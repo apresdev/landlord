@@ -8,7 +8,7 @@ import (
 )
 
 func SignUp(userPoolName, email, password string) error {
-	up, err := getUserPoolByName(userPoolName)
+	up, err := GetUserPoolByName(userPoolName)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func SignUp(userPoolName, email, password string) error {
 }
 
 func ConfirmSignUp(userPoolName, email, confirmationCode string) error {
-	up, err := getUserPoolByName(userPoolName)
+	up, err := GetUserPoolByName(userPoolName)
 	if err != nil {
 		return err
 	}

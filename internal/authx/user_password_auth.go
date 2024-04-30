@@ -6,7 +6,7 @@ import (
 )
 
 func UserPasswordAuth(userPoolName, email, password string) error {
-	up, err := getUserPoolByName(userPoolName)
+	up, err := GetUserPoolByName(userPoolName)
 	if err != nil {
 		return err
 	}

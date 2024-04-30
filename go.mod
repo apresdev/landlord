@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.11
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentity v1.23.7
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.36.5
+	github.com/ettle/strcase v0.2.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1

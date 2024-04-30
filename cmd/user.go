@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func createDeleteUserCmd() *cobra.Command {
+func newDeleteUserCmd() *cobra.Command {
 	var userpool string
 	var email string
 	var deleteUserCmd = &cobra.Command{
@@ -36,7 +36,7 @@ func createDeleteUserCmd() *cobra.Command {
 	return deleteUserCmd
 }
 
-func createListUsersCmd() *cobra.Command {
+func newListUsersCmd() *cobra.Command {
 	var userpool string
 	var listUsersCmd = &cobra.Command{
 		Use:   "list",
@@ -78,7 +78,7 @@ func init() {
 			return cmd.Help()
 		},
 	}
-	userCmd.AddCommand(createDeleteUserCmd())
-	userCmd.AddCommand(createListUsersCmd())
+	userCmd.AddCommand(newDeleteUserCmd())
+	userCmd.AddCommand(newListUsersCmd())
 	rootCmd.AddCommand(userCmd)
 }

@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/apresdev/landlord/internal/session"
 
 	"github.com/spf13/cobra"
@@ -17,7 +15,7 @@ func init() {
 			if err := ses.Logout(); err != nil {
 				return err
 			}
-			fmt.Println("Logged out")
+			cmd.Println("Logged out")
 			return nil
 		},
 	}

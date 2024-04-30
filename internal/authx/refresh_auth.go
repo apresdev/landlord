@@ -6,7 +6,7 @@ import (
 )
 
 func RefreshAuth(s *session.Session) error {
-	up, err := getUserPoolByName(s.UserPool)
+	up, err := GetUserPoolByName(s.UserPool)
 	if err != nil {
 		return err
 	}
