@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/apresdev/landlord/internal/authx"
 
@@ -17,19 +17,19 @@ func init() {
 		Short: "Sign up",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if userpool == "" {
-				return fmt.Errorf("userpool must be set")
+				return errors.New("userpool must be set")
 			}
 			if email == "" {
-				return fmt.Errorf("email must be set")
+				return errors.New("email must be set")
 			}
 			if password == "" {
-				return fmt.Errorf("password must be set")
+				return errors.New("password must be set")
 			}
 			err := authx.SignUp(userpool, email, password)
 			if err != nil {
 				return err
 			}
-			fmt.Printf("Successfully signed up '%s' -- check your email for confirmation code\n", email)
+			cmd.Printf("Successfully signed up '%s' -- check your email for confirmation code\n", email)
 			return nil
 		},
 	}

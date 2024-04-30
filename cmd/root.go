@@ -20,7 +20,9 @@ func Root() *cobra.Command {
 }
 
 func Execute() {
-	err := Root().Execute()
+	cmd := Root()
+	cmd.SilenceUsage = true
+	err := cmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}

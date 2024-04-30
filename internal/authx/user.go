@@ -16,7 +16,7 @@ func UserEmailAttribute(u types.UserType) string {
 }
 
 func DeleteUser(userPoolName, email string) error {
-	up, err := getUserPoolByName(userPoolName)
+	up, err := GetUserPoolByName(userPoolName)
 	if err != nil {
 		return err
 	}

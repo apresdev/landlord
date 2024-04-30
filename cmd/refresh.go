@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/apresdev/landlord/internal/session"
 
 	"github.com/apresdev/landlord/internal/authx"
@@ -20,7 +18,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			fmt.Println("refreshed tokens")
+			cmd.Println("refreshed tokens")
 			return nil
 		},
 	}

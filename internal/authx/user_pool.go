@@ -62,7 +62,7 @@ func getUserPoolDescriptionByName(userPoolName string) (*types.UserPoolDescripti
 	return nil, fmt.Errorf("not found: %s", userPoolName)
 }
 
-func getUserPoolByName(userPoolName string) (*types.UserPoolType, error) {
+func GetUserPoolByName(userPoolName string) (*types.UserPoolType, error) {
 	up, err := getUserPoolDescriptionByName(userPoolName)
 	if err != nil {
 		return nil, err
