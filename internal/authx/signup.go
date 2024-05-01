@@ -7,8 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 )
 
-func SignUp(userPoolName, email, password string) error {
-	up, err := GetUserPoolByName(userPoolName)
+func SignUp(userPool, email, password string) error {
+	up, err := GetUserPoolByNameOrID(userPool)
 	if err != nil {
 		return err
 	}
@@ -31,8 +31,8 @@ func SignUp(userPoolName, email, password string) error {
 	return err
 }
 
-func ConfirmSignUp(userPoolName, email, confirmationCode string) error {
-	up, err := GetUserPoolByName(userPoolName)
+func ConfirmSignUp(userPool, email, confirmationCode string) error {
+	up, err := GetUserPoolByNameOrID(userPool)
 	if err != nil {
 		return err
 	}

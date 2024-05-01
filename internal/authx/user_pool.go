@@ -1,6 +1,7 @@
 package authx
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/apresdev/landlord/internal/session"
@@ -41,7 +42,10 @@ func getUserPool(up *types.UserPoolDescriptionType) (*types.UserPoolType, error)
 	return o.UserPool, nil
 }
 
-func getUserPoolDescriptionByName(userPoolName string) (*types.UserPoolDescriptionType, error) {
+func getUserPoolDescription(
+	match func(descriptionType types.UserPoolDescriptionType) bool) (
+	*types.UserPoolDescriptionType, error) {
+
 	s := session.Must()
 	cc := cognitoidentityprovider.NewFromConfig(s.AWS())
 	maxResults := int32(10)
@@ -55,19 +59,39 @@ func getUserPoolDescriptionByName(userPoolName string) (*types.UserPoolDescripti
 		return nil, err
 	}
 	for _, up := range u.UserPools {
-		if *up.Name == userPoolName {
+		if match(up) {
 			return &up, nil
 		}
 	}
-	return nil, fmt.Errorf("not found: %s", userPoolName)
+	return nil, errors.New("user pool not found")
 }
 
-func GetUserPoolByName(userPoolName string) (*types.UserPoolType, error) {
-	up, err := getUserPoolDescriptionByName(userPoolName)
+func GetUserPoolByName(userPool string) (*types.UserPoolType, error) {
+	up, err := getUserPoolDescription(func(descriptionType types.UserPoolDescriptionType) bool {
+		return descriptionType.Name != nil && *descriptionType.Name == userPool
+	})
 	if err != nil {
 		return nil, err
 	}
 	return getUserPool(up)
+}
+
+func GetUserPoolByID(userPool string) (*types.UserPoolType, error) {
+	up, err := getUserPoolDescription(func(descriptionType types.UserPoolDescriptionType) bool {
+		return descriptionType.Id != nil && *descriptionType.Id == userPool
+	})
+	if err != nil {
+		return nil, err
+	}
+	return getUserPool(up)
+}
+
+func GetUserPoolByNameOrID(nameOrID string) (*types.UserPoolType, error) {
+	up, err := GetUserPoolByName(nameOrID)
+	if err == nil {
+		return up, nil
+	}
+	return GetUserPoolByID(nameOrID)
 }
 
 func getUserPoolClients(up *types.UserPoolType) ([]types.UserPoolClientDescription, error) {
@@ -119,8 +143,8 @@ type Users struct {
 	Entries []types.UserType
 }
 
-func GetUsersInUserPool(userPoolName string) (Users, error) {
-	up, err := getUserPoolDescriptionByName(userPoolName)
+func GetUsersInUserPool(userPool string) (Users, error) {
+	up, err := GetUserPoolByNameOrID(userPool)
 	if err != nil {
 		return Users{}, err
 	}

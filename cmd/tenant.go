@@ -74,23 +74,23 @@ func newApplyCmd() *cobra.Command {
 }
 
 func newCreateTenantCmd() *cobra.Command {
-	var userPoolName string
+	var userPool string
 	var tenantName string
 	createTenantCmd := &cobra.Command{
 		Use:   "create",
 		Short: "Delete a tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if userPoolName == "" {
+			if userPool == "" {
 				return errors.New("user pool name must be set")
 			}
 			if tenantName == "" {
 				return errors.New("tenant name must be set")
 			}
-			_, err := authx.GetUserPoolByName(userPoolName)
+			_, err := authx.GetUserPoolByNameOrID(userPool)
 			if err != nil {
 				return err
 			}
-			ten, err := authx.CreateTenant(userPoolName, tenantName)
+			ten, err := authx.CreateTenant(userPool, tenantName)
 			if err != nil {
 				return err
 			}
@@ -99,7 +99,7 @@ func newCreateTenantCmd() *cobra.Command {
 		},
 	}
 	createTenantCmd.PersistentFlags().StringVarP(
-		&userPoolName, "userpool", "U", "", "User pool to create tenant in")
+		&userPool, "userpool", "U", "", "User pool to create tenant in")
 	createTenantCmd.PersistentFlags().StringVarP(
 		&tenantName, "name", "n", "", "Name of the tenant to create")
 	return createTenantCmd
