@@ -3,6 +3,8 @@ package cmd
 import (
 	"errors"
 
+	"github.com/apresdev/landlord/internal/session"
+
 	"github.com/apresdev/landlord/internal/authx"
 
 	"github.com/spf13/cobra"
@@ -29,7 +31,10 @@ func init() {
 			if err != nil {
 				return err
 			}
+			s := session.MustReload()
 			cmd.Println("Logged in as: " + email)
+			cmd.Printf("\n==== ID Token ====\n%s\n", s.IdToken)
+			cmd.Printf("\n==== Access Token ====\n%s\n", s.AccessToken)
 			return nil
 		},
 	}

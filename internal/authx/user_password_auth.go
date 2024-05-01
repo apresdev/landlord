@@ -5,8 +5,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 )
 
-func UserPasswordAuth(userPoolName, email, password string) error {
-	up, err := GetUserPoolByName(userPoolName)
+func UserPasswordAuth(userPool, email, password string) error {
+	up, err := GetUserPoolByNameOrID(userPool)
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func UserPasswordAuth(userPoolName, email, password string) error {
 	}
 	// TODO: validate the refresh token -- cannot use ValidateToken because the
 	// refresh token is not a JWT
-	s.UserPool = userPoolName
+	s.UserPool = userPool
 	s.Email = email
 	s.AccessToken = *o.AuthenticationResult.AccessToken
 	s.IdToken = *o.AuthenticationResult.IdToken

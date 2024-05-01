@@ -15,8 +15,8 @@ func UserEmailAttribute(u types.UserType) string {
 	return ""
 }
 
-func DeleteUser(userPoolName, email string) error {
-	up, err := GetUserPoolByName(userPoolName)
+func DeleteUser(userPool, email string) error {
+	up, err := GetUserPoolByNameOrID(userPool)
 	if err != nil {
 		return err
 	}

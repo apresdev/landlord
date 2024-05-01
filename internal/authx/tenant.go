@@ -20,7 +20,7 @@ type Tenant struct {
 	FullName     string   `json:"full_name"`
 	EmailDomains []string `json:"email_domains"`
 	UserEmails   []string `json:"users"`
-	UserPoolName string   `json:"user_pool_name"`
+	UserPool     string   `json:"user_pool"`
 }
 
 func NewTenant() Tenant {
@@ -153,7 +153,7 @@ func ResolveTenant(tenantID TenantID, tenantName string) (Tenant, error) {
 
 const maxTenantNameLength = 32
 
-func CreateTenant(userPoolName, name string) (Tenant, error) {
+func CreateTenant(userPool, name string) (Tenant, error) {
 	if name == "" {
 		return Tenant{}, errors.New("tenant name must be set")
 	}
@@ -162,7 +162,7 @@ func CreateTenant(userPoolName, name string) (Tenant, error) {
 	}
 	ten := NewTenant()
 	ten.Name = strcase.ToKebab(name)
-	ten.UserPoolName = userPoolName
+	ten.UserPool = userPool
 	if err := AllTenants.Add(ten); err != nil {
 		return Tenant{}, err
 	}
@@ -197,7 +197,7 @@ func AddUserToTenant(ten Tenant, email string) error {
 }
 
 func ApplyTenant(ten Tenant) error {
-	up, err := GetUserPoolByName(ten.UserPoolName)
+	up, err := GetUserPoolByNameOrID(ten.UserPool)
 	if err != nil {
 		return err
 	}

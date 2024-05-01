@@ -61,7 +61,7 @@ func init() {
 				if s.AccessToken == "" {
 					cmd.Printf("  Access  : empty\n")
 				} else {
-					up, err := authx.GetUserPoolByName(s.UserPool)
+					up, err := authx.GetUserPoolByNameOrID(s.UserPool)
 					if err != nil {
 						return err
 					}

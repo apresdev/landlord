@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"os"
 
+	"go.uber.org/zap"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-
-	"go.uber.org/zap"
 )
 
 type Config struct {
@@ -42,9 +42,17 @@ func Must() *Session {
 	var err error
 	theSession, err = loadSessionFromFile()
 	if err != nil {
-		zap.L().Fatal("failed to load session from file", zap.Error(err))
+		theSession, err = newEmptySession()
+		if err != nil {
+			zap.L().Fatal("failed to create session", zap.Error(err))
+		}
 	}
 	return theSession
+}
+
+func MustReload() *Session {
+	theSession = nil
+	return Must()
 }
 
 func newEmptySession() (*Session, error) {
