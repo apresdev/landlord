@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newAddUserToTenantCmd() *cobra.Command {
+func createAddUserToTenantCmd() *cobra.Command {
 	var tenantID string
 	var tenantName string
 	var email string
@@ -43,7 +43,7 @@ func newAddUserToTenantCmd() *cobra.Command {
 	return addUserToTenantCmd
 }
 
-func newApplyCmd() *cobra.Command {
+func createApplyCmd() *cobra.Command {
 	var tenantID string
 	var tenantName string
 	applyToTenantCmd := &cobra.Command{
@@ -57,7 +57,8 @@ func newApplyCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = authx.ApplyTenant(ten)
+			s := MustSession()
+			err = authx.ApplyTenant(s.Ctx, s.CogIdp, ten)
 			if err != nil {
 				return err
 			}
@@ -73,7 +74,7 @@ func newApplyCmd() *cobra.Command {
 	return applyToTenantCmd
 }
 
-func newCreateTenantCmd() *cobra.Command {
+func createCreateTenantCmd() *cobra.Command {
 	var userPool string
 	var tenantName string
 	createTenantCmd := &cobra.Command{
@@ -86,7 +87,8 @@ func newCreateTenantCmd() *cobra.Command {
 			if tenantName == "" {
 				return errors.New("tenant name must be set")
 			}
-			_, err := authx.GetUserPoolByNameOrID(userPool)
+			s := MustSession()
+			_, err := authx.GetUserPoolByNameOrID(s.Ctx, s.CogIdp, userPool)
 			if err != nil {
 				return err
 			}
@@ -105,7 +107,7 @@ func newCreateTenantCmd() *cobra.Command {
 	return createTenantCmd
 }
 
-func newDeleteTenantCmd() *cobra.Command {
+func createDeleteTenantCmd() *cobra.Command {
 	var tenantID string
 	var tenantName string
 	var deleteTenantCmd = &cobra.Command{
@@ -134,7 +136,7 @@ func newDeleteTenantCmd() *cobra.Command {
 	return deleteTenantCmd
 }
 
-func newListTenantCmd() *cobra.Command {
+func createListTenantCmd() *cobra.Command {
 	var listTenantsCmd = &cobra.Command{
 		Use:   "list",
 		Short: "List the tenants",
@@ -153,18 +155,18 @@ func newListTenantCmd() *cobra.Command {
 	return listTenantsCmd
 }
 
-func init() {
-	var tenantCmd = &cobra.Command{
+func createTenantCmd() *cobra.Command {
+	tenantCmd := &cobra.Command{
 		Use:   "tenant",
 		Short: "Tenant sub-command",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
 		},
 	}
-	tenantCmd.AddCommand(newAddUserToTenantCmd())
-	tenantCmd.AddCommand(newApplyCmd())
-	tenantCmd.AddCommand(newCreateTenantCmd())
-	tenantCmd.AddCommand(newDeleteTenantCmd())
-	tenantCmd.AddCommand(newListTenantCmd())
-	rootCmd.AddCommand(tenantCmd)
+	tenantCmd.AddCommand(createAddUserToTenantCmd())
+	tenantCmd.AddCommand(createApplyCmd())
+	tenantCmd.AddCommand(createCreateTenantCmd())
+	tenantCmd.AddCommand(createDeleteTenantCmd())
+	tenantCmd.AddCommand(createListTenantCmd())
+	return tenantCmd
 }

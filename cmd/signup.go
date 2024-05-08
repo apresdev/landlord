@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
+func createSignUpCmd() *cobra.Command {
 	var userpool string
 	var email string
 	var password string
-	var signUpCmd = &cobra.Command{
+	signUpCmd := &cobra.Command{
 		Use:   "signup",
 		Short: "Sign up",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -25,7 +25,8 @@ func init() {
 			if password == "" {
 				return errors.New("password must be set")
 			}
-			err := authx.SignUp(userpool, email, password)
+			s := MustSession()
+			err := authx.SignUp(s.Ctx, s.CogIdp, userpool, email, password)
 			if err != nil {
 				return err
 			}
@@ -39,5 +40,5 @@ func init() {
 		&email, "email", "e", "", "Email to sign up with")
 	signUpCmd.PersistentFlags().StringVarP(
 		&password, "password", "p", "", "Password to sign up with")
-	rootCmd.AddCommand(signUpCmd)
+	return signUpCmd
 }

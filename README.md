@@ -1,6 +1,15 @@
 # Landlord
 
-Tool to manage users and tenants in AWS Cognito
+The `landlord` tool is a command-line utility to manage users and tenants in
+AWS Cognito.
+
+## Testing
+
+The `landlord` tool calls AWS APIs liberally. To that end,
+we test it with [localstack](https://www.localstack.cloud/)
+to get the most of our tests. A health check of localstack
+is made prior to running unit tests that rely on localstack
+and those tests are skipped if that health check fails.
 
 ## Basic Usage
 

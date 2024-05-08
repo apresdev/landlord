@@ -1,161 +1,251 @@
 package authx
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
-	"github.com/apresdev/landlord/internal/session"
+	"github.com/apresdev/landlord/internal/appenv"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+	"go.uber.org/zap"
 )
 
-// TODO: add user-pool sub-command
-func listUserPools() error {
-	s := session.Must()
-	cc := cognitoidentityprovider.NewFromConfig(s.AWS())
-	maxResults := int32(10)
+// GetUserPoolDescriptions returns the descriptions of all user pools
+// in the AWS Cognito Identity Provider for the current AWS_PROFILE
+func GetUserPoolDescriptions(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider) (
+	[]types.UserPoolDescriptionType, error) {
+
+	result := make([]types.UserPoolDescriptionType, 0)
+	maxResults := int32(MaxPagingResults)
 	nextToken := newNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
 		NextToken:  &nextToken,
 	}
-	u, err := cc.ListUserPools(s.Ctx(), &args)
-	if err != nil {
-		return err
+	for {
+		u, err := cogIdp.ListUserPools(ctx, &args)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, u.UserPools...)
+		if u.NextToken == nil {
+			break
+		}
+		nextToken = *u.NextToken
 	}
-	for _, up := range u.UserPools {
-		fmt.Printf("User Pool: %s\n", *up.Name)
-	}
-	return nil
+	return result, nil
 }
 
-func getUserPool(up *types.UserPoolDescriptionType) (*types.UserPoolType, error) {
-	s := session.Must()
+func getUserPool(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	up types.UserPoolDescriptionType) (*types.UserPoolType, error) {
+
 	args := cognitoidentityprovider.DescribeUserPoolInput{
 		UserPoolId: up.Id,
 	}
-	cc := cognitoidentityprovider.NewFromConfig(s.AWS())
-	o, err := cc.DescribeUserPool(s.Ctx(), &args)
+	o, err := cogIdp.DescribeUserPool(ctx, &args)
 	if err != nil {
 		return nil, err
 	}
 	return o.UserPool, nil
 }
 
-func getUserPoolDescription(
+func getUserPoolDescriptions(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
 	match func(descriptionType types.UserPoolDescriptionType) bool) (
-	*types.UserPoolDescriptionType, error) {
+	[]types.UserPoolDescriptionType, error) {
 
-	s := session.Must()
-	cc := cognitoidentityprovider.NewFromConfig(s.AWS())
-	maxResults := int32(10)
+	maxResults := int32(MaxPagingResults)
 	nextToken := newNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
 		NextToken:  &nextToken,
 	}
-	u, err := cc.ListUserPools(s.Ctx(), &args)
-	if err != nil {
-		return nil, err
-	}
-	for _, up := range u.UserPools {
-		if match(up) {
-			return &up, nil
+	result := make([]types.UserPoolDescriptionType, 0)
+	for {
+		u, err := cogIdp.ListUserPools(ctx, &args)
+		if err != nil {
+			return nil, err
+		}
+		for _, up := range u.UserPools {
+			if match(up) {
+				result = append(result, up)
+			}
+		}
+		if u.NextToken == nil {
+			break
 		}
 	}
-	return nil, errors.New("user pool not found")
+	return result, nil
 }
 
-func GetUserPoolByName(userPool string) (*types.UserPoolType, error) {
-	up, err := getUserPoolDescription(func(descriptionType types.UserPoolDescriptionType) bool {
-		return descriptionType.Name != nil && *descriptionType.Name == userPool
-	})
+func GetUserPoolByName(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	userPoolName string) (*types.UserPoolType, error) {
+
+	ups, err := getUserPoolDescriptions(
+		ctx, cogIdp, func(descriptionType types.UserPoolDescriptionType) bool {
+			return descriptionType.Name != nil && *descriptionType.Name == userPoolName
+		})
 	if err != nil {
 		return nil, err
 	}
-	return getUserPool(up)
+	if len(ups) == 0 {
+		return nil, fmt.Errorf("no user pool found")
+	}
+	if len(ups) > 1 {
+		return nil, fmt.Errorf("more than one user pool found")
+	}
+	return getUserPool(ctx, cogIdp, ups[0])
 }
 
-func GetUserPoolByID(userPool string) (*types.UserPoolType, error) {
-	up, err := getUserPoolDescription(func(descriptionType types.UserPoolDescriptionType) bool {
-		return descriptionType.Id != nil && *descriptionType.Id == userPool
-	})
+func GetUserPoolByID(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	userPoolID string) (*types.UserPoolType, error) {
+
+	ups, err := getUserPoolDescriptions(
+		ctx, cogIdp, func(descriptionType types.UserPoolDescriptionType) bool {
+			return descriptionType.Id != nil && *descriptionType.Id == userPoolID
+		})
 	if err != nil {
 		return nil, err
 	}
-	return getUserPool(up)
+	if len(ups) == 0 {
+		return nil, fmt.Errorf("no user pool found")
+	}
+	if len(ups) > 1 {
+		return nil, fmt.Errorf("more than one user pool found")
+	}
+	return getUserPool(ctx, cogIdp, ups[0])
 }
 
-func GetUserPoolByNameOrID(nameOrID string) (*types.UserPoolType, error) {
-	up, err := GetUserPoolByName(nameOrID)
+func GetUserPoolByNameOrID(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	nameOrID string) (*types.UserPoolType, error) {
+
+	if nameOrID == "" {
+		return nil, errors.New("user pool name or ID must be set")
+	}
+	up, err := GetUserPoolByName(ctx, cogIdp, nameOrID)
 	if err == nil {
 		return up, nil
 	}
-	return GetUserPoolByID(nameOrID)
+	return GetUserPoolByID(ctx, cogIdp, nameOrID)
 }
 
-func getUserPoolClients(up *types.UserPoolType) ([]types.UserPoolClientDescription, error) {
-	s := session.Must()
-	cc := cognitoidentityprovider.NewFromConfig(s.AWS())
-	args := cognitoidentityprovider.ListUserPoolClientsInput{
-		UserPoolId: up.Id,
-	}
-	o, err := cc.ListUserPoolClients(s.Ctx(), &args)
+func GetUsersInUserPool(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	userPool string) ([]types.UserType, error) {
+
+	up, err := GetUserPoolByNameOrID(ctx, cogIdp, userPool)
 	if err != nil {
 		return nil, err
 	}
-	return o.UserPoolClients, nil
-}
-
-func getSingletonUserPoolClientDescription(up *types.UserPoolType) (*types.UserPoolClientDescription, error) {
-	c, err := getUserPoolClients(up)
-	if err != nil {
-		return nil, err
-	}
-	if len(c) == 0 {
-		return nil, fmt.Errorf("no user pool clients found")
-	}
-	if len(c) > 1 {
-		return nil, fmt.Errorf("more than one user pool client found")
-	}
-	return &c[0], nil
-}
-
-func getSingletonUserPoolClient(up *types.UserPoolType) (*types.UserPoolClientType, error) {
-	cd, err := getSingletonUserPoolClientDescription(up)
-	if err != nil {
-		return nil, err
-	}
-	s := session.Must()
-	cc := cognitoidentityprovider.NewFromConfig(s.AWS())
-	args := cognitoidentityprovider.DescribeUserPoolClientInput{
-		ClientId:   cd.ClientId,
-		UserPoolId: cd.UserPoolId,
-	}
-	o, err := cc.DescribeUserPoolClient(s.Ctx(), &args)
-	if err != nil {
-		return nil, err
-	}
-	return o.UserPoolClient, nil
-}
-
-type Users struct {
-	Entries []types.UserType
-}
-
-func GetUsersInUserPool(userPool string) (Users, error) {
-	up, err := GetUserPoolByNameOrID(userPool)
-	if err != nil {
-		return Users{}, err
-	}
-	s := session.Must()
-	cc := cognitoidentityprovider.NewFromConfig(s.AWS())
 	args := cognitoidentityprovider.ListUsersInput{
 		UserPoolId: up.Id,
 	}
-	o, err := cc.ListUsers(s.Ctx(), &args)
+	o, err := cogIdp.ListUsers(ctx, &args)
 	if err != nil {
-		return Users{}, err
+		return nil, err
 	}
-	return Users{Entries: o.Users}, nil
+	return o.Users, nil
+}
+
+func CreateUserPool(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	name string) (*types.UserPoolType, error) {
+
+	args := cognitoidentityprovider.CreateUserPoolInput{
+		PoolName: aws.String(name),
+	}
+	o, err := cogIdp.CreateUserPool(ctx, &args)
+	if err != nil {
+		return nil, err
+	}
+	_, err = cogIdp.CreateUserPoolClient(ctx, &cognitoidentityprovider.CreateUserPoolClientInput{
+		ClientName: aws.String(name),
+		UserPoolId: o.UserPool.Id,
+		ExplicitAuthFlows: []types.ExplicitAuthFlowsType{
+			types.ExplicitAuthFlowsTypeAllowUserPasswordAuth,
+			types.ExplicitAuthFlowsTypeAllowRefreshTokenAuth,
+			types.ExplicitAuthFlowsTypeAllowUserSrpAuth,
+		},
+	})
+	if err != nil {
+		var err2 error
+		_, err2 = cogIdp.DeleteUserPool(
+			ctx,
+			&cognitoidentityprovider.DeleteUserPoolInput{UserPoolId: o.UserPool.Id})
+		if err2 != nil {
+			zap.L().Error("failed to delete user pool", zap.Error(err2))
+		}
+		return nil, err
+	}
+	return o.UserPool, nil
+}
+
+func DeleteUserPool(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	userPool string) (*types.UserPoolType, error) {
+
+	if !appenv.Localstack {
+		return nil, errors.New("cannot delete user pool in non-localstack environment")
+	}
+
+	up, err := GetUserPoolByNameOrID(ctx, cogIdp, userPool)
+	if err != nil {
+		return nil, err
+	}
+	args := cognitoidentityprovider.DeleteUserPoolInput{
+		UserPoolId: up.Id,
+	}
+	_, err = cogIdp.DeleteUserPool(ctx, &args)
+	if err != nil {
+		return nil, err
+	}
+	return up, nil
+}
+
+func DeleteAllUserPools(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider) error {
+
+	maxResults := int32(MaxPagingResults)
+	nextToken := newNextToken()
+	args := cognitoidentityprovider.ListUserPoolsInput{
+		MaxResults: &maxResults,
+		NextToken:  &nextToken,
+	}
+	for {
+		u, err := cogIdp.ListUserPools(ctx, &args)
+		if err != nil {
+			return err
+		}
+		for _, up := range u.UserPools {
+			_, err := cogIdp.DeleteUserPool(
+				ctx, &cognitoidentityprovider.DeleteUserPoolInput{
+					UserPoolId: up.Id,
+				})
+			if err != nil {
+				return err
+			}
+		}
+		if u.NextToken == nil {
+			break
+		}
+		nextToken = *u.NextToken
+	}
+	return nil
 }

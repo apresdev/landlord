@@ -1,20 +1,27 @@
 package cmd
 
 import (
-	"github.com/apresdev/landlord/internal/session"
-
 	"github.com/apresdev/landlord/internal/authx"
 
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	var refreshCmd = &cobra.Command{
+func createRefreshCmd() *cobra.Command {
+	refreshCmd := &cobra.Command{
 		Use:   "refresh",
 		Short: "Refresh the current session's tokens",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := session.Must()
-			err := authx.RefreshAuth(s)
+			s := MustSession()
+			tokens, err := authx.RefreshAuth(
+				s.Ctx, s.CogIdp, s.Validator, authx.RefreshAuthArgs{
+					Region:       s.GetRegion(),
+					UserPool:     s.UserPool,
+					RefreshToken: s.RefreshToken,
+				})
+			if err != nil {
+				return err
+			}
+			err = s.StoreTokens(tokens.AccessToken, tokens.IdToken, tokens.RefreshToken)
 			if err != nil {
 				return err
 			}
@@ -22,5 +29,5 @@ func init() {
 			return nil
 		},
 	}
-	rootCmd.AddCommand(refreshCmd)
+	return refreshCmd
 }

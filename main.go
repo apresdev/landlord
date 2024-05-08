@@ -3,8 +3,6 @@ package main
 import (
 	"github.com/apresdev/landlord/cmd"
 	"github.com/apresdev/landlord/internal/appenv"
-	"github.com/joho/godotenv"
-	"go.uber.org/zap"
 )
 
 var (
@@ -22,8 +20,5 @@ func main() {
 		GoVersion: GoVersion,
 	})
 	appenv.MustConfigureLogging()
-	if err := godotenv.Load(); err != nil {
-		zap.L().Error("failed to load env vars", zap.Error(err))
-	}
 	cmd.Execute()
 }

@@ -1,7 +1,8 @@
 package authx
 
 import (
-	"github.com/apresdev/landlord/internal/session"
+	"context"
+
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 )
@@ -15,16 +16,19 @@ func UserEmailAttribute(u types.UserType) string {
 	return ""
 }
 
-func DeleteUser(userPool, email string) error {
-	up, err := GetUserPoolByNameOrID(userPool)
+func DeleteUser(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	userPool, email string) error {
+
+	up, err := GetUserPoolByNameOrID(ctx, cogIdp, userPool)
 	if err != nil {
 		return err
 	}
-	s := session.Must()
-	cc := cognitoidentityprovider.NewFromConfig(s.AWS())
-	_, err = cc.AdminDeleteUser(s.Ctx(), &cognitoidentityprovider.AdminDeleteUserInput{
-		UserPoolId: up.Id,
-		Username:   &email,
-	})
+	_, err = cogIdp.AdminDeleteUser(ctx,
+		&cognitoidentityprovider.AdminDeleteUserInput{
+			UserPoolId: up.Id,
+			Username:   &email,
+		})
 	return err
 }

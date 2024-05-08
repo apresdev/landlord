@@ -1,18 +1,26 @@
 package authx
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
 	"slices"
 
-	"github.com/apresdev/landlord/internal/session"
+	"github.com/google/uuid"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
 	"github.com/ettle/strcase"
 )
+
+type TenantID string
+
+func MustNewTenantID() TenantID {
+	return TenantID(uuid.New().String())
+}
 
 type Tenant struct {
 	ID           TenantID `json:"id"`
@@ -196,13 +204,15 @@ func AddUserToTenant(ten Tenant, email string) error {
 	return AllTenants.Replace(ten)
 }
 
-func ApplyTenant(ten Tenant) error {
-	up, err := GetUserPoolByNameOrID(ten.UserPool)
+func ApplyTenant(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	ten Tenant) error {
+
+	up, err := GetUserPoolByNameOrID(ctx, cogIdp, ten.UserPool)
 	if err != nil {
 		return err
 	}
-	s := session.Must()
-	svc := cognitoidentityprovider.NewFromConfig(s.AWS())
 	for _, email := range ten.UserEmails {
 		input := &cognitoidentityprovider.AdminUpdateUserAttributesInput{
 			UserPoolId: up.Id,
@@ -214,7 +224,7 @@ func ApplyTenant(ten Tenant) error {
 				},
 			},
 		}
-		_, err := svc.AdminUpdateUserAttributes(s.Ctx(), input)
+		_, err := cogIdp.AdminUpdateUserAttributes(ctx, input)
 		if err != nil {
 			return err
 		}
