@@ -21,7 +21,7 @@ type LoginTestSuite struct {
 
 func TestLoginTestSuite(t *testing.T) {
 	if !localstack.IsRunning() {
-		t.Skip(" localstack not running")
+		t.Skip("localstack not running")
 	}
 	suite.Run(t, &LoginTestSuite{})
 }
