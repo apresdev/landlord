@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
+
+	"github.com/apresdev/landlord/internal/localstack"
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 	"github.com/golang-jwt/jwt/v5"
@@ -17,14 +20,18 @@ func awsJWKURL(region, userPoolID string) string {
 	return "https://cognito-idp." + region + ".amazonaws.com/" + userPoolID + "/.well-known/jwks.json"
 }
 
-func localstackJWKURL(userPoolID string) string {
-	return "http://localhost:4566/" + userPoolID + "/.well-known/jwks.json"
+func localstackJWKURL(userPoolID string) (string, error) {
+	return url.JoinPath(localstack.Endpoint(), userPoolID, ".well-known/jwks.json")
 }
 
 // TODO: caching
 func loadJWK(ctx context.Context, region, userPoolID string) (jwk.Set, error) {
 	if appenv.Localstack {
-		keySet, err := jwk.Fetch(ctx, localstackJWKURL(userPoolID))
+		u, err := localstackJWKURL(userPoolID)
+		if err != nil {
+			return nil, err
+		}
+		keySet, err := jwk.Fetch(ctx, u)
 		if err != nil {
 			return nil, err
 		}
