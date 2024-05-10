@@ -1,17 +1,15 @@
 package cmd
 
 import (
-	"github.com/apresdev/landlord/internal/session"
-
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	var logoutCmd = &cobra.Command{
+func createLogoutCmd() *cobra.Command {
+	logoutCmd := &cobra.Command{
 		Use:   "logout",
 		Short: "Logout the current logged in player",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ses := session.Must()
+			ses := MustSession()
 			if err := ses.Logout(); err != nil {
 				return err
 			}
@@ -19,5 +17,5 @@ func init() {
 			return nil
 		},
 	}
-	rootCmd.AddCommand(logoutCmd)
+	return logoutCmd
 }

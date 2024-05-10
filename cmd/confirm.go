@@ -8,24 +8,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
+func createConfirmCmd() *cobra.Command {
 	var userpool string
 	var email string
 	var code string
-	var confirmSignUpCmd = &cobra.Command{
+	confirmSignUpCmd := &cobra.Command{
 		Use:   "confirm",
 		Short: "Confirm sign up",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if userpool == "" {
-				return errors.New("userpool must be set")
+				return errors.New("--userpool required")
 			}
 			if email == "" {
-				return errors.New("email must be set")
+				return errors.New("--email required")
 			}
 			if code == "" {
-				return errors.New("code must be set")
+				return errors.New("--code required")
 			}
-			err := authx.ConfirmSignUp(userpool, email, code)
+			s := MustSession()
+			err := authx.ConfirmSignUp(s.Ctx, s.CogIdp, userpool, email, code)
 			if err != nil {
 				return err
 			}
@@ -39,5 +40,5 @@ func init() {
 		&email, "email", "e", "", "Email to confirm")
 	confirmSignUpCmd.PersistentFlags().StringVarP(
 		&code, "code", "c", "", "Confirmation code")
-	rootCmd.AddCommand(confirmSignUpCmd)
+	return confirmSignUpCmd
 }

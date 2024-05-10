@@ -1,19 +1,23 @@
 package authx
 
 import (
-	"github.com/apresdev/landlord/internal/session"
+	"context"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 )
 
-func SignUp(userPool, email, password string) error {
-	up, err := GetUserPoolByNameOrID(userPool)
+func SignUp(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	userPool, email, password string) error {
+
+	up, err := GetUserPoolByNameOrID(ctx, cogIdp, userPool)
 	if err != nil {
 		return err
 	}
-	s := session.Must()
-	client, err := getSingletonUserPoolClientDescription(up)
+	client, err := getSingletonUserPoolClientDescription(ctx, cogIdp, up)
 	if err != nil {
 		return err
 	}
@@ -26,17 +30,20 @@ func SignUp(userPool, email, password string) error {
 		Username:       aws.String(email),
 		UserAttributes: ua,
 	}
-	cc := cognitoidentityprovider.NewFromConfig(s.AWS())
-	_, err = cc.SignUp(s.Ctx(), &args)
+	_, err = cogIdp.SignUp(ctx, &args)
 	return err
 }
 
-func ConfirmSignUp(userPool, email, confirmationCode string) error {
-	up, err := GetUserPoolByNameOrID(userPool)
+func ConfirmSignUp(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	userPool, email, confirmationCode string) error {
+
+	up, err := GetUserPoolByNameOrID(ctx, cogIdp, userPool)
 	if err != nil {
 		return err
 	}
-	client, err := getSingletonUserPoolClientDescription(up)
+	client, err := getSingletonUserPoolClientDescription(ctx, cogIdp, up)
 	if err != nil {
 		return err
 	}
@@ -45,8 +52,6 @@ func ConfirmSignUp(userPool, email, confirmationCode string) error {
 		Username:         aws.String(email),
 		ConfirmationCode: aws.String(confirmationCode),
 	}
-	s := session.Must()
-	cc := cognitoidentityprovider.NewFromConfig(s.AWS())
-	_, err = cc.ConfirmSignUp(s.Ctx(), &args)
+	_, err = cogIdp.ConfirmSignUp(ctx, &args)
 	return err
 }

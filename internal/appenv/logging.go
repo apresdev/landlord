@@ -1,20 +1,8 @@
 package appenv
 
 import (
-	"os"
-	"strings"
-
 	"go.uber.org/zap"
 )
-
-var Debug bool
-
-func init() {
-	s := os.Getenv("APRES_DEBUG")
-	if s != "" {
-		Debug = strings.ToLower(s) == "true"
-	}
-}
 
 // ConfigureLogging configures Zap logging.
 func ConfigureLogging() (func(), error) {

@@ -10,3 +10,11 @@ completion: build
 	t=$(mktemp)
 	./landlord completion zsh > $t
 	echo "source $t"
+
+.PHONY: setup
+setup:
+	go install github.com/vektra/mockery/v2@v2.43.0
+
+.PHONY: install
+install: build
+	./apres-go-bld install
