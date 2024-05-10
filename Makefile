@@ -18,3 +18,8 @@ setup:
 .PHONY: install
 install: build
 	./apres-go-bld install
+
+.PHONY: sim-test
+sim-test:
+	APRES_SKIP_TESTS=1 ./apres-go-bld
+	cd ./test && ./sim-cleanup.sh && ./sim-test-01.sh && ./sim-cleanup.sh

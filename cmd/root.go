@@ -22,6 +22,7 @@ func Root() *cobra.Command {
 	rootCmd.AddCommand(createLoginCmd())
 	rootCmd.AddCommand(createLogoutCmd())
 	rootCmd.AddCommand(createRefreshCmd())
+	rootCmd.AddCommand(createRoleCmd())
 	rootCmd.AddCommand(createSignUpCmd())
 	rootCmd.AddCommand(createTenantCmd())
 	rootCmd.AddCommand(createUserCmd())

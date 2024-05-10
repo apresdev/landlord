@@ -118,6 +118,26 @@ func (tens *Tenants) Replace(ten Tenant) error {
 	return tens.Save()
 }
 
+func (tens *Tenants) Delete(ten Tenant) error {
+	idx := slices.IndexFunc(tens.Entries, func(tenant Tenant) bool {
+		return tenant.ID == ten.ID
+	})
+	if idx == -1 {
+		return errors.New("tenant not found")
+	}
+	tens.Entries = append(tens.Entries[:idx], tens.Entries[idx+1:]...)
+	delete(tens.byID, ten.ID)
+	delete(tens.byName, ten.Name)
+	return tens.Save()
+}
+
+func (tens *Tenants) DeleteAll() error {
+	tens.Entries = []Tenant{}
+	tens.byID = make(map[TenantID]Tenant)
+	tens.byName = make(map[string]Tenant)
+	return tens.Save()
+}
+
 var AllTenants Tenants
 
 func init() {
@@ -161,7 +181,7 @@ func ResolveTenant(tenantID TenantID, tenantName string) (Tenant, error) {
 
 const maxTenantNameLength = 32
 
-func CreateTenant(userPool, name string) (Tenant, error) {
+func CreateTenant(iam AWSIAM, userPool, name string) (Tenant, error) {
 	if name == "" {
 		return Tenant{}, errors.New("tenant name must be set")
 	}
@@ -174,6 +194,13 @@ func CreateTenant(userPool, name string) (Tenant, error) {
 	if err := AllTenants.Add(ten); err != nil {
 		return Tenant{}, err
 	}
+	role, err := CreateTenantRole(context.Background(), iam, string(ten.ID))
+	if err != nil {
+		_ = AllTenants.Delete(ten)
+		return Tenant{}, err
+	}
+	// TODO: create a group with the given role
+	_ = role
 	return ten, nil
 }
 

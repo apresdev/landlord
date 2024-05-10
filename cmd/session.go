@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/service/iam"
+
 	"github.com/apresdev/landlord/internal/authx"
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -33,6 +35,7 @@ type Session struct {
 	Validator    authx.TokenValidator             `json:"-"`
 	CogId        authx.AWSCognitoIdentity         `json:"-"`
 	CogIdp       authx.AWSCognitoIdentityProvider `json:"-"`
+	IAM          authx.AWSIAM                     `json:"-"`
 	LastError    error                            `json:"last_error"`
 	Config       Config                           `json:"config"`
 	UserPool     string                           `json:"user_pool"`
@@ -75,6 +78,7 @@ func newEmptySession() (*Session, error) {
 		AWSConfig: awsCfg,
 		CogId:     cognitoidentity.NewFromConfig(awsCfg),
 		CogIdp:    cognitoidentityprovider.NewFromConfig(awsCfg),
+		IAM:       iam.NewFromConfig(awsCfg),
 		Validator: authx.NewTokenValidator(),
 		Config:    NewDefaultConfig(),
 	}, nil

@@ -3,10 +3,31 @@ package authx
 import (
 	"context"
 
+	"github.com/aws/aws-sdk-go-v2/service/iam"
+
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentity"
 )
+
+//go:generate mockery --output ../mocks --name AWSIAM --with-expecter=true
+type AWSIAM interface {
+	CreateRole(
+		ctx context.Context,
+		params *iam.CreateRoleInput,
+		optFns ...func(*iam.Options)) (
+		*iam.CreateRoleOutput, error)
+	DeleteRole(
+		ctx context.Context,
+		params *iam.DeleteRoleInput,
+		optFns ...func(*iam.Options)) (
+		*iam.DeleteRoleOutput, error)
+	ListRoles(
+		ctx context.Context,
+		params *iam.ListRolesInput,
+		optFns ...func(*iam.Options)) (
+		*iam.ListRolesOutput, error)
+}
 
 //go:generate mockery --output ../mocks --name AWSCognitoIdentity --with-expecter=true
 type AWSCognitoIdentity interface {
@@ -74,6 +95,11 @@ type AWSCognitoIdentityProvider interface {
 		params *cognitoidentityprovider.ListUsersInput,
 		optFns ...func(*cognitoidentityprovider.Options)) (
 		*cognitoidentityprovider.ListUsersOutput, error)
+	AdminCreateUser(
+		ctx context.Context,
+		params *cognitoidentityprovider.AdminCreateUserInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.AdminCreateUserOutput, error)
 	AdminDeleteUser(
 		ctx context.Context,
 		params *cognitoidentityprovider.AdminDeleteUserInput,

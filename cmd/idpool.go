@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"errors"
+
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/spf13/cobra"
 )
@@ -27,6 +29,28 @@ func createListIDPoolCmd() *cobra.Command {
 	}
 }
 
+func createDeleteIDPoolCmd() *cobra.Command {
+	var id string
+	c := &cobra.Command{
+		Use:   "delete",
+		Short: "Delete an identity pool",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if id == "" {
+				return errors.New("--id is required")
+			}
+			s := MustSession()
+			err := authx.DeleteIdentityPool(s.Ctx, s.CogId, id)
+			if err != nil {
+				return err
+			}
+			cmd.Println("Identity pool deleted")
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(&id, "id", "i", "", "Identity pool ID")
+	return c
+}
+
 func createIDPoolCmd() *cobra.Command {
 	idpoolCmd := &cobra.Command{
 		Use:   "idpool",
@@ -36,5 +60,6 @@ func createIDPoolCmd() *cobra.Command {
 		},
 	}
 	idpoolCmd.AddCommand(createListIDPoolCmd())
+	idpoolCmd.AddCommand(createDeleteIDPoolCmd())
 	return idpoolCmd
 }

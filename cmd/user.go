@@ -7,6 +7,35 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func createCreateUsersCmd() *cobra.Command {
+	var userpool string
+	var email string
+	var c = &cobra.Command{
+		Use:   "create",
+		Short: "Create a new user in the given user pool",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if userpool == "" {
+				return errors.New("userpool must be set")
+			}
+			if email == "" {
+				return errors.New("email must be set")
+			}
+			s := MustSession()
+			err := authx.CreateUser(s.Ctx, s.CogIdp, userpool, email)
+			if err != nil {
+				return err
+			}
+			cmd.Printf("Created user: %s\n", email)
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&userpool, "userpool", "U", "", "User pool to create user in")
+	c.PersistentFlags().StringVarP(
+		&email, "email", "e", "", "Email of user to create")
+	return c
+}
+
 func createDeleteUsersCmd() *cobra.Command {
 	var userpool string
 	var email string
@@ -78,6 +107,7 @@ func createUserCmd() *cobra.Command {
 			return cmd.Help()
 		},
 	}
+	userCmd.AddCommand(createCreateUsersCmd())
 	userCmd.AddCommand(createDeleteUsersCmd())
 	userCmd.AddCommand(createListUsersCmd())
 	return userCmd

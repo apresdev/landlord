@@ -35,6 +35,12 @@ func GetIdentityPoolShortDescriptions(ctx context.Context, cogId AWSCognitoIdent
 	return o.IdentityPools, nil
 }
 
+func DeleteIdentityPool(ctx context.Context, cogId AWSCognitoIdentity, id string) error {
+	_, err := cogId.DeleteIdentityPool(ctx, &cognitoidentity.DeleteIdentityPoolInput{
+		IdentityPoolId: &id})
+	return err
+}
+
 func DeleteAllIdentityPools(
 	ctx context.Context,
 	cogId AWSCognitoIdentity) error {

@@ -101,7 +101,7 @@ func GetUserPoolByName(
 		return nil, fmt.Errorf("no user pool found")
 	}
 	if len(ups) > 1 {
-		return nil, fmt.Errorf("more than one user pool found")
+		return nil, fmt.Errorf("more than one user pool found with name: %s", userPoolName)
 	}
 	return getUserPool(ctx, cogIdp, ups[0])
 }
@@ -111,20 +111,11 @@ func GetUserPoolByID(
 	cogIdp AWSCognitoIdentityProvider,
 	userPoolID string) (*types.UserPoolType, error) {
 
-	ups, err := getUserPoolDescriptions(
-		ctx, cogIdp, func(descriptionType types.UserPoolDescriptionType) bool {
-			return descriptionType.Id != nil && *descriptionType.Id == userPoolID
-		})
+	up, err := getUserPool(ctx, cogIdp, types.UserPoolDescriptionType{Id: &userPoolID})
 	if err != nil {
 		return nil, err
 	}
-	if len(ups) == 0 {
-		return nil, fmt.Errorf("no user pool found")
-	}
-	if len(ups) > 1 {
-		return nil, fmt.Errorf("more than one user pool found")
-	}
-	return getUserPool(ctx, cogIdp, ups[0])
+	return up, nil
 }
 
 func GetUserPoolByNameOrID(
@@ -135,11 +126,11 @@ func GetUserPoolByNameOrID(
 	if nameOrID == "" {
 		return nil, errors.New("user pool name or ID must be set")
 	}
-	up, err := GetUserPoolByName(ctx, cogIdp, nameOrID)
+	up, err := GetUserPoolByID(ctx, cogIdp, nameOrID)
 	if err == nil {
 		return up, nil
 	}
-	return GetUserPoolByID(ctx, cogIdp, nameOrID)
+	return GetUserPoolByName(ctx, cogIdp, nameOrID)
 }
 
 func GetUsersInUserPool(
