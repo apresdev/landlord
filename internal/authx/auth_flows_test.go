@@ -27,11 +27,6 @@ func TestUserPasswordAuthTestSuite(t *testing.T) {
 func (s *UserPasswordAuthTestSuite) TestUserPasswordAuth() {
 	ctx := context.Background()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool1")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -71,11 +66,6 @@ func (s *UserPasswordAuthTestSuite) TestUserPasswordAuth() {
 func (s *UserPasswordAuthTestSuite) TestUserPasswordAuthError() {
 	ctx := context.Background()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool1")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -98,11 +88,6 @@ func (s *UserPasswordAuthTestSuite) TestUserPasswordAuthError() {
 func (s *UserPasswordAuthTestSuite) TestUserPasswordAuthError2() {
 	ctx := context.Background()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool1")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -130,11 +115,6 @@ func (s *UserPasswordAuthTestSuite) TestUserPasswordAuthError2() {
 func (s *UserPasswordAuthTestSuite) TestUserPasswordAuthError3() {
 	ctx := context.Background()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool1")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -170,11 +150,6 @@ func (s *UserPasswordAuthTestSuite) TestUserPasswordAuthError3() {
 func (s *UserPasswordAuthTestSuite) TestUserPasswordAuthError4() {
 	ctx := context.Background()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool1")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -222,11 +197,6 @@ func (s *UserPasswordAuthTestSuite) TestUserPasswordAuthNoArgs() {
 func (s *UserPasswordAuthTestSuite) TestRefreshAuth() {
 	ctx := context.Background()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool1")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -264,6 +234,8 @@ func (s *UserPasswordAuthTestSuite) TestRefreshAuth() {
 func (s *UserPasswordAuthTestSuite) TestRefreshAuthError() {
 	ctx := context.Background()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
+	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
+		nil, errors.New("test error"))
 	cogIdp.EXPECT().ListUserPools(ctx, mock.Anything).Return(
 		nil, errors.New("test error"))
 	val := mocks.NewTokenValidator(s.T())
@@ -279,11 +251,6 @@ func (s *UserPasswordAuthTestSuite) TestRefreshAuthError() {
 func (s *UserPasswordAuthTestSuite) TestRefreshAuthError2() {
 	ctx := context.Background()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool1")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -304,11 +271,6 @@ func (s *UserPasswordAuthTestSuite) TestRefreshAuthError2() {
 func (s *UserPasswordAuthTestSuite) TestRefreshAuthError3() {
 	ctx := context.Background()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool1")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -334,11 +296,6 @@ func (s *UserPasswordAuthTestSuite) TestRefreshAuthError3() {
 func (s *UserPasswordAuthTestSuite) TestRefreshAuthError4() {
 	ctx := context.Background()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool1")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -371,11 +328,6 @@ func (s *UserPasswordAuthTestSuite) TestRefreshAuthError4() {
 func (s *UserPasswordAuthTestSuite) TestRefreshAuthError5() {
 	ctx := context.Background()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool1")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{

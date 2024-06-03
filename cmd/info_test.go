@@ -66,11 +66,6 @@ func (s *InfoTestSuite) TestSimple() {
 func (s *InfoTestSuite) TestVerboseInValid() {
 	ses := cmd.MustSession()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ses.Ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ses.Ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -116,11 +111,6 @@ Tokens:
 func (s *InfoTestSuite) TestVerboseValid() {
 	ses := cmd.MustSession()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ses.Ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ses.Ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -190,11 +180,6 @@ Tokens:
 func (s *InfoTestSuite) TestVerboseRaw() {
 	ses := cmd.MustSession()
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().ListUserPools(ses.Ctx, mock.Anything).Return(
-		&cognitoidentityprovider.ListUserPoolsOutput{
-			UserPools: []types.UserPoolDescriptionType{
-				{Name: aws.String("test-user-pool")},
-			}}, nil).Once()
 	cogIdp.EXPECT().DescribeUserPool(ses.Ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
