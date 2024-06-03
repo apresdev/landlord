@@ -171,6 +171,80 @@ func (_c *AWSCognitoIdentity_DeleteIdentityPool_Call) RunAndReturn(run func(cont
 	return _c
 }
 
+// DescribeIdentityPool provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentity) DescribeIdentityPool(ctx context.Context, params *cognitoidentity.DescribeIdentityPoolInput, optFns ...func(*cognitoidentity.Options)) (*cognitoidentity.DescribeIdentityPoolOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DescribeIdentityPool")
+	}
+
+	var r0 *cognitoidentity.DescribeIdentityPoolOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentity.DescribeIdentityPoolInput, ...func(*cognitoidentity.Options)) (*cognitoidentity.DescribeIdentityPoolOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentity.DescribeIdentityPoolInput, ...func(*cognitoidentity.Options)) *cognitoidentity.DescribeIdentityPoolOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentity.DescribeIdentityPoolOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentity.DescribeIdentityPoolInput, ...func(*cognitoidentity.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentity_DescribeIdentityPool_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DescribeIdentityPool'
+type AWSCognitoIdentity_DescribeIdentityPool_Call struct {
+	*mock.Call
+}
+
+// DescribeIdentityPool is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentity.DescribeIdentityPoolInput
+//   - optFns ...func(*cognitoidentity.Options)
+func (_e *AWSCognitoIdentity_Expecter) DescribeIdentityPool(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentity_DescribeIdentityPool_Call {
+	return &AWSCognitoIdentity_DescribeIdentityPool_Call{Call: _e.mock.On("DescribeIdentityPool",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentity_DescribeIdentityPool_Call) Run(run func(ctx context.Context, params *cognitoidentity.DescribeIdentityPoolInput, optFns ...func(*cognitoidentity.Options))) *AWSCognitoIdentity_DescribeIdentityPool_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentity.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentity.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentity.DescribeIdentityPoolInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentity_DescribeIdentityPool_Call) Return(_a0 *cognitoidentity.DescribeIdentityPoolOutput, _a1 error) *AWSCognitoIdentity_DescribeIdentityPool_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentity_DescribeIdentityPool_Call) RunAndReturn(run func(context.Context, *cognitoidentity.DescribeIdentityPoolInput, ...func(*cognitoidentity.Options)) (*cognitoidentity.DescribeIdentityPoolOutput, error)) *AWSCognitoIdentity_DescribeIdentityPool_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListIdentityPools provides a mock function with given fields: ctx, params, optFns
 func (_m *AWSCognitoIdentity) ListIdentityPools(ctx context.Context, params *cognitoidentity.ListIdentityPoolsInput, optFns ...func(*cognitoidentity.Options)) (*cognitoidentity.ListIdentityPoolsOutput, error) {
 	_va := make([]interface{}, len(optFns))
@@ -241,6 +315,80 @@ func (_c *AWSCognitoIdentity_ListIdentityPools_Call) Return(_a0 *cognitoidentity
 }
 
 func (_c *AWSCognitoIdentity_ListIdentityPools_Call) RunAndReturn(run func(context.Context, *cognitoidentity.ListIdentityPoolsInput, ...func(*cognitoidentity.Options)) (*cognitoidentity.ListIdentityPoolsOutput, error)) *AWSCognitoIdentity_ListIdentityPools_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateIdentityPool provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentity) UpdateIdentityPool(ctx context.Context, params *cognitoidentity.UpdateIdentityPoolInput, optFns ...func(*cognitoidentity.Options)) (*cognitoidentity.UpdateIdentityPoolOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateIdentityPool")
+	}
+
+	var r0 *cognitoidentity.UpdateIdentityPoolOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentity.UpdateIdentityPoolInput, ...func(*cognitoidentity.Options)) (*cognitoidentity.UpdateIdentityPoolOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentity.UpdateIdentityPoolInput, ...func(*cognitoidentity.Options)) *cognitoidentity.UpdateIdentityPoolOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentity.UpdateIdentityPoolOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentity.UpdateIdentityPoolInput, ...func(*cognitoidentity.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentity_UpdateIdentityPool_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateIdentityPool'
+type AWSCognitoIdentity_UpdateIdentityPool_Call struct {
+	*mock.Call
+}
+
+// UpdateIdentityPool is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentity.UpdateIdentityPoolInput
+//   - optFns ...func(*cognitoidentity.Options)
+func (_e *AWSCognitoIdentity_Expecter) UpdateIdentityPool(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentity_UpdateIdentityPool_Call {
+	return &AWSCognitoIdentity_UpdateIdentityPool_Call{Call: _e.mock.On("UpdateIdentityPool",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentity_UpdateIdentityPool_Call) Run(run func(ctx context.Context, params *cognitoidentity.UpdateIdentityPoolInput, optFns ...func(*cognitoidentity.Options))) *AWSCognitoIdentity_UpdateIdentityPool_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentity.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentity.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentity.UpdateIdentityPoolInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentity_UpdateIdentityPool_Call) Return(_a0 *cognitoidentity.UpdateIdentityPoolOutput, _a1 error) *AWSCognitoIdentity_UpdateIdentityPool_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentity_UpdateIdentityPool_Call) RunAndReturn(run func(context.Context, *cognitoidentity.UpdateIdentityPoolInput, ...func(*cognitoidentity.Options)) (*cognitoidentity.UpdateIdentityPoolOutput, error)) *AWSCognitoIdentity_UpdateIdentityPool_Call {
 	_c.Call.Return(run)
 	return _c
 }

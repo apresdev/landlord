@@ -25,6 +25,7 @@ func TestIDPoolTestSuite(t *testing.T) {
 	if !localstack.IsRunning() {
 		t.Skip("localstack not running")
 	}
+
 	suite.Run(t, &IDPoolTestSuite{})
 }
 

@@ -12,59 +12,59 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ConfirmTestSuite struct {
+type SignUpTestSuite struct {
 	suite.Suite
 	out    bytes.Buffer
 	errOut bytes.Buffer
 	cmd    *cobra.Command
 }
 
-func TestConfirmTestSuite(t *testing.T) {
+func TestSignUpTestSuite(t *testing.T) {
 	if !localstack.IsRunning() {
 		t.Skip("localstack not running")
 	}
-	suite.Run(t, &ConfirmTestSuite{})
+	suite.Run(t, &SignUpTestSuite{})
 }
 
-func (s *ConfirmTestSuite) SetupTest() {
+func (s *SignUpTestSuite) SetupTest() {
 	s.cmd = cmd.Root()
 	s.cmd.SetOut(&s.out)
 	s.cmd.SetErr(&s.errOut)
 }
 
-func (s *ConfirmTestSuite) TearDownTest() {
+func (s *SignUpTestSuite) TearDownTest() {
 	s.out.Reset()
 }
 
-func (s *ConfirmTestSuite) CLI(args string) (*cobra.Command, error) {
+func (s *SignUpTestSuite) CLI(args string) (*cobra.Command, error) {
 	s.cmd.SetArgs(strings.Fields(args))
 	return s.cmd.ExecuteC()
 }
 
-func (s *ConfirmTestSuite) TestSimple() {
-	c, err := s.CLI("confirm --userpool not-a-user-pool1 --email test-email1 --code test-code1")
+func (s *SignUpTestSuite) TestSimple() {
+	c, err := s.CLI("signup confirm --userpool not-a-user-pool1 --email test-email1 --code test-code1")
 	s.Error(err)
 	s.Equal("confirm", c.Use)
 	s.Contains(err.Error(), "no user pool found")
 }
 
-func (s *ConfirmTestSuite) TestMissingUserPool() {
-	c, err := s.CLI("confirm --email test-email2 --code test-code2")
+func (s *SignUpTestSuite) TestMissingUserPool() {
+	c, err := s.CLI("signup confirm --email test-email2 --code test-code2")
 	s.Error(err)
 	s.Equal(c.Use, "confirm")
 	s.Contains(err.Error(), "--userpool required")
 }
 
-func (s *ConfirmTestSuite) TestMissingEmail() {
-	c, err := s.CLI("confirm --userpool not-a-user-pool3 --code test-code3")
+func (s *SignUpTestSuite) TestMissingEmail() {
+	c, err := s.CLI("signup confirm --userpool not-a-user-pool3 --code test-code3")
 	s.Error(err)
 	s.Equal(c.Use, "confirm")
 	s.Contains(err.Error(), "--email required")
 }
 
-func (s *ConfirmTestSuite) TestMissingCode() {
-	c, err := s.CLI("confirm --userpool not-a-user-pool4 --email test-email4")
+func (s *SignUpTestSuite) TestMissingCode() {
+	c, err := s.CLI("signup confirm --userpool not-a-user-pool4 --email test-email4")
 	s.Error(err)
 	s.Equal(c.Use, "confirm")
-	s.Contains(err.Error(), "--code required")
+	s.Contains(err.Error(), "--code or --admin required")
 }

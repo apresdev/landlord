@@ -55,3 +55,20 @@ func ConfirmSignUp(
 	_, err = cogIdp.ConfirmSignUp(ctx, &args)
 	return err
 }
+
+func AdminConfirmSignUp(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	userPool, email string) error {
+
+	up, err := GetUserPoolByNameOrID(ctx, cogIdp, userPool)
+	if err != nil {
+		return err
+	}
+	args := cognitoidentityprovider.AdminConfirmSignUpInput{
+		UserPoolId: up.Id,
+		Username:   aws.String(email),
+	}
+	_, err = cogIdp.AdminConfirmSignUp(ctx, &args)
+	return err
+}

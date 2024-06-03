@@ -293,6 +293,7 @@ func (s *UserPoolTestSuite) TestGetUsersInUserPoolError3() {
 
 func (s *UserPoolTestSuite) TestCreateUserPool() {
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
+	cogId := mocks.NewAWSCognitoIdentity(s.T())
 	ctx := context.Background()
 	cogIdp.EXPECT().CreateUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.CreateUserPoolOutput{
@@ -303,7 +304,8 @@ func (s *UserPoolTestSuite) TestCreateUserPool() {
 		}, nil).Once()
 	cogIdp.EXPECT().CreateUserPoolClient(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.CreateUserPoolClientOutput{}, nil).Once()
-	v, err := authx.CreateUserPool(ctx, cogIdp, "test-user-pool1")
+	v, err := authx.CreateUserPool(
+		ctx, cogIdp, cogId, "test-user-pool1", "test-id-pool1")
 	s.Assert().NoError(err)
 	s.Assert().Equal(*v.Name, "test-user-pool1")
 	s.Assert().Equal(*v.Id, "test-user-pool-id1")
@@ -311,6 +313,7 @@ func (s *UserPoolTestSuite) TestCreateUserPool() {
 
 func (s *UserPoolTestSuite) TestCreateUserPoolError() {
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
+	cogId := mocks.NewAWSCognitoIdentity(s.T())
 	ctx := context.Background()
 	cogIdp.EXPECT().CreateUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.CreateUserPoolOutput{
@@ -323,13 +326,15 @@ func (s *UserPoolTestSuite) TestCreateUserPoolError() {
 		nil, errors.New("test error")).Once()
 	cogIdp.EXPECT().DeleteUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DeleteUserPoolOutput{}, nil).Once()
-	v, err := authx.CreateUserPool(ctx, cogIdp, "test-user-pool1")
+	v, err := authx.CreateUserPool(
+		ctx, cogIdp, cogId, "test-user-pool1", "test-id-pool1")
 	s.Assert().Error(err)
 	s.Assert().Nil(v)
 }
 
 func (s *UserPoolTestSuite) TestCreateUserPoolError2() {
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
+	cogId := mocks.NewAWSCognitoIdentity(s.T())
 	ctx := context.Background()
 	cogIdp.EXPECT().CreateUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.CreateUserPoolOutput{
@@ -342,7 +347,8 @@ func (s *UserPoolTestSuite) TestCreateUserPoolError2() {
 		nil, errors.New("test error")).Once()
 	cogIdp.EXPECT().DeleteUserPool(ctx, mock.Anything).Return(
 		nil, errors.New("delete user pool error")).Once()
-	v, err := authx.CreateUserPool(ctx, cogIdp, "test-user-pool1")
+	v, err := authx.CreateUserPool(
+		ctx, cogIdp, cogId, "test-user-pool1", "test-id-pool1")
 	s.Assert().Error(err)
 	s.Assert().Equal("test error", err.Error())
 	s.Assert().Nil(v)
@@ -350,10 +356,12 @@ func (s *UserPoolTestSuite) TestCreateUserPoolError2() {
 
 func (s *UserPoolTestSuite) TestCreateUserPoolError3() {
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
+	cogId := mocks.NewAWSCognitoIdentity(s.T())
 	ctx := context.Background()
 	cogIdp.EXPECT().CreateUserPool(ctx, mock.Anything).Return(
 		nil, errors.New("test error"))
-	v, err := authx.CreateUserPool(ctx, cogIdp, "test-user-pool1")
+	v, err := authx.CreateUserPool(
+		ctx, cogIdp, cogId, "test-user-pool1", "test-id-pool1")
 	s.Assert().Error(err)
 	s.Assert().Nil(v)
 }
@@ -378,9 +386,9 @@ func (s *UserPoolTestSuite) TestDeleteUserPool() {
 func (s *UserPoolTestSuite) TestDeleteUserPoolError() {
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
 	ctx := context.Background()
-	appenv.Localstack = false
+	appenv.LocalStack = false
 	v, err := authx.DeleteUserPool(ctx, cogIdp, "test-user-pool1")
-	appenv.Localstack = true
+	appenv.LocalStack = true
 	s.Assert().Error(err)
 	s.Assert().Equal("cannot delete user pool in non-localstack environment", err.Error())
 	s.Assert().Nil(v)

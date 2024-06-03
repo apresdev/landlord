@@ -7,8 +7,10 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var Debug bool
-var Localstack bool
+var (
+	Debug      bool
+	LocalStack bool
+)
 
 func init() {
 	err := godotenv.Load()
@@ -17,7 +19,7 @@ func init() {
 	}
 	s := os.Getenv("AWS_PROFILE")
 	if s != "" {
-		Localstack = strings.ToLower(s) == "localstack"
+		LocalStack = strings.ToLower(s) == "localstack"
 	}
 	s = os.Getenv("APRES_DEBUG")
 	if s != "" {

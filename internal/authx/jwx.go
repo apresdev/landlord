@@ -26,7 +26,7 @@ func localstackJWKURL(userPoolID string) (string, error) {
 
 // TODO: caching
 func loadJWK(ctx context.Context, region, userPoolID string) (jwk.Set, error) {
-	if appenv.Localstack {
+	if appenv.LocalStack {
 		u, err := localstackJWKURL(userPoolID)
 		if err != nil {
 			return nil, err

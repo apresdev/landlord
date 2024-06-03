@@ -7,6 +7,36 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func createAssociateIDPoolCmd() *cobra.Command {
+	var idPool string
+	var userPool string
+	c := &cobra.Command{
+		Use:   "assoc",
+		Short: "Associate a user pool with an identity pool",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if idPool == "" {
+				return errors.New("--idpool is required")
+			}
+			if userPool == "" {
+				return errors.New("--userpool is required")
+			}
+			s := MustSession()
+			err := authx.AssociateUserPool(s.Ctx, s.CogId, s.CogIdp, idPool, userPool)
+			if err != nil {
+				return err
+			}
+			cmd.Printf("User pool '%s' associated with identity pool '%s'\n",
+				userPool, idPool)
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&idPool, "idpool", "i", "", "Identity pool ID")
+	c.PersistentFlags().StringVarP(
+		&userPool, "userpool", "u", "", "User pool ID")
+	return c
+}
+
 func createListIDPoolCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
@@ -52,14 +82,15 @@ func createDeleteIDPoolCmd() *cobra.Command {
 }
 
 func createIDPoolCmd() *cobra.Command {
-	idpoolCmd := &cobra.Command{
+	c := &cobra.Command{
 		Use:   "idpool",
 		Short: "Identity pool sub-command",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
 		},
 	}
-	idpoolCmd.AddCommand(createListIDPoolCmd())
-	idpoolCmd.AddCommand(createDeleteIDPoolCmd())
-	return idpoolCmd
+	c.AddCommand(createAssociateIDPoolCmd())
+	c.AddCommand(createListIDPoolCmd())
+	c.AddCommand(createDeleteIDPoolCmd())
+	return c
 }
