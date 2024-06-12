@@ -9,6 +9,7 @@ import (
 
 func createCreateUserPoolCmd() *cobra.Command {
 	var userpool string
+	var idpool string
 	c := &cobra.Command{
 		Use:   "create",
 		Short: "Create a user pool",
@@ -17,7 +18,7 @@ func createCreateUserPoolCmd() *cobra.Command {
 				return errors.New("userpool must be set")
 			}
 			s := MustSession()
-			up, err := authx.CreateUserPool(s.Ctx, s.CogIdp, userpool)
+			up, err := authx.CreateUserPool(s.Ctx, s.CogIdp, s.CogId, userpool, idpool)
 			if err != nil {
 				return err
 			}
@@ -27,6 +28,8 @@ func createCreateUserPoolCmd() *cobra.Command {
 	}
 	c.PersistentFlags().StringVarP(
 		&userpool, "name", "n", "", "Name of the user pool")
+	c.PersistentFlags().StringVarP(
+		&idpool, "idpool", "i", "", "Identity pool to associate with")
 	return c
 }
 

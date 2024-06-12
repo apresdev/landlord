@@ -155,17 +155,19 @@ func GetUsersInUserPool(
 func CreateUserPool(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
-	name string) (*types.UserPoolType, error) {
+	cogId AWSCognitoIdentity,
+	userPoolName, idPoolName string) (*types.UserPoolType, error) {
 
 	args := cognitoidentityprovider.CreateUserPoolInput{
-		PoolName: aws.String(name),
+		PoolName: aws.String(userPoolName),
 	}
 	o, err := cogIdp.CreateUserPool(ctx, &args)
 	if err != nil {
 		return nil, err
 	}
+	clientName := fmt.Sprintf("%s-client", userPoolName)
 	_, err = cogIdp.CreateUserPoolClient(ctx, &cognitoidentityprovider.CreateUserPoolClientInput{
-		ClientName: aws.String(name),
+		ClientName: aws.String(clientName),
 		UserPoolId: o.UserPool.Id,
 		ExplicitAuthFlows: []types.ExplicitAuthFlowsType{
 			types.ExplicitAuthFlowsTypeAllowUserPasswordAuth,
@@ -183,6 +185,12 @@ func CreateUserPool(
 		}
 		return nil, err
 	}
+
+	// TODO: Associate here?
+	//idPool, err := GetIdentityPoolByNameOrID(ctx, cogId, idPoolName)
+	//if err != nil {
+	//	return nil, err
+	//}
 	return o.UserPool, nil
 }
 
@@ -191,7 +199,7 @@ func DeleteUserPool(
 	cogIdp AWSCognitoIdentityProvider,
 	userPool string) (*types.UserPoolType, error) {
 
-	if !appenv.Localstack {
+	if !appenv.LocalStack {
 		return nil, errors.New("cannot delete user pool in non-localstack environment")
 	}
 

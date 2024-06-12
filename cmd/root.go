@@ -16,7 +16,6 @@ func Root() *cobra.Command {
 		},
 		SilenceUsage: true,
 	}
-	rootCmd.AddCommand(createConfirmCmd())
 	rootCmd.AddCommand(createIDPoolCmd())
 	rootCmd.AddCommand(createInfoCmd())
 	rootCmd.AddCommand(createLoginCmd())

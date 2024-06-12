@@ -6,7 +6,10 @@ import (
 	"github.com/google/uuid"
 )
 
-const MaxPagingResults = 10
+const (
+	MaxPagingResults = int32(10)
+	MaxTotalResults  = 500
+)
 
 // newNextToken generates an uuid4 and returns in base64 encoding. These
 // next tokens are used to paginate through values from AWS APIs.

@@ -36,6 +36,11 @@ type AWSCognitoIdentity interface {
 		params *cognitoidentity.CreateIdentityPoolInput,
 		optFns ...func(*cognitoidentity.Options)) (
 		*cognitoidentity.CreateIdentityPoolOutput, error)
+	DescribeIdentityPool(
+		ctx context.Context,
+		params *cognitoidentity.DescribeIdentityPoolInput,
+		optFns ...func(*cognitoidentity.Options)) (
+		*cognitoidentity.DescribeIdentityPoolOutput, error)
 	DeleteIdentityPool(
 		ctx context.Context,
 		params *cognitoidentity.DeleteIdentityPoolInput,
@@ -46,6 +51,11 @@ type AWSCognitoIdentity interface {
 		params *cognitoidentity.ListIdentityPoolsInput,
 		optFns ...func(*cognitoidentity.Options)) (
 		*cognitoidentity.ListIdentityPoolsOutput, error)
+	UpdateIdentityPool(
+		ctx context.Context,
+		params *cognitoidentity.UpdateIdentityPoolInput,
+		optFns ...func(*cognitoidentity.Options)) (
+		*cognitoidentity.UpdateIdentityPoolOutput, error)
 }
 
 //go:generate mockery --output ../mocks --name AWSCognitoIdentityProvider --with-expecter=true
@@ -95,6 +105,11 @@ type AWSCognitoIdentityProvider interface {
 		params *cognitoidentityprovider.ListUsersInput,
 		optFns ...func(*cognitoidentityprovider.Options)) (
 		*cognitoidentityprovider.ListUsersOutput, error)
+	AdminConfirmSignUp(
+		ctx context.Context,
+		params *cognitoidentityprovider.AdminConfirmSignUpInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.AdminConfirmSignUpOutput, error)
 	AdminCreateUser(
 		ctx context.Context,
 		params *cognitoidentityprovider.AdminCreateUserInput,
