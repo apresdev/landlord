@@ -65,6 +65,13 @@ func createDeleteUsersCmd() *cobra.Command {
 	return deleteUserCmd
 }
 
+func defaultStr(s *string, def string) string {
+	if s == nil {
+		return def
+	}
+	return *s
+}
+
 func createListUsersCmd() *cobra.Command {
 	var userpool string
 	var listUsersCmd = &cobra.Command{
@@ -83,11 +90,13 @@ func createListUsersCmd() *cobra.Command {
 				return err
 			}
 			for _, user := range users {
-				cmd.Printf("> %s\n", authx.UserEmailAttribute(user))
+				cmd.Printf("> %s\n", defaultStr(user.Username, "UNSET"))
+				cmd.Printf("  Status: %s\n", string(user.UserStatus))
+				cmd.Printf("  Enabled: %t\n", user.Enabled)
+				cmd.Printf("  Created at: %s\n", user.UserCreateDate.String())
+				cmd.Printf("  Last modified at: %s\n", user.UserLastModifiedDate.String())
+				cmd.Printf("  Attributes:\n")
 				for _, attr := range user.Attributes {
-					if *attr.Name == "email" {
-						continue
-					}
 					cmd.Printf("    %s: %s\n", *attr.Name, *attr.Value)
 				}
 			}

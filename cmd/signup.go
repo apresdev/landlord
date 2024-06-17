@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/apresdev/landlord/internal/authx"
-
+	pwd "github.com/sethvargo/go-password/password"
 	"github.com/spf13/cobra"
 )
 
@@ -73,15 +73,19 @@ func createNewSignUpCmd() *cobra.Command {
 				return errors.New("email must be set")
 			}
 			if password == "" {
-				// TODO: generate password
-				return errors.New("password must be set")
+				var err error
+				password, err = pwd.Generate(12, 4, 4, false, false)
+				if err != nil {
+					return err
+				}
 			}
 			s := MustSession()
 			err := authx.SignUp(s.Ctx, s.CogIdp, userpool, email, password)
 			if err != nil {
 				return err
 			}
-			cmd.Printf("Successfully signed up '%s' -- check your email for confirmation code\n", email)
+			cmd.Printf("Successfully signed up '%s' password '%s' -- check your email for confirmation code\n",
+				email, password)
 			return nil
 		},
 	}
