@@ -34,15 +34,15 @@ func TestRootTestSuite(t *testing.T) {
 func (s *RootTestSuite) SetupTest() {
 	s.cmd = cmd.Root()
 	s.cmd.SetOut(&s.out)
-	ses := cmd.MustReloadSession()
-	err := authx.DeleteAllUserPools(ses.Ctx, ses.CogIdp)
+	cs := cmd.MustClients()
+	err := authx.DeleteAllUserPools(cs.Ctx(), cs.CogIdp())
 	s.NoError(err)
 }
 
 func (s *RootTestSuite) TearDownTest() {
 	s.out.Reset()
-	ses := cmd.MustReloadSession()
-	err := authx.DeleteAllUserPools(ses.Ctx, ses.CogIdp)
+	cs := cmd.MustClients()
+	err := authx.DeleteAllUserPools(cs.Ctx(), cs.CogIdp())
 	s.NoError(err)
 }
 

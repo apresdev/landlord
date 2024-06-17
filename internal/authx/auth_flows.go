@@ -13,11 +13,21 @@ type UserPasswordAuthArgs struct {
 	Password string
 }
 
+type RawTokens struct {
+	AccessToken  string `json:"access_token"`
+	IdToken      string `json:"id_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+func (t RawTokens) Empty() bool {
+	return t.AccessToken == "" && t.IdToken == "" && t.RefreshToken == ""
+}
+
 func UserPasswordAuth(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	validator TokenValidator,
-	args UserPasswordAuthArgs) (*Tokens, error) {
+	args UserPasswordAuthArgs) (*RawTokens, error) {
 
 	up, err := GetUserPoolByNameOrID(ctx, cogIdp, args.UserPool)
 	if err != nil {
@@ -47,7 +57,7 @@ func UserPasswordAuth(
 	if err != nil {
 		return nil, err
 	}
-	return &Tokens{
+	return &RawTokens{
 		AccessToken:  *o.AuthenticationResult.AccessToken,
 		IdToken:      *o.AuthenticationResult.IdToken,
 		RefreshToken: *o.AuthenticationResult.RefreshToken,
@@ -64,7 +74,7 @@ func RefreshAuth(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	validator TokenValidator,
-	args RefreshAuthArgs) (*Tokens, error) {
+	args RefreshAuthArgs) (*RawTokens, error) {
 
 	up, err := GetUserPoolByNameOrID(ctx, cogIdp, args.UserPool)
 	if err != nil {
@@ -82,7 +92,7 @@ func RefreshAuth(
 	if err != nil {
 		return nil, err
 	}
-	tokens := Tokens{
+	tokens := RawTokens{
 		AccessToken:  *o.AuthenticationResult.AccessToken,
 		IdToken:      *o.AuthenticationResult.IdToken,
 		RefreshToken: args.RefreshToken,

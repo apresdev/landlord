@@ -19,6 +19,5 @@ func main() {
 		BuildTime: BuildTime,
 		GoVersion: GoVersion,
 	})
-	appenv.MustConfigureLogging()
 	cmd.Execute()
 }

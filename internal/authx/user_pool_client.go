@@ -42,7 +42,7 @@ func getSingletonUserPoolClientDescription(
 	return &c[0], nil
 }
 
-func getSingletonUserPoolClient(
+func GetSingletonUserPoolClient(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	up *types.UserPoolType) (

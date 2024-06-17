@@ -1,22 +1,12 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 
-	"github.com/aws/aws-sdk-go-v2/service/iam"
-
 	"github.com/apresdev/landlord/internal/authx"
 
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentity"
-
 	"go.uber.org/zap"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 )
 
 type Config struct {
@@ -30,19 +20,13 @@ func NewDefaultConfig() Config {
 }
 
 type Session struct {
-	Ctx          context.Context                  `json:"-"`
-	AWSConfig    aws.Config                       `json:"-"`
-	Validator    authx.TokenValidator             `json:"-"`
-	CogId        authx.AWSCognitoIdentity         `json:"-"`
-	CogIdp       authx.AWSCognitoIdentityProvider `json:"-"`
-	IAM          authx.AWSIAM                     `json:"-"`
-	LastError    error                            `json:"last_error"`
-	Config       Config                           `json:"config"`
-	UserPool     string                           `json:"user_pool"`
-	Email        string                           `json:"email"`
-	AccessToken  string                           `json:"access_token"`
-	IdToken      string                           `json:"id_token"`
-	RefreshToken string                           `json:"refresh_token"`
+	LastError    error  `json:"last_error"`
+	Config       Config `json:"config"`
+	UserPool     string `json:"user_pool"`
+	Email        string `json:"email"`
+	AccessToken  string `json:"access_token"`
+	IdToken      string `json:"id_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 var theSession *Session
@@ -62,25 +46,18 @@ func MustSession() *Session {
 	return theSession
 }
 
+func ClearSession() {
+	theSession = nil
+}
+
 func MustReloadSession() *Session {
 	theSession = nil
 	return MustSession()
 }
 
 func newEmptySession() (*Session, error) {
-	ctx := context.Background()
-	awsCfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
 	return &Session{
-		Ctx:       context.Background(),
-		AWSConfig: awsCfg,
-		CogId:     cognitoidentity.NewFromConfig(awsCfg),
-		CogIdp:    cognitoidentityprovider.NewFromConfig(awsCfg),
-		IAM:       iam.NewFromConfig(awsCfg),
-		Validator: authx.NewTokenValidator(),
-		Config:    NewDefaultConfig(),
+		Config: NewDefaultConfig(),
 	}, nil
 }
 
@@ -129,10 +106,6 @@ func (s *Session) SaveToFile() error {
 	return nil
 }
 
-func (s *Session) GetRegion() string {
-	return s.AWSConfig.Region
-}
-
 func (s *Session) SetLastError(err error) {
 	s.LastError = err
 }
@@ -156,4 +129,12 @@ func (s *Session) StoreTokens(accessToken, idToken, refreshToken string) error {
 	s.IdToken = idToken
 	s.RefreshToken = refreshToken
 	return s.SaveToFile()
+}
+
+func MustTenants(cs Clients) *authx.Tenants {
+	tens, err := authx.LoadTenants(cs.Ctx(), cs.Cfg(), cs.Sts(), cs.CogIdp())
+	if err != nil {
+		panic(err)
+	}
+	return tens
 }
