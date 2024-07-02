@@ -9,10 +9,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func ipWhiteList(whitelist map[string]bool) gin.HandlerFunc {
+func ipAllowList(al map[string]bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		clientIP := c.ClientIP()
-		if !whitelist[clientIP] {
+		if !al[clientIP] {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"status":  http.StatusForbidden,
 				"message": "Permission denied",
@@ -25,15 +25,15 @@ func ipWhiteList(whitelist map[string]bool) gin.HandlerFunc {
 
 func engine() (*gin.Engine, error) {
 	r := gin.Default()
-	ips := os.Getenv("LANDLORD_IP_WHITELIST")
+	ips := os.Getenv("LANDLORD_IP_ALLOW_LIST")
 	if ips != "" {
-		whitelist := make(map[string]bool)
-		whitelist["127.0.0.1"] = true
+		al := make(map[string]bool)
+		al["127.0.0.1"] = true
 		for _, ip := range strings.Split(ips, ",") {
 			ip = strings.TrimSpace(ip)
-			whitelist[ip] = true
+			al[ip] = true
 		}
-		r.Use(ipWhiteList(whitelist))
+		r.Use(ipAllowList(al))
 	}
 	if err := r.SetTrustedProxies(nil); err != nil {
 		return nil, err

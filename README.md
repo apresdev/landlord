@@ -87,7 +87,7 @@ aws sso login
   from.
 * `LANDLORD_LISTEN_ADDR=<address>`: Address to listen on when running
   landlord in server mode.
-* `LANDLORD_IP_WHITELIST=<comma-separated list of IPs>`: If set, the landlord
+* `LANDLORD_IP_ALLOW_LIST=<comma-separated list of IPs>`: If set, the landlord
   tool will only allow requests from the given IPs. This is useful for
   restricting access to the landlord tool to a specific set of IPs.
 * `LANDLORD_DEFAULT_IDENTITY_POOL=<identity-pool-name-or-id>`: The name or

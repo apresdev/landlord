@@ -170,11 +170,11 @@ func ValidateCode(
 	form := url.Values{}
 	form.Add("grant_type", "authorization_code")
 	form.Add("code", code)
-	form.Add("redirect_uri", os.Getenv("LANDLORD_REDIRECT_URI")) //TODO: get from the DefaultRedirectURI in the client
+	form.Add("redirect_uri", aws.ToString(upc.DefaultRedirectURI))
 	encodedFormData := form.Encode()
 	req, err := http.NewRequest(
 		http.MethodPost,
-		"https://auth.ryeknot.com/oauth2/token",
+		fmt.Sprintf("https://%s/oauth2/token", aws.ToString(up.CustomDomain)),
 		strings.NewReader(encodedFormData))
 	if err != nil {
 		return nil, err

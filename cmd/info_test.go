@@ -68,7 +68,7 @@ func (s *InfoTestSuite) TestSimple() {
 }
 
 func (s *InfoTestSuite) TestVerboseInValid() {
-	m, reset := cmd.MockClientsOverride(s.T())
+	m, reset := MockClientsOverride(s.T())
 	defer reset()
 	m.MockCogIdp.EXPECT().DescribeUserPool(m.Ctx(), mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
@@ -112,7 +112,7 @@ Tokens:
 }
 
 func (s *InfoTestSuite) TestVerboseValid() {
-	m, reset := cmd.MockClientsOverride(s.T())
+	m, reset := MockClientsOverride(s.T())
 	defer reset()
 	m.MockCogIdp.EXPECT().DescribeUserPool(m.Ctx(), mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
@@ -180,7 +180,7 @@ Tokens:
 }
 
 func (s *InfoTestSuite) TestVerboseRaw() {
-	m, reset := cmd.MockClientsOverride(s.T())
+	m, reset := MockClientsOverride(s.T())
 	defer reset()
 	m.MockCogIdp.EXPECT().DescribeUserPool(m.Ctx(), mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
