@@ -5,7 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apresdev/landlord/internal/mocks"
+	"github.com/apresdev/landlord/internal/localstack"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
@@ -25,6 +26,9 @@ type InfoTestSuite struct {
 }
 
 func TestInfoTestSuite(t *testing.T) {
+	if !localstack.IsRunning() {
+		t.Skip("localstack not running")
+	}
 	suite.Run(t, &InfoTestSuite{})
 }
 
@@ -64,16 +68,15 @@ func (s *InfoTestSuite) TestSimple() {
 }
 
 func (s *InfoTestSuite) TestVerboseInValid() {
-	ses := cmd.MustSession()
-	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().DescribeUserPool(ses.Ctx, mock.Anything).Return(
+	m, reset := cmd.MockClientsOverride(s.T())
+	defer reset()
+	m.MockCogIdp.EXPECT().DescribeUserPool(m.Ctx(), mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
 				Id: aws.String("test-user-pool"),
 			}}, nil).Once()
-	ses.CogIdp = cogIdp
-	val := mocks.NewTokenValidator(s.T())
-	val.EXPECT().ValidateToken(ses.Ctx, ses.GetRegion(), mock.Anything, "test-access-token").Return(
+	m.MockValidator.EXPECT().ValidateToken(
+		m.Ctx(), "mock-region", mock.Anything, "test-access-token").Return(
 		&jwt.Token{
 			Raw:       "",
 			Method:    nil,
@@ -82,7 +85,8 @@ func (s *InfoTestSuite) TestVerboseInValid() {
 			Signature: nil,
 			Valid:     false,
 		}, nil)
-	val.EXPECT().ValidateToken(ses.Ctx, ses.GetRegion(), mock.Anything, "test-id-token").Return(
+	m.MockValidator.EXPECT().ValidateToken(
+		m.Ctx(), "mock-region", mock.Anything, "test-id-token").Return(
 		&jwt.Token{
 			Raw:       "",
 			Method:    nil,
@@ -91,7 +95,6 @@ func (s *InfoTestSuite) TestVerboseInValid() {
 			Signature: nil,
 			Valid:     false,
 		}, nil)
-	ses.Validator = val
 	c, err := s.CLI("info --verbose")
 	s.NoError(err)
 	s.Equal("info", c.Use)
@@ -109,16 +112,15 @@ Tokens:
 }
 
 func (s *InfoTestSuite) TestVerboseValid() {
-	ses := cmd.MustSession()
-	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().DescribeUserPool(ses.Ctx, mock.Anything).Return(
+	m, reset := cmd.MockClientsOverride(s.T())
+	defer reset()
+	m.MockCogIdp.EXPECT().DescribeUserPool(m.Ctx(), mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
 				Id: aws.String("test-user-pool"),
 			}}, nil).Once()
-	ses.CogIdp = cogIdp
-	val := mocks.NewTokenValidator(s.T())
-	val.EXPECT().ValidateToken(ses.Ctx, ses.GetRegion(), mock.Anything, "test-access-token").Return(
+	m.MockValidator.EXPECT().ValidateToken(
+		m.Ctx(), m.Cfg().Region, mock.Anything, "test-access-token").Return(
 		&jwt.Token{
 			Raw:    "",
 			Method: jwt.GetSigningMethod(jwt.SigningMethodHS512.Alg()),
@@ -135,7 +137,8 @@ func (s *InfoTestSuite) TestVerboseValid() {
 			Signature: nil,
 			Valid:     false,
 		}, nil)
-	val.EXPECT().ValidateToken(ses.Ctx, ses.GetRegion(), mock.Anything, "test-id-token").Return(
+	m.MockValidator.EXPECT().ValidateToken(
+		m.Ctx(), m.Cfg().Region, mock.Anything, "test-id-token").Return(
 		&jwt.Token{
 			Raw:    "",
 			Method: jwt.GetSigningMethod(jwt.SigningMethodHS512.Alg()),
@@ -152,7 +155,6 @@ func (s *InfoTestSuite) TestVerboseValid() {
 			Signature: nil,
 			Valid:     false,
 		}, nil)
-	ses.Validator = val
 	c, err := s.CLI("info --verbose")
 	s.NoError(err)
 	s.Equal("info", c.Use)
@@ -178,16 +180,15 @@ Tokens:
 }
 
 func (s *InfoTestSuite) TestVerboseRaw() {
-	ses := cmd.MustSession()
-	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogIdp.EXPECT().DescribeUserPool(ses.Ctx, mock.Anything).Return(
+	m, reset := cmd.MockClientsOverride(s.T())
+	defer reset()
+	m.MockCogIdp.EXPECT().DescribeUserPool(m.Ctx(), mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
 			UserPool: &types.UserPoolType{
 				Id: aws.String("test-user-pool"),
 			}}, nil).Once()
-	ses.CogIdp = cogIdp
-	val := mocks.NewTokenValidator(s.T())
-	val.EXPECT().ValidateToken(ses.Ctx, ses.GetRegion(), mock.Anything, "test-access-token").Return(
+	m.MockValidator.EXPECT().ValidateToken(
+		m.Ctx(), m.Cfg().Region, mock.Anything, "test-access-token").Return(
 		&jwt.Token{
 			Raw:    "raw-access-token",
 			Method: jwt.GetSigningMethod(jwt.SigningMethodHS512.Alg()),
@@ -204,7 +205,8 @@ func (s *InfoTestSuite) TestVerboseRaw() {
 			Signature: nil,
 			Valid:     false,
 		}, nil)
-	val.EXPECT().ValidateToken(ses.Ctx, ses.GetRegion(), mock.Anything, "test-id-token").Return(
+	m.MockValidator.EXPECT().ValidateToken(
+		m.Ctx(), m.Cfg().Region, mock.Anything, "test-id-token").Return(
 		&jwt.Token{
 			Raw:    "raw-id-token",
 			Method: jwt.GetSigningMethod(jwt.SigningMethodHS512.Alg()),
@@ -221,7 +223,6 @@ func (s *InfoTestSuite) TestVerboseRaw() {
 			Signature: nil,
 			Valid:     false,
 		}, nil)
-	ses.Validator = val
 	c, err := s.CLI("info --verbose --raw")
 	s.NoError(err)
 	s.Equal("info", c.Use)

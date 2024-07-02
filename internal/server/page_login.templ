@@ -1,0 +1,15 @@
+package server
+
+templ loginPage() {
+    <div>
+        <form action='/login/submit' method='post'>
+            <label>Username:
+                <input type='text' name='username' />
+            </label>
+            <label>Password:
+                <input type='password' name='password' />
+            </label>
+            <input type='submit' />
+        </form>
+    </div>
+}

@@ -245,6 +245,80 @@ func (_c *AWSCognitoIdentityProvider_AdminDeleteUser_Call) RunAndReturn(run func
 	return _c
 }
 
+// AdminSetUserPassword provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) AdminSetUserPassword(ctx context.Context, params *cognitoidentityprovider.AdminSetUserPasswordInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminSetUserPasswordOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdminSetUserPassword")
+	}
+
+	var r0 *cognitoidentityprovider.AdminSetUserPasswordOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminSetUserPasswordInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminSetUserPasswordOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminSetUserPasswordInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.AdminSetUserPasswordOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.AdminSetUserPasswordOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.AdminSetUserPasswordInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_AdminSetUserPassword_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdminSetUserPassword'
+type AWSCognitoIdentityProvider_AdminSetUserPassword_Call struct {
+	*mock.Call
+}
+
+// AdminSetUserPassword is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.AdminSetUserPasswordInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) AdminSetUserPassword(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_AdminSetUserPassword_Call {
+	return &AWSCognitoIdentityProvider_AdminSetUserPassword_Call{Call: _e.mock.On("AdminSetUserPassword",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminSetUserPassword_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.AdminSetUserPasswordInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_AdminSetUserPassword_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.AdminSetUserPasswordInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminSetUserPassword_Call) Return(_a0 *cognitoidentityprovider.AdminSetUserPasswordOutput, _a1 error) *AWSCognitoIdentityProvider_AdminSetUserPassword_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminSetUserPassword_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.AdminSetUserPasswordInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminSetUserPasswordOutput, error)) *AWSCognitoIdentityProvider_AdminSetUserPassword_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AdminUpdateUserAttributes provides a mock function with given fields: ctx, params, optFns
 func (_m *AWSCognitoIdentityProvider) AdminUpdateUserAttributes(ctx context.Context, params *cognitoidentityprovider.AdminUpdateUserAttributesInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminUpdateUserAttributesOutput, error) {
 	_va := make([]interface{}, len(optFns))
@@ -541,6 +615,80 @@ func (_c *AWSCognitoIdentityProvider_CreateUserPoolClient_Call) RunAndReturn(run
 	return _c
 }
 
+// CreateUserPoolDomain provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) CreateUserPoolDomain(ctx context.Context, params *cognitoidentityprovider.CreateUserPoolDomainInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.CreateUserPoolDomainOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateUserPoolDomain")
+	}
+
+	var r0 *cognitoidentityprovider.CreateUserPoolDomainOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.CreateUserPoolDomainInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.CreateUserPoolDomainOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.CreateUserPoolDomainInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.CreateUserPoolDomainOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.CreateUserPoolDomainOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.CreateUserPoolDomainInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_CreateUserPoolDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateUserPoolDomain'
+type AWSCognitoIdentityProvider_CreateUserPoolDomain_Call struct {
+	*mock.Call
+}
+
+// CreateUserPoolDomain is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.CreateUserPoolDomainInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) CreateUserPoolDomain(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_CreateUserPoolDomain_Call {
+	return &AWSCognitoIdentityProvider_CreateUserPoolDomain_Call{Call: _e.mock.On("CreateUserPoolDomain",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_CreateUserPoolDomain_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.CreateUserPoolDomainInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_CreateUserPoolDomain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.CreateUserPoolDomainInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_CreateUserPoolDomain_Call) Return(_a0 *cognitoidentityprovider.CreateUserPoolDomainOutput, _a1 error) *AWSCognitoIdentityProvider_CreateUserPoolDomain_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_CreateUserPoolDomain_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.CreateUserPoolDomainInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.CreateUserPoolDomainOutput, error)) *AWSCognitoIdentityProvider_CreateUserPoolDomain_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteUserPool provides a mock function with given fields: ctx, params, optFns
 func (_m *AWSCognitoIdentityProvider) DeleteUserPool(ctx context.Context, params *cognitoidentityprovider.DeleteUserPoolInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.DeleteUserPoolOutput, error) {
 	_va := make([]interface{}, len(optFns))
@@ -759,6 +907,80 @@ func (_c *AWSCognitoIdentityProvider_DescribeUserPoolClient_Call) Return(_a0 *co
 }
 
 func (_c *AWSCognitoIdentityProvider_DescribeUserPoolClient_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.DescribeUserPoolClientInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.DescribeUserPoolClientOutput, error)) *AWSCognitoIdentityProvider_DescribeUserPoolClient_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DescribeUserPoolDomain provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) DescribeUserPoolDomain(ctx context.Context, params *cognitoidentityprovider.DescribeUserPoolDomainInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.DescribeUserPoolDomainOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DescribeUserPoolDomain")
+	}
+
+	var r0 *cognitoidentityprovider.DescribeUserPoolDomainOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.DescribeUserPoolDomainInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.DescribeUserPoolDomainOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.DescribeUserPoolDomainInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.DescribeUserPoolDomainOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.DescribeUserPoolDomainOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.DescribeUserPoolDomainInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_DescribeUserPoolDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DescribeUserPoolDomain'
+type AWSCognitoIdentityProvider_DescribeUserPoolDomain_Call struct {
+	*mock.Call
+}
+
+// DescribeUserPoolDomain is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.DescribeUserPoolDomainInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) DescribeUserPoolDomain(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_DescribeUserPoolDomain_Call {
+	return &AWSCognitoIdentityProvider_DescribeUserPoolDomain_Call{Call: _e.mock.On("DescribeUserPoolDomain",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_DescribeUserPoolDomain_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.DescribeUserPoolDomainInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_DescribeUserPoolDomain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.DescribeUserPoolDomainInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_DescribeUserPoolDomain_Call) Return(_a0 *cognitoidentityprovider.DescribeUserPoolDomainOutput, _a1 error) *AWSCognitoIdentityProvider_DescribeUserPoolDomain_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_DescribeUserPoolDomain_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.DescribeUserPoolDomainInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.DescribeUserPoolDomainOutput, error)) *AWSCognitoIdentityProvider_DescribeUserPoolDomain_Call {
 	_c.Call.Return(run)
 	return _c
 }

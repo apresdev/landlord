@@ -3,7 +3,7 @@ all: build
 
 .PHONY: build
 build:
-	./apres-go-bld
+	./go-bld
 
 .PHONY: completion
 completion: build
@@ -17,9 +17,9 @@ setup:
 
 .PHONY: install
 install: build
-	./apres-go-bld install
+	./go-bld install
 
 .PHONY: sim-test
 sim-test:
-	APRES_SKIP_TESTS=1 ./apres-go-bld
+	LANDLORD_SKIP_TESTS=1 ./go-bld
 	cd ./test && ./sim-cleanup.sh && ./sim-test-01.sh && ./sim-cleanup.sh

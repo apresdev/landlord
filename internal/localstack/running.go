@@ -1,7 +1,6 @@
 package localstack
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -12,15 +11,21 @@ import (
 const DefaultLocalstackEndpoint = "http://localhost:4566"
 
 func Endpoint() string {
-	v := os.Getenv("APRES_LOCALSTACK_ENDPOINT")
+	v := os.Getenv("LANDLORD_LOCALSTACK_ENDPOINT")
 	if v != "" {
 		return v
 	}
 	return DefaultLocalstackEndpoint
 }
 
+var isRunningDetermined bool
+var isRunning bool
+
 // IsRunning checks the localstack health check endpoint to see if it is running
 func IsRunning() bool {
+	if isRunningDetermined {
+		return isRunning
+	}
 	u, err := url.JoinPath(Endpoint(), "_localstack/health")
 	if err != nil {
 		zap.L().Error("Error checking LocalStack:", zap.Error(err))
@@ -33,8 +38,10 @@ func IsRunning() bool {
 		}
 	}()
 	if err != nil {
-		fmt.Println("Error checking LocalStack:", err)
+		zap.L().Error("Error checking LocalStack:", zap.Error(err))
 		return false
 	}
-	return response.StatusCode == http.StatusOK
+	isRunning = response.StatusCode == http.StatusOK
+	isRunningDetermined = true
+	return isRunning
 }

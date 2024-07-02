@@ -1,0 +1,14 @@
+package server
+
+templ alreadySignedUpPage(username string) {
+    <div>
+        <h2>You are already signed up: { username }</h2>
+        <h2>Check your email</h2>
+        <div>
+            <form action='/signup/resend' method='post'>
+                <input type='hidden' name='username' value={ username } />
+                <button type="submit">Resend Invite</button>
+            </form>
+        </div>
+    </div>
+}

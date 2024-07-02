@@ -26,3 +26,7 @@ func MustConfigureLogging() func() {
 	}
 	return undo
 }
+
+func init() {
+	MustConfigureLogging()
+}

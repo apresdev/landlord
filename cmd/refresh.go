@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/apresdev/landlord/internal/authx"
-
 	"github.com/spf13/cobra"
 )
 
@@ -12,9 +11,10 @@ func createRefreshCmd() *cobra.Command {
 		Short: "Refresh the current session's tokens",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := MustSession()
+			cs := MustClients()
 			tokens, err := authx.RefreshAuth(
-				s.Ctx, s.CogIdp, s.Validator, authx.RefreshAuthArgs{
-					Region:       s.GetRegion(),
+				cs.Ctx(), cs.CogIdp(), cs.Validator(), authx.RefreshAuthArgs{
+					Region:       cs.Cfg().Region,
 					UserPool:     s.UserPool,
 					RefreshToken: s.RefreshToken,
 				})

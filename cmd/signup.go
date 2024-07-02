@@ -29,16 +29,16 @@ func createConfirmSignUpCmd() *cobra.Command {
 			if admin && code != "" {
 				return errors.New("--code and --admin are mutually exclusive")
 			}
-			s := MustSession()
+			cs := MustClients()
 			if admin {
-				err := authx.AdminConfirmSignUp(s.Ctx, s.CogIdp, userpool, email)
+				err := authx.AdminConfirmSignUp(cs.Ctx(), cs.CogIdp(), userpool, email)
 				if err != nil {
 					return err
 				}
 				cmd.Println("Sign up confirmed by administrator")
 				return nil
 			} else {
-				err := authx.ConfirmSignUp(s.Ctx, s.CogIdp, userpool, email, code)
+				err := authx.ConfirmSignUp(cs.Ctx(), cs.CogIdp(), userpool, email, code)
 				if err != nil {
 					return err
 				}
@@ -79,8 +79,8 @@ func createNewSignUpCmd() *cobra.Command {
 					return err
 				}
 			}
-			s := MustSession()
-			err := authx.SignUp(s.Ctx, s.CogIdp, userpool, email, password)
+			cs := MustClients()
+			err := authx.SignUp(cs.Ctx(), cs.CogIdp(), userpool, email, password)
 			if err != nil {
 				return err
 			}

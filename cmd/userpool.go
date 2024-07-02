@@ -17,8 +17,10 @@ func createCreateUserPoolCmd() *cobra.Command {
 			if userpool == "" {
 				return errors.New("userpool must be set")
 			}
-			s := MustSession()
-			up, err := authx.CreateUserPool(s.Ctx, s.CogIdp, s.CogId, userpool, idpool)
+			cs := MustClients()
+			tens := MustTenants(cs)
+			up, err := authx.CreateUserPool(
+				cs.Ctx(), cs.CogIdp(), tens.Root().UserPoolID, userpool)
 			if err != nil {
 				return err
 			}
@@ -46,15 +48,15 @@ func createDeleteUserPoolCmd() *cobra.Command {
 			if userpool != "" && all {
 				return errors.New("cannot specify both --name and --all")
 			}
-			s := MustSession()
+			cs := MustClients()
 			if all {
-				err := authx.DeleteAllUserPools(s.Ctx, s.CogIdp)
+				err := authx.DeleteAllUserPools(cs.Ctx(), cs.CogIdp())
 				if err != nil {
 					return err
 				}
 				cmd.Printf("Deleted all user pools\n")
 			} else {
-				up, err := authx.DeleteUserPool(s.Ctx, s.CogIdp, userpool)
+				up, err := authx.DeleteUserPool(cs.Ctx(), cs.CogIdp(), userpool)
 				if err != nil {
 					return err
 				}
@@ -75,8 +77,8 @@ func createListUserPoolCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List the user pools",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := MustSession()
-			userPools, err := authx.GetUserPoolDescriptions(s.Ctx, s.CogIdp)
+			cs := MustClients()
+			userPools, err := authx.GetUserPoolDescriptions(cs.Ctx(), cs.CogIdp())
 			if err != nil {
 				return err
 			}
@@ -89,15 +91,15 @@ func createListUserPoolCmd() *cobra.Command {
 }
 
 func createUserPoolCmd() *cobra.Command {
-	userpoolCmd := &cobra.Command{
+	c := &cobra.Command{
 		Use:   "userpool",
 		Short: "Identity pool sub-command",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
 		},
 	}
-	userpoolCmd.AddCommand(createCreateUserPoolCmd())
-	userpoolCmd.AddCommand(createDeleteUserPoolCmd())
-	userpoolCmd.AddCommand(createListUserPoolCmd())
-	return userpoolCmd
+	c.AddCommand(createCreateUserPoolCmd())
+	c.AddCommand(createDeleteUserPoolCmd())
+	c.AddCommand(createListUserPoolCmd())
+	return c
 }
