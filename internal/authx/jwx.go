@@ -94,3 +94,31 @@ func (DefaultTokenValidator) ValidateToken(
 func NewTokenValidator() TokenValidator {
 	return DefaultTokenValidator{}
 }
+
+type Tokens struct {
+	AccessToken *jwt.Token
+	IdToken     *jwt.Token
+	// The RefreshToken is base64-encoded data. It is not a JWT token.
+	RefreshToken string
+}
+
+func ValidateAllTokens(
+	ctx context.Context,
+	region string,
+	v TokenValidator,
+	up *types.UserPoolType,
+	rawTokens RawTokens) (*Tokens, error) {
+
+	result := Tokens{}
+	var err error
+	result.AccessToken, err = v.ValidateToken(ctx, region, up, rawTokens.AccessToken)
+	if err != nil {
+		return nil, err
+	}
+	result.IdToken, err = v.ValidateToken(ctx, region, up, rawTokens.IdToken)
+	if err != nil {
+		return nil, err
+	}
+	result.RefreshToken = rawTokens.RefreshToken
+	return &result, nil
+}

@@ -25,10 +25,10 @@ func createLoginCmd() *cobra.Command {
 			if password == "" {
 				return errors.New("--password required")
 			}
-			s := MustSession()
+			cs := MustClients()
 			tokens, err := authx.UserPasswordAuth(
-				s.Ctx, s.CogIdp, s.Validator, authx.UserPasswordAuthArgs{
-					Region:   s.GetRegion(),
+				cs.Ctx(), cs.CogIdp(), cs.Validator(), authx.UserPasswordAuthArgs{
+					Region:   cs.Cfg().Region,
 					UserPool: userpool,
 					Email:    email,
 					Password: password,
@@ -36,6 +36,7 @@ func createLoginCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			s := MustSession()
 			err = s.StoreIdentity(userpool, email)
 			if err != nil {
 				return err

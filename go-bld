@@ -4,6 +4,7 @@ set -Eeuo pipefail
 set -x
 
 go generate ./...
+templ generate
 
 go get -v
 
@@ -11,9 +12,9 @@ goimports -w .
 
 go fmt ./...
 
-if [[ "${APRES_SKIP_TESTS:-}" == "" ]];
+if [[ "${_SKIP_TESTS:-}" == "" ]];
 then
-    go test -v ./...
+    AWS_PROFILE=localstack go test -v ./...
 fi
 
 go vet -v ./...

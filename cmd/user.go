@@ -3,6 +3,8 @@ package cmd
 import (
 	"errors"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/spf13/cobra"
 )
@@ -20,8 +22,8 @@ func createCreateUsersCmd() *cobra.Command {
 			if email == "" {
 				return errors.New("email must be set")
 			}
-			s := MustSession()
-			err := authx.CreateUser(s.Ctx, s.CogIdp, userpool, email)
+			cs := MustClients()
+			err := authx.CreateUser(cs.Ctx(), cs.CogIdp(), userpool, email)
 			if err != nil {
 				return err
 			}
@@ -49,8 +51,8 @@ func createDeleteUsersCmd() *cobra.Command {
 			if email == "" {
 				return errors.New("email must be set")
 			}
-			s := MustSession()
-			err := authx.DeleteUser(s.Ctx, s.CogIdp, userpool, email)
+			cs := MustClients()
+			err := authx.DeleteUser(cs.Ctx(), cs.CogIdp(), userpool, email)
 			if err != nil {
 				return err
 			}
@@ -78,21 +80,25 @@ func createListUsersCmd() *cobra.Command {
 			if userpool == "" {
 				return errors.New("userpool must be set")
 			}
-			users, err := authx.GetUsersInUserPool(s.Ctx, s.CogIdp, userpool)
+			cs := MustClients()
+			users, err := authx.GetUsersInUserPool(cs.Ctx(), cs.CogIdp(), userpool)
 			if err != nil {
 				return err
 			}
 			for _, user := range users {
-				cmd.Printf("> %s\n", authx.UserEmailAttribute(user))
+				cmd.Printf("> %s\n", aws.ToString(user.Username))
+				cmd.Printf("  Status: %s\n", string(user.UserStatus))
+				cmd.Printf("  Enabled: %t\n", user.Enabled)
+				cmd.Printf("  Created at: %s\n", user.UserCreateDate.String())
+				cmd.Printf("  Last modified at: %s\n", user.UserLastModifiedDate.String())
+				cmd.Printf("  Attributes:\n")
 				for _, attr := range user.Attributes {
-					if *attr.Name == "email" {
-						continue
-					}
 					cmd.Printf("    %s: %s\n", *attr.Name, *attr.Value)
 				}
 			}
 			return nil
 		},
+		Aliases: []string{"ls"},
 	}
 	listUsersCmd.PersistentFlags().StringVarP(
 		&userpool, "userpool", "U", "", "User pool to list users from")

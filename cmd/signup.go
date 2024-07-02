@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/apresdev/landlord/internal/authx"
-
+	pwd "github.com/sethvargo/go-password/password"
 	"github.com/spf13/cobra"
 )
 
@@ -29,16 +29,16 @@ func createConfirmSignUpCmd() *cobra.Command {
 			if admin && code != "" {
 				return errors.New("--code and --admin are mutually exclusive")
 			}
-			s := MustSession()
+			cs := MustClients()
 			if admin {
-				err := authx.AdminConfirmSignUp(s.Ctx, s.CogIdp, userpool, email)
+				err := authx.AdminConfirmSignUp(cs.Ctx(), cs.CogIdp(), userpool, email)
 				if err != nil {
 					return err
 				}
 				cmd.Println("Sign up confirmed by administrator")
 				return nil
 			} else {
-				err := authx.ConfirmSignUp(s.Ctx, s.CogIdp, userpool, email, code)
+				err := authx.ConfirmSignUp(cs.Ctx(), cs.CogIdp(), userpool, email, code)
 				if err != nil {
 					return err
 				}
@@ -73,15 +73,19 @@ func createNewSignUpCmd() *cobra.Command {
 				return errors.New("email must be set")
 			}
 			if password == "" {
-				// TODO: generate password
-				return errors.New("password must be set")
+				var err error
+				password, err = pwd.Generate(12, 4, 4, false, false)
+				if err != nil {
+					return err
+				}
 			}
-			s := MustSession()
-			err := authx.SignUp(s.Ctx, s.CogIdp, userpool, email, password)
+			cs := MustClients()
+			err := authx.SignUp(cs.Ctx(), cs.CogIdp(), userpool, email, password)
 			if err != nil {
 				return err
 			}
-			cmd.Printf("Successfully signed up '%s' -- check your email for confirmation code\n", email)
+			cmd.Printf("Successfully signed up '%s' password '%s' -- check your email for confirmation code\n",
+				email, password)
 			return nil
 		},
 	}

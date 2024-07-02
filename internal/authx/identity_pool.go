@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-	"strings"
 
 	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentity/types"

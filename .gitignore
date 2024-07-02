@@ -2,3 +2,6 @@
 landlord
 session.json
 tenants.json
+tenants.*.json
+.env.local
+.env.*.local

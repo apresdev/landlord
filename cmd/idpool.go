@@ -20,8 +20,8 @@ func createAssociateIDPoolCmd() *cobra.Command {
 			if userPool == "" {
 				return errors.New("--userpool is required")
 			}
-			s := MustSession()
-			err := authx.AssociateUserPool(s.Ctx, s.CogId, s.CogIdp, idPool, userPool)
+			cs := MustClients()
+			err := authx.AssociateUserPool(cs.Ctx(), cs.CogId(), cs.CogIdp(), idPool, userPool)
 			if err != nil {
 				return err
 			}
@@ -42,8 +42,8 @@ func createListIDPoolCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List the identity pools",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := MustSession()
-			ips, err := authx.GetIdentityPoolShortDescriptions(s.Ctx, s.CogId)
+			cs := MustClients()
+			ips, err := authx.GetIdentityPoolShortDescriptions(cs.Ctx(), cs.CogId())
 			if err != nil {
 				return err
 			}
@@ -56,6 +56,7 @@ func createListIDPoolCmd() *cobra.Command {
 			}
 			return nil
 		},
+		Aliases: []string{"ls"},
 	}
 }
 
@@ -68,8 +69,8 @@ func createDeleteIDPoolCmd() *cobra.Command {
 			if id == "" {
 				return errors.New("--id is required")
 			}
-			s := MustSession()
-			err := authx.DeleteIdentityPool(s.Ctx, s.CogId, id)
+			cs := MustClients()
+			err := authx.DeleteIdentityPool(cs.Ctx(), cs.CogId(), id)
 			if err != nil {
 				return err
 			}

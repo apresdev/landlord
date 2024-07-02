@@ -6,11 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 )
+
+const RoleGuest = "guest"
 
 type PolicyStatement struct {
 	Effect    string                       `json:"Effect,omitempty"`
@@ -67,12 +71,13 @@ const DefaultTenantRolePath = "/tenant/"
 func CreateTenantRole(
 	ctx context.Context,
 	i AWSIAM,
-	tenantID string) (*types.Role, error) {
+	tenantID uuid.UUID) (*types.Role, error) {
 
-	tp := NewTrustPolicyDocumentForTenantRole(tenantID)
-	roleName := fmt.Sprintf("tenant-%s", tenantID)
+	// TODO: this is the wrong ID for this policy document
+	tp := NewTrustPolicyDocumentForTenantRole(tenantID.String())
+	roleName := fmt.Sprintf("tenant-%s", tenantID.String())
 	tags := []types.Tag{
-		{Key: aws.String("tenant-id"), Value: aws.String(tenantID)},
+		{Key: aws.String("tenant-id"), Value: aws.String(tenantID.String())},
 	}
 	return CreateIAMRole(ctx, i, tp, DefaultTenantRolePath, roleName, tags)
 }

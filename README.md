@@ -72,3 +72,37 @@ aws sso login
 # Delete a user
 ./landlord user delete --email example@apres.dev
 ```
+
+## Environment Variables
+
+* `AWS_REGION=<region>`: If set, the landlord tool will use this region as the
+  default region for all commands that require a region.
+* `LANDLORD_APP_DOMAIN=<domain>`: Domain of the application. Where cookies
+  from authentication are stored and where the app is expected to be
+  delivered from.
+* `LANDLORD_CUSTOM_DOMAIN=<domain>`: Custom domain to use for AWS Cognito
+  authentication. See:
+  https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-add-custom-domain.html
+* `LANDLORD_SENDER_EMAIL=<email>`: Email address to send alerts and invites
+  from.
+* `LANDLORD_LISTEN_ADDR=<address>`: Address to listen on when running
+  landlord in server mode.
+* `LANDLORD_IP_ALLOW_LIST=<comma-separated list of IPs>`: If set, the landlord
+  tool will only allow requests from the given IPs. This is useful for
+  restricting access to the landlord tool to a specific set of IPs.
+* `LANDLORD_DEFAULT_IDENTITY_POOL=<identity-pool-name-or-id>`: The name or
+  ID of the default identity pool. There is a single identity pool that all
+  user pools are configured with.
+* `LANDLORD_DEFAULT_USER_POOL=<user-pool-name-or-id>`: The name or ID of the
+  default user pool. Tenants can have custom user pools, but the fallback is
+  to use the default user pool.
+* `LANDLORD_DEFAULT_USER_POOL_CLIENT=<user-pool-client-name-or-id>`: The
+  name or ID of the default user pool client. Tenants can have custom user
+  pool clients.
+* `LANDLORD_CERT_PATH=<path>`: Path to the certificate when running landlord
+  in server mode with TLS.
+* `LANDLORD_PRIVATE_KEY_PATH=<path>`: Path to the private key when running
+  landlord in server mode with TLS.
+* `LANDLORD_LOCALSTACK_ENDPOINT=<endpoint>`: If set, the landlord tool will
+  use this endpoint for AWS API calls using localstack. AWS_PROFILE should
+  be set to a profile that uses the localstack endpoint.

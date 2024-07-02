@@ -25,7 +25,6 @@ func TestIDPoolTestSuite(t *testing.T) {
 	if !localstack.IsRunning() {
 		t.Skip("localstack not running")
 	}
-
 	suite.Run(t, &IDPoolTestSuite{})
 }
 
@@ -33,15 +32,15 @@ func (s *IDPoolTestSuite) SetupTest() {
 	s.cmd = cmd.Root()
 	s.cmd.SetOut(&s.out)
 	s.cmd.SetErr(&s.errOut)
-	ses := cmd.MustReloadSession()
-	err := authx.DeleteAllIdentityPools(ses.Ctx, ses.CogId)
+	cs := cmd.MustClients()
+	err := authx.DeleteAllIdentityPools(cs.Ctx(), cs.CogId())
 	s.NoError(err)
 }
 
 func (s *IDPoolTestSuite) TearDownTest() {
 	s.out.Reset()
-	ses := cmd.MustReloadSession()
-	err := authx.DeleteAllIdentityPools(ses.Ctx, ses.CogId)
+	cs := cmd.MustClients()
+	err := authx.DeleteAllIdentityPools(cs.Ctx(), cs.CogId())
 	s.NoError(err)
 }
 
@@ -66,15 +65,15 @@ func (s *IDPoolTestSuite) TestEmptyList() {
 }
 
 func (s *IDPoolTestSuite) TestList() {
-	ses := cmd.MustSession()
-	err := authx.CreateIdentityPool(ses.Ctx, ses.CogId, "test-idpool1")
+	cs := cmd.MustClients()
+	err := authx.CreateIdentityPool(cs.Ctx(), cs.CogId(), "test-idpool1")
 	s.NoError(err)
-	err = authx.CreateIdentityPool(ses.Ctx, ses.CogId, "test-idpool2")
+	err = authx.CreateIdentityPool(cs.Ctx(), cs.CogId(), "test-idpool2")
 	s.NoError(err)
 
-	c, err := s.CLI("idpool list")
+	cli, err := s.CLI("idpool list")
 	s.NoError(err)
-	s.Equal("list", c.Use)
+	s.Equal("list", cli.Use)
 	s.Assert().Contains(s.out.String(), "test-idpool1")
 	s.Assert().Contains(s.out.String(), "test-idpool2")
 }

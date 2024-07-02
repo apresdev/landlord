@@ -1,0 +1,13 @@
+package server
+
+templ usernamePage() {
+    <div>
+        <h2>Enter your email address to start login</h2>
+        <form action='/username/submit' method='post'>
+            <label>Username:
+                <input type='text' name='username' />
+            </label>
+            <input type='submit' value='Enter' />
+        </form>
+    </div>
+}

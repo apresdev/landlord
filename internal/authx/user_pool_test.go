@@ -293,8 +293,23 @@ func (s *UserPoolTestSuite) TestGetUsersInUserPoolError3() {
 
 func (s *UserPoolTestSuite) TestCreateUserPool() {
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogId := mocks.NewAWSCognitoIdentity(s.T())
 	ctx := context.Background()
+	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
+		&cognitoidentityprovider.DescribeUserPoolOutput{
+			UserPool: &types.UserPoolType{
+				Name: aws.String("test-default-user-pool1"),
+				Id:   aws.String("test-default-user-pool-id1"),
+			},
+		}, nil).Once()
+	cogIdp.EXPECT().DescribeUserPoolDomain(ctx, mock.Anything).Return(
+		&cognitoidentityprovider.DescribeUserPoolDomainOutput{
+			DomainDescription: &types.DomainDescriptionType{
+				Domain: aws.String("test-default-user-pool-domain"),
+				CustomDomainConfig: &types.CustomDomainConfigType{
+					CertificateArn: aws.String("test-default-certificate-arn"),
+				},
+			},
+		}, nil).Once()
 	cogIdp.EXPECT().CreateUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.CreateUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -302,10 +317,12 @@ func (s *UserPoolTestSuite) TestCreateUserPool() {
 				Id:   aws.String("test-user-pool-id1"),
 			},
 		}, nil).Once()
+	cogIdp.EXPECT().CreateUserPoolDomain(ctx, mock.Anything).Return(
+		&cognitoidentityprovider.CreateUserPoolDomainOutput{}, nil).Once()
 	cogIdp.EXPECT().CreateUserPoolClient(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.CreateUserPoolClientOutput{}, nil).Once()
 	v, err := authx.CreateUserPool(
-		ctx, cogIdp, cogId, "test-user-pool1", "test-id-pool1")
+		ctx, cogIdp, "test-root-user-pool-id", "test-user-pool1")
 	s.Assert().NoError(err)
 	s.Assert().Equal(*v.Name, "test-user-pool1")
 	s.Assert().Equal(*v.Id, "test-user-pool-id1")
@@ -313,8 +330,23 @@ func (s *UserPoolTestSuite) TestCreateUserPool() {
 
 func (s *UserPoolTestSuite) TestCreateUserPoolError() {
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogId := mocks.NewAWSCognitoIdentity(s.T())
 	ctx := context.Background()
+	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
+		&cognitoidentityprovider.DescribeUserPoolOutput{
+			UserPool: &types.UserPoolType{
+				Name: aws.String("test-default-user-pool1"),
+				Id:   aws.String("test-default-user-pool-id1"),
+			},
+		}, nil).Once()
+	cogIdp.EXPECT().DescribeUserPoolDomain(ctx, mock.Anything).Return(
+		&cognitoidentityprovider.DescribeUserPoolDomainOutput{
+			DomainDescription: &types.DomainDescriptionType{
+				Domain: aws.String("test-default-user-pool-domain"),
+				CustomDomainConfig: &types.CustomDomainConfigType{
+					CertificateArn: aws.String("test-default-certificate-arn"),
+				},
+			},
+		}, nil).Once()
 	cogIdp.EXPECT().CreateUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.CreateUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -322,20 +354,37 @@ func (s *UserPoolTestSuite) TestCreateUserPoolError() {
 				Id:   aws.String("test-user-pool-id1"),
 			},
 		}, nil).Once()
+	cogIdp.EXPECT().CreateUserPoolDomain(ctx, mock.Anything).Return(
+		&cognitoidentityprovider.CreateUserPoolDomainOutput{}, nil).Once()
 	cogIdp.EXPECT().CreateUserPoolClient(ctx, mock.Anything).Return(
 		nil, errors.New("test error")).Once()
 	cogIdp.EXPECT().DeleteUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DeleteUserPoolOutput{}, nil).Once()
 	v, err := authx.CreateUserPool(
-		ctx, cogIdp, cogId, "test-user-pool1", "test-id-pool1")
+		ctx, cogIdp, "test-root-user-pool-id", "test-user-pool1")
 	s.Assert().Error(err)
 	s.Assert().Nil(v)
 }
 
 func (s *UserPoolTestSuite) TestCreateUserPoolError2() {
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogId := mocks.NewAWSCognitoIdentity(s.T())
 	ctx := context.Background()
+	cogIdp.EXPECT().DescribeUserPool(ctx, mock.Anything).Return(
+		&cognitoidentityprovider.DescribeUserPoolOutput{
+			UserPool: &types.UserPoolType{
+				Name: aws.String("test-default-user-pool1"),
+				Id:   aws.String("test-default-user-pool-id1"),
+			},
+		}, nil).Once()
+	cogIdp.EXPECT().DescribeUserPoolDomain(ctx, mock.Anything).Return(
+		&cognitoidentityprovider.DescribeUserPoolDomainOutput{
+			DomainDescription: &types.DomainDescriptionType{
+				Domain: aws.String("test-default-user-pool-domain"),
+				CustomDomainConfig: &types.CustomDomainConfigType{
+					CertificateArn: aws.String("test-default-certificate-arn"),
+				},
+			},
+		}, nil).Once()
 	cogIdp.EXPECT().CreateUserPool(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.CreateUserPoolOutput{
 			UserPool: &types.UserPoolType{
@@ -343,12 +392,14 @@ func (s *UserPoolTestSuite) TestCreateUserPoolError2() {
 				Id:   aws.String("test-user-pool-id1"),
 			},
 		}, nil).Once()
+	cogIdp.EXPECT().CreateUserPoolDomain(ctx, mock.Anything).Return(
+		&cognitoidentityprovider.CreateUserPoolDomainOutput{}, nil).Once()
 	cogIdp.EXPECT().CreateUserPoolClient(ctx, mock.Anything).Return(
 		nil, errors.New("test error")).Once()
 	cogIdp.EXPECT().DeleteUserPool(ctx, mock.Anything).Return(
 		nil, errors.New("delete user pool error")).Once()
 	v, err := authx.CreateUserPool(
-		ctx, cogIdp, cogId, "test-user-pool1", "test-id-pool1")
+		ctx, cogIdp, "test-root-user-pool-id", "test-user-pool1")
 	s.Assert().Error(err)
 	s.Assert().Equal("test error", err.Error())
 	s.Assert().Nil(v)
@@ -356,12 +407,11 @@ func (s *UserPoolTestSuite) TestCreateUserPoolError2() {
 
 func (s *UserPoolTestSuite) TestCreateUserPoolError3() {
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	cogId := mocks.NewAWSCognitoIdentity(s.T())
 	ctx := context.Background()
 	cogIdp.EXPECT().CreateUserPool(ctx, mock.Anything).Return(
 		nil, errors.New("test error"))
 	v, err := authx.CreateUserPool(
-		ctx, cogIdp, cogId, "test-user-pool1", "test-id-pool1")
+		ctx, cogIdp, "test-root-user-pool-id", "test-user-pool1")
 	s.Assert().Error(err)
 	s.Assert().Nil(v)
 }

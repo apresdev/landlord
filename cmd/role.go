@@ -20,9 +20,9 @@ func createDeleteRoleCmd() *cobra.Command {
 			if name != "" && prefix != "" {
 				return errors.New("--name and --prefix cannot be set together")
 			}
-			s := MustSession()
+			cs := MustClients()
 			if prefix != "" {
-				roles, err := authx.DeleteIAMRoleByPrefix(s.Ctx, s.IAM, prefix)
+				roles, err := authx.DeleteIAMRoleByPrefix(cs.Ctx(), cs.IAM(), prefix)
 				if err != nil {
 					return err
 				}
@@ -30,7 +30,7 @@ func createDeleteRoleCmd() *cobra.Command {
 					cmd.Printf("Deleted role: %s\n", role)
 				}
 			} else {
-				err := authx.DeleteIAMRole(s.Ctx, s.IAM, name)
+				err := authx.DeleteIAMRole(cs.Ctx(), cs.IAM(), name)
 				if err != nil {
 					return err
 				}
@@ -52,8 +52,8 @@ func createListRoleCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List the roles",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := MustSession()
-			roles, err := authx.GetIAMRoles(s.Ctx, s.IAM, prefix)
+			cs := MustClients()
+			roles, err := authx.GetIAMRoles(cs.Ctx(), cs.IAM(), prefix)
 			if err != nil {
 				return err
 			}
@@ -62,6 +62,7 @@ func createListRoleCmd() *cobra.Command {
 			}
 			return nil
 		},
+		Aliases: []string{"ls"},
 	}
 	c.PersistentFlags().StringVarP(
 		&prefix, "prefix", "p", "", "Prefix of the role name")
