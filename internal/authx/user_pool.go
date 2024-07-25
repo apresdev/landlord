@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sethvargo/go-password/password"
+
 	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -20,7 +22,7 @@ func GetUserPoolDescriptions(
 	[]types.UserPoolDescriptionType, error) {
 
 	result := make([]types.UserPoolDescriptionType, 0)
-	maxResults := int32(MaxPagingResults)
+	maxResults := MaxPagingResults
 	nextToken := newNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
@@ -61,7 +63,7 @@ func getUserPoolDescriptions(
 	match func(descriptionType types.UserPoolDescriptionType) bool) (
 	[]types.UserPoolDescriptionType, error) {
 
-	maxResults := int32(MaxPagingResults)
+	maxResults := MaxPagingResults
 	nextToken := newNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
@@ -223,12 +225,6 @@ func CreateUserPool(
 		}
 		return nil, err
 	}
-
-	// TODO: Associate here?
-	//idPool, err := GetIdentityPoolByNameOrID(ctx, cogId, idPoolName)
-	//if err != nil {
-	//	return nil, err
-	//}
 	return o.UserPool, nil
 }
 
@@ -291,7 +287,7 @@ func DeleteUserFromUserPool(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	userPool string,
-	username string) error {
+	email string) error {
 
 	up, err := GetUserPoolByNameOrID(ctx, cogIdp, userPool)
 	if err != nil {
@@ -299,11 +295,52 @@ func DeleteUserFromUserPool(
 	}
 	args := cognitoidentityprovider.AdminDeleteUserInput{
 		UserPoolId: up.Id,
-		Username:   aws.String(username),
+		Username:   aws.String(email),
 	}
 	_, err = cogIdp.AdminDeleteUser(ctx, &args)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func CreateUser(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	userPool string,
+	username string) error {
+
+	pwd, err := password.Generate(16, 4, 4, false, false)
+	if err != nil {
+		return err
+	}
+
+	up, err := GetUserPoolByNameOrID(ctx, cogIdp, userPool)
+	if err != nil {
+		return err
+	}
+	_, err = cogIdp.AdminCreateUser(ctx,
+		&cognitoidentityprovider.AdminCreateUserInput{
+			UserPoolId:        up.Id,
+			Username:          &username,
+			TemporaryPassword: &pwd,
+		})
+	return err
+}
+
+func DeleteUser(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	userPool, email string) error {
+
+	up, err := GetUserPoolByNameOrID(ctx, cogIdp, userPool)
+	if err != nil {
+		return err
+	}
+	_, err = cogIdp.AdminDeleteUser(ctx,
+		&cognitoidentityprovider.AdminDeleteUserInput{
+			UserPoolId: up.Id,
+			Username:   &email,
+		})
+	return err
 }

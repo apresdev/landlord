@@ -3,60 +3,62 @@ package cmd
 import (
 	"errors"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+
 	"github.com/apresdev/landlord/internal/authx"
 
 	"github.com/spf13/cobra"
 )
 
-func createLoginCmd() *cobra.Command {
+func loginCmd() *cobra.Command {
 	var userpool string
-	var email string
+	var username string
 	var password string
-	loginCmd := &cobra.Command{
+	c := &cobra.Command{
 		Use:   "login",
 		Short: "Login to the server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if userpool == "" {
 				return errors.New("--userpool required")
 			}
-			if email == "" {
-				return errors.New("--email required")
+			if username == "" {
+				return errors.New("--username required")
 			}
 			if password == "" {
 				return errors.New("--password required")
 			}
 			cs := MustClients()
+			up, err := authx.GetUserPoolByNameOrID(cs.Ctx(), cs.CogIdp(), userpool)
+			if err != nil {
+				return err
+			}
+			validationURL := authx.ValidationURL(cs.Cfg().Region, aws.ToString(up.Id))
 			tokens, err := authx.UserPasswordAuth(
-				cs.Ctx(), cs.CogIdp(), cs.Validator(), authx.UserPasswordAuthArgs{
-					Region:   cs.Cfg().Region,
-					UserPool: userpool,
-					Email:    email,
-					Password: password,
-				})
+				cs.Ctx(), cs.CogIdp(), cs.Validator(), validationURL, up, username, password)
 			if err != nil {
 				return err
 			}
 			s := MustSession()
-			err = s.StoreIdentity(userpool, email)
-			if err != nil {
-				return err
-			}
-			err = s.StoreTokens(tokens.AccessToken, tokens.IdToken, tokens.RefreshToken)
-			if err != nil {
+			s.UserPool = userpool
+			s.ValidationURL = validationURL.String()
+			s.AccessToken = tokens.AccessToken.Raw
+			s.IdToken = tokens.IdToken.Raw
+			s.RefreshToken = tokens.RefreshToken
+			if err = s.SaveToFile(); err != nil {
 				return err
 			}
 			s = MustReloadSession()
-			cmd.Println("Logged in as: " + email)
+			cmd.Println("Logged in as: " + username)
 			cmd.Printf("\n==== ID Token ====\n%s\n", s.IdToken)
 			cmd.Printf("\n==== Access Token ====\n%s\n", s.AccessToken)
 			return nil
 		},
 	}
-	loginCmd.PersistentFlags().StringVarP(
+	c.PersistentFlags().StringVarP(
 		&userpool, "userpool", "U", "", "User pool to login to")
-	loginCmd.PersistentFlags().StringVarP(
-		&email, "email", "e", "", "Email to login with")
-	loginCmd.PersistentFlags().StringVarP(
+	c.PersistentFlags().StringVarP(
+		&username, "username", "u", "", "Username to login with")
+	c.PersistentFlags().StringVarP(
 		&password, "password", "p", "", "Password to login with")
-	return loginCmd
+	return c
 }

@@ -1,25 +1,26 @@
 # TODOs
 
-* tenant user delete / tenant user add
-* cache identity?
-* manage sub-domains with route53?
-* Generate a temporary password and email it when sending the invite
-* Add auth domain and redirect host to terraform
-* Groups in tokens?
-* install templ
-* Add configuration for auth.domain app-domain and alert@domain
-* Refresh token handling
-* Fix command-line errors so they don't always display the help
-* Cache the JWKs from Cognito
-* Break down the JWT into its component in one of the list views
-* Take user pool name or user pool ID
-* Don't fail if a session.json is not already present
+* replace "apply" with direct manipulation of the user's groups
+* rename default-user-pool to landlord-default-user-pool
+* how to handle abuse of the landlord APIs? -- especially "recover-password"
+* remove a user from their old group in apply if applicable
+* remove a group from a tenant if it no longer exists
+* API for refresh token handling
+* list pending invitations
+* email domain guard rails
+* tenant role add-template (or some such) that adds a set of roles from a 
+  predefined list, like "admin, user, guest" or "admin, poweruser, user, guest"
 * Still show a token's contents when it has expired
-* send an email via SES
-* create a temporary password and email it
-* add marketer roles
-* for patch, PUT / SetFieldOnThing() for DELETE / ClearFieldOnThing()
-* MFA
+* Send an email via SES -- needs terraform
+* invitation email could look better
+* remove the last error cookie and put it in the session
+* add points where the error is cleared
+* change "signup" to "register"?
+* general styling improvements for the htmx version
+    * add password fields that have the little eyeball to reveal the password
+      * maybe save this for the React version only?
+* test user in multiple tenants
+* front end validation that the passwords match in new-password page
 * Add IP address and device-fingerprinting data to signups
   * type UserContextDataType struct {
 
@@ -28,20 +29,7 @@
     //
     // [Adding user device and session data to API requests]: https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-adaptive-authentication.html#user-pool-settings-adaptive-authentication-device-fingerprint
     EncodedData *string
-
-# TODO Roles
-
-* Admin: full access
-  * Has access to all regions
-  * Has access to all enterprise settings
-* Marketer: has access to clearsight 360 only
-  * They can toggle physician profiles
-* Manager: has rep 360, has a region, has multiple territories
-  * Same as admin, but only see one region
-  * Do they have access to the admin dashboard?
-* User: has rep 360 / dashboard, and their territory
-  * No access to other stuff
-* Guest
+* MFA
 
 # Flow: User Signup by Invitation
 
@@ -78,7 +66,6 @@ new invitation.
 1. User requests via out-of-band channel to get the invitation resent
   1. Admin may choose to navigate to the UI to determine if there
   is an existing outstanding invitation
-    1. TODO: can landlord list pending invitations
 
 # Flow: User Initiates Password Reset
 

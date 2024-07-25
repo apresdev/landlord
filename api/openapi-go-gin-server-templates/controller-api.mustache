@@ -1,0 +1,17 @@
+{{>partial_header}}
+package {{packageName}}
+
+{{#operations}}
+import (
+    "github.com/gin-gonic/gin"
+)
+{{#operation}}
+// {{nickname}} - {{{summary}}}
+{{#isDeprecated}}
+// Deprecated
+{{/isDeprecated}}
+func gin{{nickname}}(c *gin.Context) {
+    callImpl(c, handle{{nickname}})
+}
+{{/operation}}
+{{/operations}}

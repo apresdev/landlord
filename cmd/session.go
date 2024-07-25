@@ -2,31 +2,19 @@ package cmd
 
 import (
 	"encoding/json"
+	"net/url"
 	"os"
-
-	"github.com/apresdev/landlord/internal/authx"
 
 	"go.uber.org/zap"
 )
 
-type Config struct {
-	LogLimit int `json:"log_limit"`
-}
-
-func NewDefaultConfig() Config {
-	return Config{
-		LogLimit: 15,
-	}
-}
-
 type Session struct {
-	LastError    error  `json:"last_error"`
-	Config       Config `json:"config"`
-	UserPool     string `json:"user_pool"`
-	Email        string `json:"email"`
-	AccessToken  string `json:"access_token"`
-	IdToken      string `json:"id_token"`
-	RefreshToken string `json:"refresh_token"`
+	LastError     error  `json:"last_error"`
+	ValidationURL string `json:"validation_url"`
+	UserPool      string `json:"user_pool"`
+	AccessToken   string `json:"access_token"`
+	IdToken       string `json:"id_token"`
+	RefreshToken  string `json:"refresh_token"`
 }
 
 var theSession *Session
@@ -56,9 +44,7 @@ func MustReloadSession() *Session {
 }
 
 func newEmptySession() (*Session, error) {
-	return &Session{
-		Config: NewDefaultConfig(),
-	}, nil
+	return &Session{}, nil
 }
 
 func loadSessionFromFile() (*Session, error) {
@@ -81,8 +67,7 @@ func loadSessionFromFile() (*Session, error) {
 }
 
 func (s *Session) Logout() error {
-	s.UserPool = ""
-	s.Email = ""
+	s.ValidationURL = ""
 	s.AccessToken = ""
 	s.IdToken = ""
 	s.RefreshToken = ""
@@ -118,23 +103,10 @@ func (s *Session) GetLastError() error {
 	return s.LastError
 }
 
-func (s *Session) StoreIdentity(userpool, email string) error {
-	s.UserPool = userpool
-	s.Email = email
-	return s.SaveToFile()
-}
-
-func (s *Session) StoreTokens(accessToken, idToken, refreshToken string) error {
-	s.AccessToken = accessToken
-	s.IdToken = idToken
-	s.RefreshToken = refreshToken
-	return s.SaveToFile()
-}
-
-func MustTenants(cs Clients) *authx.Tenants {
-	tens, err := authx.LoadTenants(cs.Ctx(), cs.Cfg(), cs.Sts(), cs.CogIdp())
+func (s *Session) GetValidationURL() *url.URL {
+	u, err := url.Parse(s.ValidationURL)
 	if err != nil {
-		panic(err)
+		zap.L().Fatal("could not parse URL", zap.Error(err))
 	}
-	return tens
+	return u
 }
