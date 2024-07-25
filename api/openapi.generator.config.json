@@ -1,0 +1,7 @@
+{
+  "modelPropertyNaming": "camelCase",
+  "platform": "browser",
+  "sortModelPropertiesByRequiredFlag": true,
+  "supportsES6": true,
+  "useSingleRequestParameter": true
+}

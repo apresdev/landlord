@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/apresdev/landlord/cmd"
 	"github.com/apresdev/landlord/internal/appenv"
+
+	"github.com/apresdev/landlord/cmd"
 )
 
 var (

@@ -1,5 +1,7 @@
 /.idea
+/tmp
 landlord
+landlord.*
 session.json
 tenants.json
 tenants.*.json

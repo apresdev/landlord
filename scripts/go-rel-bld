@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+set -x
+
+go get -v
+
+GO_FILES=$(find . -name "*.go")
+GOFMT_DIFF=$(gofmt -l -d $GO_FILES)
+if [[ "$GOFMT_DIFF" != "" ]];
+then
+    echo "gofmt failed:"
+    echo "files that differ: $GOFMT_DIFF"
+    exit 1
+fi
+
+GOIMPORTS_DIFF=$(goimports -d .)
+if [[ "$GOIMPORTS_DIFF" != "" ]];
+then
+    echo "goimports failed:"
+    echo "files that differ: $GOIMPORTS_DIFF"
+    exit 1
+fi
+
+if [[ "${LANDLORD_SKIP_TESTS:-}" == "" ]];
+then
+    AWS_PROFILE=localstack go test -v ./...
+fi
+
+go vet -v ./...
+
+MAIN_PKG='main'
+BUILD_TIME=$(date +"%Y%m%d.%H%M%S")
+CommitHash=N/A
+GoVersion=N/A
+GitTag=N/A
+
+if [[ $(go version) =~ [0-9]+\.[0-9]+\.[0-9]+ ]];
+then
+    GoVersion=${BASH_REMATCH[0]}
+fi
+
+GV=$(git tag || echo 'N/A')
+if [[ $GV =~ [^[:space:]]+ ]];
+then
+    GitTag=${BASH_REMATCH[0]}
+fi
+
+GH=$(git log -1 --pretty=format:%h || echo 'N/A')
+if [[ GH =~ 'fatal' ]];
+then
+    CommitHash=N/A
+else
+    CommitHash=$GH
+fi
+
+FLAG="-X $MAIN_PKG.BuildTime=$BUILD_TIME"
+FLAG="$FLAG -X $MAIN_PKG.CommitHash=$CommitHash"
+FLAG="$FLAG -X $MAIN_PKG.GoVersion=$GoVersion"
+FLAG="$FLAG -X $MAIN_PKG.GitTag=$GitTag"
+
+export CGO_ENABLED=0
+export GOOS=linux
+export GOARCH=amd64
+export GIN_MODE=release
+
+go build \
+  -v \
+  -ldflags "$FLAG -w -s -extldflags '-static'" \
+  -o ./landlord.$GOOS.$GOARCH
