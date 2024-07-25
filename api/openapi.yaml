@@ -1,0 +1,657 @@
+openapi: 3.0.3
+info:
+  title: Landlord Auth API
+  version: 1.0.0
+  description: Backend API Landlord authentication.
+  contact:
+    email: info@apres.dev
+tags:
+  - name: UserAuth
+    description: User authentication operations
+servers:
+  - url: https://apres.dev/ll-auth/api
+    description: The production URL.
+    variables: {}
+paths:
+  /login:
+    post:
+      operationId: login
+      summary: Login with a username and password.
+      tags:
+        - UserAuth
+      parameters: []
+      requestBody:
+        $ref: "#/components/requestBodies/LoginRequest"
+      description: Initiated a login with a username and password.
+      responses:
+        "200":
+          $ref: '#/components/responses/LoginResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      # No security as this is the call to obtain a token
+      security: []
+  /tenants:
+    get:
+      operationId: getTenants
+      summary: Get a list of tenants.
+      tags:
+      - UserAuth
+      parameters: []
+      description: Get a list of tenants.
+      responses:
+        "200":
+          $ref: '#/components/responses/TenantsResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+  /tenants/{tenantID}/users:
+    get:
+      operationId: getUsersForTenant
+      summary: Get a list of users for a tenant.
+      tags:
+        - UserAuth
+      parameters:
+        - name: tenantID
+          in: path
+          required: true
+          description: The ID of the tenant to get users for.
+          schema:
+            type: string
+      description: Get a list of users for a tenant.
+      responses:
+        "200":
+          $ref: '#/components/responses/TenantUsersResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+  /tenants/{tenantID}/users/{username}:
+    put:
+      operationId: updateUser
+      summary: Update the user
+      tags:
+        - UserAuth
+      parameters:
+        - name: tenantID
+          in: path
+          required: true
+          description: The ID of the tenant to get users for.
+          schema:
+            type: string
+        - name: username
+          in: path
+          required: true
+          description: The username of the user to update.
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateUser"
+      description: Update a user's settings.
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: [ ]
+  /invite:
+    post:
+      operationId: inviteToTenant
+      summary: Invite a user to a tenant.
+      tags:
+        - UserAuth
+      parameters: [ ]
+      requestBody:
+        $ref: "#/components/requestBodies/InviteRequest"
+      description: Invite a new user to join a tenant.
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+  /impersonate:
+    post:
+      operationId: impersonate
+      summary: Impersonate a role within a tenant.
+      tags:
+        - UserAuth
+      parameters: [ ]
+      requestBody:
+        $ref: "#/components/requestBodies/ImpersonateRequest"
+      description: Impersonate a role within a tenant.
+      responses:
+        "200":
+          $ref: '#/components/responses/ImpersonateResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+  /clear-impersonate:
+    post:
+      operationId: clearImpersonate
+      summary: Clear any impersonation.
+      tags:
+        - UserAuth
+      parameters: [ ]
+      requestBody:
+        $ref: "#/components/requestBodies/ClearImpersonateRequest"
+      description: Clear any impersonation for the current user.
+      responses:
+        "200":
+          $ref: '#/components/responses/ClearImpersonateResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+  /new-password:
+    post:
+      operationId: setNewPassword
+      summary: Set a new password.
+      tags:
+        - UserAuth
+      parameters: [ ]
+      requestBody:
+        $ref: "#/components/requestBodies/SetNewPasswordRequest"
+      description: Set a new password after being issued a temporary password.
+      responses:
+        "200":
+          $ref: '#/components/responses/SetNewPasswordResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      # No security on this as the request is authenticated via a one-time
+      # session parameter that is included in the request.
+      security: []
+  /recover-password:
+    post:
+      operationId: recoverPassword
+      summary: Recover a password.
+      tags:
+        - UserAuth
+      parameters: [ ]
+      requestBody:
+        $ref: "#/components/requestBodies/RecoverPasswordRequest"
+      description: Recover a password.
+      responses:
+        "200":
+          $ref: '#/components/responses/RecoverPasswordResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      # No security on this as it initiates a password recovery, and, by
+      # definition the user does not have a password.
+      security: []
+  /reset-password:
+    post:
+      operationId: resetPassword
+      summary: Reset a password.
+      tags:
+        - UserAuth
+      parameters: [ ]
+      requestBody:
+        $ref: "#/components/requestBodies/ResetPasswordRequest"
+      description: Complete resetting a password.
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      # No security as this is authorized with a one-time confirmation code
+      security: []
+
+components:
+  parameters: {}
+  requestBodies:
+    LoginRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginRequest'
+    ImpersonateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ImpersonateRequest'
+    ClearImpersonateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ClearImpersonateRequest'
+    SetNewPasswordRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SetNewPasswordRequest'
+    RecoverPasswordRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RecoverPasswordRequest'
+    ResetPasswordRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResetPasswordRequest'
+    InviteRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/InviteRequest'
+    UpdateUserRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateUserRequest'
+  responses:
+    NoContent:
+      description: |
+        The request completed successfully.  No response body will be sent.
+    LoginResponse:
+      description: A response for a successful authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginResponse'
+    TenantsResponse:
+      description: Return the tenants available to the user.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TenantsResponse'
+    TenantUsersResponse:
+      description: Return the users associated with the tenant
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TenantUsersResponse'
+    ImpersonateResponse:
+      description: Return a new token for the impersonated role.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ImpersonateResponse'
+    ClearImpersonateResponse:
+      description: Clear any impersonation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ClearImpersonateResponse'
+    RecoverPasswordResponse:
+      description: A response for a successful initiation of a password recovery
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RecoverPasswordResponse'
+    SetNewPasswordResponse:
+      description: A response for a successful setting of a new password
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginResponse'
+    BadRequest:
+      description: An error occurred.  The client provided one or more invalid inputs.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            status: failure
+            data:
+              errors:
+                - message: bad_request
+                  description: The supplied value was invalid.
+                  path: request
+    Unauthorized:
+      description: An error occurred.  The client is not authenticated in the system.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            status: failure
+            data:
+              errors:
+                - message: unauthorized
+                  description: The client should authenticate itself to get the requested response.
+    Forbidden:
+      description: An error occurred.  The client is not authorized to perform the requested action.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            status: failure
+            data:
+              errors:
+                - message: forbidden
+                  description: The client does not have the access right for the content.
+    NotFound:
+      description: An error occurred.  The client requested a resource that does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            status: failure
+            data:
+              errors:
+                - message: not_found
+                  description: Could not find to requested resource.
+    InternalServerError:
+      description: An unexpected error occurred during the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+          example:
+            status: failure
+            data:
+              errors:
+                - message: server_error
+                  description: An error occurred while processing the request.
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    oauth2:
+      type: oauth2
+      description: This API uses OAuth 2 with the implicit grant flow. [More info](https://api.example.com/docs/auth)
+      flows:
+        authorizationCode:
+          authorizationUrl: /authorize
+          tokenUrl: /token
+          scopes: {}
+    cognito:
+      type: apiKey
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authtype: cognito_user_pools
+      x-amazon-apigateway-authorizer:
+        type: cognito_user_pools
+        providerARNs:
+          - ${cognito_provider_arn}
+  schemas:
+    ApiStatus:
+      type: string
+      enum:
+        - success
+        - failure
+    FieldError:
+      type: object
+      properties:
+        message:
+          type: string
+        description:
+          type: string
+        path:
+          type: string
+    APIError:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ApiStatus'
+        data:
+          type: object
+          properties:
+            errors:
+              type: array
+              items:
+                $ref: '#/components/schemas/FieldError'
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    LoginResponse:
+      type: object
+      required:
+        - status
+        - session
+        - idToken
+        - accessToken
+        - refreshToken
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - new-password-required
+            - password-reset-required
+        session:
+          type: string
+        idToken:
+          type: string
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+    TenantsResponse:
+      type: object
+      properties:
+        tenants:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - name
+              - description
+              - roles
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              roles:
+                type: array
+                items:
+                  type: string
+    TenantUsersResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            type: object
+            required:
+              - username
+              - role
+              - status
+            properties:
+              username:
+                type: string
+              role:
+                type: string
+              status:
+                type: string
+                enum:
+                  - inactive
+                  - invited
+                  - active
+    ImpersonateRequest:
+      type: object
+      required:
+        - tenant
+        - role
+        - refreshToken
+      properties:
+        tenant:
+          type: string
+        role:
+          type: string
+        refreshToken:
+          type: string
+    ImpersonateResponse:
+      type: object
+      required:
+        - idToken
+        - accessToken
+      properties:
+        idToken:
+          type: string
+        accessToken:
+          type: string
+    ClearImpersonateRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+    ClearImpersonateResponse:
+      type: object
+      required:
+        - idToken
+        - accessToken
+      properties:
+        idToken:
+          type: string
+        accessToken:
+          type: string
+    SetNewPasswordRequest:
+      type: object
+      required:
+        - username
+        - password
+        - session
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        session:
+          type: string
+    ResetPasswordRequest:
+      type: object
+      required:
+        - username
+        - confirmationCode
+        - newPassword
+      properties:
+        username:
+          type: string
+        confirmationCode:
+          type: string
+        newPassword:
+          type: string
+    RecoverPasswordRequest:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+    RecoverPasswordResponse:
+      type: object
+      required:
+        - deliveryMedium
+        - destination
+      properties:
+        deliveryMedium:
+          type: string
+          enum:
+            - EMAIL
+            - SMS
+        destination:
+          type: string
+          description: Displayable string for the destination where the recovery code was sent.
+
+    InviteRequest:
+      type: object
+      required:
+      - tenant
+      - username
+      - role
+      properties:
+        tenant:
+          type: string
+        username:
+          type: string
+        role:
+          type: string
+          default: guest
+
+    UpdateUserRequest:
+      type: object
+      required:
+        - role
+      properties:
+       role:
+        type: string
+        default: guest

@@ -23,6 +23,80 @@ func (_m *AWSCognitoIdentityProvider) EXPECT() *AWSCognitoIdentityProvider_Expec
 	return &AWSCognitoIdentityProvider_Expecter{mock: &_m.Mock}
 }
 
+// AdminAddUserToGroup provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) AdminAddUserToGroup(ctx context.Context, params *cognitoidentityprovider.AdminAddUserToGroupInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminAddUserToGroupOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdminAddUserToGroup")
+	}
+
+	var r0 *cognitoidentityprovider.AdminAddUserToGroupOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminAddUserToGroupInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminAddUserToGroupOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminAddUserToGroupInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.AdminAddUserToGroupOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.AdminAddUserToGroupOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.AdminAddUserToGroupInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_AdminAddUserToGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdminAddUserToGroup'
+type AWSCognitoIdentityProvider_AdminAddUserToGroup_Call struct {
+	*mock.Call
+}
+
+// AdminAddUserToGroup is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.AdminAddUserToGroupInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) AdminAddUserToGroup(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_AdminAddUserToGroup_Call {
+	return &AWSCognitoIdentityProvider_AdminAddUserToGroup_Call{Call: _e.mock.On("AdminAddUserToGroup",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminAddUserToGroup_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.AdminAddUserToGroupInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_AdminAddUserToGroup_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.AdminAddUserToGroupInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminAddUserToGroup_Call) Return(_a0 *cognitoidentityprovider.AdminAddUserToGroupOutput, _a1 error) *AWSCognitoIdentityProvider_AdminAddUserToGroup_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminAddUserToGroup_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.AdminAddUserToGroupInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminAddUserToGroupOutput, error)) *AWSCognitoIdentityProvider_AdminAddUserToGroup_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AdminConfirmSignUp provides a mock function with given fields: ctx, params, optFns
 func (_m *AWSCognitoIdentityProvider) AdminConfirmSignUp(ctx context.Context, params *cognitoidentityprovider.AdminConfirmSignUpInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminConfirmSignUpOutput, error) {
 	_va := make([]interface{}, len(optFns))
@@ -245,6 +319,228 @@ func (_c *AWSCognitoIdentityProvider_AdminDeleteUser_Call) RunAndReturn(run func
 	return _c
 }
 
+// AdminGetUser provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) AdminGetUser(ctx context.Context, params *cognitoidentityprovider.AdminGetUserInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminGetUserOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdminGetUser")
+	}
+
+	var r0 *cognitoidentityprovider.AdminGetUserOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminGetUserInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminGetUserOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminGetUserInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.AdminGetUserOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.AdminGetUserOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.AdminGetUserInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_AdminGetUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdminGetUser'
+type AWSCognitoIdentityProvider_AdminGetUser_Call struct {
+	*mock.Call
+}
+
+// AdminGetUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.AdminGetUserInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) AdminGetUser(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_AdminGetUser_Call {
+	return &AWSCognitoIdentityProvider_AdminGetUser_Call{Call: _e.mock.On("AdminGetUser",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminGetUser_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.AdminGetUserInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_AdminGetUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.AdminGetUserInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminGetUser_Call) Return(_a0 *cognitoidentityprovider.AdminGetUserOutput, _a1 error) *AWSCognitoIdentityProvider_AdminGetUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminGetUser_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.AdminGetUserInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminGetUserOutput, error)) *AWSCognitoIdentityProvider_AdminGetUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AdminRemoveUserFromGroup provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) AdminRemoveUserFromGroup(ctx context.Context, params *cognitoidentityprovider.AdminRemoveUserFromGroupInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminRemoveUserFromGroupOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdminRemoveUserFromGroup")
+	}
+
+	var r0 *cognitoidentityprovider.AdminRemoveUserFromGroupOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminRemoveUserFromGroupInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminRemoveUserFromGroupOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminRemoveUserFromGroupInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.AdminRemoveUserFromGroupOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.AdminRemoveUserFromGroupOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.AdminRemoveUserFromGroupInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_AdminRemoveUserFromGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdminRemoveUserFromGroup'
+type AWSCognitoIdentityProvider_AdminRemoveUserFromGroup_Call struct {
+	*mock.Call
+}
+
+// AdminRemoveUserFromGroup is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.AdminRemoveUserFromGroupInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) AdminRemoveUserFromGroup(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_AdminRemoveUserFromGroup_Call {
+	return &AWSCognitoIdentityProvider_AdminRemoveUserFromGroup_Call{Call: _e.mock.On("AdminRemoveUserFromGroup",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminRemoveUserFromGroup_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.AdminRemoveUserFromGroupInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_AdminRemoveUserFromGroup_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.AdminRemoveUserFromGroupInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminRemoveUserFromGroup_Call) Return(_a0 *cognitoidentityprovider.AdminRemoveUserFromGroupOutput, _a1 error) *AWSCognitoIdentityProvider_AdminRemoveUserFromGroup_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminRemoveUserFromGroup_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.AdminRemoveUserFromGroupInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminRemoveUserFromGroupOutput, error)) *AWSCognitoIdentityProvider_AdminRemoveUserFromGroup_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AdminResetUserPassword provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) AdminResetUserPassword(ctx context.Context, params *cognitoidentityprovider.AdminResetUserPasswordInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminResetUserPasswordOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdminResetUserPassword")
+	}
+
+	var r0 *cognitoidentityprovider.AdminResetUserPasswordOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminResetUserPasswordInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminResetUserPasswordOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminResetUserPasswordInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.AdminResetUserPasswordOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.AdminResetUserPasswordOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.AdminResetUserPasswordInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_AdminResetUserPassword_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdminResetUserPassword'
+type AWSCognitoIdentityProvider_AdminResetUserPassword_Call struct {
+	*mock.Call
+}
+
+// AdminResetUserPassword is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.AdminResetUserPasswordInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) AdminResetUserPassword(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_AdminResetUserPassword_Call {
+	return &AWSCognitoIdentityProvider_AdminResetUserPassword_Call{Call: _e.mock.On("AdminResetUserPassword",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminResetUserPassword_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.AdminResetUserPasswordInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_AdminResetUserPassword_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.AdminResetUserPasswordInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminResetUserPassword_Call) Return(_a0 *cognitoidentityprovider.AdminResetUserPasswordOutput, _a1 error) *AWSCognitoIdentityProvider_AdminResetUserPassword_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminResetUserPassword_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.AdminResetUserPasswordInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminResetUserPasswordOutput, error)) *AWSCognitoIdentityProvider_AdminResetUserPassword_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AdminSetUserPassword provides a mock function with given fields: ctx, params, optFns
 func (_m *AWSCognitoIdentityProvider) AdminSetUserPassword(ctx context.Context, params *cognitoidentityprovider.AdminSetUserPasswordInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminSetUserPasswordOutput, error) {
 	_va := make([]interface{}, len(optFns))
@@ -393,6 +689,80 @@ func (_c *AWSCognitoIdentityProvider_AdminUpdateUserAttributes_Call) RunAndRetur
 	return _c
 }
 
+// ConfirmForgotPassword provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) ConfirmForgotPassword(ctx context.Context, params *cognitoidentityprovider.ConfirmForgotPasswordInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.ConfirmForgotPasswordOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ConfirmForgotPassword")
+	}
+
+	var r0 *cognitoidentityprovider.ConfirmForgotPasswordOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.ConfirmForgotPasswordInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.ConfirmForgotPasswordOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.ConfirmForgotPasswordInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.ConfirmForgotPasswordOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.ConfirmForgotPasswordOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.ConfirmForgotPasswordInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_ConfirmForgotPassword_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ConfirmForgotPassword'
+type AWSCognitoIdentityProvider_ConfirmForgotPassword_Call struct {
+	*mock.Call
+}
+
+// ConfirmForgotPassword is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.ConfirmForgotPasswordInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) ConfirmForgotPassword(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_ConfirmForgotPassword_Call {
+	return &AWSCognitoIdentityProvider_ConfirmForgotPassword_Call{Call: _e.mock.On("ConfirmForgotPassword",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_ConfirmForgotPassword_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.ConfirmForgotPasswordInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_ConfirmForgotPassword_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.ConfirmForgotPasswordInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_ConfirmForgotPassword_Call) Return(_a0 *cognitoidentityprovider.ConfirmForgotPasswordOutput, _a1 error) *AWSCognitoIdentityProvider_ConfirmForgotPassword_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_ConfirmForgotPassword_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.ConfirmForgotPasswordInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.ConfirmForgotPasswordOutput, error)) *AWSCognitoIdentityProvider_ConfirmForgotPassword_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ConfirmSignUp provides a mock function with given fields: ctx, params, optFns
 func (_m *AWSCognitoIdentityProvider) ConfirmSignUp(ctx context.Context, params *cognitoidentityprovider.ConfirmSignUpInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.ConfirmSignUpOutput, error) {
 	_va := make([]interface{}, len(optFns))
@@ -463,6 +833,80 @@ func (_c *AWSCognitoIdentityProvider_ConfirmSignUp_Call) Return(_a0 *cognitoiden
 }
 
 func (_c *AWSCognitoIdentityProvider_ConfirmSignUp_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.ConfirmSignUpInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.ConfirmSignUpOutput, error)) *AWSCognitoIdentityProvider_ConfirmSignUp_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateGroup provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) CreateGroup(ctx context.Context, params *cognitoidentityprovider.CreateGroupInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.CreateGroupOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateGroup")
+	}
+
+	var r0 *cognitoidentityprovider.CreateGroupOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.CreateGroupInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.CreateGroupOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.CreateGroupInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.CreateGroupOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.CreateGroupOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.CreateGroupInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_CreateGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateGroup'
+type AWSCognitoIdentityProvider_CreateGroup_Call struct {
+	*mock.Call
+}
+
+// CreateGroup is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.CreateGroupInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) CreateGroup(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_CreateGroup_Call {
+	return &AWSCognitoIdentityProvider_CreateGroup_Call{Call: _e.mock.On("CreateGroup",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_CreateGroup_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.CreateGroupInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_CreateGroup_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.CreateGroupInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_CreateGroup_Call) Return(_a0 *cognitoidentityprovider.CreateGroupOutput, _a1 error) *AWSCognitoIdentityProvider_CreateGroup_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_CreateGroup_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.CreateGroupInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.CreateGroupOutput, error)) *AWSCognitoIdentityProvider_CreateGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -685,6 +1129,80 @@ func (_c *AWSCognitoIdentityProvider_CreateUserPoolDomain_Call) Return(_a0 *cogn
 }
 
 func (_c *AWSCognitoIdentityProvider_CreateUserPoolDomain_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.CreateUserPoolDomainInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.CreateUserPoolDomainOutput, error)) *AWSCognitoIdentityProvider_CreateUserPoolDomain_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteGroup provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) DeleteGroup(ctx context.Context, params *cognitoidentityprovider.DeleteGroupInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.DeleteGroupOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteGroup")
+	}
+
+	var r0 *cognitoidentityprovider.DeleteGroupOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.DeleteGroupInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.DeleteGroupOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.DeleteGroupInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.DeleteGroupOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.DeleteGroupOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.DeleteGroupInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_DeleteGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteGroup'
+type AWSCognitoIdentityProvider_DeleteGroup_Call struct {
+	*mock.Call
+}
+
+// DeleteGroup is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.DeleteGroupInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) DeleteGroup(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_DeleteGroup_Call {
+	return &AWSCognitoIdentityProvider_DeleteGroup_Call{Call: _e.mock.On("DeleteGroup",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_DeleteGroup_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.DeleteGroupInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_DeleteGroup_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.DeleteGroupInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_DeleteGroup_Call) Return(_a0 *cognitoidentityprovider.DeleteGroupOutput, _a1 error) *AWSCognitoIdentityProvider_DeleteGroup_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_DeleteGroup_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.DeleteGroupInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.DeleteGroupOutput, error)) *AWSCognitoIdentityProvider_DeleteGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -985,6 +1503,154 @@ func (_c *AWSCognitoIdentityProvider_DescribeUserPoolDomain_Call) RunAndReturn(r
 	return _c
 }
 
+// ForgotPassword provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) ForgotPassword(ctx context.Context, params *cognitoidentityprovider.ForgotPasswordInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.ForgotPasswordOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ForgotPassword")
+	}
+
+	var r0 *cognitoidentityprovider.ForgotPasswordOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.ForgotPasswordInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.ForgotPasswordOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.ForgotPasswordInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.ForgotPasswordOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.ForgotPasswordOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.ForgotPasswordInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_ForgotPassword_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ForgotPassword'
+type AWSCognitoIdentityProvider_ForgotPassword_Call struct {
+	*mock.Call
+}
+
+// ForgotPassword is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.ForgotPasswordInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) ForgotPassword(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_ForgotPassword_Call {
+	return &AWSCognitoIdentityProvider_ForgotPassword_Call{Call: _e.mock.On("ForgotPassword",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_ForgotPassword_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.ForgotPasswordInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_ForgotPassword_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.ForgotPasswordInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_ForgotPassword_Call) Return(_a0 *cognitoidentityprovider.ForgotPasswordOutput, _a1 error) *AWSCognitoIdentityProvider_ForgotPassword_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_ForgotPassword_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.ForgotPasswordInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.ForgotPasswordOutput, error)) *AWSCognitoIdentityProvider_ForgotPassword_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetGroup provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) GetGroup(ctx context.Context, params *cognitoidentityprovider.GetGroupInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.GetGroupOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGroup")
+	}
+
+	var r0 *cognitoidentityprovider.GetGroupOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.GetGroupInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.GetGroupOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.GetGroupInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.GetGroupOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.GetGroupOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.GetGroupInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_GetGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroup'
+type AWSCognitoIdentityProvider_GetGroup_Call struct {
+	*mock.Call
+}
+
+// GetGroup is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.GetGroupInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) GetGroup(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_GetGroup_Call {
+	return &AWSCognitoIdentityProvider_GetGroup_Call{Call: _e.mock.On("GetGroup",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_GetGroup_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.GetGroupInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_GetGroup_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.GetGroupInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_GetGroup_Call) Return(_a0 *cognitoidentityprovider.GetGroupOutput, _a1 error) *AWSCognitoIdentityProvider_GetGroup_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_GetGroup_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.GetGroupInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.GetGroupOutput, error)) *AWSCognitoIdentityProvider_GetGroup_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // InitiateAuth provides a mock function with given fields: ctx, params, optFns
 func (_m *AWSCognitoIdentityProvider) InitiateAuth(ctx context.Context, params *cognitoidentityprovider.InitiateAuthInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.InitiateAuthOutput, error) {
 	_va := make([]interface{}, len(optFns))
@@ -1277,6 +1943,80 @@ func (_c *AWSCognitoIdentityProvider_ListUsers_Call) Return(_a0 *cognitoidentity
 }
 
 func (_c *AWSCognitoIdentityProvider_ListUsers_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.ListUsersInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.ListUsersOutput, error)) *AWSCognitoIdentityProvider_ListUsers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RespondToAuthChallenge provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) RespondToAuthChallenge(ctx context.Context, params *cognitoidentityprovider.RespondToAuthChallengeInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.RespondToAuthChallengeOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RespondToAuthChallenge")
+	}
+
+	var r0 *cognitoidentityprovider.RespondToAuthChallengeOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.RespondToAuthChallengeInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.RespondToAuthChallengeOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.RespondToAuthChallengeInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.RespondToAuthChallengeOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.RespondToAuthChallengeOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.RespondToAuthChallengeInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_RespondToAuthChallenge_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RespondToAuthChallenge'
+type AWSCognitoIdentityProvider_RespondToAuthChallenge_Call struct {
+	*mock.Call
+}
+
+// RespondToAuthChallenge is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.RespondToAuthChallengeInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) RespondToAuthChallenge(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_RespondToAuthChallenge_Call {
+	return &AWSCognitoIdentityProvider_RespondToAuthChallenge_Call{Call: _e.mock.On("RespondToAuthChallenge",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_RespondToAuthChallenge_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.RespondToAuthChallengeInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_RespondToAuthChallenge_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.RespondToAuthChallengeInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_RespondToAuthChallenge_Call) Return(_a0 *cognitoidentityprovider.RespondToAuthChallengeOutput, _a1 error) *AWSCognitoIdentityProvider_RespondToAuthChallenge_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_RespondToAuthChallenge_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.RespondToAuthChallengeInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.RespondToAuthChallengeOutput, error)) *AWSCognitoIdentityProvider_RespondToAuthChallenge_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -39,7 +39,7 @@ func (s *InfoTestSuite) SetupTest() {
 	ses := cmd.MustSession()
 
 	ses.UserPool = "test-user-pool"
-	ses.Email = "test-email"
+	ses.ValidationURL = "https://example.com/test-validation-url"
 	ses.AccessToken = "test-access-token"
 	ses.IdToken = "test-id-token"
 	ses.RefreshToken = "test-refresh-token"
@@ -60,7 +60,7 @@ func (s *InfoTestSuite) TestSimple() {
 	s.Equal("info", c.Use)
 	f := strings.Split(s.out.String(), "\n")
 	s.Equal("User pool : test-user-pool", f[0])
-	s.Equal("Email     : test-email", f[1])
+	s.Equal("Username     : test-email", f[1])
 	s.Equal("Tokens:", f[2])
 	s.Equal("  Access  : valid", f[3])
 	s.Equal("  ID      : valid", f[4])
@@ -99,7 +99,7 @@ func (s *InfoTestSuite) TestVerboseInValid() {
 	s.NoError(err)
 	s.Equal("info", c.Use)
 	expected := `User pool : test-user-pool
-Email     : test-email
+Username     : test-email
 Tokens:
   Access:
     Valid : false
@@ -159,7 +159,7 @@ func (s *InfoTestSuite) TestVerboseValid() {
 	s.NoError(err)
 	s.Equal("info", c.Use)
 	expected := `User pool : test-user-pool
-Email     : test-email
+Username     : test-email
 Tokens:
   Access:
     Valid : false
@@ -227,7 +227,7 @@ func (s *InfoTestSuite) TestVerboseRaw() {
 	s.NoError(err)
 	s.Equal("info", c.Use)
 	expected := `User pool : test-user-pool
-Email     : test-email
+Username     : test-email
 Tokens:
   Access:
     Valid : false

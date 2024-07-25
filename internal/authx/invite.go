@@ -3,124 +3,62 @@ package authx
 import (
 	"context"
 	"errors"
-	"os"
-	"time"
-
-	"github.com/aws/aws-sdk-go-v2/service/ses"
-	"go.uber.org/zap"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	sestypes "github.com/aws/aws-sdk-go-v2/service/ses/types"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+
+	"github.com/apresdev/landlord/internal/apperr"
+
+	"github.com/apresdev/landlord/internal/db"
+	"github.com/apresdev/landlord/internal/multi"
 )
 
-func newInviteMessage(
-	ctx context.Context,
-	ten *Tenant,
-	cogIdp AWSCognitoIdentityProvider) (*sestypes.Message, error) {
+type Resend int
 
-	url, err := CreateAuthorizeURL(ctx, cogIdp, ten.UserPoolName, RedirectURI())
-	if err != nil {
-		zap.L().Error("Error creating authorize URL", zap.Error(err))
-		return nil, err
-	}
-	now := time.Now().String()
-	bodyContent := sestypes.Content{
-		Data: aws.String("test message body " + now + "\n" + url + "\n"),
-	}
-	subjectContent := sestypes.Content{
-		Data: aws.String("test message subject " + now),
-	}
-	return &sestypes.Message{
-		Body:    &sestypes.Body{Text: &bodyContent},
-		Subject: &subjectContent,
-	}, nil
-}
-
-func SendInviteEmail(
-	ctx context.Context,
-	s AWSSES,
-	cogIdp AWSCognitoIdentityProvider,
-	ten *Tenant,
-	e Email) error {
-
-	msg, err := newInviteMessage(ctx, ten, cogIdp)
-	if err != nil {
-		return err
-	}
-	senderEmail := os.Getenv("LANDLORD_SENDER_EMAIL")
-	o, err := s.SendEmail(
-		ctx, &ses.SendEmailInput{
-			Destination: &sestypes.Destination{ToAddresses: []string{e.Address()}},
-			Message:     msg,
-			Source:      aws.String(senderEmail),
-		})
-	if err != nil {
-		return err
-	}
-	zap.L().Info("Sent invite email",
-		zap.String("email", e.Address()), zap.Any("output", o))
-	return nil
-}
+const (
+	NoResend Resend = iota
+	ResendConfirmation
+)
 
 func SendInvite(
 	ctx context.Context,
-	s AWSSES,
+	ddb db.AWSDynamoDB,
 	cogIdp AWSCognitoIdentityProvider,
-	tens *Tenants,
-	email string,
-	role string) error {
+	ten *multi.Tenant,
+	username string,
+	role string,
+	resend Resend) error {
 
-	e, err := ParseEmail(email)
+	e, err := ParseEmail(username)
 	if err != nil {
 		return errors.New("invalid email")
 	}
-	ten, err := tens.ForExclusiveEmailDomain(e.Domain())
-	if err != nil {
+	_, err = db.GetUser(ctx, ddb, e.Address())
+	if err == nil {
+		return apperr.NewAlreadyExists(
+			fmt.Sprintf("%s is already signed up", e.Address()))
+	}
+	ua := []types.AttributeType{
+		{Name: aws.String("name"), Value: aws.String(e.Address())},
+		{Name: aws.String("custom:tenant"), Value: aws.String(ten.ID.String())},
+	}
+	args := cognitoidentityprovider.AdminCreateUserInput{
+		UserPoolId:     aws.String(ten.UserPoolID),
+		Username:       aws.String(e.Address()),
+		UserAttributes: ua,
+	}
+	if resend == ResendConfirmation {
+		args.MessageAction = types.MessageActionTypeResend
+	}
+	if _, err := cogIdp.AdminCreateUser(ctx, &args); err != nil {
 		return err
 	}
-	if ten.HasUser(e.Address()) {
-		return errors.New("user already invited to tenant")
-	}
-	if err := SendInviteEmail(ctx, s, cogIdp, ten, e); err != nil {
-		return err
-	}
-	return tens.UpdateTenant(ten.ID, func(t *Tenant) error {
-		ten.Users = append(ten.Users, User{
-			Email:  email,
-			Role:   role,
-			Status: "invited",
-		})
-		return nil
-	})
-}
-
-func ResendInvite(
-	ctx context.Context,
-	s AWSSES,
-	cogIdp AWSCognitoIdentityProvider,
-	tens *Tenants,
-	email string,
-	role string) error {
-
-	e, err := ParseEmail(email)
-	if err != nil {
-		return errors.New("invalid email")
-	}
-	ten, err := tens.ForExclusiveEmailDomain(e.Domain())
-	if err != nil {
-		return err
-	}
-	if _, err = ten.User(e.Address()); err != nil {
-		return errors.New("user not in tenant, cannot resend invite")
-	}
-	if err := SendInviteEmail(ctx, s, cogIdp, ten, e); err != nil {
-		return err
-	}
-	return tens.UpdateTenant(ten.ID, func(t *Tenant) error {
-		return t.UpdateUser(e.Address(), func(u *User) error {
-			u.Status = "invited"
-			u.Role = role
-			return nil
-		})
+	return db.StoreUser(ctx, ddb, &multi.User{
+		Username: e.Address(),
+		TenantID: ten.ID,
+		Role:     role,
+		Status:   multi.UserStatusInvited,
 	})
 }

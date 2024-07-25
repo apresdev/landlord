@@ -3,12 +3,15 @@ package cmd
 import (
 	"context"
 
+	"github.com/apresdev/landlord/internal/jwx"
+
+	"github.com/apresdev/landlord/internal/db"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentity"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/ses"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
@@ -17,22 +20,20 @@ type Clients interface {
 	Ctx() context.Context
 	Cfg() aws.Config
 	Sts() authx.AWSSTS
-	CogId() authx.AWSCognitoIdentity
 	CogIdp() authx.AWSCognitoIdentityProvider
-	IAM() authx.AWSIAM
 	SES() authx.AWSSES
-	Validator() authx.TokenValidator
+	Validator() jwx.TokenValidator
+	DDB() db.AWSDynamoDB
 }
 
 type clients struct {
 	ctx       context.Context
 	cfg       aws.Config
 	sts       authx.AWSSTS
-	cogId     authx.AWSCognitoIdentity
 	cogIdp    authx.AWSCognitoIdentityProvider
-	iam       authx.AWSIAM
 	ses       authx.AWSSES
-	validator authx.TokenValidator
+	validator jwx.TokenValidator
+	dynamo    db.AWSDynamoDB
 }
 
 func (c *clients) Ctx() context.Context {
@@ -47,24 +48,20 @@ func (c *clients) Sts() authx.AWSSTS {
 	return c.sts
 }
 
-func (c *clients) CogId() authx.AWSCognitoIdentity {
-	return c.cogId
-}
-
 func (c *clients) CogIdp() authx.AWSCognitoIdentityProvider {
 	return c.cogIdp
-}
-
-func (c *clients) IAM() authx.AWSIAM {
-	return c.iam
 }
 
 func (c *clients) SES() authx.AWSSES {
 	return c.ses
 }
 
-func (c *clients) Validator() authx.TokenValidator {
+func (c *clients) Validator() jwx.TokenValidator {
 	return c.validator
+}
+
+func (c *clients) DDB() db.AWSDynamoDB {
+	return c.dynamo
 }
 
 func newClients() (*clients, error) {
@@ -77,11 +74,10 @@ func newClients() (*clients, error) {
 		ctx:       ctx,
 		cfg:       awsCfg,
 		sts:       sts.NewFromConfig(awsCfg),
-		cogId:     cognitoidentity.NewFromConfig(awsCfg),
 		cogIdp:    cognitoidentityprovider.NewFromConfig(awsCfg),
-		iam:       iam.NewFromConfig(awsCfg),
 		ses:       ses.NewFromConfig(awsCfg),
-		validator: authx.NewTokenValidator(),
+		validator: jwx.NewTokenValidator(),
+		dynamo:    dynamodb.NewFromConfig(awsCfg),
 	}, nil
 }
 

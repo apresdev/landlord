@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func createServerCmd() *cobra.Command {
+func serverCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "server",
 		Short: "Run landlord as a service",

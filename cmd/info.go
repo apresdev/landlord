@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/apresdev/landlord/internal/authx"
+	"github.com/apresdev/landlord/internal/jwx"
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/spf13/cobra"
@@ -15,7 +15,7 @@ func ifSet(s, setV, unsetV string) string {
 }
 
 func displayToken(cmd *cobra.Command, tokName string, tok *jwt.Token) error {
-	desc, err := authx.JWTDesc(tokName, tok)
+	desc, err := jwx.Describe(tokName, tok)
 	if err != nil {
 		return err
 	}
@@ -23,28 +23,22 @@ func displayToken(cmd *cobra.Command, tokName string, tok *jwt.Token) error {
 	return nil
 }
 
-func createInfoCmd() *cobra.Command {
+func infoCmd() *cobra.Command {
 	var raw bool
 	var verbose bool
-	infoCmd := &cobra.Command{
+	c := &cobra.Command{
 		Use:   "info",
 		Short: "Display info about the current session",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := MustSession()
-			cmd.Printf("User pool : %s\n", s.UserPool)
-			cmd.Printf("Email     : %s\n", s.Email)
 			cmd.Printf("Tokens:\n")
 			cs := MustClients()
 			if verbose {
-				up, err := authx.GetUserPoolByNameOrID(cs.Ctx(), cs.CogIdp(), s.UserPool)
-				if err != nil {
-					return err
-				}
 				if s.AccessToken == "" {
 					cmd.Printf("  Access  : empty\n")
 				} else {
 					accessJWT, err := cs.Validator().ValidateToken(
-						cs.Ctx(), cs.Cfg().Region, up, s.AccessToken)
+						cs.Ctx(), jwx.EmptyOpaqueClientID, s.GetValidationURL(), s.AccessToken)
 					if err != nil {
 						return err
 					}
@@ -56,7 +50,7 @@ func createInfoCmd() *cobra.Command {
 					cmd.Printf("  ID      : empty\n")
 				} else {
 					idJWT, err := cs.Validator().ValidateToken(
-						cs.Ctx(), cs.Cfg().Region, up, s.IdToken)
+						cs.Ctx(), jwx.EmptyOpaqueClientID, s.GetValidationURL(), s.IdToken)
 					if err != nil {
 						return err
 					}
@@ -77,9 +71,9 @@ func createInfoCmd() *cobra.Command {
 			return nil
 		},
 	}
-	infoCmd.PersistentFlags().BoolVarP(
+	c.PersistentFlags().BoolVarP(
 		&verbose, "verbose", "v", false, "verbose output")
-	infoCmd.PersistentFlags().BoolVarP(
+	c.PersistentFlags().BoolVarP(
 		&raw, "raw", "r", false, "display raw tokens")
-	return infoCmd
+	return c
 }

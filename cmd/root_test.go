@@ -92,7 +92,7 @@ func (s *RootTestSuite) logoutAndVerify() {
 	s.NoError(err)
 	ses := cmd.MustReloadSession()
 	s.Empty(ses.UserPool)
-	s.Empty(ses.Email)
+	s.Empty(ses.ValidationURL)
 	s.Empty(ses.AccessToken)
 	s.Empty(ses.IdToken)
 	s.Empty(ses.RefreshToken)
@@ -126,41 +126,6 @@ func (s *RootTestSuite) TestSignUpScenario() {
 		"login --userpool %s --email %s --password Test-password1",
 		userPoolName, testEmail))
 	s.NoError(err)
-
-	s.logoutAndVerify()
-}
-
-func (s *RootTestSuite) TestSignUpScenarioWithAdminConfirm() {
-	testRunUUID := uuid.New().String()
-	userPoolName := fmt.Sprintf("test-userpool1-%s", testRunUUID)
-	c, err := s.CLI(fmt.Sprintf("userpool create --name %s", userPoolName))
-	s.NoError(err)
-	s.Equal("create", c.Use)
-	s.Contains(s.out.String(), "Created user pool")
-
-	testEmail := fmt.Sprintf("%s@example.com", testRunUUID)
-	c, err = s.CLI(fmt.Sprintf(
-		"signup new --userpool %s --email %s --password Test-password1",
-		userPoolName, testEmail))
-	s.NoError(err)
-	s.Equal("new", c.Use)
-
-	c, err = s.CLI(fmt.Sprintf(
-		"signup confirm --userpool %s --email %s --admin",
-		userPoolName, testEmail))
-	s.NoError(err)
-
-	c, err = s.CLI(fmt.Sprintf(
-		"login --userpool %s --email %s --password Test-password1",
-		userPoolName, testEmail))
-	s.NoError(err)
-
-	ses := cmd.MustReloadSession()
-	s.Equal(userPoolName, ses.UserPool)
-	s.Equal(testEmail, ses.Email)
-	s.NotEmpty(ses.AccessToken)
-	s.NotEmpty(ses.IdToken)
-	s.NotEmpty(ses.RefreshToken)
 
 	s.logoutAndVerify()
 }

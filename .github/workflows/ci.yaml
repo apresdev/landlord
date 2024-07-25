@@ -1,0 +1,72 @@
+name: build-and-push-docker-to-ecr
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  actions: none
+  checks: write
+  contents: read
+  deployments: none
+  id-token: write
+  issues: none
+  discussions: none
+  packages: none
+  pages: none
+  pull-requests: write
+  repository-projects: none
+  security-events: none
+  statuses: none
+
+jobs:
+  build-and-push:
+    timeout-minutes: 10
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.22.1' ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Build the release target
+        run: make setup-rel && make rel
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::767397774077:role/GitHubActionsECRServiceRoleLandlord
+          role-session-name: GitHubActionsLandlordBuildAndPush
+          aws-region: us-east-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Build and tag Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: landlord
+          IMAGE_TAG: ${{ github.sha }}
+        run: docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --platform linux/arm64 .
+
+      - name: Push Docker image to ECR
+        # TODO: Only do this on push to main.
+        #if: github.ref == 'refs/heads/main'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: landlord
+          IMAGE_TAG: ${{ github.sha }}
+        run: docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG

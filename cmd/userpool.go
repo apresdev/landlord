@@ -3,11 +3,13 @@ package cmd
 import (
 	"errors"
 
+	"github.com/apresdev/landlord/internal/db"
+
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/spf13/cobra"
 )
 
-func createCreateUserPoolCmd() *cobra.Command {
+func userPoolCreateCmd() *cobra.Command {
 	var userpool string
 	var idpool string
 	c := &cobra.Command{
@@ -18,9 +20,12 @@ func createCreateUserPoolCmd() *cobra.Command {
 				return errors.New("userpool must be set")
 			}
 			cs := MustClients()
-			tens := MustTenants(cs)
+			rootTenant, err := db.GetRootTenant(cs.Ctx(), cs.DDB())
+			if err != nil {
+				return err
+			}
 			up, err := authx.CreateUserPool(
-				cs.Ctx(), cs.CogIdp(), tens.Root().UserPoolID, userpool)
+				cs.Ctx(), cs.CogIdp(), rootTenant.UserPoolID, userpool)
 			if err != nil {
 				return err
 			}
@@ -35,7 +40,7 @@ func createCreateUserPoolCmd() *cobra.Command {
 	return c
 }
 
-func createDeleteUserPoolCmd() *cobra.Command {
+func userPoolDeleteCmd() *cobra.Command {
 	var userpool string
 	var all bool
 	c := &cobra.Command{
@@ -72,7 +77,7 @@ func createDeleteUserPoolCmd() *cobra.Command {
 	return c
 }
 
-func createListUserPoolCmd() *cobra.Command {
+func userPoolListCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "List the user pools",
@@ -90,7 +95,7 @@ func createListUserPoolCmd() *cobra.Command {
 	}
 }
 
-func createUserPoolCmd() *cobra.Command {
+func userPoolCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "userpool",
 		Short: "Identity pool sub-command",
@@ -98,8 +103,8 @@ func createUserPoolCmd() *cobra.Command {
 			return cmd.Help()
 		},
 	}
-	c.AddCommand(createCreateUserPoolCmd())
-	c.AddCommand(createDeleteUserPoolCmd())
-	c.AddCommand(createListUserPoolCmd())
+	c.AddCommand(userPoolCreateCmd())
+	c.AddCommand(userPoolDeleteCmd())
+	c.AddCommand(userPoolListCmd())
 	return c
 }
