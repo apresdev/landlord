@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 
 	"github.com/apresdev/landlord/internal/multi"
 
@@ -12,7 +13,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func apiClient(token, server string) (*client.APIClient, error) {
+	cfg := client.NewConfiguration()
+	if server == "" {
+		server = "http://localhost:8080"
+	}
+	u, err := url.JoinPath(server, "ll-auth/api")
+	if err != nil {
+		return nil, err
+	}
+	cfg.Servers[0] = client.ServerConfiguration{URL: u}
+	if token != "" {
+		cfg.DefaultHeader["Authorization"] = "Bearer " + token
+	}
+	cl := client.NewAPIClient(cfg)
+	return cl, nil
+}
+
 func restClearImpersonateCmd() *cobra.Command {
+	var server string
 	var token string
 	var refreshToken string
 	c := &cobra.Command{
@@ -32,10 +51,10 @@ func restClearImpersonateCmd() *cobra.Command {
 					return errors.New("no refresh token found")
 				}
 			}
-			cfg := client.NewConfiguration()
-			cfg.Servers[0] = client.ServerConfiguration{URL: "http://localhost:8080/ll-auth/api"}
-			cfg.DefaultHeader["Authorization"] = "Bearer " + token
-			cl := client.NewAPIClient(cfg)
+			cl, err := apiClient(token, server)
+			if err != nil {
+				return err
+			}
 			ctx := context.Background()
 			r, _, err := cl.UserAuthAPI.ClearImpersonate(ctx).ClearImpersonateRequest(
 				client.ClearImpersonateRequest{RefreshToken: s.RefreshToken}).Execute()
@@ -55,6 +74,8 @@ func restClearImpersonateCmd() *cobra.Command {
 		&token, "token", "t", "", "Token to authorize with")
 	c.PersistentFlags().StringVarP(
 		&refreshToken, "refresh-token", "f", "", "Refresh token to use")
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
 	return c
 }
 
@@ -63,6 +84,7 @@ func restImpersonateCmd() *cobra.Command {
 	var tenant string
 	var role string
 	var refreshToken string
+	var server string
 	c := &cobra.Command{
 		Use:   "impersonate",
 		Short: "Impersonate a role from a different tenant",
@@ -86,10 +108,10 @@ func restImpersonateCmd() *cobra.Command {
 					return errors.New("no refresh token found")
 				}
 			}
-			cfg := client.NewConfiguration()
-			cfg.Servers[0] = client.ServerConfiguration{URL: "http://localhost:8080/ll-auth/api"}
-			cfg.DefaultHeader["Authorization"] = "Bearer " + token
-			cl := client.NewAPIClient(cfg)
+			cl, err := apiClient(token, server)
+			if err != nil {
+				return err
+			}
 			ctx := context.Background()
 			r, _, err := cl.UserAuthAPI.Impersonate(ctx).ImpersonateRequest(
 				client.ImpersonateRequest{
@@ -117,6 +139,8 @@ func restImpersonateCmd() *cobra.Command {
 		&role, "role", "r", "", "Role to impersonate")
 	c.PersistentFlags().StringVarP(
 		&refreshToken, "refresh-token", "f", "", "Refresh token to use")
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
 	return c
 }
 
@@ -124,6 +148,7 @@ func restInviteCmd() *cobra.Command {
 	var tenant string
 	var username string
 	var role string
+	var server string
 	c := &cobra.Command{
 		Use:   "invite",
 		Short: "Send an invite to a tenant",
@@ -135,10 +160,10 @@ func restInviteCmd() *cobra.Command {
 				return errors.New("--username required")
 			}
 			s := MustSession()
-			cfg := client.NewConfiguration()
-			cfg.Servers[0] = client.ServerConfiguration{URL: "http://localhost:8080/ll-auth/api"}
-			cfg.DefaultHeader["Authorization"] = "Bearer " + s.IdToken
-			cl := client.NewAPIClient(cfg)
+			cl, err := apiClient(s.IdToken, server)
+			if err != nil {
+				return err
+			}
 			ctx := context.Background()
 			r, err := cl.UserAuthAPI.InviteToTenant(ctx).InviteRequest(
 				client.InviteRequest{
@@ -163,12 +188,15 @@ func restInviteCmd() *cobra.Command {
 		&username, "username", "u", "", "Username to invite")
 	c.PersistentFlags().StringVarP(
 		&role, "role", "r", multi.RoleGuest, "Role to impersonate")
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
 	return c
 }
 
 func restLoginCmd() *cobra.Command {
 	var username string
 	var password string
+	var server string
 	c := &cobra.Command{
 		Use:   "login",
 		Short: "Login to the server",
@@ -179,9 +207,10 @@ func restLoginCmd() *cobra.Command {
 			if password == "" {
 				return errors.New("--password required")
 			}
-			cfg := client.NewConfiguration()
-			cfg.Servers[0] = client.ServerConfiguration{URL: "http://localhost:8080/ll-auth/api"}
-			cl := client.NewAPIClient(cfg)
+			cl, err := apiClient("", server)
+			if err != nil {
+				return err
+			}
 			ctx := context.Background()
 			r, _, err := cl.UserAuthAPI.Login(ctx).LoginRequest(client.LoginRequest{
 				Username: username,
@@ -205,11 +234,14 @@ func restLoginCmd() *cobra.Command {
 		&username, "username", "u", "", "Username to login with")
 	c.PersistentFlags().StringVarP(
 		&password, "password", "p", "", "Password to login with")
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
 	return c
 }
 
 func restTenantsCmd() *cobra.Command {
 	var token string
+	var server string
 	c := &cobra.Command{
 		Use:   "tenants",
 		Short: "List the tenants for the given token",
@@ -221,10 +253,10 @@ func restTenantsCmd() *cobra.Command {
 					return errors.New("--token must be set")
 				}
 			}
-			cfg := client.NewConfiguration()
-			cfg.Servers[0] = client.ServerConfiguration{URL: "http://localhost:8080/ll-auth/api"}
-			cfg.DefaultHeader["Authorization"] = "Bearer " + token
-			cl := client.NewAPIClient(cfg)
+			cl, err := apiClient(token, server)
+			if err != nil {
+				return err
+			}
 			ctx := context.Background()
 			tenants, _, err := cl.UserAuthAPI.GetTenants(ctx).Execute()
 			if err != nil {
@@ -242,11 +274,14 @@ func restTenantsCmd() *cobra.Command {
 	}
 	c.PersistentFlags().StringVarP(
 		&token, "token", "t", "", "Token to authorize with")
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
 	return c
 }
 
 func restUsersCmd() *cobra.Command {
 	var tenant string
+	var server string
 	c := &cobra.Command{
 		Use:   "users",
 		Short: "List the users for the given tenant",
@@ -258,10 +293,10 @@ func restUsersCmd() *cobra.Command {
 			if tenant == "" {
 				return errors.New("--tenant must be set")
 			}
-			cfg := client.NewConfiguration()
-			cfg.Servers[0] = client.ServerConfiguration{URL: "http://localhost:8080/ll-auth/api"}
-			cfg.DefaultHeader["Authorization"] = "Bearer " + s.IdToken
-			cl := client.NewAPIClient(cfg)
+			cl, err := apiClient(s.IdToken, server)
+			if err != nil {
+				return err
+			}
 			ctx := context.Background()
 			o, _, err := cl.UserAuthAPI.GetUsersForTenant(ctx, tenant).Execute()
 			if err != nil {
@@ -279,6 +314,8 @@ func restUsersCmd() *cobra.Command {
 	}
 	c.PersistentFlags().StringVarP(
 		&tenant, "tenant", "T", "", "Tenant to list users for")
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
 	return c
 }
 
