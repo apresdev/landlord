@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 )
@@ -11,10 +13,10 @@ import (
 func getUserPoolClients(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
-	up *types.UserPoolType) ([]types.UserPoolClientDescription, error) {
+	userPoolID string) ([]types.UserPoolClientDescription, error) {
 
 	args := cognitoidentityprovider.ListUserPoolClientsInput{
-		UserPoolId: up.Id,
+		UserPoolId: aws.String(userPoolID),
 	}
 	o, err := cogIdp.ListUserPoolClients(ctx, &args)
 	if err != nil {
@@ -26,10 +28,10 @@ func getUserPoolClients(
 func getSingletonUserPoolClientDescription(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
-	up *types.UserPoolType) (
+	userPoolID string) (
 	*types.UserPoolClientDescription, error) {
 
-	c, err := getUserPoolClients(ctx, cogIdp, up)
+	c, err := getUserPoolClients(ctx, cogIdp, userPoolID)
 	if err != nil {
 		return nil, err
 	}
@@ -42,13 +44,16 @@ func getSingletonUserPoolClientDescription(
 	return &c[0], nil
 }
 
-func GetSingletonUserPoolClient(
+// GetUserPoolClient finds a single user pool client for the given user pool. If
+// the user pool is configured (unexpectedly) with more than one client, an
+// error is returned.
+func GetUserPoolClient(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
-	up *types.UserPoolType) (
+	userPoolID string) (
 	*types.UserPoolClientType, error) {
 
-	cd, err := getSingletonUserPoolClientDescription(ctx, cogIdp, up)
+	cd, err := getSingletonUserPoolClientDescription(ctx, cogIdp, userPoolID)
 	if err != nil {
 		return nil, err
 	}

@@ -2,32 +2,76 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
+	"slices"
+	"strings"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+
+	"github.com/apresdev/landlord/internal/apperr"
+
+	"github.com/apresdev/landlord/internal/db"
+	"github.com/apresdev/landlord/internal/multi"
+	"github.com/google/uuid"
+
+	"go.uber.org/zap"
 
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/spf13/cobra"
 )
 
-func tenantApplyCmd() *cobra.Command {
-	var tenantID string
-	var tenantName string
+func tenantActivateCmd() *cobra.Command {
+	var tenant string
 	c := &cobra.Command{
-		Use:   "apply",
-		Short: "Apply local settings to Cognito",
+		Use:   "activate",
+		Short: "Activate a tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if tenantID == "" && tenantName == "" {
-				return errors.New("tenant ID or tenant name must be set")
+			if tenant == "" {
+				return errors.New("--tenant must be set")
 			}
-			h, err := authx.ParseTenantHandle(tenantID, tenantName)
+			h, err := multi.ParseTenantHandle(tenant)
 			if err != nil {
 				return err
 			}
 			cs := MustClients()
-			tens := MustTenants(cs)
-			ten, err := tens.ResolveTenant(h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
 			}
-			err = authx.ApplyTenant(cs.Ctx(), cs.CogIdp(), ten)
+			ten.State = multi.TenantStateActive
+			err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten)
+			if err != nil {
+				return err
+			}
+			cmd.Printf("Deactivated tenant: %s\n", ten.Name)
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&tenant, "tenant", "T", "", "Name/ID of the tenant to delete")
+	return c
+}
+
+func tenantApplyCmd() *cobra.Command {
+	var tenant string
+	c := &cobra.Command{
+		Use:   "apply",
+		Short: "Apply local settings to Cognito",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if tenant == "" {
+				return errors.New("--tenant must be set")
+			}
+			h, err := multi.ParseTenantHandle(tenant)
+			if err != nil {
+				return err
+			}
+			cs := MustClients()
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			if err != nil {
+				return err
+			}
+			err = authx.ApplyTenant(cs.Ctx(), cs.DDB(), cs.CogIdp(), ten)
 			if err != nil {
 				return err
 			}
@@ -36,25 +80,19 @@ func tenantApplyCmd() *cobra.Command {
 		},
 	}
 	c.PersistentFlags().StringVarP(
-		&tenantID, "id", "I", "", "ID of the tenant to apply")
-	c.PersistentFlags().StringVarP(
-		&tenantName, "name", "n", "", "Name of the tenant to apply")
-
+		&tenant, "tenant", "T", "", "Name/ID of the tenant to apply")
 	return c
 }
 
 func tenantCreateCmd() *cobra.Command {
 	var name string
-	var fullName string
-	var customAuthDomain string
+	var description string
 	c := &cobra.Command{
 		Use:   "create",
 		Short: "Create a tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cs := MustClients()
-			tens := MustTenants(cs)
-			ten, err := tens.CreateTenant(
-				cs.Ctx(), cs.IAM(), cs.CogIdp(), name, fullName, customAuthDomain)
+			ten, err := authx.CreateTenant(cs.Ctx(), cs.DDB(), cs.CogIdp(), name, description)
 			if err != nil {
 				return err
 			}
@@ -65,71 +103,46 @@ func tenantCreateCmd() *cobra.Command {
 	c.PersistentFlags().StringVarP(
 		&name, "name", "n", "", "Name of the tenant to create")
 	c.PersistentFlags().StringVarP(
-		&fullName, "full-name", "f", "", "Full name of the tenant")
-	c.PersistentFlags().StringVarP(
-		&customAuthDomain,
-		"custom-auth-domain",
-		"",
-		"",
-		"Use this as the custom auth domain instead of the default")
+		&description, "description", "D", "", "Description of the tenant")
 	return c
 }
 
-func tenantDeleteCmd() *cobra.Command {
-	var tenantID string
-	var tenantName string
-	var all bool
+func tenantDeactivateCmd() *cobra.Command {
+	var tenant string
 	c := &cobra.Command{
-		Use:   "delete",
-		Short: "Delete a tenant",
+		Use:   "deactivate",
+		Short: "Deactivate a tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if tenantID == "" && tenantName == "" && !all {
-				return errors.New(
-					"tenant ID (--id), tenant name (--name) or --all must be set")
+			if tenant == "" {
+				return errors.New("--tenant must be set")
 			}
-			if all && (tenantID != "" || tenantName != "") {
-				return errors.New("cannot specify --all with --id or --name")
+			h, err := multi.ParseTenantHandle(tenant)
+			if err != nil {
+				return err
 			}
-			if all {
-				tens := MustTenants(MustClients())
-				err := tens.DeleteAll()
-				if err != nil {
-					return err
-				}
-				cmd.Println("Deleted all tenants")
-				return nil
-			} else {
-				h, err := authx.ParseTenantHandle(tenantID, tenantName)
-				if err != nil {
-					return err
-				}
-				tens := MustTenants(MustClients())
-				ten, err := tens.ResolveTenant(h)
-				if err != nil {
-					return err
-				}
-				err = tens.DeleteTenant(ten)
-				if err != nil {
-					return err
-				}
-				cmd.Printf("Deleted tenant: %s\n", ten.Name)
-				return nil
+			cs := MustClients()
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			if err != nil {
+				return err
 			}
+			ten.State = multi.TenantStateInactive
+			err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten)
+			if err != nil {
+				return err
+			}
+			cmd.Printf("Deactivated tenant: %s\n", ten.Name)
+			return nil
 		},
 	}
 	c.PersistentFlags().StringVarP(
-		&tenantID, "id", "I", "", "ID of the tenant to delete")
-	c.PersistentFlags().StringVarP(
-		&tenantName, "name", "n", "", "Name of the tenant to delete")
-	c.PersistentFlags().BoolVarP(
-		&all, "all", "a", false, "Delete all tenants")
+		&tenant, "tenant", "T", "", "Name/ID of the tenant to delete")
 	return c
 }
 
 func tenantEmailDomainCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "email-domain",
-		Short: "Email domain sub-command",
+		Short: "Username domain sub-command",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
 		},
@@ -140,39 +153,53 @@ func tenantEmailDomainCmd() *cobra.Command {
 }
 
 func tenantEmailDomainAddCmd() *cobra.Command {
-	var tenantID string
-	var tenantName string
+	var tenant string
 	var domain string
 	var allowed bool
 	c := &cobra.Command{
 		Use:   "add",
 		Short: "Add an email domain to a tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if tenantID == "" && tenantName == "" {
-				return errors.New("tenant ID or tenant name must be set")
+			if tenant == "" {
+				return errors.New("--tenant must be set")
 			}
 			if domain == "" {
 				return errors.New("--domain must be set")
 			}
-			h, err := authx.ParseTenantHandle(tenantID, tenantName)
+			h, err := multi.ParseTenantHandle(tenant)
 			if err != nil {
 				return err
 			}
 			cs := MustClients()
-			tens := MustTenants(cs)
-			ten, err := tens.ResolveTenant(h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
 			}
-			if allowed {
-				err = authx.AddAllowedEmailDomain(tens, ten.ID, domain)
-				if err != nil {
+			dom, err := db.GetEmailDomain(cs.Ctx(), cs.DDB(), domain)
+			if err != nil && !apperr.IsNotFound(err) {
+				return err
+			}
+			if apperr.IsNotFound(err) {
+				dom = &db.EmailDomain{Domain: domain, TenantIDs: []uuid.UUID{h.ID}}
+				if !allowed {
+					dom.Exclusive = true
+				}
+				if err := db.StoreEmailDomain(cs.Ctx(), cs.DDB(), dom); err != nil {
 					return err
 				}
 			} else {
-				err = authx.AddExclusiveEmailDomain(tens, ten.ID, domain)
-				if err != nil {
-					return err
+				if allowed {
+					if dom.Exclusive {
+						return errors.New("domain already configured as exclusive")
+					}
+					if idx := slices.Index(dom.TenantIDs, h.ID); idx == -1 {
+						fmt.Printf("domain already configured as allowed for tenant\n")
+						return nil
+					}
+					dom.TenantIDs = append(dom.TenantIDs, h.ID)
+					if err := db.StoreEmailDomain(cs.Ctx(), cs.DDB(), dom); err != nil {
+						return err
+					}
 				}
 			}
 			cmd.Printf("Added email domain %s to tenant %s\n", domain, ten.Name)
@@ -180,48 +207,53 @@ func tenantEmailDomainAddCmd() *cobra.Command {
 		},
 	}
 	c.PersistentFlags().StringVarP(
-		&tenantID, "id", "I", "", "ID of the tenant to add email domain to")
+		&tenant, "tenant", "T", "", "Name/ID of the tenant to add email domain to")
 	c.PersistentFlags().StringVarP(
-		&tenantName, "name", "n", "", "Name of the tenant to add email domain to")
-	c.PersistentFlags().StringVarP(
-		&domain, "domain", "d", "", "Email domain to add to tenant")
+		&domain, "domain", "d", "", "Username domain to add to tenant")
 	c.PersistentFlags().BoolVarP(
 		&allowed, "allowed", "", false, "Add the email domain as allowed")
 	return c
 }
 
 func tenantEmailDomainRemoveCmd() *cobra.Command {
-	var tenantID string
-	var tenantName string
+	var tenant string
 	var domain string
 	var allowed bool
 	c := &cobra.Command{
 		Use:   "remove",
 		Short: "Remove an email domain from a tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if tenantID == "" && tenantName == "" {
-				return errors.New("tenant ID or tenant name must be set")
+			if tenant == "" {
+				return errors.New("--tenant name must be set")
 			}
 			if domain == "" {
 				return errors.New("--domain must be set")
 			}
-			h, err := authx.ParseTenantHandle(tenantID, tenantName)
+			h, err := multi.ParseTenantHandle(tenant)
 			if err != nil {
 				return err
 			}
 			cs := MustClients()
-			tens := MustTenants(cs)
-			ten, err := tens.ResolveTenant(h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
 			}
-			if allowed {
-				err = authx.RemoveAllowedEmailDomain(tens, ten.ID, domain)
+			dom, err := db.GetEmailDomain(cs.Ctx(), cs.DDB(), domain)
+			if err != nil {
+				return err
+			}
+			idx := slices.Index(dom.TenantIDs, ten.ID)
+			if idx == -1 {
+				return errors.New("domain not configured for tenant")
+			}
+			dom.TenantIDs = append(dom.TenantIDs[:idx], dom.TenantIDs[idx+1:]...)
+			if len(dom.TenantIDs) == 0 {
+				err = db.DeleteEmailDomain(cs.Ctx(), cs.DDB(), domain)
 				if err != nil {
 					return err
 				}
 			} else {
-				err = authx.RemoveExclusiveEmailDomain(tens, ten.ID, domain)
+				err = db.StoreEmailDomain(cs.Ctx(), cs.DDB(), dom)
 				if err != nil {
 					return err
 				}
@@ -231,112 +263,104 @@ func tenantEmailDomainRemoveCmd() *cobra.Command {
 		},
 	}
 	c.PersistentFlags().StringVarP(
-		&tenantID, "id", "I", "", "ID of the tenant to add email domain to")
+		&tenant, "tenant", "T", "", "Name/ID of the tenant to add email domain to")
 	c.PersistentFlags().StringVarP(
-		&tenantName, "name", "n", "", "Name of the tenant to add email domain to")
-	c.PersistentFlags().StringVarP(
-		&domain, "domain", "d", "", "Email domain to add to tenant")
+		&domain, "domain", "d", "", "Username domain to add to tenant")
 	c.PersistentFlags().BoolVarP(
 		&allowed, "allowed", "", false, "Add the email domain as allowed")
 	return c
 }
 
 func tenantInitCmd() *cobra.Command {
+	var reinit bool
 	c := &cobra.Command{
 		Use:   "init",
-		Short: "Initialize a tenant 'DB'",
+		Short: "Initialize the tenant database",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cs := MustClients()
-			tens, err := authx.InitTenants(
-				cs.Ctx(), cs.Cfg(), cs.Sts(), cs.CogIdp())
+			if reinit {
+				if err := db.DeleteTables(cs.Ctx(), cs.DDB()); err != nil {
+					return err
+				}
+			}
+			err := db.Init(cs.Ctx(), cs.DDB())
 			if err != nil {
 				return err
 			}
-			if err := tens.Save(); err != nil {
-				return err
-			}
-			return nil
+			return authx.CreateRootTenant(cs.Ctx(), cs.DDB(), cs.CogIdp())
 		},
 	}
+	c.PersistentFlags().BoolVarP(
+		&reinit, "reinit", "", false, "Reinitialize the tenant database")
 	return c
 }
 
 func tenantInviteCmd() *cobra.Command {
-	var tenantID string
-	var tenantName string
-	var email string
+	var tenant string
+	var username string
 	var role string
 	c := &cobra.Command{
 		Use:   "invite",
 		Short: "Invite a user to a tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if tenantID == "" && tenantName == "" {
-				return errors.New("tenant ID (--id) or tenant name (--name)")
+			if tenant == "" {
+				return errors.New("--tenant must be set")
 			}
-			if email == "" {
-				return errors.New("email of user (--email) must be set")
+			if username == "" {
+				return errors.New("--username must be set")
 			}
-			h, err := authx.ParseTenantHandle(tenantID, tenantName)
+			h, err := multi.ParseTenantHandle(tenant)
 			if err != nil {
 				return err
 			}
 			cs := MustClients()
-			tens := MustTenants(cs)
-			ten, err := tens.ResolveTenant(h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
 			}
-			err = authx.SendInvite(cs.Ctx(), cs.SES(), cs.CogIdp(), tens, email, role)
+			err = authx.SendInvite(
+				cs.Ctx(), cs.DDB(), cs.CogIdp(), ten, username, role, authx.NoResend)
 			if err != nil {
 				return err
 			}
-			cmd.Printf("Added user %s to tenant %s\n", email, ten.Name)
+			cmd.Printf("Invited user %s to tenant %s\n", username, ten.Name)
 			return nil
 		},
 	}
 	c.PersistentFlags().StringVarP(
-		&tenantID, "id", "I", "", "ID of the tenant to add user to")
+		&tenant, "tenant", "T", "", "Name/ID of the tenant to add user to")
 	c.PersistentFlags().StringVarP(
-		&tenantName, "name", "n", "", "Name of the tenant to add user to")
+		&username, "username", "u", "", "Username of user to add to tenant")
 	c.PersistentFlags().StringVarP(
-		&email, "email", "e", "", "Email of user to add to tenant")
-	c.PersistentFlags().StringVarP(
-		&role, "role", "r", authx.RoleGuest, "Role to assign to user")
+		&role, "role", "r", multi.RoleGuest, "Role to assign to user")
 	return c
 }
 
-func displayTenant(cmd *cobra.Command, ten *authx.Tenant) {
-	if ten.FullName == "" {
+func displayTenant(cmd *cobra.Command, ten *multi.Tenant) {
+	if ten.Description == "" {
 		cmd.Printf("> %s\n", ten.Name)
 	} else {
-		cmd.Printf("> %s -- %s\n", ten.Name, ten.FullName)
+		cmd.Printf("> %s -- %s\n", ten.Name, ten.Description)
 	}
 	cmd.Printf("    ID: %s\n", ten.ID.String())
-	cmd.Printf("    Custom Auth Domain: %s\n", ten.CustomAuthDomain)
+	cmd.Printf("    State: %s\n", ten.State)
 	cmd.Printf("    User Pool: %s (%s)\n", ten.UserPoolName, ten.UserPoolID)
-	if len(ten.Users) > 0 {
-		cmd.Printf("    Users:\n")
-		for _, email := range ten.Users {
-			cmd.Printf("    * %s\n", email)
-		}
-	} else {
-		cmd.Printf("    No Users\n")
+	cmd.Printf("    Roles:\n")
+	for _, role := range ten.Roles {
+		cmd.Printf("    * %s\n", role)
 	}
-	if len(ten.AllowedEmailDomains) > 0 {
-		cmd.Printf("    Allowed Email Domains:\n")
-		for _, domain := range ten.AllowedEmailDomains {
-			cmd.Printf("    * %s\n", domain)
-		}
+	users, err := db.GetUsersForTenant(cmd.Context(), MustClients().DDB(), ten.ID)
+	if err != nil {
+		zap.L().Error("Error getting users for tenant", zap.Error(err))
 	} else {
-		cmd.Printf("    No Allowed Email Domains\n")
-	}
-	if len(ten.ExclusiveEmailDomains) > 0 {
-		cmd.Printf("    Exclusive Email Domains:\n")
-		for _, domain := range ten.ExclusiveEmailDomains {
-			cmd.Printf("    * %s\n", domain)
+		if len(users) > 0 {
+			cmd.Printf("    Users:\n")
+			for _, user := range users {
+				cmd.Printf("    * %s\n", user.Username)
+			}
+		} else {
+			cmd.Printf("    No Users\n")
 		}
-	} else {
-		cmd.Printf("    No Exclusive Email Domains\n")
 	}
 }
 
@@ -345,14 +369,140 @@ func tenantListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List the tenants",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			tens := MustTenants(MustClients())
-			for _, ten := range tens.Entries {
+			cs := MustClients()
+			tens, err := db.GetAllTenants(cs.Ctx(), cs.DDB())
+			if err != nil {
+				return err
+			}
+			if len(tens) == 0 {
+				cmd.Println("No tenants")
+				return nil
+			}
+			for _, ten := range tens {
 				displayTenant(cmd, ten)
 			}
 			return nil
 		},
 		Aliases: []string{"ls"},
 	}
+}
+
+func tenantRoleCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "role",
+		Short: "Role sub-command",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+	}
+	c.AddCommand(tenantRoleCreateCmd())
+	c.AddCommand(tenantRoleDeleteCmd())
+	return c
+}
+
+func tenantRoleCreateCmd() *cobra.Command {
+	var tenant string
+	var role string
+	c := &cobra.Command{
+		Use:   "create",
+		Short: "Create a role on a tenant",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if tenant == "" {
+				return errors.New("--tenant must be set")
+			}
+			if role == "" {
+				return errors.New("--role must be set")
+			}
+			h, err := multi.ParseTenantHandle(tenant)
+			if err != nil {
+				return err
+			}
+			cs := MustClients()
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			if err != nil {
+				return err
+			}
+			if err = ten.AddRole(role); err != nil {
+				return err
+			}
+			groupName := ten.GroupName(role)
+			_, err = cs.CogIdp().CreateGroup(cs.Ctx(),
+				&cognitoidentityprovider.CreateGroupInput{
+					GroupName:  aws.String(groupName),
+					UserPoolId: aws.String(ten.UserPoolID),
+				})
+			if err != nil {
+				return err
+			}
+			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+				return err
+			}
+			cmd.Printf("Create role %s for tenant %s\n", role, ten.Name)
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&tenant, "tenant", "T", "", "Name/ID of the tenant to create a role for")
+	c.PersistentFlags().StringVarP(
+		&role, "role", "", "", "Role to create")
+	return c
+}
+
+func tenantRoleDeleteCmd() *cobra.Command {
+	var tenant string
+	var role string
+	c := &cobra.Command{
+		Use:   "remove",
+		Short: "Remove a role from a tenant",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if tenant == "" {
+				return errors.New("--tenant must be set")
+			}
+			if role == "" {
+				return errors.New("--role must be set")
+			}
+			h, err := multi.ParseTenantHandle(tenant)
+			if err != nil {
+				return err
+			}
+			cs := MustClients()
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			if err != nil {
+				return err
+			}
+			idx := slices.Index(ten.Roles, role)
+			if idx == -1 {
+				return errors.New("role not found")
+			}
+			users, err := db.GetUsersForTenant(cs.Ctx(), cs.DDB(), ten.ID)
+			if err != nil {
+				return err
+			}
+			for _, user := range users {
+				if user.Role == role {
+					return errors.New("role still in use by user")
+				}
+			}
+			if _, err := cs.CogIdp().DeleteGroup(cs.Ctx(),
+				&cognitoidentityprovider.DeleteGroupInput{
+					GroupName:  aws.String(ten.GroupName(role)),
+					UserPoolId: aws.String(ten.UserPoolID),
+				}); err != nil {
+				return err
+			}
+			ten.Roles = append(ten.Roles[:idx], ten.Roles[idx+1:]...)
+			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+				return err
+			}
+			cmd.Printf("Removed role %s from tenant %s\n", role, ten.Name)
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&tenant, "tenant", "T", "", "Name/ID of the tenant to add email domain to")
+	c.PersistentFlags().StringVarP(
+		&role, "role", "", "", "Role to add to tenant")
+	return c
 }
 
 func tenantUserCmd() *cobra.Command {
@@ -363,114 +513,117 @@ func tenantUserCmd() *cobra.Command {
 			return cmd.Help()
 		},
 	}
-	c.AddCommand(tenantUserAddCmd())
 	c.AddCommand(tenantUserRemoveCmd())
-	return c
-}
-
-func tenantUserAddCmd() *cobra.Command {
-	var tenantID string
-	var tenantName string
-	var email string
-	c := &cobra.Command{
-		Use:   "add",
-		Short: "Add an user to a tenant without an invite",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if tenantID == "" && tenantName == "" {
-				return errors.New("tenant ID or tenant name must be set")
-			}
-			if email == "" {
-				return errors.New("--email must be set")
-			}
-			h, err := authx.ParseTenantHandle(tenantID, tenantName)
-			if err != nil {
-				return err
-			}
-			cs := MustClients()
-			tens := MustTenants(cs)
-			ten, err := tens.ResolveTenant(h)
-			if err != nil {
-				return err
-			}
-			err = tens.UpdateTenant(ten.ID, func(t *authx.Tenant) error {
-				e, err := authx.ParseEmail(email)
-				if err != nil {
-					return err
-				}
-				if t.HasUser(e.Address()) {
-					return errors.New("user already in tenant")
-				}
-				t.Users = append(t.Users, authx.User{
-					Email:  e.Address(),
-					Role:   authx.RoleGuest,
-					Status: "disabled",
-				})
-				return nil
-			})
-			cmd.Printf("Added user %s to tenant %s\n", email, ten.Name)
-			return nil
-		},
-	}
-	c.PersistentFlags().StringVarP(
-		&tenantID, "id", "I", "", "ID of the tenant to add email domain to")
-	c.PersistentFlags().StringVarP(
-		&tenantName, "name", "n", "", "Name of the tenant to add email domain to")
-	c.PersistentFlags().StringVarP(
-		&email, "email", "e", "", "Email of user to add to tenant")
+	c.AddCommand(tenantUserRoleCmd())
 	return c
 }
 
 func tenantUserRemoveCmd() *cobra.Command {
-	var tenantID string
-	var tenantName string
-	var email string
+	var tenant string
+	var username string
 	c := &cobra.Command{
 		Use:   "remove",
 		Short: "Remove a user from a tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if tenantID == "" && tenantName == "" {
-				return errors.New("tenant ID or tenant name must be set")
+			if tenant == "" {
+				return errors.New("--tenant must be set")
 			}
-			if email == "" {
-				return errors.New("--email must be set")
+			if username == "" {
+				return errors.New("--username must be set")
 			}
-			h, err := authx.ParseTenantHandle(tenantID, tenantName)
+			e, err := authx.ParseEmail(username)
+			if err != nil {
+				return err
+			}
+			h, err := multi.ParseTenantHandle(tenant)
 			if err != nil {
 				return err
 			}
 			cs := MustClients()
-			tens := MustTenants(cs)
-			ten, err := tens.ResolveTenant(h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
 			}
 			err = authx.DeleteUserFromUserPool(
-				cs.Ctx(), cs.CogIdp(), ten.UserPoolID, email)
+				cs.Ctx(), cs.CogIdp(), ten.UserPoolID, e.Address())
 			if err != nil {
+				zap.L().Info("Error deleting user from user pool", zap.Error(err))
+			}
+			if err = db.DeleteUser(cs.Ctx(), cs.DDB(), ten.ID, e.Address()); err != nil {
 				return err
 			}
-			err = tens.UpdateTenant(ten.ID, func(t *authx.Tenant) error {
-				e, err := authx.ParseEmail(email)
-				if err != nil {
-					return err
-				}
-				idx := t.UserIdx(e.Address())
-				if idx == -1 {
-					return errors.New("user not in tenant")
-				}
-				t.Users = append(t.Users[:idx], t.Users[idx+1:]...)
-				return nil
-			})
-			cmd.Printf("Removed user %s from tenant %s\n", email, ten.Name)
+			cmd.Printf("Removed user %s from tenant %s\n", e.Address(), ten.Name)
 			return nil
 		},
 	}
 	c.PersistentFlags().StringVarP(
-		&tenantID, "id", "I", "", "ID of the tenant to add email domain to")
+		&tenant, "tenant", "T", "", "Name/ID of the tenant to add email domain to")
 	c.PersistentFlags().StringVarP(
-		&tenantName, "name", "n", "", "Name of the tenant to add email domain to")
+		&username, "username", "u", "", "Username of user to add to tenant")
+	return c
+}
+
+func tenantUserRoleCmd() *cobra.Command {
+	var tenant string
+	var username string
+	var role string
+	c := &cobra.Command{
+		Use:   "role",
+		Short: "Set the role for a user",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if tenant == "" {
+				return errors.New("--tenant must be set")
+			}
+			if username == "" {
+				return errors.New("--username must be set")
+			}
+			h, err := multi.ParseTenantHandle(tenant)
+			if err != nil {
+				return err
+			}
+			cs := MustClients()
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			if err != nil {
+				return err
+			}
+			if !ten.HasRole(role) {
+				return fmt.Errorf("role '%s' does not exist, pick one of %s\n",
+					role, strings.Join(ten.Roles, ", "))
+			}
+			user, err := db.GetUser(cs.Ctx(), cs.DDB(), username)
+			if err != nil {
+				return err
+			}
+			user.Role = role
+			userGroupName := ten.GroupName(user.Role)
+			_, err = cs.CogIdp().AdminAddUserToGroup(
+				cs.Ctx(), &cognitoidentityprovider.AdminAddUserToGroupInput{
+					GroupName:  aws.String(userGroupName),
+					UserPoolId: aws.String(ten.UserPoolID),
+					Username:   aws.String(user.Username),
+				})
+			if err != nil {
+				zap.L().Warn("failed to add user to group",
+					zap.Error(err),
+					zap.String("user-pool-id", ten.UserPoolID),
+					zap.String("tenant-id", ten.ID.String()),
+					zap.String("group", userGroupName),
+					zap.String("user", user.Username))
+				return err
+			}
+			if err = db.StoreUser(cs.Ctx(), cs.DDB(), user); err != nil {
+				return err
+			}
+			fmt.Printf("Set role %s for user %s in tenant %s\n", role, username, ten.Name)
+			return nil
+		},
+	}
 	c.PersistentFlags().StringVarP(
-		&email, "email", "e", "", "Email of user to add to tenant")
+		&tenant, "tenant", "T", "", "Name/ID of the tenant")
+	c.PersistentFlags().StringVarP(
+		&username, "username", "u", "", "Username to assign role to")
+	c.PersistentFlags().StringVarP(
+		&role, "role", "r", "", "Role to assign to user")
 	return c
 }
 
@@ -482,13 +635,15 @@ func tenantCmd() *cobra.Command {
 			return cmd.Help()
 		},
 	}
+	c.AddCommand(tenantActivateCmd())
 	c.AddCommand(tenantApplyCmd())
 	c.AddCommand(tenantCreateCmd())
-	c.AddCommand(tenantDeleteCmd())
+	c.AddCommand(tenantDeactivateCmd())
 	c.AddCommand(tenantEmailDomainCmd())
 	c.AddCommand(tenantInitCmd())
 	c.AddCommand(tenantInviteCmd())
 	c.AddCommand(tenantListCmd())
+	c.AddCommand(tenantRoleCmd())
 	c.AddCommand(tenantUserCmd())
 	return c
 }

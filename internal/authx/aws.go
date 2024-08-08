@@ -3,15 +3,11 @@ package authx
 import (
 	"context"
 
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 
 	"github.com/aws/aws-sdk-go-v2/service/ses"
-
-	"github.com/aws/aws-sdk-go-v2/service/iam"
-
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentity"
 )
 
 //go:generate mockery --output ../mocks --name AWSSTS --with-expecter=true
@@ -31,54 +27,6 @@ type AWSSES interface {
 		optFns ...func(*ses.Options)) (*ses.SendEmailOutput, error)
 }
 
-//go:generate mockery --output ../mocks --name AWSIAM --with-expecter=true
-type AWSIAM interface {
-	CreateRole(
-		ctx context.Context,
-		params *iam.CreateRoleInput,
-		optFns ...func(*iam.Options)) (
-		*iam.CreateRoleOutput, error)
-	DeleteRole(
-		ctx context.Context,
-		params *iam.DeleteRoleInput,
-		optFns ...func(*iam.Options)) (
-		*iam.DeleteRoleOutput, error)
-	ListRoles(
-		ctx context.Context,
-		params *iam.ListRolesInput,
-		optFns ...func(*iam.Options)) (
-		*iam.ListRolesOutput, error)
-}
-
-//go:generate mockery --output ../mocks --name AWSCognitoIdentity --with-expecter=true
-type AWSCognitoIdentity interface {
-	CreateIdentityPool(
-		ctx context.Context,
-		params *cognitoidentity.CreateIdentityPoolInput,
-		optFns ...func(*cognitoidentity.Options)) (
-		*cognitoidentity.CreateIdentityPoolOutput, error)
-	DescribeIdentityPool(
-		ctx context.Context,
-		params *cognitoidentity.DescribeIdentityPoolInput,
-		optFns ...func(*cognitoidentity.Options)) (
-		*cognitoidentity.DescribeIdentityPoolOutput, error)
-	DeleteIdentityPool(
-		ctx context.Context,
-		params *cognitoidentity.DeleteIdentityPoolInput,
-		optFns ...func(*cognitoidentity.Options)) (
-		*cognitoidentity.DeleteIdentityPoolOutput, error)
-	ListIdentityPools(
-		ctx context.Context,
-		params *cognitoidentity.ListIdentityPoolsInput,
-		optFns ...func(*cognitoidentity.Options)) (
-		*cognitoidentity.ListIdentityPoolsOutput, error)
-	UpdateIdentityPool(
-		ctx context.Context,
-		params *cognitoidentity.UpdateIdentityPoolInput,
-		optFns ...func(*cognitoidentity.Options)) (
-		*cognitoidentity.UpdateIdentityPoolOutput, error)
-}
-
 //go:generate mockery --output ../mocks --name AWSCognitoIdentityProvider --with-expecter=true
 type AWSCognitoIdentityProvider interface {
 	InitiateAuth(
@@ -86,6 +34,11 @@ type AWSCognitoIdentityProvider interface {
 		params *cognitoidentityprovider.InitiateAuthInput,
 		optFns ...func(*cognitoidentityprovider.Options)) (
 		*cognitoidentityprovider.InitiateAuthOutput, error)
+	RespondToAuthChallenge(
+		ctx context.Context,
+		params *cognitoidentityprovider.RespondToAuthChallengeInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.RespondToAuthChallengeOutput, error)
 	CreateUserPool(
 		ctx context.Context,
 		params *cognitoidentityprovider.CreateUserPoolInput,
@@ -151,11 +104,21 @@ type AWSCognitoIdentityProvider interface {
 		params *cognitoidentityprovider.AdminDeleteUserInput,
 		optFns ...func(*cognitoidentityprovider.Options)) (
 		*cognitoidentityprovider.AdminDeleteUserOutput, error)
+	AdminGetUser(
+		ctx context.Context,
+		params *cognitoidentityprovider.AdminGetUserInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.AdminGetUserOutput, error)
 	AdminSetUserPassword(
 		ctx context.Context,
 		params *cognitoidentityprovider.AdminSetUserPasswordInput,
 		optFns ...func(*cognitoidentityprovider.Options)) (
 		*cognitoidentityprovider.AdminSetUserPasswordOutput, error)
+	AdminResetUserPassword(
+		ctx context.Context,
+		params *cognitoidentityprovider.AdminResetUserPasswordInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.AdminResetUserPasswordOutput, error)
 	AdminUpdateUserAttributes(
 		ctx context.Context,
 		params *cognitoidentityprovider.AdminUpdateUserAttributesInput,
@@ -171,4 +134,39 @@ type AWSCognitoIdentityProvider interface {
 		params *cognitoidentityprovider.ConfirmSignUpInput,
 		optFns ...func(*cognitoidentityprovider.Options)) (
 		*cognitoidentityprovider.ConfirmSignUpOutput, error)
+	CreateGroup(
+		ctx context.Context,
+		params *cognitoidentityprovider.CreateGroupInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.CreateGroupOutput, error)
+	DeleteGroup(
+		ctx context.Context,
+		params *cognitoidentityprovider.DeleteGroupInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.DeleteGroupOutput, error)
+	GetGroup(
+		ctx context.Context,
+		params *cognitoidentityprovider.GetGroupInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.GetGroupOutput, error)
+	AdminAddUserToGroup(
+		ctx context.Context,
+		params *cognitoidentityprovider.AdminAddUserToGroupInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.AdminAddUserToGroupOutput, error)
+	AdminRemoveUserFromGroup(
+		ctx context.Context,
+		params *cognitoidentityprovider.AdminRemoveUserFromGroupInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.AdminRemoveUserFromGroupOutput, error)
+	ForgotPassword(
+		ctx context.Context,
+		params *cognitoidentityprovider.ForgotPasswordInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.ForgotPasswordOutput, error)
+	ConfirmForgotPassword(
+		ctx context.Context,
+		params *cognitoidentityprovider.ConfirmForgotPasswordInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.ConfirmForgotPasswordOutput, error)
 }

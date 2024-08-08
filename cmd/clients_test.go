@@ -4,6 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/apresdev/landlord/internal/jwx"
+
+	"github.com/apresdev/landlord/internal/db"
+
 	"github.com/apresdev/landlord/cmd"
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/mocks"
@@ -14,11 +18,10 @@ type MockClients struct {
 	ctx           context.Context
 	cfg           aws.Config
 	MockSts       *mocks.AWSSTS
-	MockCogId     *mocks.AWSCognitoIdentity
 	MockCogIdp    *mocks.AWSCognitoIdentityProvider
-	MockIAM       *mocks.AWSIAM
 	MockSES       *mocks.AWSSES
 	MockValidator *mocks.TokenValidator
+	MockDynamo    *mocks.AWSDynamoDB
 }
 
 func (c *MockClients) Ctx() context.Context {
@@ -33,24 +36,20 @@ func (c *MockClients) Sts() authx.AWSSTS {
 	return c.MockSts
 }
 
-func (c *MockClients) CogId() authx.AWSCognitoIdentity {
-	return c.MockCogId
-}
-
 func (c *MockClients) CogIdp() authx.AWSCognitoIdentityProvider {
 	return c.MockCogIdp
-}
-
-func (c *MockClients) IAM() authx.AWSIAM {
-	return c.MockIAM
 }
 
 func (c *MockClients) SES() authx.AWSSES {
 	return c.MockSES
 }
 
-func (c *MockClients) Validator() authx.TokenValidator {
+func (c *MockClients) Validator() jwx.TokenValidator {
 	return c.MockValidator
+}
+
+func (c *MockClients) DDB() db.AWSDynamoDB {
+	return c.MockDynamo
 }
 
 func MockClientsOverride(t *testing.T) (*MockClients, func()) {
@@ -58,11 +57,10 @@ func MockClientsOverride(t *testing.T) (*MockClients, func()) {
 		ctx:           context.Background(),
 		cfg:           aws.Config{Region: "mock-region"},
 		MockSts:       mocks.NewAWSSTS(t),
-		MockCogId:     mocks.NewAWSCognitoIdentity(t),
 		MockCogIdp:    mocks.NewAWSCognitoIdentityProvider(t),
-		MockIAM:       mocks.NewAWSIAM(t),
 		MockSES:       mocks.NewAWSSES(t),
 		MockValidator: mocks.NewTokenValidator(t),
+		MockDynamo:    mocks.NewAWSDynamoDB(t),
 	}
 	cmd.OverrideClient = cs
 	return cs, func() {

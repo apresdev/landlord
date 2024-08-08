@@ -4,8 +4,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func createLogoutCmd() *cobra.Command {
-	logoutCmd := &cobra.Command{
+func logoutCmd() *cobra.Command {
+	c := &cobra.Command{
 		Use:   "logout",
 		Short: "Logout the current logged in player",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -17,5 +17,5 @@ func createLogoutCmd() *cobra.Command {
 			return nil
 		},
 	}
-	return logoutCmd
+	return c
 }
