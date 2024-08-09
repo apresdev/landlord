@@ -1,5 +1,5 @@
 resource "aws_cognito_user_pool" "default" {
-  name = "default-user-pool"
+  name = "landlord-default-user-pool"
 
   email_verification_subject = "Your Verification Code"
   email_verification_message = "Please use the following code: {####}"
@@ -17,7 +17,9 @@ resource "aws_cognito_user_pool" "default" {
   username_attributes      = ["email"]
   auto_verified_attributes = ["email"]
 
-  # TODO: this is not secure, just for the example!
+  # We keep the password policy constraints to a minimum, and use the advice
+  # from NIST to inform the user of their password strength. Requiring specific
+  # character sets doesn't necessarily make a strong password.
   password_policy {
     minimum_length                   = 8
     require_lowercase                = false
@@ -39,20 +41,7 @@ resource "aws_cognito_user_pool" "default" {
     required                 = true
 
     string_attribute_constraints {
-      min_length = 7
-      max_length = 256
-    }
-  }
-
-  schema {
-    attribute_data_type      = "String"
-    developer_only_attribute = false
-    mutable                  = true
-    name                     = "name"
-    required                 = true
-
-    string_attribute_constraints {
-      min_length = 3
+      min_length = 5
       max_length = 256
     }
   }
@@ -85,7 +74,7 @@ resource "aws_cognito_user_pool" "default" {
 }
 
 resource "aws_cognito_user_pool_client" "default" {
-  name                 = "default-user-pool-client"
+  name                 = "landlord-default-user-pool-client"
   explicit_auth_flows  = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"]
   user_pool_id         = aws_cognito_user_pool.default.id
   default_redirect_uri = format("https://%s", var.app_domain_name)
@@ -94,15 +83,4 @@ resource "aws_cognito_user_pool_client" "default" {
   generate_secret = true
   allowed_oauth_flows = ["code"]
   allowed_oauth_scopes = ["email", "openid"]
-}
-
-resource "aws_cognito_identity_pool" "default" {
-  identity_pool_name               = "default-identity-pool"
-  allow_unauthenticated_identities = false
-  cognito_identity_providers {
-    client_id               = aws_cognito_user_pool_client.default.id
-    provider_name           = aws_cognito_user_pool.default.endpoint
-    server_side_token_check = false
-  }
-  tags = var.tags
 }

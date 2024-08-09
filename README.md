@@ -64,9 +64,6 @@ aws sso login
 * `LANDLORD_IP_ALLOW_LIST=<comma-separated list of IPs>`: If set, the landlord
   tool will only allow requests from the given IPs. This is useful for
   restricting access to the landlord tool to a specific set of IPs.
-* `LANDLORD_DEFAULT_IDENTITY_POOL=<identity-pool-name-or-id>`: The name or
-  ID of the default identity pool. There is a single identity pool that all
-  user pools are configured with.
 * `LANDLORD_DEFAULT_USER_POOL=<user-pool-name-or-id>`: The name or ID of the
   default user pool. Tenants can have custom user pools, but the fallback is
   to use the default user pool.

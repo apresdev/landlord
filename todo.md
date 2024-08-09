@@ -1,10 +1,12 @@
 # TODOs
 
-* rename default-user-pool to landlord-default-user-pool
+* add ability to impersonate a user, not just a role
+* add ability to give a cross-tenant impersonation permission
 * MFA -- needs a QR code library of some sort
 * replace terraform for initializing the user pool with the landlord tool
   itself -- replace `landord tenant init` with just `landlord init`
 * how to handle abuse of the unauthenticated landlord APIs? 
+    * what does the WAF do to help here?
 * apply handling
     * remove a user from their old group in apply if applicable
     * remove a group from a tenant if it no longer exists
