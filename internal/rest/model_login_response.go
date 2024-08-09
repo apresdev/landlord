@@ -4,7 +4,7 @@
 package rest
 
 type LoginResponse struct {
-	Status string `json:"status"`
+	Status LoginStatus `json:"status"`
 
 	Session string `json:"session"`
 

@@ -14,11 +14,11 @@ var _ MappedNullable = &LoginResponse{}
 
 // LoginResponse struct for LoginResponse
 type LoginResponse struct {
-	Status       string `json:"status"`
-	Session      string `json:"session"`
-	IdToken      string `json:"idToken"`
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
+	Status       LoginStatus `json:"status"`
+	Session      string      `json:"session"`
+	IdToken      string      `json:"idToken"`
+	AccessToken  string      `json:"accessToken"`
+	RefreshToken string      `json:"refreshToken"`
 }
 
 type _LoginResponse LoginResponse
@@ -27,7 +27,7 @@ type _LoginResponse LoginResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewLoginResponse(status string, session string, idToken string, accessToken string, refreshToken string) *LoginResponse {
+func NewLoginResponse(status LoginStatus, session string, idToken string, accessToken string, refreshToken string) *LoginResponse {
 	this := LoginResponse{}
 	this.Status = status
 	this.Session = session
@@ -46,9 +46,9 @@ func NewLoginResponseWithDefaults() *LoginResponse {
 }
 
 // GetStatus returns the Status field value
-func (o *LoginResponse) GetStatus() string {
+func (o *LoginResponse) GetStatus() LoginStatus {
 	if o == nil {
-		var ret string
+		var ret LoginStatus
 		return ret
 	}
 
@@ -57,7 +57,7 @@ func (o *LoginResponse) GetStatus() string {
 
 // GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
-func (o *LoginResponse) GetStatusOk() (*string, bool) {
+func (o *LoginResponse) GetStatusOk() (*LoginStatus, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -65,7 +65,7 @@ func (o *LoginResponse) GetStatusOk() (*string, bool) {
 }
 
 // SetStatus sets field value
-func (o *LoginResponse) SetStatus(v string) {
+func (o *LoginResponse) SetStatus(v LoginStatus) {
 	o.Status = v
 }
 

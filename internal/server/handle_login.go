@@ -35,7 +35,8 @@ func handleLoginSubmit(a *app, c *gin.Context) error {
 		setCookie(c, appenv.AppURL(), LandlordChallengeSessionCookie, resp.Session)
 		c.Redirect(http.StatusFound, "/reset-password")
 	default:
-		zap.L().Error("unexpected login status value", zap.String("status", resp.Status))
+		zap.L().Error("unexpected login status value",
+			zap.String("status", string(resp.Status)))
 		c.String(http.StatusInternalServerError, "internal error")
 	}
 	return nil

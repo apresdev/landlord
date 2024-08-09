@@ -440,11 +440,14 @@ components:
         providerARNs:
           - ${cognito_provider_arn}
   schemas:
-    ApiStatus:
+    APIStatus:
       type: string
       enum:
         - success
         - failure
+      x-enum-varnames:
+        - APIStatusSuccess
+        - APIStatusFailure
     FieldError:
       type: object
       properties:
@@ -458,7 +461,7 @@ components:
       type: object
       properties:
         status:
-          $ref: '#/components/schemas/ApiStatus'
+          $ref: '#/components/schemas/APIStatus'
         data:
           type: object
           properties:
@@ -466,6 +469,16 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/FieldError'
+    LoginStatus:
+      type: string
+      enum:
+        - success
+        - new-password-required
+        - password-reset-required
+      x-enum-varnames:
+        - LoginStatusSuccess
+        - LoginStatusNewPasswordRequired
+        - LoginStatusPasswordResetRequired
     LoginRequest:
       type: object
       required:
@@ -486,11 +499,7 @@ components:
         - refreshToken
       properties:
         status:
-          type: string
-          enum:
-            - success
-            - new-password-required
-            - password-reset-required
+          $ref: '#/components/schemas/LoginStatus'
         session:
           type: string
         idToken:

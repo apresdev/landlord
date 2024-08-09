@@ -68,7 +68,7 @@ resource "aws_api_gateway_deployment" "default" {
 
 # TODO: This should be a system-wide deployment, not specific to this module.
 resource "aws_api_gateway_account" "default" {
-  cloudwatch_role_arn = aws_iam_role.cloudwatch.arn
+  cloudwatch_role_arn = var.cloudwatch_iam_arn
 }
 
 resource "aws_api_gateway_vpc_link" "default" {

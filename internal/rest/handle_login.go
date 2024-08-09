@@ -22,12 +22,6 @@ func clientID(c *gin.Context) jwx.OpaqueClientID {
 	return jwx.OpaqueClientID(c.ClientIP())
 }
 
-const (
-	LoginStatusSuccess               = "success"
-	LoginStatusNewPasswordRequired   = "new-password-required"
-	LoginStatusPasswordResetRequired = "password-reset-required"
-)
-
 func handleLogin(app App, c *gin.Context) error {
 	var req LoginRequest
 	if err := c.BindJSON(&req); err != nil {

@@ -8,52 +8,52 @@ import (
 	"fmt"
 )
 
-// ApiStatus the model 'ApiStatus'
-type ApiStatus string
+// APIStatus the model 'APIStatus'
+type APIStatus string
 
-// List of ApiStatus
+// List of APIStatus
 const (
-	SUCCESS ApiStatus = "success"
-	FAILURE ApiStatus = "failure"
+	APIStatusSuccess APIStatus = "success"
+	APIStatusFailure APIStatus = "failure"
 )
 
-// All allowed values of ApiStatus enum
-var AllowedApiStatusEnumValues = []ApiStatus{
+// All allowed values of APIStatus enum
+var AllowedAPIStatusEnumValues = []APIStatus{
 	"success",
 	"failure",
 }
 
-func (v *ApiStatus) UnmarshalJSON(src []byte) error {
+func (v *APIStatus) UnmarshalJSON(src []byte) error {
 	var value string
 	err := json.Unmarshal(src, &value)
 	if err != nil {
 		return err
 	}
-	enumTypeValue := ApiStatus(value)
-	for _, existing := range AllowedApiStatusEnumValues {
+	enumTypeValue := APIStatus(value)
+	for _, existing := range AllowedAPIStatusEnumValues {
 		if existing == enumTypeValue {
 			*v = enumTypeValue
 			return nil
 		}
 	}
 
-	return fmt.Errorf("%+v is not a valid ApiStatus", value)
+	return fmt.Errorf("%+v is not a valid APIStatus", value)
 }
 
-// NewApiStatusFromValue returns a pointer to a valid ApiStatus
+// NewAPIStatusFromValue returns a pointer to a valid APIStatus
 // for the value passed as argument, or an error if the value passed is not allowed by the enum
-func NewApiStatusFromValue(v string) (*ApiStatus, error) {
-	ev := ApiStatus(v)
+func NewAPIStatusFromValue(v string) (*APIStatus, error) {
+	ev := APIStatus(v)
 	if ev.IsValid() {
 		return &ev, nil
 	} else {
-		return nil, fmt.Errorf("invalid value '%v' for ApiStatus: valid values are %v", v, AllowedApiStatusEnumValues)
+		return nil, fmt.Errorf("invalid value '%v' for APIStatus: valid values are %v", v, AllowedAPIStatusEnumValues)
 	}
 }
 
 // IsValid return true if the value is valid for the enum, false otherwise
-func (v ApiStatus) IsValid() bool {
-	for _, existing := range AllowedApiStatusEnumValues {
+func (v APIStatus) IsValid() bool {
+	for _, existing := range AllowedAPIStatusEnumValues {
 		if existing == v {
 			return true
 		}
@@ -61,43 +61,43 @@ func (v ApiStatus) IsValid() bool {
 	return false
 }
 
-// Ptr returns reference to ApiStatus value
-func (v ApiStatus) Ptr() *ApiStatus {
+// Ptr returns reference to APIStatus value
+func (v APIStatus) Ptr() *APIStatus {
 	return &v
 }
 
-type NullableApiStatus struct {
-	value *ApiStatus
+type NullableAPIStatus struct {
+	value *APIStatus
 	isSet bool
 }
 
-func (v NullableApiStatus) Get() *ApiStatus {
+func (v NullableAPIStatus) Get() *APIStatus {
 	return v.value
 }
 
-func (v *NullableApiStatus) Set(val *ApiStatus) {
+func (v *NullableAPIStatus) Set(val *APIStatus) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableApiStatus) IsSet() bool {
+func (v NullableAPIStatus) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableApiStatus) Unset() {
+func (v *NullableAPIStatus) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableApiStatus(val *ApiStatus) *NullableApiStatus {
-	return &NullableApiStatus{value: val, isSet: true}
+func NewNullableAPIStatus(val *APIStatus) *NullableAPIStatus {
+	return &NullableAPIStatus{value: val, isSet: true}
 }
 
-func (v NullableApiStatus) MarshalJSON() ([]byte, error) {
+func (v NullableAPIStatus) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableApiStatus) UnmarshalJSON(src []byte) error {
+func (v *NullableAPIStatus) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
