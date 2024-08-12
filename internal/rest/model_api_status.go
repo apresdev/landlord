@@ -7,6 +7,6 @@ type ApiStatus string
 
 // List of ApiStatus
 const (
-	SUCCESS ApiStatus = "success"
-	FAILURE ApiStatus = "failure"
+	APIStatusSuccess ApiStatus = "success"
+	APIStatusFailure ApiStatus = "failure"
 )

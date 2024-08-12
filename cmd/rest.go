@@ -214,14 +214,22 @@ func restLoginCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			s := MustSession()
-			s.AccessToken = r.AccessToken
-			s.IdToken = r.IdToken
-			s.RefreshToken = r.RefreshToken
-			if err = s.SaveToFile(); err != nil {
-				return err
+			if r.Status == client.LoginStatusSuccess {
+				s := MustSession()
+				s.AccessToken = r.AccessToken
+				s.IdToken = r.IdToken
+				s.RefreshToken = r.RefreshToken
+				if err = s.SaveToFile(); err != nil {
+					return err
+				}
+				fmt.Printf("tokens stored successfully\n")
+			} else if r.Status == client.LoginStatusNewPasswordRequired {
+				fmt.Printf("new password required: session=%s\n", r.Session)
+			} else if r.Status == client.LoginStatusPasswordResetRequired {
+				fmt.Printf("password reset required: session=%s\n", r.Session)
+			} else {
+				return fmt.Errorf("unknown status: %s", r.Status)
 			}
-			fmt.Printf("tokens stored successfully\n")
 			return nil
 		},
 	}
@@ -229,6 +237,64 @@ func restLoginCmd() *cobra.Command {
 		&username, "username", "u", "", "Username to login with")
 	c.PersistentFlags().StringVarP(
 		&password, "password", "p", "", "Password to login with")
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
+	return c
+}
+
+func restNewPassword() *cobra.Command {
+	var username string
+	var password string
+	var session string
+	var server string
+	c := &cobra.Command{
+		Use:   "new-password",
+		Short: "Set a new password",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if username == "" {
+				return errors.New("--username required")
+			}
+			if password == "" {
+				return errors.New("--password required")
+			}
+			if session == "" {
+				return errors.New("--session required")
+			}
+			cl, err := apiClient("", server)
+			if err != nil {
+				return err
+			}
+			ctx := context.Background()
+			r, _, err := cl.UserAuthAPI.SetNewPassword(ctx).SetNewPasswordRequest(
+				client.SetNewPasswordRequest{
+					Username: username,
+					Password: password,
+					Session:  session,
+				}).Execute()
+			if err != nil {
+				return err
+			}
+			if r.Status == client.LoginStatusSuccess {
+				s := MustSession()
+				s.AccessToken = r.AccessToken
+				s.IdToken = r.IdToken
+				s.RefreshToken = r.RefreshToken
+				if err = s.SaveToFile(); err != nil {
+					return err
+				}
+				fmt.Printf("tokens stored successfully\n")
+			} else {
+				return fmt.Errorf("unknown status: %s", r.Status)
+			}
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&username, "username", "u", "", "Username to login with")
+	c.PersistentFlags().StringVarP(
+		&password, "password", "p", "", "Password to login with")
+	c.PersistentFlags().StringVarP(
+		&session, "session", "", "", "Session token returned from login call")
 	c.PersistentFlags().StringVarP(
 		&server, "server", "s", "", "Server to connect to")
 	return c
@@ -326,6 +392,7 @@ func restCmd() *cobra.Command {
 	c.AddCommand(restImpersonateCmd())
 	c.AddCommand(restInviteCmd())
 	c.AddCommand(restLoginCmd())
+	c.AddCommand(restNewPassword())
 	c.AddCommand(restTenantsCmd())
 	c.AddCommand(restUsersCmd())
 	return c

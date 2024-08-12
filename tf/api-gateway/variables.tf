@@ -74,3 +74,8 @@ variable "user_pool_arn" {
   description = "The ARN of the Cognito User Pool"
   type        = string
 }
+
+variable "cloudwatch_iam_arn" {
+  description = "The ARN of the IAM role for CloudWatch Logs"
+  type        = string
+}

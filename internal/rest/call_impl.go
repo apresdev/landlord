@@ -71,7 +71,7 @@ const (
 
 func newAPIError(msg string) ApiError {
 	result := ApiError{}
-	result.Status = FAILURE
+	result.Status = APIStatusFailure
 	result.Data.Errors = append(result.Data.Errors, FieldError{
 		Message: msg,
 	})

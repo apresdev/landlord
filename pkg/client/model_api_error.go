@@ -12,7 +12,7 @@ var _ MappedNullable = &APIError{}
 
 // APIError struct for APIError
 type APIError struct {
-	Status *ApiStatus    `json:"status,omitempty"`
+	Status *APIStatus    `json:"status,omitempty"`
 	Data   *APIErrorData `json:"data,omitempty"`
 }
 
@@ -34,9 +34,9 @@ func NewAPIErrorWithDefaults() *APIError {
 }
 
 // GetStatus returns the Status field value if set, zero value otherwise.
-func (o *APIError) GetStatus() ApiStatus {
+func (o *APIError) GetStatus() APIStatus {
 	if o == nil || IsNil(o.Status) {
-		var ret ApiStatus
+		var ret APIStatus
 		return ret
 	}
 	return *o.Status
@@ -44,7 +44,7 @@ func (o *APIError) GetStatus() ApiStatus {
 
 // GetStatusOk returns a tuple with the Status field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *APIError) GetStatusOk() (*ApiStatus, bool) {
+func (o *APIError) GetStatusOk() (*APIStatus, bool) {
 	if o == nil || IsNil(o.Status) {
 		return nil, false
 	}
@@ -60,8 +60,8 @@ func (o *APIError) HasStatus() bool {
 	return false
 }
 
-// SetStatus gets a reference to the given ApiStatus and assigns it to the Status field.
-func (o *APIError) SetStatus(v ApiStatus) {
+// SetStatus gets a reference to the given APIStatus and assigns it to the Status field.
+func (o *APIError) SetStatus(v APIStatus) {
 	o.Status = &v
 }
 
