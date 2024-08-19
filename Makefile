@@ -36,13 +36,13 @@ sim-test:
 .PHONY: gen
 gen:
 	./scripts/generate-go-server.sh \
-		./api/openapi.yaml \
+		./api/landlord-openapi.yaml \
 		apresdev \
 		landlord \
 		rest \
 		internal/rest
 	./scripts/generate-go-client.sh \
-		./api/openapi.yaml \
+		./api/landlord-openapi.yaml \
 		apresdev \
 		landlord \
 		client \
@@ -63,5 +63,5 @@ docker: docker-pull	## - Build the smallest and secured golang docker image base
 .PHONY: api-spec
 api-spec:
 	mkdir -p ./tmp
-	yq eval -o=json ./api/openapi.yaml > ./tmp/openapi.json
-	./scripts/add-openapi-extensions.py ./tmp/openapi.json > ./api/openapi-ext.json
+	yq eval -o=json ./api/landlord-openapi.yaml > ./tmp/landlord-openapi.json
+	./scripts/add-openapi-extensions.py ./tmp/landlord-openapi.json > ./api/landlord-openapi-ext.json

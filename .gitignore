@@ -7,3 +7,4 @@ tenants.json
 tenants.*.json
 .env.local
 .env.*.local
+.DS_Store

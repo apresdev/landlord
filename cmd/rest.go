@@ -51,7 +51,7 @@ func restClearImpersonateCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.UserAuthAPI.ClearImpersonate(ctx).ClearImpersonateRequest(
+			r, _, err := cl.AuthAPI.ClearImpersonate(ctx).ClearImpersonateRequest(
 				client.ClearImpersonateRequest{RefreshToken: s.RefreshToken}).Execute()
 			if err != nil {
 				return err
@@ -108,8 +108,8 @@ func restImpersonateCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.UserAuthAPI.Impersonate(ctx).ImpersonateRequest(
-				client.ImpersonateRequest{
+			r, _, err := cl.AuthAPI.ImpersonateRole(ctx).ImpersonateRoleRequest(
+				client.ImpersonateRoleRequest{
 					Tenant:       tenant,
 					Role:         role,
 					RefreshToken: refreshToken,
@@ -160,7 +160,7 @@ func restInviteCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, err := cl.UserAuthAPI.InviteToTenant(ctx).InviteRequest(
+			r, err := cl.AuthAPI.InviteToTenant(ctx).InviteRequest(
 				client.InviteRequest{
 					Tenant:   tenant,
 					Username: username,
@@ -207,7 +207,7 @@ func restLoginCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.UserAuthAPI.Login(ctx).LoginRequest(client.LoginRequest{
+			r, _, err := cl.AuthAPI.Login(ctx).LoginRequest(client.LoginRequest{
 				Username: username,
 				Password: password,
 			}).Execute()
@@ -265,7 +265,7 @@ func restNewPassword() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.UserAuthAPI.SetNewPassword(ctx).SetNewPasswordRequest(
+			r, _, err := cl.AuthAPI.SetNewPassword(ctx).SetNewPasswordRequest(
 				client.SetNewPasswordRequest{
 					Username: username,
 					Password: password,
@@ -319,7 +319,7 @@ func restTenantsCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			tenants, _, err := cl.UserAuthAPI.GetTenants(ctx).Execute()
+			tenants, _, err := cl.AuthAPI.GetTenants(ctx).Execute()
 			if err != nil {
 				return err
 			}
@@ -359,7 +359,7 @@ func restUsersCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			o, _, err := cl.UserAuthAPI.GetUsersForTenant(ctx, tenant).Execute()
+			o, _, err := cl.AuthAPI.GetUsersForTenant(ctx, tenant).Execute()
 			if err != nil {
 				return err
 			}

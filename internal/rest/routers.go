@@ -42,10 +42,16 @@ func getRoutes() []Route {
 			ginGetUsersForTenant,
 		},
 		{
-			"Impersonate",
+			"ImpersonateRole",
 			http.MethodPost,
-			"/ll-auth/api/impersonate",
-			ginImpersonate,
+			"/ll-auth/api/impersonate-role",
+			ginImpersonateRole,
+		},
+		{
+			"ImpersonateUser",
+			http.MethodPost,
+			"/ll-auth/api/impersonate-user",
+			ginImpersonateUser,
 		},
 		{
 			"InviteToTenant",

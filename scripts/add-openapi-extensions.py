@@ -21,6 +21,7 @@ for path in openapi["paths"]:
         }
     # see https://docs.aws.amazon.com/apigateway/latest/developerguide/enable-cors-for-resource-using-swagger-importer-tool.html
     openapi["components"]["responses"]["CorsResponse"] = {
+      "description": "built-in CORS response",
       "headers": {
         "Access-Control-Allow-Origin": {
           "schema": {

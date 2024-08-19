@@ -22,9 +22,14 @@ func ginGetUsersForTenant(c *gin.Context) {
 	callImpl(c, handleGetUsersForTenant)
 }
 
-// Impersonate - Impersonate a role within a tenant.
-func ginImpersonate(c *gin.Context) {
-	callImpl(c, handleImpersonate)
+// ImpersonateRole - Impersonate a role within a tenant.
+func ginImpersonateRole(c *gin.Context) {
+	callImpl(c, handleImpersonateRole)
+}
+
+// ImpersonateUser - Impersonate a user within a tenant.
+func ginImpersonateUser(c *gin.Context) {
+	callImpl(c, handleImpersonateUser)
 }
 
 // InviteToTenant - Invite a user to a tenant.
