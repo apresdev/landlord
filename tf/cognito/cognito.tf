@@ -6,11 +6,13 @@ resource "aws_cognito_user_pool" "default" {
 
   admin_create_user_config {
     invite_message_template {
-      email_subject = format("Invitation to join %s", var.app_domain_name)
+      email_subject = format("Invitation for %s", var.app_domain_name)
       email_message = format(
-        "Your username is {username} and temporary password is {####}\n\nClick here to sign in: https://%s",
+        "Login here: https://%s with temporary password: {####}",
         var.app_domain_name)
-      sms_message = "Your username is {username} and temporary password is {####}"
+      sms_message = format(
+        "Login here: https://%s with temporary password: {####}",
+        var.app_domain_name)
     }
   }
 
@@ -62,12 +64,28 @@ resource "aws_cognito_user_pool" "default" {
     attribute_data_type      = "String"
     developer_only_attribute = false
     mutable                  = true
-    name                     = "impersonate"
+    name                     = "impersonate_group"
     required                 = false
 
     string_attribute_constraints {
       max_length = 64
     }
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "impersonate_user"
+    required                 = false
+
+    string_attribute_constraints {
+      max_length = 128
+    }
+  }
+
+  user_pool_add_ons {
+    advanced_security_mode = "AUDIT"
   }
 
   tags = var.tags

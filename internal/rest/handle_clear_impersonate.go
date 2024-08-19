@@ -68,7 +68,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	err = authx.ClearImpersonateOnUser(
+	err = authx.ClearImpersonate(
 		c.Request.Context(), app.CogIdp(), rootTenant.UserPoolID, username)
 	if err != nil {
 		zap.L().Error("could not clear impersonation",

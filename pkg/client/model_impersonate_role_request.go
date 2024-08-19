@@ -9,40 +9,40 @@ import (
 	"fmt"
 )
 
-// checks if the ImpersonateRequest type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &ImpersonateRequest{}
+// checks if the ImpersonateRoleRequest type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &ImpersonateRoleRequest{}
 
-// ImpersonateRequest struct for ImpersonateRequest
-type ImpersonateRequest struct {
+// ImpersonateRoleRequest struct for ImpersonateRoleRequest
+type ImpersonateRoleRequest struct {
 	Tenant       string `json:"tenant"`
 	Role         string `json:"role"`
 	RefreshToken string `json:"refreshToken"`
 }
 
-type _ImpersonateRequest ImpersonateRequest
+type _ImpersonateRoleRequest ImpersonateRoleRequest
 
-// NewImpersonateRequest instantiates a new ImpersonateRequest object
+// NewImpersonateRoleRequest instantiates a new ImpersonateRoleRequest object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewImpersonateRequest(tenant string, role string, refreshToken string) *ImpersonateRequest {
-	this := ImpersonateRequest{}
+func NewImpersonateRoleRequest(tenant string, role string, refreshToken string) *ImpersonateRoleRequest {
+	this := ImpersonateRoleRequest{}
 	this.Tenant = tenant
 	this.Role = role
 	this.RefreshToken = refreshToken
 	return &this
 }
 
-// NewImpersonateRequestWithDefaults instantiates a new ImpersonateRequest object
+// NewImpersonateRoleRequestWithDefaults instantiates a new ImpersonateRoleRequest object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewImpersonateRequestWithDefaults() *ImpersonateRequest {
-	this := ImpersonateRequest{}
+func NewImpersonateRoleRequestWithDefaults() *ImpersonateRoleRequest {
+	this := ImpersonateRoleRequest{}
 	return &this
 }
 
 // GetTenant returns the Tenant field value
-func (o *ImpersonateRequest) GetTenant() string {
+func (o *ImpersonateRoleRequest) GetTenant() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -53,7 +53,7 @@ func (o *ImpersonateRequest) GetTenant() string {
 
 // GetTenantOk returns a tuple with the Tenant field value
 // and a boolean to check if the value has been set.
-func (o *ImpersonateRequest) GetTenantOk() (*string, bool) {
+func (o *ImpersonateRoleRequest) GetTenantOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -61,12 +61,12 @@ func (o *ImpersonateRequest) GetTenantOk() (*string, bool) {
 }
 
 // SetTenant sets field value
-func (o *ImpersonateRequest) SetTenant(v string) {
+func (o *ImpersonateRoleRequest) SetTenant(v string) {
 	o.Tenant = v
 }
 
 // GetRole returns the Role field value
-func (o *ImpersonateRequest) GetRole() string {
+func (o *ImpersonateRoleRequest) GetRole() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -77,7 +77,7 @@ func (o *ImpersonateRequest) GetRole() string {
 
 // GetRoleOk returns a tuple with the Role field value
 // and a boolean to check if the value has been set.
-func (o *ImpersonateRequest) GetRoleOk() (*string, bool) {
+func (o *ImpersonateRoleRequest) GetRoleOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -85,12 +85,12 @@ func (o *ImpersonateRequest) GetRoleOk() (*string, bool) {
 }
 
 // SetRole sets field value
-func (o *ImpersonateRequest) SetRole(v string) {
+func (o *ImpersonateRoleRequest) SetRole(v string) {
 	o.Role = v
 }
 
 // GetRefreshToken returns the RefreshToken field value
-func (o *ImpersonateRequest) GetRefreshToken() string {
+func (o *ImpersonateRoleRequest) GetRefreshToken() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -101,7 +101,7 @@ func (o *ImpersonateRequest) GetRefreshToken() string {
 
 // GetRefreshTokenOk returns a tuple with the RefreshToken field value
 // and a boolean to check if the value has been set.
-func (o *ImpersonateRequest) GetRefreshTokenOk() (*string, bool) {
+func (o *ImpersonateRoleRequest) GetRefreshTokenOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -109,11 +109,11 @@ func (o *ImpersonateRequest) GetRefreshTokenOk() (*string, bool) {
 }
 
 // SetRefreshToken sets field value
-func (o *ImpersonateRequest) SetRefreshToken(v string) {
+func (o *ImpersonateRoleRequest) SetRefreshToken(v string) {
 	o.RefreshToken = v
 }
 
-func (o ImpersonateRequest) MarshalJSON() ([]byte, error) {
+func (o ImpersonateRoleRequest) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -121,7 +121,7 @@ func (o ImpersonateRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o ImpersonateRequest) ToMap() (map[string]interface{}, error) {
+func (o ImpersonateRoleRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["tenant"] = o.Tenant
 	toSerialize["role"] = o.Role
@@ -129,7 +129,7 @@ func (o ImpersonateRequest) ToMap() (map[string]interface{}, error) {
 	return toSerialize, nil
 }
 
-func (o *ImpersonateRequest) UnmarshalJSON(data []byte) (err error) {
+func (o *ImpersonateRoleRequest) UnmarshalJSON(data []byte) (err error) {
 	// This validates that all required properties are included in the JSON object
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
@@ -153,53 +153,53 @@ func (o *ImpersonateRequest) UnmarshalJSON(data []byte) (err error) {
 		}
 	}
 
-	varImpersonateRequest := _ImpersonateRequest{}
+	varImpersonateRoleRequest := _ImpersonateRoleRequest{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varImpersonateRequest)
+	err = decoder.Decode(&varImpersonateRoleRequest)
 
 	if err != nil {
 		return err
 	}
 
-	*o = ImpersonateRequest(varImpersonateRequest)
+	*o = ImpersonateRoleRequest(varImpersonateRoleRequest)
 
 	return err
 }
 
-type NullableImpersonateRequest struct {
-	value *ImpersonateRequest
+type NullableImpersonateRoleRequest struct {
+	value *ImpersonateRoleRequest
 	isSet bool
 }
 
-func (v NullableImpersonateRequest) Get() *ImpersonateRequest {
+func (v NullableImpersonateRoleRequest) Get() *ImpersonateRoleRequest {
 	return v.value
 }
 
-func (v *NullableImpersonateRequest) Set(val *ImpersonateRequest) {
+func (v *NullableImpersonateRoleRequest) Set(val *ImpersonateRoleRequest) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableImpersonateRequest) IsSet() bool {
+func (v NullableImpersonateRoleRequest) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableImpersonateRequest) Unset() {
+func (v *NullableImpersonateRoleRequest) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableImpersonateRequest(val *ImpersonateRequest) *NullableImpersonateRequest {
-	return &NullableImpersonateRequest{value: val, isSet: true}
+func NewNullableImpersonateRoleRequest(val *ImpersonateRoleRequest) *NullableImpersonateRoleRequest {
+	return &NullableImpersonateRoleRequest{value: val, isSet: true}
 }
 
-func (v NullableImpersonateRequest) MarshalJSON() ([]byte, error) {
+func (v NullableImpersonateRoleRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableImpersonateRequest) UnmarshalJSON(src []byte) error {
+func (v *NullableImpersonateRoleRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

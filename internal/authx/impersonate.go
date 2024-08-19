@@ -8,20 +8,29 @@ import (
 	cogidptypes "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 )
 
-func SetImpersonateOnUser(
+const (
+	ImpersonateRoleClaim = "custom:impersonate_role"
+	ImpersonateUserClaim = "custom:impersonate_user"
+)
+
+func ImpersonateRole(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	userPoolID string,
 	username string,
-	groupName string) error {
+	roleName string) error {
 
 	input := &cognitoidentityprovider.AdminUpdateUserAttributesInput{
 		UserPoolId: aws.String(userPoolID),
 		Username:   aws.String(username),
 		UserAttributes: []cogidptypes.AttributeType{
 			{
-				Name:  aws.String("custom:impersonate"),
-				Value: aws.String(groupName),
+				Name:  aws.String(ImpersonateRoleClaim),
+				Value: aws.String(roleName),
+			},
+			{
+				Name:  aws.String(ImpersonateUserClaim),
+				Value: aws.String(""),
 			},
 		},
 	}
@@ -29,7 +38,32 @@ func SetImpersonateOnUser(
 	return err
 }
 
-func ClearImpersonateOnUser(
+func ImpersonateUser(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	userPoolID string,
+	username string,
+	impersonateUsername string) error {
+
+	input := &cognitoidentityprovider.AdminUpdateUserAttributesInput{
+		UserPoolId: aws.String(userPoolID),
+		Username:   aws.String(username),
+		UserAttributes: []cogidptypes.AttributeType{
+			{
+				Name:  aws.String(ImpersonateRoleClaim),
+				Value: aws.String(""),
+			},
+			{
+				Name:  aws.String(ImpersonateUserClaim),
+				Value: aws.String(impersonateUsername),
+			},
+		},
+	}
+	_, err := cogIdp.AdminUpdateUserAttributes(ctx, input)
+	return err
+}
+
+func ClearImpersonate(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	userPoolID string,
@@ -40,7 +74,11 @@ func ClearImpersonateOnUser(
 		Username:   aws.String(username),
 		UserAttributes: []cogidptypes.AttributeType{
 			{
-				Name:  aws.String("custom:impersonate"),
+				Name:  aws.String(ImpersonateRoleClaim),
+				Value: aws.String(""),
+			},
+			{
+				Name:  aws.String(ImpersonateUserClaim),
 				Value: aws.String(""),
 			},
 		},

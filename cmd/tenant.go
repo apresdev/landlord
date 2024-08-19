@@ -627,6 +627,54 @@ func tenantUserRoleCmd() *cobra.Command {
 	return c
 }
 
+func tenantUserPoolCmd() *cobra.Command {
+	var tenant string
+	var userpool string
+	c := &cobra.Command{
+		Use:   "userpool",
+		Short: "Set the userpool for a tenant",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if tenant == "" {
+				return errors.New("--tenant must be set")
+			}
+			if userpool == "" {
+				return errors.New("--userpool must be set")
+			}
+			h, err := multi.ParseTenantHandle(tenant)
+			if err != nil {
+				return err
+			}
+			cs := MustClients()
+			up, err := authx.GetUserPoolByNameOrID(cs.Ctx(), cs.CogIdp(), userpool)
+			if err != nil {
+				return err
+			}
+			// Ensure that there is an appropriately configured client
+			_, err = authx.GetUserPoolClient(cs.Ctx(), cs.CogIdp(), aws.ToString(up.Id))
+			if err != nil {
+				return err
+			}
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			if err != nil {
+				return err
+			}
+			ten.UserPoolID = aws.ToString(up.Id)
+			ten.UserPoolName = aws.ToString(up.Name)
+			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+				return err
+			}
+			fmt.Printf("Set userpool %s (%s) in tenant %s\n",
+				ten.UserPoolID, ten.UserPoolID, ten.Name)
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&tenant, "tenant", "T", "", "Name/ID of the tenant")
+	c.PersistentFlags().StringVarP(
+		&userpool, "userpool", "U", "", "User pool set for tenant")
+	return c
+}
+
 func tenantCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "tenant",
@@ -645,5 +693,6 @@ func tenantCmd() *cobra.Command {
 	c.AddCommand(tenantListCmd())
 	c.AddCommand(tenantRoleCmd())
 	c.AddCommand(tenantUserCmd())
+	c.AddCommand(tenantUserPoolCmd())
 	return c
 }

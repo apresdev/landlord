@@ -12,12 +12,12 @@ import (
 	"strings"
 )
 
-// UserAuthAPIService UserAuthAPI service
-type UserAuthAPIService service
+// AuthAPIService AuthAPI service
+type AuthAPIService service
 
 type ApiClearImpersonateRequest struct {
 	ctx                     context.Context
-	ApiService              *UserAuthAPIService
+	ApiService              *AuthAPIService
 	clearImpersonateRequest *ClearImpersonateRequest
 }
 
@@ -38,7 +38,7 @@ Clear any impersonation for the current user.
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiClearImpersonateRequest
 */
-func (a *UserAuthAPIService) ClearImpersonate(ctx context.Context) ApiClearImpersonateRequest {
+func (a *AuthAPIService) ClearImpersonate(ctx context.Context) ApiClearImpersonateRequest {
 	return ApiClearImpersonateRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -48,7 +48,7 @@ func (a *UserAuthAPIService) ClearImpersonate(ctx context.Context) ApiClearImper
 // Execute executes the request
 //
 //	@return ClearImpersonateResponse
-func (a *UserAuthAPIService) ClearImpersonateExecute(r ApiClearImpersonateRequest) (*ClearImpersonateResponse, *http.Response, error) {
+func (a *AuthAPIService) ClearImpersonateExecute(r ApiClearImpersonateRequest) (*ClearImpersonateResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
 		localVarPostBody    interface{}
@@ -56,7 +56,7 @@ func (a *UserAuthAPIService) ClearImpersonateExecute(r ApiClearImpersonateReques
 		localVarReturnValue *ClearImpersonateResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAuthAPIService.ClearImpersonate")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.ClearImpersonate")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -171,7 +171,7 @@ func (a *UserAuthAPIService) ClearImpersonateExecute(r ApiClearImpersonateReques
 
 type ApiGetTenantsRequest struct {
 	ctx        context.Context
-	ApiService *UserAuthAPIService
+	ApiService *AuthAPIService
 }
 
 func (r ApiGetTenantsRequest) Execute() (*TenantsResponse, *http.Response, error) {
@@ -186,7 +186,7 @@ Get a list of tenants.
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiGetTenantsRequest
 */
-func (a *UserAuthAPIService) GetTenants(ctx context.Context) ApiGetTenantsRequest {
+func (a *AuthAPIService) GetTenants(ctx context.Context) ApiGetTenantsRequest {
 	return ApiGetTenantsRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -196,7 +196,7 @@ func (a *UserAuthAPIService) GetTenants(ctx context.Context) ApiGetTenantsReques
 // Execute executes the request
 //
 //	@return TenantsResponse
-func (a *UserAuthAPIService) GetTenantsExecute(r ApiGetTenantsRequest) (*TenantsResponse, *http.Response, error) {
+func (a *AuthAPIService) GetTenantsExecute(r ApiGetTenantsRequest) (*TenantsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
@@ -204,7 +204,7 @@ func (a *UserAuthAPIService) GetTenantsExecute(r ApiGetTenantsRequest) (*Tenants
 		localVarReturnValue *TenantsResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAuthAPIService.GetTenants")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.GetTenants")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -314,7 +314,7 @@ func (a *UserAuthAPIService) GetTenantsExecute(r ApiGetTenantsRequest) (*Tenants
 
 type ApiGetUsersForTenantRequest struct {
 	ctx        context.Context
-	ApiService *UserAuthAPIService
+	ApiService *AuthAPIService
 	tenantID   string
 }
 
@@ -331,7 +331,7 @@ Get a list of users for a tenant.
 	@param tenantID The ID of the tenant to get users for.
 	@return ApiGetUsersForTenantRequest
 */
-func (a *UserAuthAPIService) GetUsersForTenant(ctx context.Context, tenantID string) ApiGetUsersForTenantRequest {
+func (a *AuthAPIService) GetUsersForTenant(ctx context.Context, tenantID string) ApiGetUsersForTenantRequest {
 	return ApiGetUsersForTenantRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -342,7 +342,7 @@ func (a *UserAuthAPIService) GetUsersForTenant(ctx context.Context, tenantID str
 // Execute executes the request
 //
 //	@return TenantUsersResponse
-func (a *UserAuthAPIService) GetUsersForTenantExecute(r ApiGetUsersForTenantRequest) (*TenantUsersResponse, *http.Response, error) {
+func (a *AuthAPIService) GetUsersForTenantExecute(r ApiGetUsersForTenantRequest) (*TenantUsersResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
@@ -350,7 +350,7 @@ func (a *UserAuthAPIService) GetUsersForTenantExecute(r ApiGetUsersForTenantRequ
 		localVarReturnValue *TenantUsersResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAuthAPIService.GetUsersForTenant")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.GetUsersForTenant")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -459,31 +459,31 @@ func (a *UserAuthAPIService) GetUsersForTenantExecute(r ApiGetUsersForTenantRequ
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiImpersonateRequest struct {
-	ctx                context.Context
-	ApiService         *UserAuthAPIService
-	impersonateRequest *ImpersonateRequest
+type ApiImpersonateRoleRequest struct {
+	ctx                    context.Context
+	ApiService             *AuthAPIService
+	impersonateRoleRequest *ImpersonateRoleRequest
 }
 
-func (r ApiImpersonateRequest) ImpersonateRequest(impersonateRequest ImpersonateRequest) ApiImpersonateRequest {
-	r.impersonateRequest = &impersonateRequest
+func (r ApiImpersonateRoleRequest) ImpersonateRoleRequest(impersonateRoleRequest ImpersonateRoleRequest) ApiImpersonateRoleRequest {
+	r.impersonateRoleRequest = &impersonateRoleRequest
 	return r
 }
 
-func (r ApiImpersonateRequest) Execute() (*ImpersonateResponse, *http.Response, error) {
-	return r.ApiService.ImpersonateExecute(r)
+func (r ApiImpersonateRoleRequest) Execute() (*ImpersonateResponse, *http.Response, error) {
+	return r.ApiService.ImpersonateRoleExecute(r)
 }
 
 /*
-Impersonate Impersonate a role within a tenant.
+ImpersonateRole Impersonate a role within a tenant.
 
 Impersonate a role within a tenant.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiImpersonateRequest
+	@return ApiImpersonateRoleRequest
 */
-func (a *UserAuthAPIService) Impersonate(ctx context.Context) ApiImpersonateRequest {
-	return ApiImpersonateRequest{
+func (a *AuthAPIService) ImpersonateRole(ctx context.Context) ApiImpersonateRoleRequest {
+	return ApiImpersonateRoleRequest{
 		ApiService: a,
 		ctx:        ctx,
 	}
@@ -492,7 +492,7 @@ func (a *UserAuthAPIService) Impersonate(ctx context.Context) ApiImpersonateRequ
 // Execute executes the request
 //
 //	@return ImpersonateResponse
-func (a *UserAuthAPIService) ImpersonateExecute(r ApiImpersonateRequest) (*ImpersonateResponse, *http.Response, error) {
+func (a *AuthAPIService) ImpersonateRoleExecute(r ApiImpersonateRoleRequest) (*ImpersonateResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
 		localVarPostBody    interface{}
@@ -500,18 +500,18 @@ func (a *UserAuthAPIService) ImpersonateExecute(r ApiImpersonateRequest) (*Imper
 		localVarReturnValue *ImpersonateResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAuthAPIService.Impersonate")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.ImpersonateRole")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ll-auth/api/impersonate"
+	localVarPath := localBasePath + "/ll-auth/api/impersonate-role"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.impersonateRequest == nil {
-		return localVarReturnValue, nil, reportError("impersonateRequest is required and must be specified")
+	if r.impersonateRoleRequest == nil {
+		return localVarReturnValue, nil, reportError("impersonateRoleRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -532,7 +532,161 @@ func (a *UserAuthAPIService) ImpersonateExecute(r ApiImpersonateRequest) (*Imper
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.impersonateRequest
+	localVarPostBody = r.impersonateRoleRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v APIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v APIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v APIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v APIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiImpersonateUserRequest struct {
+	ctx                    context.Context
+	ApiService             *AuthAPIService
+	impersonateUserRequest *ImpersonateUserRequest
+}
+
+func (r ApiImpersonateUserRequest) ImpersonateUserRequest(impersonateUserRequest ImpersonateUserRequest) ApiImpersonateUserRequest {
+	r.impersonateUserRequest = &impersonateUserRequest
+	return r
+}
+
+func (r ApiImpersonateUserRequest) Execute() (*ImpersonateResponse, *http.Response, error) {
+	return r.ApiService.ImpersonateUserExecute(r)
+}
+
+/*
+ImpersonateUser Impersonate a user within a tenant.
+
+Impersonate a user within a tenant.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiImpersonateUserRequest
+*/
+func (a *AuthAPIService) ImpersonateUser(ctx context.Context) ApiImpersonateUserRequest {
+	return ApiImpersonateUserRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return ImpersonateResponse
+func (a *AuthAPIService) ImpersonateUserExecute(r ApiImpersonateUserRequest) (*ImpersonateResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ImpersonateResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.ImpersonateUser")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ll-auth/api/impersonate-user"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.impersonateUserRequest == nil {
+		return localVarReturnValue, nil, reportError("impersonateUserRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.impersonateUserRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -615,7 +769,7 @@ func (a *UserAuthAPIService) ImpersonateExecute(r ApiImpersonateRequest) (*Imper
 
 type ApiInviteToTenantRequest struct {
 	ctx           context.Context
-	ApiService    *UserAuthAPIService
+	ApiService    *AuthAPIService
 	inviteRequest *InviteRequest
 }
 
@@ -636,7 +790,7 @@ Invite a new user to join a tenant.
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiInviteToTenantRequest
 */
-func (a *UserAuthAPIService) InviteToTenant(ctx context.Context) ApiInviteToTenantRequest {
+func (a *AuthAPIService) InviteToTenant(ctx context.Context) ApiInviteToTenantRequest {
 	return ApiInviteToTenantRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -644,14 +798,14 @@ func (a *UserAuthAPIService) InviteToTenant(ctx context.Context) ApiInviteToTena
 }
 
 // Execute executes the request
-func (a *UserAuthAPIService) InviteToTenantExecute(r ApiInviteToTenantRequest) (*http.Response, error) {
+func (a *AuthAPIService) InviteToTenantExecute(r ApiInviteToTenantRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod = http.MethodPost
 		localVarPostBody   interface{}
 		formFiles          []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAuthAPIService.InviteToTenant")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.InviteToTenant")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -757,7 +911,7 @@ func (a *UserAuthAPIService) InviteToTenantExecute(r ApiInviteToTenantRequest) (
 
 type ApiLoginRequest struct {
 	ctx          context.Context
-	ApiService   *UserAuthAPIService
+	ApiService   *AuthAPIService
 	loginRequest *LoginRequest
 }
 
@@ -778,7 +932,7 @@ Initiated a login with a username and password.
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiLoginRequest
 */
-func (a *UserAuthAPIService) Login(ctx context.Context) ApiLoginRequest {
+func (a *AuthAPIService) Login(ctx context.Context) ApiLoginRequest {
 	return ApiLoginRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -788,7 +942,7 @@ func (a *UserAuthAPIService) Login(ctx context.Context) ApiLoginRequest {
 // Execute executes the request
 //
 //	@return LoginResponse
-func (a *UserAuthAPIService) LoginExecute(r ApiLoginRequest) (*LoginResponse, *http.Response, error) {
+func (a *AuthAPIService) LoginExecute(r ApiLoginRequest) (*LoginResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
 		localVarPostBody    interface{}
@@ -796,7 +950,7 @@ func (a *UserAuthAPIService) LoginExecute(r ApiLoginRequest) (*LoginResponse, *h
 		localVarReturnValue *LoginResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAuthAPIService.Login")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.Login")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -911,7 +1065,7 @@ func (a *UserAuthAPIService) LoginExecute(r ApiLoginRequest) (*LoginResponse, *h
 
 type ApiRecoverPasswordRequest struct {
 	ctx                    context.Context
-	ApiService             *UserAuthAPIService
+	ApiService             *AuthAPIService
 	recoverPasswordRequest *RecoverPasswordRequest
 }
 
@@ -932,7 +1086,7 @@ Recover a password.
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiRecoverPasswordRequest
 */
-func (a *UserAuthAPIService) RecoverPassword(ctx context.Context) ApiRecoverPasswordRequest {
+func (a *AuthAPIService) RecoverPassword(ctx context.Context) ApiRecoverPasswordRequest {
 	return ApiRecoverPasswordRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -942,7 +1096,7 @@ func (a *UserAuthAPIService) RecoverPassword(ctx context.Context) ApiRecoverPass
 // Execute executes the request
 //
 //	@return RecoverPasswordResponse
-func (a *UserAuthAPIService) RecoverPasswordExecute(r ApiRecoverPasswordRequest) (*RecoverPasswordResponse, *http.Response, error) {
+func (a *AuthAPIService) RecoverPasswordExecute(r ApiRecoverPasswordRequest) (*RecoverPasswordResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
 		localVarPostBody    interface{}
@@ -950,7 +1104,7 @@ func (a *UserAuthAPIService) RecoverPasswordExecute(r ApiRecoverPasswordRequest)
 		localVarReturnValue *RecoverPasswordResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAuthAPIService.RecoverPassword")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.RecoverPassword")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1065,7 +1219,7 @@ func (a *UserAuthAPIService) RecoverPasswordExecute(r ApiRecoverPasswordRequest)
 
 type ApiResetPasswordRequest struct {
 	ctx                  context.Context
-	ApiService           *UserAuthAPIService
+	ApiService           *AuthAPIService
 	resetPasswordRequest *ResetPasswordRequest
 }
 
@@ -1086,7 +1240,7 @@ Complete resetting a password.
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiResetPasswordRequest
 */
-func (a *UserAuthAPIService) ResetPassword(ctx context.Context) ApiResetPasswordRequest {
+func (a *AuthAPIService) ResetPassword(ctx context.Context) ApiResetPasswordRequest {
 	return ApiResetPasswordRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1094,14 +1248,14 @@ func (a *UserAuthAPIService) ResetPassword(ctx context.Context) ApiResetPassword
 }
 
 // Execute executes the request
-func (a *UserAuthAPIService) ResetPasswordExecute(r ApiResetPasswordRequest) (*http.Response, error) {
+func (a *AuthAPIService) ResetPasswordExecute(r ApiResetPasswordRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod = http.MethodPost
 		localVarPostBody   interface{}
 		formFiles          []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAuthAPIService.ResetPassword")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.ResetPassword")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1207,7 +1361,7 @@ func (a *UserAuthAPIService) ResetPasswordExecute(r ApiResetPasswordRequest) (*h
 
 type ApiSetNewPasswordRequest struct {
 	ctx                   context.Context
-	ApiService            *UserAuthAPIService
+	ApiService            *AuthAPIService
 	setNewPasswordRequest *SetNewPasswordRequest
 }
 
@@ -1228,7 +1382,7 @@ Set a new password after being issued a temporary password.
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiSetNewPasswordRequest
 */
-func (a *UserAuthAPIService) SetNewPassword(ctx context.Context) ApiSetNewPasswordRequest {
+func (a *AuthAPIService) SetNewPassword(ctx context.Context) ApiSetNewPasswordRequest {
 	return ApiSetNewPasswordRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1238,7 +1392,7 @@ func (a *UserAuthAPIService) SetNewPassword(ctx context.Context) ApiSetNewPasswo
 // Execute executes the request
 //
 //	@return LoginResponse
-func (a *UserAuthAPIService) SetNewPasswordExecute(r ApiSetNewPasswordRequest) (*LoginResponse, *http.Response, error) {
+func (a *AuthAPIService) SetNewPasswordExecute(r ApiSetNewPasswordRequest) (*LoginResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
 		localVarPostBody    interface{}
@@ -1246,7 +1400,7 @@ func (a *UserAuthAPIService) SetNewPasswordExecute(r ApiSetNewPasswordRequest) (
 		localVarReturnValue *LoginResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAuthAPIService.SetNewPassword")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.SetNewPassword")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
@@ -1361,7 +1515,7 @@ func (a *UserAuthAPIService) SetNewPasswordExecute(r ApiSetNewPasswordRequest) (
 
 type ApiUpdateUserRequest struct {
 	ctx               context.Context
-	ApiService        *UserAuthAPIService
+	ApiService        *AuthAPIService
 	tenantID          string
 	username          string
 	updateUserRequest *UpdateUserRequest
@@ -1386,7 +1540,7 @@ Update a user's settings.
 	@param username The username of the user to update.
 	@return ApiUpdateUserRequest
 */
-func (a *UserAuthAPIService) UpdateUser(ctx context.Context, tenantID string, username string) ApiUpdateUserRequest {
+func (a *AuthAPIService) UpdateUser(ctx context.Context, tenantID string, username string) ApiUpdateUserRequest {
 	return ApiUpdateUserRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1396,14 +1550,14 @@ func (a *UserAuthAPIService) UpdateUser(ctx context.Context, tenantID string, us
 }
 
 // Execute executes the request
-func (a *UserAuthAPIService) UpdateUserExecute(r ApiUpdateUserRequest) (*http.Response, error) {
+func (a *AuthAPIService) UpdateUserExecute(r ApiUpdateUserRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod = http.MethodPut
 		localVarPostBody   interface{}
 		formFiles          []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "UserAuthAPIService.UpdateUser")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.UpdateUser")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}

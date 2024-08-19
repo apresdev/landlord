@@ -20,15 +20,15 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleImpersonate(app App, c *gin.Context) error {
+func isRequestAuthorizedForRoot(app App, c *gin.Context) (*jwt.Token, error) {
 	t, ok := c.Get(TokenKey)
 	if !ok {
-		return apperr.NewUnauthorized("no token")
+		return nil, apperr.NewUnauthorized("no token")
 	}
 	tok, ok := t.(*jwt.Token)
 	if !ok {
 		zap.L().Error("could not convert token to *jwt.Token")
-		return apperr.NewUnauthorized("no token")
+		return nil, apperr.NewUnauthorized("no token")
 	}
 	cid := clientID(c)
 	groups, err := jwx.GetClaimsStrings(tok, "cognito:groups")
@@ -37,7 +37,7 @@ func handleImpersonate(app App, c *gin.Context) error {
 			zap.String("clientID", string(cid)),
 			zap.Error(err),
 			zap.Any("token", tok))
-		return apperr.NewUnauthorized("no groups")
+		return nil, apperr.NewUnauthorized("no groups")
 	}
 	roles, err := authx.ParseRolesFromGroups(groups)
 	if err != nil {
@@ -45,20 +45,28 @@ func handleImpersonate(app App, c *gin.Context) error {
 			zap.String("clientID", string(cid)),
 			zap.Error(err),
 			zap.Any("groups", groups))
-		return apperr.NewUnauthorized("no groups")
+		return nil, apperr.NewUnauthorized("no groups")
 	}
 	rootTenant, err := db.GetRootTenant(c.Request.Context(), app.DDB())
 	if err != nil {
 		zap.L().Error("error fetching root tenant", zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	if !authx.IsAuthorizedForTenant(rootTenant, roles) {
 		zap.L().Info("not authorized for root",
 			zap.String("clientID", string(cid)),
 			zap.Any("groups", groups))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
-	var req ImpersonateRequest
+	return tok, nil
+}
+
+func handleImpersonateUser(app App, c *gin.Context) error {
+	tok, err := isRequestAuthorizedForRoot(app, c)
+	if err != nil {
+		return err
+	}
+	var req ImpersonateRoleRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
@@ -70,6 +78,7 @@ func handleImpersonate(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
+	cid := clientID(c)
 	username, err := jwx.GetClaimString(tok, "name")
 	if err != nil {
 		zap.L().Error("could not get username from token",
@@ -78,7 +87,7 @@ func handleImpersonate(app App, c *gin.Context) error {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	userGroupName := ten.GroupName(req.Role)
-	err = authx.SetImpersonateOnUser(
+	err = authx.ImpersonateRole(
 		c.Request.Context(), app.CogIdp(), ten.UserPoolID, username, userGroupName)
 	if err != nil {
 		zap.L().Error("could not set impersonate on user",

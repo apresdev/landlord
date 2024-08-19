@@ -43,7 +43,7 @@ type APIClient struct {
 
 	// API Services
 
-	UserAuthAPI *UserAuthAPIService
+	AuthAPI *AuthAPIService
 }
 
 type service struct {
@@ -62,7 +62,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
-	c.UserAuthAPI = (*UserAuthAPIService)(&c.common)
+	c.AuthAPI = (*AuthAPIService)(&c.common)
 
 	return c
 }

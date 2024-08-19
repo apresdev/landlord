@@ -87,7 +87,6 @@ func callImpl(c *gin.Context, impl func(App, *gin.Context) error) {
 	}
 	var sb strings.Builder
 	_ = c.Request.Header.Write(&sb)
-	zap.L().Info("Test request headers", zap.String("headers", sb.String()))
 	app, ok := a.(App)
 	if !ok {
 		zap.L().Error(errCouldNotConvertContextToApp)

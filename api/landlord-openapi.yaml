@@ -6,8 +6,8 @@ info:
   contact:
     email: info@apres.dev
 tags:
-  - name: UserAuth
-    description: User authentication operations
+  - name: Auth
+    description: Authentication operations
 servers:
   - url: http://localhost:8080
     description: The default testing URL.
@@ -18,7 +18,7 @@ paths:
       operationId: login
       summary: Login with a username and password.
       tags:
-        - UserAuth
+        - Auth
       parameters: []
       requestBody:
         $ref: "#/components/requestBodies/LoginRequest"
@@ -41,7 +41,7 @@ paths:
       operationId: getTenants
       summary: Get a list of tenants.
       tags:
-      - UserAuth
+      - Auth
       parameters: []
       description: Get a list of tenants.
       responses:
@@ -62,7 +62,7 @@ paths:
       operationId: getUsersForTenant
       summary: Get a list of users for a tenant.
       tags:
-        - UserAuth
+        - Auth
       parameters:
         - name: tenantID
           in: path
@@ -89,7 +89,7 @@ paths:
       operationId: updateUser
       summary: Update the user
       tags:
-        - UserAuth
+        - Auth
       parameters:
         - name: tenantID
           in: path
@@ -124,7 +124,7 @@ paths:
       operationId: inviteToTenant
       summary: Invite a user to a tenant.
       tags:
-        - UserAuth
+        - Auth
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/InviteRequest"
@@ -142,16 +142,39 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-  /ll-auth/api/impersonate:
+  /ll-auth/api/impersonate-role:
     post:
-      operationId: impersonate
+      operationId: impersonateRole
       summary: Impersonate a role within a tenant.
       tags:
-        - UserAuth
+        - Auth
       parameters: [ ]
       requestBody:
-        $ref: "#/components/requestBodies/ImpersonateRequest"
+        $ref: "#/components/requestBodies/ImpersonateRoleRequest"
       description: Impersonate a role within a tenant.
+      responses:
+        "200":
+          $ref: '#/components/responses/ImpersonateResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+  /ll-auth/api/impersonate-user:
+    post:
+      operationId: impersonateUser
+      summary: Impersonate a user within a tenant.
+      tags:
+        - Auth
+      parameters: [ ]
+      requestBody:
+        $ref: "#/components/requestBodies/ImpersonateUserRequest"
+      description: Impersonate a user within a tenant.
       responses:
         "200":
           $ref: '#/components/responses/ImpersonateResponse'
@@ -170,7 +193,7 @@ paths:
       operationId: clearImpersonate
       summary: Clear any impersonation.
       tags:
-        - UserAuth
+        - Auth
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/ClearImpersonateRequest"
@@ -193,7 +216,7 @@ paths:
       operationId: setNewPassword
       summary: Set a new password.
       tags:
-        - UserAuth
+        - Auth
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/SetNewPasswordRequest"
@@ -217,7 +240,7 @@ paths:
       operationId: recoverPassword
       summary: Recover a password.
       tags:
-        - UserAuth
+        - Auth
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/RecoverPasswordRequest"
@@ -241,7 +264,7 @@ paths:
       operationId: resetPassword
       summary: Reset a password.
       tags:
-        - UserAuth
+        - Auth
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/ResetPasswordRequest"
@@ -269,12 +292,18 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/LoginRequest'
-    ImpersonateRequest:
+    ImpersonateRoleRequest:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ImpersonateRequest'
+            $ref: '#/components/schemas/ImpersonateRoleRequest'
+    ImpersonateUserRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ImpersonateUserRequest'
     ClearImpersonateRequest:
       required: true
       content:
@@ -553,7 +582,7 @@ components:
                   - inactive
                   - invited
                   - active
-    ImpersonateRequest:
+    ImpersonateRoleRequest:
       type: object
       required:
         - tenant
@@ -564,6 +593,20 @@ components:
           type: string
         role:
           type: string
+        refreshToken:
+          type: string
+    ImpersonateUserRequest:
+      type: object
+      required:
+        - tenant
+        - username
+        - refreshToken
+      properties:
+        tenant:
+          type: string
+        username:
+          type: string
+          format: uuid
         refreshToken:
           type: string
     ImpersonateResponse:

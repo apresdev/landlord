@@ -3,7 +3,7 @@
 
 package rest
 
-type ImpersonateRequest struct {
+type ImpersonateRoleRequest struct {
 	Tenant string `json:"tenant"`
 
 	Role string `json:"role"`
