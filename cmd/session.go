@@ -68,6 +68,7 @@ func loadSessionFromFile() (*Session, error) {
 
 func (s *Session) Logout() error {
 	s.ValidationURL = ""
+	s.UserPool = ""
 	s.AccessToken = ""
 	s.IdToken = ""
 	s.RefreshToken = ""

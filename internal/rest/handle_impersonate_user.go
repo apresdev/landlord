@@ -31,7 +31,7 @@ func isRequestAuthorizedForRoot(app App, c *gin.Context) (*jwt.Token, error) {
 		return nil, apperr.NewUnauthorized("no token")
 	}
 	cid := clientID(c)
-	groups, err := jwx.GetClaimsStrings(tok, "cognito:groups")
+	groups, err := jwx.GetClaimStrings(tok, authx.CognitoGroupsClaim)
 	if err != nil {
 		zap.L().Error("could not get groups",
 			zap.String("clientID", string(cid)),
@@ -66,7 +66,7 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	var req ImpersonateRoleRequest
+	var req ImpersonateUserRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
@@ -79,22 +79,21 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 		return apperr.NewBadRequest(err.Error())
 	}
 	cid := clientID(c)
-	username, err := jwx.GetClaimString(tok, "name")
+	username, err := jwx.GetClaimString(tok, authx.EmailClaim)
 	if err != nil {
 		zap.L().Error("could not get username from token",
 			zap.String("clientID", string(cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	userGroupName := ten.GroupName(req.Role)
-	err = authx.ImpersonateRole(
-		c.Request.Context(), app.CogIdp(), ten.UserPoolID, username, userGroupName)
+	err = authx.ImpersonateUser(
+		c.Request.Context(), app.CogIdp(), ten.UserPoolID, username, req.Username)
 	if err != nil {
 		zap.L().Error("could not set impersonate on user",
 			zap.String("clientID", string(cid)),
 			zap.String("userPoolID", ten.UserPoolID),
 			zap.String("username", username),
-			zap.String("groupName", userGroupName),
+			zap.String("impersonateUsername", req.Username),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -106,7 +105,7 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 			zap.Error(err))
 		return err
 	}
-	sub, err := jwx.GetClaimString(tok, "sub")
+	sub, err := jwx.GetClaimString(tok, authx.SubClaim)
 	if err != nil {
 		zap.L().Error("could not get sub from token",
 			zap.String("clientID", string(cid)),

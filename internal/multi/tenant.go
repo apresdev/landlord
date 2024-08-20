@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	RoleAdmin             = "admin"
 	RoleGuest             = "guest"
 	RootTenantName        = "root"
 	RootTenantDescription = "Root Tenant"

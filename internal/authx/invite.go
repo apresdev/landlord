@@ -41,7 +41,6 @@ func SendInvite(
 			fmt.Sprintf("%s is already signed up", e.Address()))
 	}
 	ua := []types.AttributeType{
-		{Name: aws.String("name"), Value: aws.String(e.Address())},
 		{Name: aws.String("custom:tenant"), Value: aws.String(ten.ID.String())},
 	}
 	args := cognitoidentityprovider.AdminCreateUserInput{

@@ -26,7 +26,7 @@ func resolveUser(c *gin.Context) (*UserResolution, error) {
 		return nil, apperr.NewUnauthorized("no token")
 	}
 	cid := clientID(c)
-	groups, err := jwx.GetClaimsStrings(tok, "cognito:groups")
+	groups, err := jwx.GetClaimStrings(tok, authx.CognitoGroupsClaim)
 	if !ok {
 		zap.L().Error("could not get groups",
 			zap.String("clientID", string(cid)),
@@ -42,7 +42,7 @@ func resolveUser(c *gin.Context) (*UserResolution, error) {
 			zap.Any("groups", groups))
 		return nil, apperr.NewUnauthorized("no groups")
 	}
-	username, err := jwx.GetClaimString(tok, "name")
+	username, err := jwx.GetClaimString(tok, authx.EmailClaim)
 	return &UserResolution{
 		Username: username,
 		Roles:    roles,

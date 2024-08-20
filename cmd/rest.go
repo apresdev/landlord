@@ -61,7 +61,7 @@ func restClearImpersonateCmd() *cobra.Command {
 			if err = s.SaveToFile(); err != nil {
 				return err
 			}
-			fmt.Printf("new tokens stored successfully\n")
+			cmd.Printf("new tokens stored successfully\n")
 			return nil
 		},
 	}
@@ -74,14 +74,14 @@ func restClearImpersonateCmd() *cobra.Command {
 	return c
 }
 
-func restImpersonateCmd() *cobra.Command {
+func restImpersonateRoleCmd() *cobra.Command {
 	var token string
 	var tenant string
 	var role string
 	var refreshToken string
 	var server string
 	c := &cobra.Command{
-		Use:   "impersonate",
+		Use:   "impersonate-role",
 		Short: "Impersonate a role from a different tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if tenant == "" {
@@ -122,7 +122,7 @@ func restImpersonateCmd() *cobra.Command {
 			if err = s.SaveToFile(); err != nil {
 				return err
 			}
-			fmt.Printf("new tokens stored successfully\n")
+			cmd.Printf("new tokens stored successfully\n")
 			return nil
 		},
 	}
@@ -132,6 +132,71 @@ func restImpersonateCmd() *cobra.Command {
 		&tenant, "tenant", "T", "", "Tenant to impersonate")
 	c.PersistentFlags().StringVarP(
 		&role, "role", "r", "", "Role to impersonate")
+	c.PersistentFlags().StringVarP(
+		&refreshToken, "refresh-token", "f", "", "Refresh token to use")
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
+	return c
+}
+
+func restImpersonateUserCmd() *cobra.Command {
+	var token string
+	var tenant string
+	var username string
+	var refreshToken string
+	var server string
+	c := &cobra.Command{
+		Use:   "impersonate-user",
+		Short: "Impersonate a user from a different tenant",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if tenant == "" {
+				return errors.New("--tenant required")
+			}
+			if username == "" {
+				return errors.New("--username required")
+			}
+			s := MustSession()
+			if token == "" {
+				token = s.IdToken
+				if token == "" {
+					return errors.New("no token found")
+				}
+			}
+			if refreshToken == "" {
+				refreshToken = s.RefreshToken
+				if refreshToken == "" {
+					return errors.New("no refresh token found")
+				}
+			}
+			cl, err := apiClient(token, server)
+			if err != nil {
+				return err
+			}
+			ctx := context.Background()
+			r, _, err := cl.AuthAPI.ImpersonateUser(ctx).ImpersonateUserRequest(
+				client.ImpersonateUserRequest{
+					Tenant:       tenant,
+					Username:     username,
+					RefreshToken: refreshToken,
+				}).Execute()
+			if err != nil {
+				return err
+			}
+			s.AccessToken = r.AccessToken
+			s.IdToken = r.IdToken
+			if err = s.SaveToFile(); err != nil {
+				return err
+			}
+			cmd.Printf("new tokens stored successfully\n")
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&token, "token", "t", "", "Token to authorize with")
+	c.PersistentFlags().StringVarP(
+		&tenant, "tenant", "T", "", "Tenant to impersonate")
+	c.PersistentFlags().StringVarP(
+		&username, "username", "u", "", "Username to impersonate")
 	c.PersistentFlags().StringVarP(
 		&refreshToken, "refresh-token", "f", "", "Refresh token to use")
 	c.PersistentFlags().StringVarP(
@@ -173,7 +238,7 @@ func restInviteCmd() *cobra.Command {
 				}
 				return err
 			}
-			fmt.Printf("invitation sent\n")
+			cmd.Printf("invitation sent\n")
 			return nil
 		},
 	}
@@ -222,11 +287,11 @@ func restLoginCmd() *cobra.Command {
 				if err = s.SaveToFile(); err != nil {
 					return err
 				}
-				fmt.Printf("tokens stored successfully\n")
+				cmd.Printf("tokens stored successfully\n")
 			} else if r.Status == client.LoginStatusNewPasswordRequired {
-				fmt.Printf("new password required: session=%s\n", r.Session)
+				cmd.Printf("new password required: session=%s\n", r.Session)
 			} else if r.Status == client.LoginStatusPasswordResetRequired {
-				fmt.Printf("password reset required: session=%s\n", r.Session)
+				cmd.Printf("password reset required: session=%s\n", r.Session)
 			} else {
 				return fmt.Errorf("unknown status: %s", r.Status)
 			}
@@ -282,7 +347,7 @@ func restNewPassword() *cobra.Command {
 				if err = s.SaveToFile(); err != nil {
 					return err
 				}
-				fmt.Printf("tokens stored successfully\n")
+				cmd.Printf("tokens stored successfully\n")
 			} else {
 				return fmt.Errorf("unknown status: %s", r.Status)
 			}
@@ -324,10 +389,10 @@ func restTenantsCmd() *cobra.Command {
 				return err
 			}
 			for _, ten := range tenants.Tenants {
-				fmt.Printf("> %s\n", ten.Name)
-				fmt.Printf("    ID: %s\n", ten.Id)
+				cmd.Printf("> %s\n", ten.Name)
+				cmd.Printf("    ID: %s\n", ten.Id)
 				if ten.Description != "" {
-					fmt.Printf("    Description: %s\n", ten.Description)
+					cmd.Printf("    Description: %s\n", ten.Description)
 				}
 			}
 			return nil
@@ -365,10 +430,10 @@ func restUsersCmd() *cobra.Command {
 			}
 			if len(o.Users) > 0 {
 				for _, user := range o.Users {
-					fmt.Printf("%s -- %s -- %s\n", user.Username, user.Role, user.Status)
+					cmd.Printf("%s -- %s -- %s\n", user.Username, user.Role, user.Status)
 				}
 			} else {
-				fmt.Printf("No users for tenant\n")
+				cmd.Printf("No users for tenant\n")
 			}
 			return nil
 		},
@@ -389,7 +454,8 @@ func restCmd() *cobra.Command {
 		},
 	}
 	c.AddCommand(restClearImpersonateCmd())
-	c.AddCommand(restImpersonateCmd())
+	c.AddCommand(restImpersonateRoleCmd())
+	c.AddCommand(restImpersonateUserCmd())
 	c.AddCommand(restInviteCmd())
 	c.AddCommand(restLoginCmd())
 	c.AddCommand(restNewPassword())

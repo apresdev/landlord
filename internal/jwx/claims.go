@@ -24,8 +24,8 @@ func GetClaimString(tok *jwt.Token, key string) (string, error) {
 	return vs, nil
 }
 
-// GetClaimsStrings returns the string values of the claim with the given key.
-func GetClaimsStrings(tok *jwt.Token, key string) ([]string, error) {
+// GetClaimStrings returns the string values of the claim with the given key.
+func GetClaimStrings(tok *jwt.Token, key string) ([]string, error) {
 	claims, ok := tok.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, errors.New("could not convert claims to jwt.MapClaims")

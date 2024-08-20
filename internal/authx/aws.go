@@ -169,4 +169,14 @@ type AWSCognitoIdentityProvider interface {
 		params *cognitoidentityprovider.ConfirmForgotPasswordInput,
 		optFns ...func(*cognitoidentityprovider.Options)) (
 		*cognitoidentityprovider.ConfirmForgotPasswordOutput, error)
+	AdminSetUserMFAPreference(
+		ctx context.Context,
+		params *cognitoidentityprovider.AdminSetUserMFAPreferenceInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.AdminSetUserMFAPreferenceOutput, error)
+	AssociateSoftwareToken(
+		ctx context.Context,
+		params *cognitoidentityprovider.AssociateSoftwareTokenInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.AssociateSoftwareTokenOutput, error)
 }

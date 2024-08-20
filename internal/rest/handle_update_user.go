@@ -26,7 +26,7 @@ func handleUpdateUser(app App, c *gin.Context) error {
 		return apperr.NewUnauthorized("no token")
 	}
 	cid := clientID(c)
-	groups, err := jwx.GetClaimsStrings(tok, "cognito:groups")
+	groups, err := jwx.GetClaimStrings(tok, authx.CognitoGroupsClaim)
 	if !ok {
 		zap.L().Error("could get groups",
 			zap.String("clientID", string(cid)),
