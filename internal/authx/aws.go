@@ -179,4 +179,9 @@ type AWSCognitoIdentityProvider interface {
 		params *cognitoidentityprovider.AssociateSoftwareTokenInput,
 		optFns ...func(*cognitoidentityprovider.Options)) (
 		*cognitoidentityprovider.AssociateSoftwareTokenOutput, error)
+	VerifySoftwareToken(
+		ctx context.Context,
+		params *cognitoidentityprovider.VerifySoftwareTokenInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.VerifySoftwareTokenOutput, error)
 }

@@ -1,5 +1,8 @@
 # TODOs
 
+* resend an invitation email
+* terraform for the lambda
+* install instructions that indicate turning on advanced security
 * change the userpool and reconcile users in the user pool
 * add ability to impersonate a user, not just a role
 * add ability to give a cross-tenant impersonation permission

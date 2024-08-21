@@ -541,6 +541,80 @@ func (_c *AWSCognitoIdentityProvider_AdminResetUserPassword_Call) RunAndReturn(r
 	return _c
 }
 
+// AdminSetUserMFAPreference provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) AdminSetUserMFAPreference(ctx context.Context, params *cognitoidentityprovider.AdminSetUserMFAPreferenceInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminSetUserMFAPreferenceOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdminSetUserMFAPreference")
+	}
+
+	var r0 *cognitoidentityprovider.AdminSetUserMFAPreferenceOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminSetUserMFAPreferenceInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminSetUserMFAPreferenceOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminSetUserMFAPreferenceInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.AdminSetUserMFAPreferenceOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.AdminSetUserMFAPreferenceOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.AdminSetUserMFAPreferenceInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_AdminSetUserMFAPreference_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdminSetUserMFAPreference'
+type AWSCognitoIdentityProvider_AdminSetUserMFAPreference_Call struct {
+	*mock.Call
+}
+
+// AdminSetUserMFAPreference is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.AdminSetUserMFAPreferenceInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) AdminSetUserMFAPreference(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_AdminSetUserMFAPreference_Call {
+	return &AWSCognitoIdentityProvider_AdminSetUserMFAPreference_Call{Call: _e.mock.On("AdminSetUserMFAPreference",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminSetUserMFAPreference_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.AdminSetUserMFAPreferenceInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_AdminSetUserMFAPreference_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.AdminSetUserMFAPreferenceInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminSetUserMFAPreference_Call) Return(_a0 *cognitoidentityprovider.AdminSetUserMFAPreferenceOutput, _a1 error) *AWSCognitoIdentityProvider_AdminSetUserMFAPreference_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminSetUserMFAPreference_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.AdminSetUserMFAPreferenceInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminSetUserMFAPreferenceOutput, error)) *AWSCognitoIdentityProvider_AdminSetUserMFAPreference_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AdminSetUserPassword provides a mock function with given fields: ctx, params, optFns
 func (_m *AWSCognitoIdentityProvider) AdminSetUserPassword(ctx context.Context, params *cognitoidentityprovider.AdminSetUserPasswordInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminSetUserPasswordOutput, error) {
 	_va := make([]interface{}, len(optFns))
@@ -685,6 +759,80 @@ func (_c *AWSCognitoIdentityProvider_AdminUpdateUserAttributes_Call) Return(_a0 
 }
 
 func (_c *AWSCognitoIdentityProvider_AdminUpdateUserAttributes_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.AdminUpdateUserAttributesInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminUpdateUserAttributesOutput, error)) *AWSCognitoIdentityProvider_AdminUpdateUserAttributes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AssociateSoftwareToken provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) AssociateSoftwareToken(ctx context.Context, params *cognitoidentityprovider.AssociateSoftwareTokenInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AssociateSoftwareTokenOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AssociateSoftwareToken")
+	}
+
+	var r0 *cognitoidentityprovider.AssociateSoftwareTokenOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AssociateSoftwareTokenInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AssociateSoftwareTokenOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AssociateSoftwareTokenInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.AssociateSoftwareTokenOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.AssociateSoftwareTokenOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.AssociateSoftwareTokenInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_AssociateSoftwareToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AssociateSoftwareToken'
+type AWSCognitoIdentityProvider_AssociateSoftwareToken_Call struct {
+	*mock.Call
+}
+
+// AssociateSoftwareToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.AssociateSoftwareTokenInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) AssociateSoftwareToken(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_AssociateSoftwareToken_Call {
+	return &AWSCognitoIdentityProvider_AssociateSoftwareToken_Call{Call: _e.mock.On("AssociateSoftwareToken",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_AssociateSoftwareToken_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.AssociateSoftwareTokenInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_AssociateSoftwareToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.AssociateSoftwareTokenInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AssociateSoftwareToken_Call) Return(_a0 *cognitoidentityprovider.AssociateSoftwareTokenOutput, _a1 error) *AWSCognitoIdentityProvider_AssociateSoftwareToken_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AssociateSoftwareToken_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.AssociateSoftwareTokenInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AssociateSoftwareTokenOutput, error)) *AWSCognitoIdentityProvider_AssociateSoftwareToken_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2091,6 +2239,80 @@ func (_c *AWSCognitoIdentityProvider_SignUp_Call) Return(_a0 *cognitoidentitypro
 }
 
 func (_c *AWSCognitoIdentityProvider_SignUp_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.SignUpInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.SignUpOutput, error)) *AWSCognitoIdentityProvider_SignUp_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// VerifySoftwareToken provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) VerifySoftwareToken(ctx context.Context, params *cognitoidentityprovider.VerifySoftwareTokenInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.VerifySoftwareTokenOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for VerifySoftwareToken")
+	}
+
+	var r0 *cognitoidentityprovider.VerifySoftwareTokenOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.VerifySoftwareTokenInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.VerifySoftwareTokenOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.VerifySoftwareTokenInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.VerifySoftwareTokenOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.VerifySoftwareTokenOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.VerifySoftwareTokenInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_VerifySoftwareToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'VerifySoftwareToken'
+type AWSCognitoIdentityProvider_VerifySoftwareToken_Call struct {
+	*mock.Call
+}
+
+// VerifySoftwareToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.VerifySoftwareTokenInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) VerifySoftwareToken(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_VerifySoftwareToken_Call {
+	return &AWSCognitoIdentityProvider_VerifySoftwareToken_Call{Call: _e.mock.On("VerifySoftwareToken",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_VerifySoftwareToken_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.VerifySoftwareTokenInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_VerifySoftwareToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.VerifySoftwareTokenInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_VerifySoftwareToken_Call) Return(_a0 *cognitoidentityprovider.VerifySoftwareTokenOutput, _a1 error) *AWSCognitoIdentityProvider_VerifySoftwareToken_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_VerifySoftwareToken_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.VerifySoftwareTokenInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.VerifySoftwareTokenOutput, error)) *AWSCognitoIdentityProvider_VerifySoftwareToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -24,6 +24,12 @@ type Route struct {
 func getRoutes() []Route {
 	return []Route{
 		{
+			"AssociateOTP",
+			http.MethodGet,
+			"/ll-auth/api/associate-otp",
+			ginAssociateOTP,
+		},
+		{
 			"ClearImpersonate",
 			http.MethodPost,
 			"/ll-auth/api/clear-impersonate",
@@ -88,6 +94,18 @@ func getRoutes() []Route {
 			http.MethodPut,
 			"/ll-auth/api/tenants/:tenantID/users/:username",
 			ginUpdateUser,
+		},
+		{
+			"ValidateMFACode",
+			http.MethodPost,
+			"/ll-auth/api/validate-mfa-code",
+			ginValidateMFACode,
+		},
+		{
+			"VerifyOTPAssociation",
+			http.MethodPost,
+			"/ll-auth/api/associate-otp",
+			ginVerifyOTPAssociation,
 		},
 	}
 }

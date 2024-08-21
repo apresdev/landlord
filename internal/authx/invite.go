@@ -29,6 +29,7 @@ func SendInvite(
 	ten *multi.Tenant,
 	username string,
 	role string,
+	mfaPolicy multi.MFAPolicy,
 	resend Resend) error {
 
 	e, err := ParseEmail(username)
@@ -55,9 +56,10 @@ func SendInvite(
 		return err
 	}
 	return db.StoreUser(ctx, ddb, &multi.User{
-		Username: e.Address(),
-		TenantID: ten.ID,
-		Role:     role,
-		Status:   multi.UserStatusInvited,
+		Username:  e.Address(),
+		TenantID:  ten.ID,
+		Role:      role,
+		Status:    multi.UserStatusInvited,
+		MFAPolicy: mfaPolicy,
 	})
 }

@@ -3,8 +3,11 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 	"slices"
 	"strings"
+
+	"github.com/skip2/go-qrcode"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -193,7 +196,7 @@ func tenantEmailDomainAddCmd() *cobra.Command {
 						return errors.New("domain already configured as exclusive")
 					}
 					if idx := slices.Index(dom.TenantIDs, h.ID); idx == -1 {
-						fmt.Printf("domain already configured as allowed for tenant\n")
+						cmd.Printf("domain already configured as allowed for tenant\n")
 						return nil
 					}
 					dom.TenantIDs = append(dom.TenantIDs, h.ID)
@@ -299,6 +302,7 @@ func tenantInviteCmd() *cobra.Command {
 	var tenant string
 	var username string
 	var role string
+	var mfa string
 	c := &cobra.Command{
 		Use:   "invite",
 		Short: "Invite a user to a tenant",
@@ -318,8 +322,19 @@ func tenantInviteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			mfaPol, err := multi.ParseMFAPolicy(mfa)
+			if err != nil {
+				return err
+			}
 			err = authx.SendInvite(
-				cs.Ctx(), cs.DDB(), cs.CogIdp(), ten, username, role, authx.NoResend)
+				cs.Ctx(),
+				cs.DDB(),
+				cs.CogIdp(),
+				ten,
+				username,
+				role,
+				mfaPol,
+				authx.NoResend)
 			if err != nil {
 				return err
 			}
@@ -333,6 +348,8 @@ func tenantInviteCmd() *cobra.Command {
 		&username, "username", "u", "", "Username of user to add to tenant")
 	c.PersistentFlags().StringVarP(
 		&role, "role", "r", multi.RoleGuest, "Role to assign to user")
+	c.PersistentFlags().StringVarP(
+		&mfa, "mfa", "M", "required", "MFA policy for user. One of 'none', 'required'")
 	return c
 }
 
@@ -513,8 +530,99 @@ func tenantUserCmd() *cobra.Command {
 			return cmd.Help()
 		},
 	}
+	c.AddCommand(tenantUserAssociateOTP())
 	c.AddCommand(tenantUserRemoveCmd())
 	c.AddCommand(tenantUserRoleCmd())
+	c.AddCommand(tenantUserVerifyOTP())
+	return c
+}
+
+func tenantUserAssociateOTP() *cobra.Command {
+	var username string
+	c := &cobra.Command{
+		Use:   "associate-otp",
+		Short: "Associate a OTP provider for the user",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if username == "" {
+				return errors.New("--username must be set")
+			}
+			s := MustSession()
+			if s.AccessToken == "" {
+				return errors.New("no access token")
+			}
+			e, err := authx.ParseEmail(username)
+			if err != nil {
+				return err
+			}
+			cs := MustClients()
+			result, err := authx.AssociateSoftwareToken(
+				cs.Ctx(), cs.CogIdp(), s.AccessToken, e.Address())
+			if err != nil {
+				return err
+			}
+			png, err := qrcode.Encode(result.OtpAuthURI, qrcode.Medium, 256)
+			if err != nil {
+				return err
+			}
+			if err := os.WriteFile("otp.png", png, 0644); err != nil {
+				return err
+			}
+			cmd.Printf("QR code saved to otp.png\n")
+			cmd.Printf("OTP URI: %s\n", result.OtpAuthURI)
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&username, "username", "u", "", "Username of user to add to tenant")
+	return c
+}
+
+func tenantUserVerifyOTP() *cobra.Command {
+	var tenant string
+	var username string
+	var code string
+	c := &cobra.Command{
+		Use:   "verify-otp",
+		Short: "Verify OTP code for user",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if tenant == "" {
+				return errors.New("--tenant must be set")
+			}
+			if username == "" {
+				return errors.New("--username must be set")
+			}
+			if code == "" {
+				return errors.New("--code must be set")
+			}
+			s := MustSession()
+			e, err := authx.ParseEmail(username)
+			if err != nil {
+				return err
+			}
+			h, err := multi.ParseTenantHandle(tenant)
+			if err != nil {
+				return err
+			}
+			cs := MustClients()
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			if err != nil {
+				return err
+			}
+			err = authx.VerifySoftwareToken(
+				cs.Ctx(), cs.CogIdp(), ten.UserPoolID, s.AccessToken, e.Address(), code)
+			if err != nil {
+				return err
+			}
+			cmd.Printf("Verified OTP code for user %s in tenant %s\n", e.Address(), ten.Name)
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&tenant, "tenant", "T", "", "Name/ID of the tenant to add email domain to")
+	c.PersistentFlags().StringVarP(
+		&username, "username", "u", "", "Username of user to add to tenant")
+	c.PersistentFlags().StringVarP(
+		&code, "code", "", "", "MFA one-time code")
 	return c
 }
 
@@ -587,7 +695,7 @@ func tenantUserRoleCmd() *cobra.Command {
 				return err
 			}
 			if !ten.HasRole(role) {
-				return fmt.Errorf("role '%s' does not exist, pick one of %s\n",
+				return fmt.Errorf("role '%s' does not exist, pick one of: %s\n",
 					role, strings.Join(ten.Roles, ", "))
 			}
 			user, err := db.GetUser(cs.Ctx(), cs.DDB(), username)
@@ -614,7 +722,7 @@ func tenantUserRoleCmd() *cobra.Command {
 			if err = db.StoreUser(cs.Ctx(), cs.DDB(), user); err != nil {
 				return err
 			}
-			fmt.Printf("Set role %s for user %s in tenant %s\n", role, username, ten.Name)
+			cmd.Printf("Set role %s for user %s in tenant %s\n", role, username, ten.Name)
 			return nil
 		},
 	}
@@ -663,7 +771,7 @@ func tenantUserPoolCmd() *cobra.Command {
 			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
 				return err
 			}
-			fmt.Printf("Set userpool %s (%s) in tenant %s\n",
+			cmd.Printf("Set userpool %s (%s) in tenant %s\n",
 				ten.UserPoolID, ten.UserPoolID, ten.Name)
 			return nil
 		},

@@ -36,6 +36,72 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       # No security as this is the call to obtain a token
       security: []
+  /ll-auth/api/validate-mfa-code:
+    post:
+      operationId: validateMFACode
+      summary: Validate an MFA code.
+      tags:
+        - Auth
+      parameters: [ ]
+      requestBody:
+        $ref: "#/components/requestBodies/ValidateMFACodeRequest"
+      description: Validate a one-time multi-factor authentication (MFA) code.
+      responses:
+        "200":
+          $ref: '#/components/responses/LoginResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      # No security as this is the call to obtain a token
+      security: [ ]
+  /ll-auth/api/associate-otp:
+    get:
+      operationId: associateOTP
+      summary: Associate OTP with a user.
+      tags:
+        - Auth
+      parameters: [ ]
+      description: Begins the process of associating an OTP provider with a user.
+      responses:
+        "200":
+          $ref: '#/components/responses/AssociateOTPResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+    post:
+      operationId: verifyOTPAssociation
+      summary: Verify the association of an OTP device.
+      tags:
+        - Auth
+      parameters: [ ]
+      requestBody:
+        $ref: "#/components/requestBodies/VerifyOTPAssociationRequest"
+      description: Verify the association of an OTP device.
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
   /ll-auth/api/tenants:
     get:
       operationId: getTenants
@@ -292,6 +358,18 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/LoginRequest'
+    ValidateMFACodeRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidateMFACodeRequest'
+    VerifyOTPAssociationRequest:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOTPAssociationRequest'
     ImpersonateRoleRequest:
       required: true
       content:
@@ -350,6 +428,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/LoginResponse'
+    AssociateOTPResponse:
+      description: Return the secret for associating an OTP device.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AssociateOTPResponse'
     TenantsResponse:
       description: Return the tenants available to the user.
       content:
@@ -385,7 +469,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/LoginResponse'
+            $ref: '#/components/schemas/SetNewPasswordResponse'
     BadRequest:
       description: An error occurred.  The client provided one or more invalid inputs.
       content:
@@ -504,10 +588,14 @@ components:
         - success
         - new-password-required
         - password-reset-required
+        - mfa-setup-required
+        - mfa-code-required
       x-enum-varnames:
         - LoginStatusSuccess
         - LoginStatusNewPasswordRequired
         - LoginStatusPasswordResetRequired
+        - LoginStatusMFASetupRequired
+        - LoginStatusMFACodeRequired
     LoginRequest:
       type: object
       required:
@@ -526,6 +614,7 @@ components:
         - idToken
         - accessToken
         - refreshToken
+        - optURI
       properties:
         status:
           $ref: '#/components/schemas/LoginStatus'
@@ -536,6 +625,60 @@ components:
         accessToken:
           type: string
         refreshToken:
+          type: string
+        otpURI:
+          type: string
+    SetNewPasswordResponse:
+      type: object
+      required:
+        - status
+        - idToken
+        - accessToken
+        - refreshToken
+        - otpURI
+      properties:
+        status:
+          $ref: '#/components/schemas/LoginStatus'
+        idToken:
+          type: string
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        otpURI:
+          type: string
+    AssociateOTPResponse:
+      type: object
+      required:
+        - otpURI
+      properties:
+        otpURI:
+          type: string
+    ValidateMFACodeRequest:
+      type: object
+      required:
+        - username
+        - mfaCode
+        - session
+      properties:
+        username:
+          type: string
+        mfaCode:
+          type: string
+        session:
+          type: string
+    VerifyOTPAssociationRequest:
+      type: object
+      required:
+        - username
+        - otpCode
+        - accessToken
+      properties:
+        username:
+          type: string
+        otpCode:
+          type: string
+        accessToken:
           type: string
     TenantsResponse:
       type: object
@@ -626,6 +769,7 @@ components:
       properties:
         refreshToken:
           type: string
+
     ClearImpersonateResponse:
       type: object
       required:
@@ -683,13 +827,21 @@ components:
         destination:
           type: string
           description: Displayable string for the destination where the recovery code was sent.
-
+    MFAPolicy:
+      type: string
+      enum:
+        - none
+        - required
+      x-enum-varnames:
+        - MFAPolicyNone
+        - MFAPolicyRequired
     InviteRequest:
       type: object
       required:
       - tenant
       - username
       - role
+      - mfaPolicy
       properties:
         tenant:
           type: string
@@ -698,7 +850,8 @@ components:
         role:
           type: string
           default: guest
-
+        mfaPolicy:
+          $ref: '#/components/schemas/MFAPolicy'
     UpdateUserRequest:
       type: object
       required:

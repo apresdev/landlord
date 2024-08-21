@@ -13,6 +13,7 @@ const (
 	LandlordIDTokenCookie          = "landlord-id-token"
 	LandlordAccessTokenCookie      = "landlord-access-token"
 	LandlordRefreshTokenCookie     = "landlord-refresh-token"
+	LandlordOTPURI                 = "landlord-otp-uri"
 	LandlordCookieMaxAge           = 3600
 )
 

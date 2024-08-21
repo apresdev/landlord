@@ -26,8 +26,19 @@ func handleInviteToTenant(app App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
+	mfaPol, err := multi.ParseMFAPolicy(string(req.MfaPolicy))
+	if err != nil {
+		return apperr.NewBadRequest(err.Error())
+	}
 	err = authx.SendInvite(
-		c.Request.Context(), app.DDB(), app.CogIdp(), ten, req.Username, req.Role, authx.NoResend)
+		c.Request.Context(),
+		app.DDB(),
+		app.CogIdp(),
+		ten,
+		req.Username,
+		req.Role,
+		mfaPol,
+		authx.NoResend)
 	if err != nil {
 		zap.L().Error("could not send invite",
 			zap.String("username", req.Username),

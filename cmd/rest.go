@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
+
+	"github.com/skip2/go-qrcode"
 
 	"github.com/apresdev/landlord/internal/multi"
 
@@ -25,6 +28,48 @@ func apiClient(token, server string) (*client.APIClient, error) {
 	return cl, nil
 }
 
+func restAssociateOTP() *cobra.Command {
+	var server string
+	var token string
+	c := &cobra.Command{
+		Use:   "associate-otp",
+		Short: "Associate one-time password provider",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := MustSession()
+			if token == "" {
+				token = s.AccessToken
+				if token == "" {
+					return errors.New("no token found")
+				}
+			}
+			cl, err := apiClient(token, server)
+			if err != nil {
+				return err
+			}
+			ctx := context.Background()
+			r, _, err := cl.AuthAPI.AssociateOTP(ctx).Execute()
+			if err != nil {
+				return err
+			}
+			cmd.Printf("OTP URI: %s\n", r.OtpURI)
+			png, err := qrcode.Encode(r.OtpURI, qrcode.Medium, 256)
+			if err != nil {
+				return err
+			}
+			if err := os.WriteFile("otp.png", png, 0644); err != nil {
+				return err
+			}
+			cmd.Printf("QR code saved to otp.png\n")
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&token, "token", "t", "", "Token to authorize with")
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
+	return c
+}
+
 func restClearImpersonateCmd() *cobra.Command {
 	var server string
 	var token string
@@ -35,7 +80,7 @@ func restClearImpersonateCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := MustSession()
 			if token == "" {
-				token = s.IdToken
+				token = s.AccessToken
 				if token == "" {
 					return errors.New("no token found")
 				}
@@ -61,7 +106,7 @@ func restClearImpersonateCmd() *cobra.Command {
 			if err = s.SaveToFile(); err != nil {
 				return err
 			}
-			cmd.Printf("new tokens stored successfully\n")
+			cmd.Printf("Impersonation cleared. New tokens stored.\n")
 			return nil
 		},
 	}
@@ -92,7 +137,7 @@ func restImpersonateRoleCmd() *cobra.Command {
 			}
 			s := MustSession()
 			if token == "" {
-				token = s.IdToken
+				token = s.AccessToken
 				if token == "" {
 					return errors.New("no token found")
 				}
@@ -122,7 +167,7 @@ func restImpersonateRoleCmd() *cobra.Command {
 			if err = s.SaveToFile(); err != nil {
 				return err
 			}
-			cmd.Printf("new tokens stored successfully\n")
+			cmd.Printf("Impersonation successful. New tokens stored.\n")
 			return nil
 		},
 	}
@@ -157,7 +202,7 @@ func restImpersonateUserCmd() *cobra.Command {
 			}
 			s := MustSession()
 			if token == "" {
-				token = s.IdToken
+				token = s.AccessToken
 				if token == "" {
 					return errors.New("no token found")
 				}
@@ -187,7 +232,7 @@ func restImpersonateUserCmd() *cobra.Command {
 			if err = s.SaveToFile(); err != nil {
 				return err
 			}
-			cmd.Printf("new tokens stored successfully\n")
+			cmd.Printf("Impersonation successful. New tokens stored.\n")
 			return nil
 		},
 	}
@@ -205,10 +250,11 @@ func restImpersonateUserCmd() *cobra.Command {
 }
 
 func restInviteCmd() *cobra.Command {
+	var server string
 	var tenant string
 	var username string
 	var role string
-	var server string
+	var mfa string
 	c := &cobra.Command{
 		Use:   "invite",
 		Short: "Send an invite to a tenant",
@@ -220,16 +266,17 @@ func restInviteCmd() *cobra.Command {
 				return errors.New("--username required")
 			}
 			s := MustSession()
-			cl, err := apiClient(s.IdToken, server)
+			cl, err := apiClient(s.AccessToken, server)
 			if err != nil {
 				return err
 			}
 			ctx := context.Background()
 			r, err := cl.AuthAPI.InviteToTenant(ctx).InviteRequest(
 				client.InviteRequest{
-					Tenant:   tenant,
-					Username: username,
-					Role:     role,
+					Tenant:    tenant,
+					Username:  username,
+					Role:      role,
+					MfaPolicy: client.MFAPolicy(mfa),
 				}).Execute()
 			if err != nil {
 				b, err2 := io.ReadAll(r.Body)
@@ -238,10 +285,12 @@ func restInviteCmd() *cobra.Command {
 				}
 				return err
 			}
-			cmd.Printf("invitation sent\n")
+			cmd.Printf("Invitation sent to: %s for %s\n", username, tenant)
 			return nil
 		},
 	}
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
 	c.PersistentFlags().StringVarP(
 		&tenant, "tenant", "T", "", "Tenant to impersonate")
 	c.PersistentFlags().StringVarP(
@@ -249,7 +298,11 @@ func restInviteCmd() *cobra.Command {
 	c.PersistentFlags().StringVarP(
 		&role, "role", "r", multi.RoleGuest, "Role to impersonate")
 	c.PersistentFlags().StringVarP(
-		&server, "server", "s", "", "Server to connect to")
+		&mfa,
+		"mfa",
+		"M",
+		multi.MFAPolicyRequired.String(),
+		"MFA policy for user. One of 'none', 'required'")
 	return c
 }
 
@@ -287,13 +340,17 @@ func restLoginCmd() *cobra.Command {
 				if err = s.SaveToFile(); err != nil {
 					return err
 				}
-				cmd.Printf("tokens stored successfully\n")
-			} else if r.Status == client.LoginStatusNewPasswordRequired {
-				cmd.Printf("new password required: session=%s\n", r.Session)
-			} else if r.Status == client.LoginStatusPasswordResetRequired {
-				cmd.Printf("password reset required: session=%s\n", r.Session)
-			} else {
-				return fmt.Errorf("unknown status: %s", r.Status)
+				cmd.Printf("Login success. Tokens stored.\n")
+				return nil
+			}
+			cmd.Printf("login failed with status=%s\n", r.Status)
+			if r.Session != "" {
+				s := MustSession()
+				s.ChallengeSession = r.Session
+				if err = s.SaveToFile(); err != nil {
+					return err
+				}
+				cmd.Printf("Challenge session stored.\n")
 			}
 			return nil
 		},
@@ -347,7 +404,7 @@ func restNewPassword() *cobra.Command {
 				if err = s.SaveToFile(); err != nil {
 					return err
 				}
-				cmd.Printf("tokens stored successfully\n")
+				cmd.Printf("Login success. Tokens stored.\n")
 			} else {
 				return fmt.Errorf("unknown status: %s", r.Status)
 			}
@@ -374,7 +431,7 @@ func restTenantsCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if token == "" {
 				s := MustSession()
-				token = s.IdToken
+				token = s.AccessToken
 				if token == "" {
 					return errors.New("--token must be set")
 				}
@@ -413,13 +470,13 @@ func restUsersCmd() *cobra.Command {
 		Short: "List the users for the given tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := MustSession()
-			if s.IdToken == "" {
+			if s.AccessToken == "" {
 				return errors.New("need to login")
 			}
 			if tenant == "" {
 				return errors.New("--tenant must be set")
 			}
-			cl, err := apiClient(s.IdToken, server)
+			cl, err := apiClient(s.AccessToken, server)
 			if err != nil {
 				return err
 			}
@@ -445,6 +502,108 @@ func restUsersCmd() *cobra.Command {
 	return c
 }
 
+func restValidateMFACodeCmd() *cobra.Command {
+	var server string
+	var username string
+	var code string
+	var session string
+	c := &cobra.Command{
+		Use:   "validate-mfa-code",
+		Short: "Validate an MFA code",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := MustSession()
+			if username == "" {
+				return errors.New("--username required")
+			}
+			if code == "" {
+				return errors.New("--code required")
+			}
+			if session == "" {
+				session = s.ChallengeSession
+				if session == "" {
+					return errors.New("--session required")
+				}
+			}
+			cl, err := apiClient(s.AccessToken, server)
+			if err != nil {
+				return err
+			}
+			resp, _, err := cl.AuthAPI.ValidateMFACode(context.Background()).ValidateMFACodeRequest(
+				client.ValidateMFACodeRequest{
+					Username: username,
+					MfaCode:  code,
+					Session:  session,
+				}).Execute()
+			if err != nil {
+				return err
+			}
+			s.AccessToken = resp.AccessToken
+			s.IdToken = resp.IdToken
+			if err = s.SaveToFile(); err != nil {
+				return err
+			}
+			cmd.Printf("Login success. Tokens stored.\n")
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
+	c.PersistentFlags().StringVarP(
+		&username, "username", "u", "", "Username to validate")
+	c.PersistentFlags().StringVarP(
+		&code, "code", "c", "", "MFA code to validate")
+	c.PersistentFlags().StringVarP(
+		&session, "session", "", "", "Session token returned from login call")
+	return c
+}
+
+func restVerifyOTPAssociation() *cobra.Command {
+	var server string
+	var tenant string
+	var username string
+	var code string
+	c := &cobra.Command{
+		Use:   "verify-otp-association",
+		Short: "Verify the association of an OTP provider",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := MustSession()
+			if tenant == "" {
+				return errors.New("--tenant required")
+			}
+			if username == "" {
+				return errors.New("--username required")
+			}
+			if code == "" {
+				return errors.New("--code required")
+			}
+			cl, err := apiClient(s.AccessToken, server)
+			if err != nil {
+				return err
+			}
+			ctx := context.Background()
+			_, err = cl.AuthAPI.VerifyOTPAssociation(ctx).VerifyOTPAssociationRequest(
+				client.VerifyOTPAssociationRequest{
+					Username: username,
+					OtpCode:  code,
+				}).Execute()
+			if err != nil {
+				return err
+			}
+			cmd.Printf("OTP association verified\n")
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
+	c.PersistentFlags().StringVarP(
+		&tenant, "tenant", "T", "", "Tenant to impersonate")
+	c.PersistentFlags().StringVarP(
+		&username, "username", "u", "", "Username to validate")
+	c.PersistentFlags().StringVarP(
+		&code, "code", "c", "", "MFA code to validate")
+	return c
+}
+
 func restCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "rest",
@@ -453,6 +612,7 @@ func restCmd() *cobra.Command {
 			return cmd.Help()
 		},
 	}
+	c.AddCommand(restAssociateOTP())
 	c.AddCommand(restClearImpersonateCmd())
 	c.AddCommand(restImpersonateRoleCmd())
 	c.AddCommand(restImpersonateUserCmd())
@@ -461,5 +621,7 @@ func restCmd() *cobra.Command {
 	c.AddCommand(restNewPassword())
 	c.AddCommand(restTenantsCmd())
 	c.AddCommand(restUsersCmd())
+	c.AddCommand(restValidateMFACodeCmd())
+	c.AddCommand(restVerifyOTPAssociation())
 	return c
 }

@@ -3,7 +3,6 @@ package apperr
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"go.uber.org/zap"
 )
@@ -32,12 +31,15 @@ type NotFound struct {
 	error
 }
 
-func NewNotFound(params ...string) error {
-	if len(params) == 0 {
+func NewNotFound(s string) error {
+	if s == "" {
 		return NotFound{error: errors.New("not found")}
-	} else {
-		return NotFound{error: errors.New(strings.Join(params, " "))}
 	}
+	return NotFound{error: errors.New(s)}
+}
+
+func NewNotFoundE(err error) error {
+	return NotFound{error: err}
 }
 
 func IsNotFound(err error) bool {
@@ -52,12 +54,15 @@ func IsInternal(err error) bool {
 	return errors.As(err, &Internal{})
 }
 
-func NewInternal(params ...string) error {
-	if len(params) == 0 {
+func NewInternal(s string) error {
+	if s == "" {
 		return Internal{error: errors.New("internal error")}
-	} else {
-		return Internal{error: errors.New(strings.Join(params, " "))}
 	}
+	return Internal{error: errors.New(s)}
+}
+
+func NewInternalE(err error) error {
+	return Internal{error: err}
 }
 
 type BadRequest struct {
@@ -68,12 +73,15 @@ func IsBadRequest(err error) bool {
 	return errors.As(err, &BadRequest{})
 }
 
-func NewBadRequest(params ...string) error {
-	if len(params) == 0 {
+func NewBadRequest(s string) error {
+	if s == "" {
 		return BadRequest{error: errors.New("bad request")}
-	} else {
-		return BadRequest{error: errors.New(strings.Join(params, " "))}
 	}
+	return BadRequest{error: errors.New(s)}
+}
+
+func NewBadRequestE(err error) error {
+	return BadRequest{error: err}
 }
 
 type AlreadyExists struct {
@@ -84,12 +92,15 @@ func IsAlreadyExists(err error) bool {
 	return errors.As(err, &AlreadyExists{})
 }
 
-func NewAlreadyExists(params ...string) error {
-	if len(params) == 0 {
+func NewAlreadyExists(s string) error {
+	if s == "" {
 		return AlreadyExists{error: errors.New("already exists")}
-	} else {
-		return AlreadyExists{error: errors.New(strings.Join(params, " "))}
 	}
+	return AlreadyExists{error: errors.New(s)}
+}
+
+func NewAlreadyExistsE(err error) error {
+	return AlreadyExists{error: err}
 }
 
 type Unauthorized struct {
@@ -100,10 +111,13 @@ func IsUnauthorized(err error) bool {
 	return errors.As(err, &Unauthorized{})
 }
 
-func NewUnauthorized(params ...string) error {
-	if len(params) == 0 {
+func NewUnauthorized(s string) error {
+	if s == "" {
 		return Unauthorized{error: errors.New("unauthorized")}
-	} else {
-		return Unauthorized{error: errors.New(strings.Join(params, " "))}
 	}
+	return Unauthorized{error: errors.New(s)}
+}
+
+func NewUnauthorizedE(err error) error {
+	return Unauthorized{error: err}
 }

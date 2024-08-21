@@ -3,6 +3,9 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"slices"
+
+	"github.com/apresdev/landlord/internal/multi"
 
 	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/apresdev/landlord/internal/db"
@@ -28,11 +31,14 @@ func handleSetNewPassword(app App, c *gin.Context) error {
 	return nil
 }
 
-func HandleSetNewPassword(app App, c *gin.Context, req SetNewPasswordRequest) (*LoginResponse, error) {
+func HandleSetNewPassword(
+	app App, c *gin.Context, req SetNewPasswordRequest) (
+	*SetNewPasswordResponse, error) {
+
 	ddb := app.DDB()
 	cogIdp := app.CogIdp()
 	ctx := c.Request.Context()
-	_, tenant, err := db.GetUserAndTenant(ctx, ddb, req.Username)
+	user, tenant, err := db.GetUserAndTenant(ctx, ddb, req.Username)
 	if err != nil {
 		return nil, fmt.Errorf("error finding tenant for username: %w", err)
 	}
@@ -82,9 +88,31 @@ func HandleSetNewPassword(app App, c *gin.Context, req SetNewPasswordRequest) (*
 		zap.L().Warn("error updating email_verified user attribute", zap.Error(err))
 	}
 
-	var resp LoginResponse
+	if user.MFAPolicy == multi.MFAPolicyRequired {
+		u, err := cogIdp.AdminGetUser(ctx,
+			&cognitoidentityprovider.AdminGetUserInput{
+				UserPoolId: aws.String(tenant.UserPoolID),
+				Username:   aws.String(req.Username)})
+		if err != nil {
+			return nil, apperr.NewInternalE(fmt.Errorf("error getting user: %w", err))
+		}
+		idx := slices.Index(u.UserMFASettingList, "SOFTWARE_TOKEN_MFA")
+		if idx == -1 {
+			result, err := authx.AssociateSoftwareToken(
+				ctx, cogIdp, aws.ToString(o.AuthenticationResult.AccessToken), req.Username)
+			if err != nil {
+				return nil, apperr.NewInternalE(fmt.Errorf("error associating software token: %w", err))
+			}
+			var resp SetNewPasswordResponse
+			resp.Status = LoginStatusMFASetupRequired
+			resp.OtpURI = result.OtpAuthURI
+			resp.AccessToken = aws.ToString(o.AuthenticationResult.AccessToken)
+			return &resp, nil
+		}
+	}
+
+	var resp SetNewPasswordResponse
 	resp.Status = LoginStatusSuccess
-	resp.Session = ""
 	resp.IdToken = aws.ToString(o.AuthenticationResult.IdToken)
 	resp.AccessToken = aws.ToString(o.AuthenticationResult.AccessToken)
 	resp.RefreshToken = aws.ToString(o.AuthenticationResult.RefreshToken)

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"os"
@@ -49,6 +50,35 @@ func Run() error {
 	r.POST("/login/submit", func(c *gin.Context) {
 		if err := handleLoginSubmit(a, c); err != nil {
 			c.String(http.StatusInternalServerError, "Error logging in: %v", err)
+		}
+	})
+
+	r.GET("/qrcode", func(c *gin.Context) {
+		if err := handleQRCode(a, c); err != nil {
+			c.String(http.StatusInternalServerError, "Error handling QR code: %v", err)
+		}
+	})
+
+	r.GET("/setup-otp", func(c *gin.Context) {
+		otpURI, _ := c.Cookie(LandlordOTPURI)
+		otpImageURI := fmt.Sprintf(
+			"/qrcode?uri=%s", base64.URLEncoding.EncodeToString([]byte(otpURI)))
+		username, _ := c.Cookie(LandlordUsernameCookie)
+		render(c, setupOTPPage(appenv.AppName(), otpImageURI, username))
+	})
+	r.POST("/setup-otp/submit", func(c *gin.Context) {
+		if err := handleSetupOTPSubmit(a, c); err != nil {
+			c.String(http.StatusInternalServerError, "Error setting up OTP: %v", err)
+		}
+	})
+
+	r.GET("/otp", func(c *gin.Context) {
+		username, _ := c.Cookie(LandlordUsernameCookie)
+		render(c, otpCodePage(appenv.AppName(), username))
+	})
+	r.POST("/otp/submit", func(c *gin.Context) {
+		if err := handleOTPSubmit(a, c); err != nil {
+			c.String(http.StatusInternalServerError, "Error handling OTP: %v", err)
 		}
 	})
 
