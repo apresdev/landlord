@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/apresdev/landlord/internal/apperr"
+	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/apresdev/landlord/internal/jwx"
 
 	"github.com/apresdev/landlord/internal/db"
@@ -114,4 +117,45 @@ func getStr(c *gin.Context, key string) string {
 		zap.String("key", key),
 		zap.Any("value", v))
 	return ""
+}
+
+func isRequestAuthorizedForRoot(app App, c *gin.Context) (*jwt.Token, error) {
+	t, ok := c.Get(TokenKey)
+	if !ok {
+		return nil, apperr.NewUnauthorized("no token")
+	}
+	tok, ok := t.(*jwt.Token)
+	if !ok {
+		zap.L().Error("could not convert token to *jwt.Token")
+		return nil, apperr.NewUnauthorized("no token")
+	}
+	cid := clientID(c)
+	groups, err := jwx.GetClaimStrings(tok, authx.CognitoGroupsClaim)
+	if err != nil {
+		zap.L().Error("could not get groups",
+			zap.String("clientID", string(cid)),
+			zap.Error(err),
+			zap.Any("token", tok))
+		return nil, apperr.NewUnauthorized("no groups")
+	}
+	roles, err := authx.ParseRolesFromGroups(groups)
+	if err != nil {
+		zap.L().Error("could not parse roles from groups",
+			zap.String("clientID", string(cid)),
+			zap.Error(err),
+			zap.Any("groups", groups))
+		return nil, apperr.NewUnauthorized("no groups")
+	}
+	rootTenant, err := db.GetRootTenant(c.Request.Context(), app.DDB())
+	if err != nil {
+		zap.L().Error("error fetching root tenant", zap.Error(err))
+		return nil, apperr.NewUnauthorized("not authorized")
+	}
+	if !authx.IsAuthorizedForTenant(rootTenant, roles) {
+		zap.L().Info("not authorized for root",
+			zap.String("clientID", string(cid)),
+			zap.Any("groups", groups))
+		return nil, apperr.NewUnauthorized("not authorized")
+	}
+	return tok, nil
 }

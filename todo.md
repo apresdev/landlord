@@ -3,10 +3,7 @@
 * resend an invitation email
 * terraform for the lambda
 * install instructions that indicate turning on advanced security
-* change the userpool and reconcile users in the user pool
-* add ability to impersonate a user, not just a role
 * add ability to give a cross-tenant impersonation permission
-* MFA -- needs a QR code library of some sort
 * replace terraform for initializing the user pool with the landlord tool
   itself -- replace `landord tenant init` with just `landlord init`
 * how to handle abuse of the unauthenticated landlord APIs? 
@@ -25,6 +22,7 @@
 * last error handling 
   * remove the last error cookie and put it in the session
   * add points where the error is cleared
+* change the userpool and reconcile users in the user pool
 * general styling improvements for the htmx version
   * add password fields that have the little eyeball to reveal the password
     * maybe save this for the React version only?
