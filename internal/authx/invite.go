@@ -15,13 +15,6 @@ import (
 	"github.com/apresdev/landlord/internal/multi"
 )
 
-type Resend int
-
-const (
-	NoResend Resend = iota
-	ResendConfirmation
-)
-
 func SendInvite(
 	ctx context.Context,
 	ddb db.AWSDynamoDB,
@@ -29,27 +22,31 @@ func SendInvite(
 	ten *multi.Tenant,
 	username string,
 	role string,
-	mfaPolicy multi.MFAPolicy,
-	resend Resend) error {
+	mfaPolicy multi.MFAPolicy) error {
 
 	e, err := ParseEmail(username)
 	if err != nil {
 		return errors.New("invalid email")
 	}
-	_, err = db.GetUser(ctx, ddb, e.Address())
+	u, err := db.GetUser(ctx, ddb, e.Address())
 	if err == nil {
-		return apperr.NewAlreadyExists(
-			fmt.Sprintf("%s is already signed up", e.Address()))
+		if u.Status == multi.UserStatusInactive {
+			return apperr.NewBadRequest(
+				fmt.Sprintf("cannot send invite, user '%s' is inactive", e.Address()))
+		}
+	} else if !apperr.IsNotFound(err) {
+		return err
 	}
 	ua := []types.AttributeType{
-		{Name: aws.String("custom:tenant"), Value: aws.String(ten.ID.String())},
+		{Name: aws.String(TenantClaim), Value: aws.String(ten.ID.String())},
 	}
 	args := cognitoidentityprovider.AdminCreateUserInput{
 		UserPoolId:     aws.String(ten.UserPoolID),
 		Username:       aws.String(e.Address()),
 		UserAttributes: ua,
 	}
-	if resend == ResendConfirmation {
+	// User has already been activated, so we need to resend the invite.
+	if u != nil {
 		args.MessageAction = types.MessageActionTypeResend
 	}
 	if _, err := cogIdp.AdminCreateUser(ctx, &args); err != nil {

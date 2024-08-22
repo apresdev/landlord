@@ -31,14 +31,7 @@ func handleInviteToTenant(app App, c *gin.Context) error {
 		return apperr.NewBadRequest(err.Error())
 	}
 	err = authx.SendInvite(
-		c.Request.Context(),
-		app.DDB(),
-		app.CogIdp(),
-		ten,
-		req.Username,
-		req.Role,
-		mfaPol,
-		authx.NoResend)
+		c.Request.Context(), app.DDB(), app.CogIdp(), ten, req.Username, req.Role, mfaPol)
 	if err != nil {
 		zap.L().Error("could not send invite",
 			zap.String("username", req.Username),

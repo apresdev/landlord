@@ -146,6 +146,10 @@ func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, err
 		}
 	}
 
+	if err := authx.OnSuccessfulLogin(ctx, app.DDB(), app.CogIdp(), tenant, user); err != nil {
+		return nil, err
+	}
+
 	cid := clientID(c)
 	validationURL := jwx.ValidationURL(app.Cfg().Region, tenant.UserPoolID)
 	accessTok, err := app.Validator().ValidateToken(

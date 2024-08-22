@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/apresdev/landlord/internal/apptest"
+
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/multi"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -111,9 +113,9 @@ func (s *HandleClearImpersonateTestSuite) TestNotAuthorizedForRoot() {
 		fmt.Sprintf("tenant-%s-guest", tenantUUID)}
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
-	o := dynamodb.QueryOutput{}
 	mt := multi.NewTenant()
-	o.Items = append(o.Items, MustStructToDynamoMap(mt))
+	o := dynamodb.QueryOutput{}
+	o.Items = append(o.Items, apptest.MustStructToDynamoMap(mt))
 	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	err := handleClearImpersonate(app, gt1.c)
 	s.Error(err)
@@ -129,7 +131,7 @@ func (s *HandleClearImpersonateTestSuite) TestNoEmailClaim() {
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
 	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, MustStructToDynamoMap(mt))
+	o.Items = append(o.Items, apptest.MustStructToDynamoMap(mt))
 	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	err := handleClearImpersonate(app, gt1.c)
 	s.Error(err)
@@ -146,7 +148,7 @@ func (s *HandleClearImpersonateTestSuite) TestFailedToUpdateUserAttributes() {
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
 	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, MustStructToDynamoMap(mt))
+	o.Items = append(o.Items, apptest.MustStructToDynamoMap(mt))
 	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, errors.New("could not update user attributes"))
@@ -165,7 +167,7 @@ func (s *HandleClearImpersonateTestSuite) TestNoSubClaim() {
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
 	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, MustStructToDynamoMap(mt))
+	o.Items = append(o.Items, apptest.MustStructToDynamoMap(mt))
 	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, nil)
@@ -195,7 +197,7 @@ func (s *HandleClearImpersonateTestSuite) TestSuccess() {
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
 	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, MustStructToDynamoMap(mt))
+	o.Items = append(o.Items, apptest.MustStructToDynamoMap(mt))
 	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(
 		gt1.c.Request.Context(), mock.Anything, mock.Anything).Return(
