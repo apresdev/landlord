@@ -20,6 +20,14 @@ import (
 )
 
 func handleClearImpersonate(app App, c *gin.Context) error {
+	var req ClearImpersonateRequest
+	if err := c.BindJSON(&req); err != nil {
+		return apperr.NewBadRequest(err.Error())
+	}
+	if req.RefreshToken == "" {
+		return apperr.NewBadRequest("refresh token is required")
+	}
+
 	t, ok := c.Get(TokenKey)
 	if !ok {
 		return apperr.NewUnauthorized("no token")
@@ -46,6 +54,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 			zap.Any("groups", groups))
 		return apperr.NewUnauthorized("no groups")
 	}
+
 	rootTenant, err := db.GetRootTenant(c.Request.Context(), app.DDB())
 	if err != nil {
 		zap.L().Error("error fetching root tenant", zap.Error(err))
@@ -57,10 +66,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 			zap.Any("groups", groups))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	var req ClearImpersonateRequest
-	if err := c.BindJSON(&req); err != nil {
-		return apperr.NewBadRequest(err.Error())
-	}
+
 	username, err := jwx.GetClaimString(tok, authx.EmailClaim)
 	if err != nil {
 		zap.L().Error("could not get username from token",

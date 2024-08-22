@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/apresdev/landlord/internal/jwx"
 
@@ -16,52 +17,31 @@ import (
 
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 )
 
 func handleImpersonateRole(app App, c *gin.Context) error {
-	t, ok := c.Get(TokenKey)
-	if !ok {
-		return apperr.NewUnauthorized("no token")
-	}
-	tok, ok := t.(*jwt.Token)
-	if !ok {
-		zap.L().Error("could not convert token to *jwt.Token")
-		return apperr.NewUnauthorized("no token")
-	}
-	cid := clientID(c)
-	groups, err := jwx.GetClaimStrings(tok, authx.CognitoGroupsClaim)
-	if err != nil {
-		zap.L().Error("could not get groups",
-			zap.String("clientID", string(cid)),
-			zap.Error(err),
-			zap.Any("token", tok))
-		return apperr.NewUnauthorized("no groups")
-	}
-	roles, err := authx.ParseRolesFromGroups(groups)
-	if err != nil {
-		zap.L().Error("could not parse roles from groups",
-			zap.String("clientID", string(cid)),
-			zap.Error(err),
-			zap.Any("groups", groups))
-		return apperr.NewUnauthorized("no groups")
-	}
-	rootTenant, err := db.GetRootTenant(c.Request.Context(), app.DDB())
-	if err != nil {
-		zap.L().Error("error fetching root tenant", zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
-	}
-	if !authx.IsAuthorizedForTenant(rootTenant, roles) {
-		zap.L().Info("not authorized for root",
-			zap.String("clientID", string(cid)),
-			zap.Any("groups", groups))
-		return apperr.NewUnauthorized("not authorized")
-	}
 	var req ImpersonateRoleRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
+	if req.Tenant == "" {
+		return apperr.NewBadRequest("tenant is required")
+	}
+	if req.Role == "" {
+		return apperr.NewBadRequest("role is required")
+	}
+	if req.RefreshToken == "" {
+		return apperr.NewBadRequest("refresh token is required")
+	}
+
+	tok, err := isRequestAuthorizedForRoot(app, c)
+	if err != nil {
+		return err
+	}
+
+	cid := clientID(c)
+
 	h, err := multi.ParseTenantHandle(req.Tenant)
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
@@ -70,6 +50,13 @@ func handleImpersonateRole(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
+	if idx := slices.Index(ten.Roles, req.Role); idx < 0 {
+		zap.L().Info("tenant does not have role",
+			zap.String("clientID", string(cid)),
+			zap.String("role", req.Role))
+		return apperr.NewUnauthorized("not authorized")
+	}
+
 	username, err := jwx.GetClaimString(tok, authx.EmailClaim)
 	if err != nil {
 		zap.L().Error("could not get username from token",
@@ -78,7 +65,6 @@ func handleImpersonateRole(app App, c *gin.Context) error {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	userGroupName := ten.GroupName(req.Role)
-	// TODO: check if the role exists?
 	err = authx.ImpersonateRole(
 		c.Request.Context(), app.CogIdp(), ten.UserPoolID, username, userGroupName)
 	if err != nil {
