@@ -8,11 +8,6 @@ import (
 	cogidptypes "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 )
 
-const (
-	ImpersonateRoleClaim = "custom:impersonate_role"
-	ImpersonateUserClaim = "custom:impersonate_user"
-)
-
 func ImpersonateRole(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
@@ -25,7 +20,7 @@ func ImpersonateRole(
 		Username:   aws.String(username),
 		UserAttributes: []cogidptypes.AttributeType{
 			{
-				Name:  aws.String(ImpersonateRoleClaim),
+				Name:  aws.String(ImpersonateGroupClaim),
 				Value: aws.String(roleName),
 			},
 			{
@@ -50,7 +45,7 @@ func ImpersonateUser(
 		Username:   aws.String(username),
 		UserAttributes: []cogidptypes.AttributeType{
 			{
-				Name:  aws.String(ImpersonateRoleClaim),
+				Name:  aws.String(ImpersonateGroupClaim),
 				Value: aws.String(""),
 			},
 			{
@@ -74,7 +69,7 @@ func ClearImpersonate(
 		Username:   aws.String(username),
 		UserAttributes: []cogidptypes.AttributeType{
 			{
-				Name:  aws.String(ImpersonateRoleClaim),
+				Name:  aws.String(ImpersonateGroupClaim),
 				Value: aws.String(""),
 			},
 			{

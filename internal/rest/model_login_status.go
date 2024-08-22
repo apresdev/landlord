@@ -10,4 +10,6 @@ const (
 	LoginStatusSuccess               LoginStatus = "success"
 	LoginStatusNewPasswordRequired   LoginStatus = "new-password-required"
 	LoginStatusPasswordResetRequired LoginStatus = "password-reset-required"
+	LoginStatusMFASetupRequired      LoginStatus = "mfa-setup-required"
+	LoginStatusMFACodeRequired       LoginStatus = "mfa-code-required"
 )

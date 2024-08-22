@@ -36,6 +36,20 @@ func CreateRootTenant(
 		return err
 	}
 	rootTenant.UserPoolID = aws.ToString(up.Id)
+	_, err = cogIdp.CreateGroup(ctx, &cognitoidentityprovider.CreateGroupInput{
+		GroupName:  aws.String(rootTenant.GroupName(multi.RoleGuest)),
+		UserPoolId: aws.String(rootTenant.UserPoolID),
+	})
+	if err != nil {
+		return err
+	}
+	_, err = cogIdp.CreateGroup(ctx, &cognitoidentityprovider.CreateGroupInput{
+		GroupName:  aws.String(rootTenant.GroupName(multi.RoleAdmin)),
+		UserPoolId: aws.String(rootTenant.UserPoolID),
+	})
+	if err != nil {
+		return err
+	}
 	return db.StoreTenant(ctx, ddb, &rootTenant)
 }
 
@@ -66,7 +80,7 @@ func CreateTenant(
 	ten.Description = description
 	ten.UserPoolName = rootTenant.UserPoolName
 	ten.UserPoolID = rootTenant.UserPoolID
-	guestGroupName := ten.GroupName("guest")
+	guestGroupName := ten.GroupName(multi.RoleGuest)
 	_, err = cogIdp.CreateGroup(ctx, &cognitoidentityprovider.CreateGroupInput{
 		GroupName:  aws.String(guestGroupName),
 		UserPoolId: aws.String(ten.UserPoolID),
@@ -91,7 +105,7 @@ func SetTenantOnUser(
 		Username:   aws.String(user.Username),
 		UserAttributes: []cogidptypes.AttributeType{
 			{
-				Name:  aws.String("custom:tenant"),
+				Name:  aws.String(TenantClaim),
 				Value: aws.String(ten.ID.String()),
 			},
 		},
@@ -133,7 +147,9 @@ func ApplyTenant(
 		if err := SetTenantOnUser(ctx, cogIdp, ten, user); err != nil {
 			return err
 		}
-		fmt.Printf("updated user attributes: %s custom:tenant=%s\n", user.Username, ten.ID.String())
+		zap.L().Info("updated user attributes",
+			zap.String("tenant", ten.ID.String()),
+			zap.String("user", user.Username))
 		userGroupName := ten.GroupName(user.Role)
 		_, err := cogIdp.AdminAddUserToGroup(ctx, &cognitoidentityprovider.AdminAddUserToGroupInput{
 			GroupName:  aws.String(userGroupName),

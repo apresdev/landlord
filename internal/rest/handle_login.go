@@ -2,7 +2,11 @@ package rest
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"slices"
+
+	"github.com/apresdev/landlord/internal/multi"
 
 	"github.com/apresdev/landlord/internal/jwx"
 
@@ -106,9 +110,40 @@ func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, err
 		return &resp, nil
 	}
 
+	if o.ChallengeName == types.ChallengeNameTypeSoftwareTokenMfa {
+		var resp LoginResponse
+		resp.Status = LoginStatusMFACodeRequired
+		resp.Session = aws.ToString(o.Session)
+		return &resp, nil
+	}
+
 	if o.ChallengeName != "" {
-		// Handle MFA here
-		panic("TODO NYI")
+		zap.L().Warn("Unexpected challenge name",
+			zap.String("challengeName", string(o.ChallengeName)))
+		return nil, apperr.NewInternal("unexpected challenge name")
+	}
+
+	if user.MFAPolicy == multi.MFAPolicyRequired {
+		u, err := app.CogIdp().AdminGetUser(ctx,
+			&cognitoidentityprovider.AdminGetUserInput{
+				UserPoolId: aws.String(tenant.UserPoolID),
+				Username:   aws.String(req.Username)})
+		if err != nil {
+			return nil, apperr.NewInternalE(fmt.Errorf("error getting user: %w", err))
+		}
+		idx := slices.Index(u.UserMFASettingList, "SOFTWARE_TOKEN_MFA")
+		if idx == -1 {
+			result, err := authx.AssociateSoftwareToken(
+				ctx, app.CogIdp(), aws.ToString(o.AuthenticationResult.AccessToken), req.Username)
+			if err != nil {
+				return nil, apperr.NewInternalE(fmt.Errorf("error associating software token: %w", err))
+			}
+			var resp LoginResponse
+			resp.Status = LoginStatusMFASetupRequired
+			resp.OtpURI = result.OtpAuthURI
+			resp.AccessToken = aws.ToString(o.AuthenticationResult.AccessToken)
+			return &resp, nil
+		}
 	}
 
 	cid := clientID(c)

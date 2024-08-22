@@ -5,13 +5,14 @@ resource "aws_cognito_user_pool" "default" {
   email_verification_message = "Please use the following code: {####}"
 
   admin_create_user_config {
+    allow_admin_create_user_only = true
     invite_message_template {
       email_subject = format("Invitation for %s", var.app_domain_name)
       email_message = format(
-        "Login here: https://%s with temporary password: {####}",
+        "{username} login here: https://%s with temporary password: {####}",
         var.app_domain_name)
       sms_message = format(
-        "Login here: https://%s with temporary password: {####}",
+        "{username} login here: https://%s with temporary password: {####}",
         var.app_domain_name)
     }
   }
@@ -29,6 +30,18 @@ resource "aws_cognito_user_pool" "default" {
     require_symbols                  = false
     require_uppercase                = false
     temporary_password_validity_days = 7
+  }
+
+  mfa_configuration = "OPTIONAL"
+
+  software_token_mfa_configuration {
+    enabled = true
+  }
+
+  sms_configuration {
+    external_id    = var.user_pool_external_id
+    sns_caller_arn = aws_iam_role.landlord_sms_cognito_role.arn
+    sns_region     = var.aws_region
   }
 
   username_configuration {
@@ -101,4 +114,57 @@ resource "aws_cognito_user_pool_client" "default" {
   generate_secret = true
   allowed_oauth_flows = ["code"]
   allowed_oauth_scopes = ["email", "openid"]
+}
+
+resource "aws_iam_role" "landlord_sms_cognito_role" {
+  name = "Landlord-SMS-Cognito-Role"
+
+  force_detach_policies = true
+
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "",
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "cognito-idp.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole",
+        "Condition" : {
+          "StringEquals" : {
+            "sts:ExternalId" : var.user_pool_external_id,
+            "aws:SourceAccount": data.aws_caller_identity.current.account_id
+          },
+          "ArnLike" : {
+            "aws:SourceArn": format(
+              "arn:aws:cognito-idp:%s:%s:userpool/*",
+              var.aws_region,
+              data.aws_caller_identity.current.account_id)
+          }
+        }
+      },
+    ]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "landlord_sms_cognito_role_policy" {
+  name = "landlord_sms_cognito_role_policy"
+  role = aws_iam_role.landlord_sms_cognito_role.id
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "sns:publish"
+        ],
+        "Resource" : [
+          "*"
+        ]
+      }
+    ]
+  })
 }

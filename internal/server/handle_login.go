@@ -34,6 +34,15 @@ func handleLoginSubmit(a *app, c *gin.Context) error {
 		setCookie(c, appenv.AppURL(), LandlordUsernameCookie, req.Username)
 		setCookie(c, appenv.AppURL(), LandlordChallengeSessionCookie, resp.Session)
 		c.Redirect(http.StatusFound, "/reset-password")
+	case rest.LoginStatusMFASetupRequired:
+		setCookie(c, appenv.AppURL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, appenv.AppURL(), LandlordAccessTokenCookie, resp.AccessToken)
+		setCookie(c, appenv.AppURL(), LandlordOTPURI, resp.OtpURI)
+		c.Redirect(http.StatusFound, "/setup-otp")
+	case rest.LoginStatusMFACodeRequired:
+		setCookie(c, appenv.AppURL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, appenv.AppURL(), LandlordChallengeSessionCookie, resp.Session)
+		c.Redirect(http.StatusFound, "/otp")
 	default:
 		zap.L().Error("unexpected login status value",
 			zap.String("status", string(resp.Status)))

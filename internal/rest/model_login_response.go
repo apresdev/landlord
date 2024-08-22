@@ -13,4 +13,6 @@ type LoginResponse struct {
 	AccessToken string `json:"accessToken"`
 
 	RefreshToken string `json:"refreshToken"`
+
+	OtpURI string `json:"otpURI,omitempty"`
 }

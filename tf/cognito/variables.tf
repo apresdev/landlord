@@ -12,3 +12,15 @@ variable "tags" {
     "managed-by"  = "terraform"
   }
 }
+
+variable "user_pool_external_id" {
+  description = "The external ID of the user pool."
+  type        = string
+  default     = "landlord_external_id"
+}
+
+variable "aws_region" {
+    description = "The AWS region."
+    type        = string
+    default     = "us-east-2"
+}

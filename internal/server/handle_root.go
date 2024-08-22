@@ -1,9 +1,11 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/apresdev/landlord/internal/appenv"
+	"go.uber.org/zap"
 
 	"github.com/apresdev/landlord/internal/jwx"
 
@@ -42,7 +44,12 @@ func handleRoot(
 
 	_, tenant, err := db.GetUserAndTenant(c.Request.Context(), ddb, username)
 	if err != nil {
-		return fmt.Errorf("error finding tenant for username: %w", err)
+		zap.L().Warn("error finding tenant for username",
+			zap.String("username", username),
+			zap.Error(err))
+		clearLandlordCookies(c, appenv.AppURL())
+		c.Redirect(http.StatusFound, "/login")
+		return nil
 	}
 	validationURL := jwx.ValidationURL(awsCfg.Region, tenant.UserPoolID)
 	tks, err := jwx.ValidateAllTokens(

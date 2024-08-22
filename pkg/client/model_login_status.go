@@ -16,6 +16,8 @@ const (
 	LoginStatusSuccess               LoginStatus = "success"
 	LoginStatusNewPasswordRequired   LoginStatus = "new-password-required"
 	LoginStatusPasswordResetRequired LoginStatus = "password-reset-required"
+	LoginStatusMFASetupRequired      LoginStatus = "mfa-setup-required"
+	LoginStatusMFACodeRequired       LoginStatus = "mfa-code-required"
 )
 
 // All allowed values of LoginStatus enum
@@ -23,6 +25,8 @@ var AllowedLoginStatusEnumValues = []LoginStatus{
 	"success",
 	"new-password-required",
 	"password-reset-required",
+	"mfa-setup-required",
+	"mfa-code-required",
 }
 
 func (v *LoginStatus) UnmarshalJSON(src []byte) error {

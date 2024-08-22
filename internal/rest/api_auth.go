@@ -7,6 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// AssociateOTP - Associate OTP with a user.
+func ginAssociateOTP(c *gin.Context) {
+	callImpl(c, handleAssociateOTP)
+}
+
 // ClearImpersonate - Clear any impersonation.
 func ginClearImpersonate(c *gin.Context) {
 	callImpl(c, handleClearImpersonate)
@@ -60,4 +65,14 @@ func ginSetNewPassword(c *gin.Context) {
 // UpdateUser - Update the user
 func ginUpdateUser(c *gin.Context) {
 	callImpl(c, handleUpdateUser)
+}
+
+// ValidateMFACode - Validate an MFA code.
+func ginValidateMFACode(c *gin.Context) {
+	callImpl(c, handleValidateMFACode)
+}
+
+// VerifyOTPAssociation - Verify the association of an OTP device.
+func ginVerifyOTPAssociation(c *gin.Context) {
+	callImpl(c, handleVerifyOTPAssociation)
 }

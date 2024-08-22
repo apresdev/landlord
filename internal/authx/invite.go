@@ -29,6 +29,7 @@ func SendInvite(
 	ten *multi.Tenant,
 	username string,
 	role string,
+	mfaPolicy multi.MFAPolicy,
 	resend Resend) error {
 
 	e, err := ParseEmail(username)
@@ -41,7 +42,6 @@ func SendInvite(
 			fmt.Sprintf("%s is already signed up", e.Address()))
 	}
 	ua := []types.AttributeType{
-		{Name: aws.String("name"), Value: aws.String(e.Address())},
 		{Name: aws.String("custom:tenant"), Value: aws.String(ten.ID.String())},
 	}
 	args := cognitoidentityprovider.AdminCreateUserInput{
@@ -56,9 +56,10 @@ func SendInvite(
 		return err
 	}
 	return db.StoreUser(ctx, ddb, &multi.User{
-		Username: e.Address(),
-		TenantID: ten.ID,
-		Role:     role,
-		Status:   multi.UserStatusInvited,
+		Username:  e.Address(),
+		TenantID:  ten.ID,
+		Role:      role,
+		Status:    multi.UserStatusInvited,
+		MFAPolicy: mfaPolicy,
 	})
 }

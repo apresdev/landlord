@@ -19,6 +19,7 @@ type LoginResponse struct {
 	IdToken      string      `json:"idToken"`
 	AccessToken  string      `json:"accessToken"`
 	RefreshToken string      `json:"refreshToken"`
+	OtpURI       *string     `json:"otpURI,omitempty"`
 }
 
 type _LoginResponse LoginResponse
@@ -165,6 +166,38 @@ func (o *LoginResponse) SetRefreshToken(v string) {
 	o.RefreshToken = v
 }
 
+// GetOtpURI returns the OtpURI field value if set, zero value otherwise.
+func (o *LoginResponse) GetOtpURI() string {
+	if o == nil || IsNil(o.OtpURI) {
+		var ret string
+		return ret
+	}
+	return *o.OtpURI
+}
+
+// GetOtpURIOk returns a tuple with the OtpURI field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *LoginResponse) GetOtpURIOk() (*string, bool) {
+	if o == nil || IsNil(o.OtpURI) {
+		return nil, false
+	}
+	return o.OtpURI, true
+}
+
+// HasOtpURI returns a boolean if a field has been set.
+func (o *LoginResponse) HasOtpURI() bool {
+	if o != nil && !IsNil(o.OtpURI) {
+		return true
+	}
+
+	return false
+}
+
+// SetOtpURI gets a reference to the given string and assigns it to the OtpURI field.
+func (o *LoginResponse) SetOtpURI(v string) {
+	o.OtpURI = &v
+}
+
 func (o LoginResponse) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -180,6 +213,9 @@ func (o LoginResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["idToken"] = o.IdToken
 	toSerialize["accessToken"] = o.AccessToken
 	toSerialize["refreshToken"] = o.RefreshToken
+	if !IsNil(o.OtpURI) {
+		toSerialize["otpURI"] = o.OtpURI
+	}
 	return toSerialize, nil
 }
 

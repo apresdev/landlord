@@ -14,9 +14,10 @@ var _ MappedNullable = &InviteRequest{}
 
 // InviteRequest struct for InviteRequest
 type InviteRequest struct {
-	Tenant   string `json:"tenant"`
-	Username string `json:"username"`
-	Role     string `json:"role"`
+	Tenant    string    `json:"tenant"`
+	Username  string    `json:"username"`
+	Role      string    `json:"role"`
+	MfaPolicy MFAPolicy `json:"mfaPolicy"`
 }
 
 type _InviteRequest InviteRequest
@@ -25,11 +26,12 @@ type _InviteRequest InviteRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInviteRequest(tenant string, username string, role string) *InviteRequest {
+func NewInviteRequest(tenant string, username string, role string, mfaPolicy MFAPolicy) *InviteRequest {
 	this := InviteRequest{}
 	this.Tenant = tenant
 	this.Username = username
 	this.Role = role
+	this.MfaPolicy = mfaPolicy
 	return &this
 }
 
@@ -115,6 +117,30 @@ func (o *InviteRequest) SetRole(v string) {
 	o.Role = v
 }
 
+// GetMfaPolicy returns the MfaPolicy field value
+func (o *InviteRequest) GetMfaPolicy() MFAPolicy {
+	if o == nil {
+		var ret MFAPolicy
+		return ret
+	}
+
+	return o.MfaPolicy
+}
+
+// GetMfaPolicyOk returns a tuple with the MfaPolicy field value
+// and a boolean to check if the value has been set.
+func (o *InviteRequest) GetMfaPolicyOk() (*MFAPolicy, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.MfaPolicy, true
+}
+
+// SetMfaPolicy sets field value
+func (o *InviteRequest) SetMfaPolicy(v MFAPolicy) {
+	o.MfaPolicy = v
+}
+
 func (o InviteRequest) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -128,6 +154,7 @@ func (o InviteRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize["tenant"] = o.Tenant
 	toSerialize["username"] = o.Username
 	toSerialize["role"] = o.Role
+	toSerialize["mfaPolicy"] = o.MfaPolicy
 	return toSerialize, nil
 }
 
@@ -139,6 +166,7 @@ func (o *InviteRequest) UnmarshalJSON(data []byte) (err error) {
 		"tenant",
 		"username",
 		"role",
+		"mfaPolicy",
 	}
 
 	allProperties := make(map[string]interface{})

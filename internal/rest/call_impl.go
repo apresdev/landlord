@@ -39,9 +39,11 @@ func pathFor(path string) string {
 var unauthorizedPaths = []string{
 	pathFor("/api/login"),
 	pathFor("/api/logout"),
+	pathFor("/api/validate-mfa-code"),
 	pathFor("/api/recover-password"),
 	pathFor("/api/reset-password"),
 	pathFor("/api/new-password"),
+	pathFor("/api/verify-otp-association"),
 }
 
 func AddRestRoutes(app App, router *gin.Engine) http.Handler {

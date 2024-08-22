@@ -9,4 +9,6 @@ type InviteRequest struct {
 	Username string `json:"username"`
 
 	Role string `json:"role"`
+
+	MfaPolicy MfaPolicy `json:"mfaPolicy"`
 }

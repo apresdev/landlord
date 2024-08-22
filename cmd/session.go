@@ -9,12 +9,13 @@ import (
 )
 
 type Session struct {
-	LastError     error  `json:"last_error"`
-	ValidationURL string `json:"validation_url"`
-	UserPool      string `json:"user_pool"`
-	AccessToken   string `json:"access_token"`
-	IdToken       string `json:"id_token"`
-	RefreshToken  string `json:"refresh_token"`
+	LastError        error  `json:"last_error"`
+	ValidationURL    string `json:"validation_url"`
+	UserPool         string `json:"user_pool"`
+	AccessToken      string `json:"access_token"`
+	IdToken          string `json:"id_token"`
+	RefreshToken     string `json:"refresh_token"`
+	ChallengeSession string `json:"challenge_session"`
 }
 
 var theSession *Session
@@ -68,9 +69,11 @@ func loadSessionFromFile() (*Session, error) {
 
 func (s *Session) Logout() error {
 	s.ValidationURL = ""
+	s.UserPool = ""
 	s.AccessToken = ""
 	s.IdToken = ""
 	s.RefreshToken = ""
+	s.ChallengeSession = ""
 	return s.SaveToFile()
 }
 
