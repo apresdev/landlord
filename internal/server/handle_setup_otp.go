@@ -22,6 +22,7 @@ func handleSetupOTPSubmit(a *app, c *gin.Context) error {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return nil
 	}
-	c.JSON(http.StatusNoContent, nil)
+	// TODO: add refresh token to request and re-fetch tokens here
+	c.Redirect(http.StatusFound, "/")
 	return nil
 }

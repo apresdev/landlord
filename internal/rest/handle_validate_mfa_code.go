@@ -33,7 +33,7 @@ func HandleValidateMFACode(app App, c *gin.Context, req ValidateMfaCodeRequest) 
 	ddb := app.DDB()
 	cogIdp := app.CogIdp()
 	ctx := c.Request.Context()
-	_, tenant, err := db.GetUserAndTenant(ctx, ddb, req.Username)
+	user, tenant, err := db.GetUserAndTenant(ctx, ddb, req.Username)
 	if err != nil {
 		return nil, fmt.Errorf("error finding tenant for username: %w", err)
 	}
@@ -82,6 +82,10 @@ func HandleValidateMFACode(app App, c *gin.Context, req ValidateMfaCodeRequest) 
 		})
 	if err != nil {
 		zap.L().Warn("error updating email_verified user attribute", zap.Error(err))
+	}
+
+	if err := authx.OnSuccessfulLogin(ctx, app.DDB(), app.CogIdp(), tenant, user); err != nil {
+		return nil, err
 	}
 
 	var resp LoginResponse

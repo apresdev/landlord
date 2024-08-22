@@ -327,14 +327,7 @@ func tenantInviteCmd() *cobra.Command {
 				return err
 			}
 			err = authx.SendInvite(
-				cs.Ctx(),
-				cs.DDB(),
-				cs.CogIdp(),
-				ten,
-				username,
-				role,
-				mfaPol,
-				authx.NoResend)
+				cs.Ctx(), cs.DDB(), cs.CogIdp(), ten, username, role, mfaPol)
 			if err != nil {
 				return err
 			}
@@ -703,20 +696,7 @@ func tenantUserRoleCmd() *cobra.Command {
 				return err
 			}
 			user.Role = role
-			userGroupName := ten.GroupName(user.Role)
-			_, err = cs.CogIdp().AdminAddUserToGroup(
-				cs.Ctx(), &cognitoidentityprovider.AdminAddUserToGroupInput{
-					GroupName:  aws.String(userGroupName),
-					UserPoolId: aws.String(ten.UserPoolID),
-					Username:   aws.String(user.Username),
-				})
-			if err != nil {
-				zap.L().Warn("failed to add user to group",
-					zap.Error(err),
-					zap.String("user-pool-id", ten.UserPoolID),
-					zap.String("tenant-id", ten.ID.String()),
-					zap.String("group", userGroupName),
-					zap.String("user", user.Username))
+			if err = authx.SetCognitoGroup(cs.Ctx(), cs.CogIdp(), ten, user); err != nil {
 				return err
 			}
 			if err = db.StoreUser(cs.Ctx(), cs.DDB(), user); err != nil {
