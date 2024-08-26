@@ -393,6 +393,80 @@ func (_c *AWSCognitoIdentityProvider_AdminGetUser_Call) RunAndReturn(run func(co
 	return _c
 }
 
+// AdminListUserAuthEvents provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) AdminListUserAuthEvents(ctx context.Context, params *cognitoidentityprovider.AdminListUserAuthEventsInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminListUserAuthEventsOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdminListUserAuthEvents")
+	}
+
+	var r0 *cognitoidentityprovider.AdminListUserAuthEventsOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminListUserAuthEventsInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminListUserAuthEventsOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminListUserAuthEventsInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.AdminListUserAuthEventsOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.AdminListUserAuthEventsOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.AdminListUserAuthEventsInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_AdminListUserAuthEvents_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdminListUserAuthEvents'
+type AWSCognitoIdentityProvider_AdminListUserAuthEvents_Call struct {
+	*mock.Call
+}
+
+// AdminListUserAuthEvents is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.AdminListUserAuthEventsInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) AdminListUserAuthEvents(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_AdminListUserAuthEvents_Call {
+	return &AWSCognitoIdentityProvider_AdminListUserAuthEvents_Call{Call: _e.mock.On("AdminListUserAuthEvents",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminListUserAuthEvents_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.AdminListUserAuthEventsInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_AdminListUserAuthEvents_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.AdminListUserAuthEventsInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminListUserAuthEvents_Call) Return(_a0 *cognitoidentityprovider.AdminListUserAuthEventsOutput, _a1 error) *AWSCognitoIdentityProvider_AdminListUserAuthEvents_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminListUserAuthEvents_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.AdminListUserAuthEventsInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminListUserAuthEventsOutput, error)) *AWSCognitoIdentityProvider_AdminListUserAuthEvents_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AdminRemoveUserFromGroup provides a mock function with given fields: ctx, params, optFns
 func (_m *AWSCognitoIdentityProvider) AdminRemoveUserFromGroup(ctx context.Context, params *cognitoidentityprovider.AdminRemoveUserFromGroupInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminRemoveUserFromGroupOutput, error) {
 	_va := make([]interface{}, len(optFns))
