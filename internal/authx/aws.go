@@ -109,6 +109,11 @@ type AWSCognitoIdentityProvider interface {
 		params *cognitoidentityprovider.AdminGetUserInput,
 		optFns ...func(*cognitoidentityprovider.Options)) (
 		*cognitoidentityprovider.AdminGetUserOutput, error)
+	AdminListUserAuthEvents(
+		ctx context.Context,
+		params *cognitoidentityprovider.AdminListUserAuthEventsInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.AdminListUserAuthEventsOutput, error)
 	AdminSetUserPassword(
 		ctx context.Context,
 		params *cognitoidentityprovider.AdminSetUserPasswordInput,

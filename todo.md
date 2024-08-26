@@ -1,11 +1,12 @@
 # TODOs
 
-* resend an invitation email
+* reapply the permissions from landlord
 * terraform for the lambda
 * install instructions that indicate turning on advanced security
 * add ability to give a cross-tenant impersonation permission
 * replace terraform for initializing the user pool with the landlord tool
   itself -- replace `landord tenant init` with just `landlord init`
+* limit the permissions needed by landlord
 * how to handle abuse of the unauthenticated landlord APIs? 
     * what does the WAF do to help here?
 * apply handling

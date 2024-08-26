@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+
 	"github.com/skip2/go-qrcode"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -524,6 +526,7 @@ func tenantUserCmd() *cobra.Command {
 		},
 	}
 	c.AddCommand(tenantUserAssociateOTP())
+	c.AddCommand(tenantUserListEvents())
 	c.AddCommand(tenantUserRemoveCmd())
 	c.AddCommand(tenantUserRoleCmd())
 	c.AddCommand(tenantUserVerifyOTP())
@@ -567,6 +570,68 @@ func tenantUserAssociateOTP() *cobra.Command {
 	}
 	c.PersistentFlags().StringVarP(
 		&username, "username", "u", "", "Username of user to add to tenant")
+	return c
+}
+
+func tenantUserListEvents() *cobra.Command {
+	var tenant string
+	var username string
+	var results int32
+	c := &cobra.Command{
+		Use:   "list-events",
+		Short: "List events for a user",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if tenant == "" {
+				return errors.New("--tenant must be set")
+			}
+			if username == "" {
+				return errors.New("--username must be set")
+			}
+			s := MustSession()
+			e, err := authx.ParseEmail(username)
+			if err != nil {
+				return err
+			}
+			cs := MustClients()
+			result, err := cs.CogIdp().AdminListUserAuthEvents(cs.Ctx(),
+				&cognitoidentityprovider.AdminListUserAuthEventsInput{
+					UserPoolId: aws.String(s.UserPool),
+					Username:   aws.String(e.Address()),
+					MaxResults: aws.Int32(results),
+				})
+			if err != nil {
+				return err
+			}
+			for _, event := range result.AuthEvents {
+				risk := event.EventRisk
+				var line strings.Builder
+				line.WriteString(fmt.Sprintf(
+					"%s | %s %s",
+					aws.ToTime(event.CreationDate).Format("2006-01-02 15:04:05"),
+					event.EventType,
+					event.EventResponse))
+				if risk != nil {
+					if risk.RiskDecision != types.RiskDecisionTypeNoRisk {
+						line.WriteString(fmt.Sprintf(
+							" | %s risk: %s",
+							risk.RiskLevel,
+							risk.RiskDecision))
+					}
+					if aws.ToBool(risk.CompromisedCredentialsDetected) {
+						line.WriteString(" | Compromised or trivial credentials")
+					}
+				}
+				cmd.Println(line.String())
+			}
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&tenant, "tenant", "T", "", "Tenant of the user")
+	c.PersistentFlags().StringVarP(
+		&username, "username", "u", "", "List events for this username")
+	c.PersistentFlags().Int32VarP(
+		&results, "results", "r", 10, "Number of results to return")
 	return c
 }
 
