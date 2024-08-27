@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/base64"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 
@@ -118,6 +119,16 @@ func Run() error {
 		clearLandlordCookies(c, appenv.AppURL())
 		c.Redirect(http.StatusFound, "/")
 	})
+
+	if appenv.DevMode() {
+		r.StaticFS("/static", http.Dir("internal/server/static"))
+	} else {
+		sfs, err := fs.Sub(staticFS, "static")
+		if err != nil {
+			return err
+		}
+		r.StaticFS("/static", http.FS(sfs))
+	}
 	listenAddr, err := parseListenAddr(os.Getenv("LANDLORD_LISTEN_ADDR"))
 	if err != nil {
 		return err

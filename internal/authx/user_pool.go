@@ -233,7 +233,7 @@ func DeleteUserPool(
 	cogIdp AWSCognitoIdentityProvider,
 	userPool string) (*types.UserPoolType, error) {
 
-	if !appenv.LocalStack {
+	if !appenv.LocalStack() {
 		return nil, errors.New("cannot delete user pool in non-localstack environment")
 	}
 

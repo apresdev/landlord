@@ -436,9 +436,9 @@ func (s *UserPoolTestSuite) TestDeleteUserPool() {
 func (s *UserPoolTestSuite) TestDeleteUserPoolError() {
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
 	ctx := context.Background()
-	appenv.LocalStack = false
+	restore := appenv.OverrideLocalStack(false)
 	v, err := authx.DeleteUserPool(ctx, cogIdp, "test-user-pool1")
-	appenv.LocalStack = true
+	restore()
 	s.Assert().Error(err)
 	s.Assert().Equal("cannot delete user pool in non-localstack environment", err.Error())
 	s.Assert().Nil(v)

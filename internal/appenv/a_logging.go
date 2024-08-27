@@ -13,9 +13,6 @@ import (
 // ConfigureLogging configures Zap logging.
 func ConfigureLogging() (func(), error) {
 	factory := zap.NewProduction
-	if Debug {
-		factory = zap.NewDevelopment
-	}
 	logger, err := factory()
 	if err != nil {
 		return nil, err
@@ -35,4 +32,14 @@ func MustConfigureLogging() func() {
 
 func init() {
 	MustConfigureLogging()
+}
+
+// MustConfigureDevelopmentLogging configures Zap logging for development.
+func MustConfigureDevelopmentLogging() {
+	factory := zap.NewDevelopment
+	logger, err := factory()
+	if err != nil {
+		panic(err)
+	}
+	_ = zap.ReplaceGlobals(logger)
 }

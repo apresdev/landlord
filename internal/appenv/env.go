@@ -11,8 +11,10 @@ import (
 )
 
 var (
-	Debug      bool
-	LocalStack bool
+	devMode       bool
+	devModeSet    bool
+	localStack    bool
+	localStackSet bool
 )
 
 func loadIfExists(filename string) error {
@@ -48,13 +50,46 @@ func init() {
 	if err != nil {
 		panicDuringInit("error loading .env", zap.Error(err))
 	}
-	s := os.Getenv("AWS_PROFILE")
-	if s != "" {
-		LocalStack = strings.ToLower(s) == "localstack"
+	if DevMode() {
+		MustConfigureDevelopmentLogging()
 	}
-	s = os.Getenv("LANDLORD_DEBUG")
-	if s != "" {
-		Debug = strings.ToLower(s) == "true"
+}
+
+// DevMode returns true if the LANDLORD_DEV_MODE environment variable is set to
+// "true". This is used to determine whether to enable development mode features.
+// See README.md for more information on development mode features.
+func DevMode() bool {
+	if !devModeSet {
+		s := os.Getenv("LANDLORD_DEV_MODE")
+		devMode = strings.ToLower(s) == "true"
+		devModeSet = true
+	}
+	return devMode
+}
+
+// LocalStack returns true if the AWS_PROFILE environment variable is set to
+// "localstack". This is used to determine whether to use the local stack for
+// testing.
+func LocalStack() bool {
+	if !localStackSet {
+		s := os.Getenv("AWS_PROFILE")
+		localStack = strings.ToLower(s) == "localstack"
+		localStackSet = true
+	}
+	return localStack
+}
+
+// OverrideLocalStack sets the local stack mode to v and returns a function that
+// resets the local stack mode to its previous value. Used in unit tests
+// that poke around with the development environment.
+func OverrideLocalStack(v bool) func() {
+	current := LocalStack()
+	if current == v {
+		return func() {}
+	}
+	localStack = v
+	return func() {
+		localStack = current
 	}
 }
 
