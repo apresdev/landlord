@@ -1,22 +1,19 @@
 # TODOs
 
-* reapply the permissions from landlord
+* reapply the IAM permissions from landlord
 * terraform for the lambda
-* install instructions that indicate turning on advanced security
 * add ability to give a cross-tenant impersonation permission
 * replace terraform for initializing the user pool with the landlord tool
   itself -- replace `landord tenant init` with just `landlord init`
-* limit the permissions needed by landlord
 * how to handle abuse of the unauthenticated landlord APIs? 
     * what does the WAF do to help here?
 * apply handling
     * remove a user from their old group in apply if applicable
     * remove a group from a tenant if it no longer exists
 * REST API for refresh token handling
+* further limit the permissions needed by landlord
 * list pending invitations
 * email domain guard rails
-* tenant role add-template (or some such) that adds a set of roles from a 
-  predefined list, like "admin, user, guest" or "admin, poweruser, user, guest"
 * Make it possible to show a token's contents when it has expired in the 
   `info` command
 * invitation email could look better
@@ -28,5 +25,5 @@
   * add password fields that have the little eyeball to reveal the password
     * maybe save this for the React version only?
   * front end validation that the passwords match in new-password page
-* Add IP address and device-fingerprinting data to signups:
+* add IP address and device-fingerprinting data to signups:
   https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-adaptive-authentication.html#user-pool-settings-adaptive-authentication-device-fingerprint
