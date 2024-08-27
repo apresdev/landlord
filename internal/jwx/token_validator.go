@@ -52,7 +52,7 @@ type TokenValidator interface {
 // ValidationURL returns the URL for the JWKS endpoint of the Cognito user pool.
 func ValidationURL(region, userPoolID string) *url.URL {
 	var raw string
-	if appenv.LocalStack {
+	if appenv.LocalStack() {
 		var err error
 		raw, err = url.JoinPath(localstack.Endpoint(), userPoolID, ".well-known/jwks.json")
 		if err != nil {
@@ -77,7 +77,7 @@ func loadJWK(ctx context.Context, validationURL *url.URL) (jwk.Set, error) {
 	if cachedJWKSet != nil {
 		return cachedJWKSet, nil
 	}
-	if appenv.LocalStack {
+	if appenv.LocalStack() {
 		keySet, err := jwk.Fetch(ctx, validationURL.String())
 		if err != nil {
 			return nil, err

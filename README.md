@@ -55,6 +55,12 @@ aws sso login
 
 ## Environment Variables
 
+* `LANDLORD_DEV_MODE`: If set, the landlord tool will run in development mode.
+  This enables various development features, such as:
+    * Use of the zap development logger.
+    * In server mode, static files will be served from the local
+      file system instead of via an embedded file system. This simplifies
+      reloading things like style sheets.
 * `AWS_REGION=<region>`: If set, the landlord tool will use this region as the
   default region for all commands that require a region.
 * `LANDLORD_APP_URL=<url>`: URL of the application. Where cookies

@@ -7,62 +7,14 @@ templ otpCodePage(appName string, username string) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{ appName } | Login</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .login-container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 100%;
-        }
-        .login-container h2 {
-            margin-bottom: 20px;
-            font-size: 24px;
-            text-align: center;
-        }
-        .login-container input[type="email"],
-        .login-container input[type="password"] {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .login-container button {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .login-container button:hover {
-            background-color: #45a049;
-        }
-        .login-container .recovery {
-            text-align: center;
-            margin: 10px 0;
-        }
-    </style>
+    <link rel="stylesheet" href="static/landlord.css">
 </head>
 <body>
-    <div class="login-container">
+    <div class="container">
         <h2>{ appName } | Authenticator Code</h2>
         <form action="/otp/submit" method="POST">
             <label>Code
-                <input type="text" name="code" placeholder="OTP Code" required>
+                <input type="text" name="code" placeholder="Enter the code from your authenticator app..." required>
             </label>
             <input type="hidden" name="username" value={ username } />
             <button type="submit">Submit</button>
