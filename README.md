@@ -12,6 +12,13 @@ command:
 go install github.com/apres/landlord@latest
 ```
 
+## AWS Cognito
+
+Landlord configures one or more AWS Cognito user pools, and enables advanced
+security on these pools. The AWS advanced security features are recommended,
+but do come with an additional cost. See:
+[AWS Cognito Advanced Security](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html)
+
 ## Testing
 
 The `landlord` tool calls AWS APIs liberally. To that end,

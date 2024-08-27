@@ -101,6 +101,13 @@ resource "aws_cognito_user_pool" "default" {
     advanced_security_mode = "AUDIT"
   }
 
+  lambda_config {
+    pre_token_generation_config {
+      lambda_arn     = module.landlord_pre_token_generation_lambda.lambda_function_arn
+      lambda_version = "V2_0"
+    }
+  }
+
   tags = var.tags
 }
 
@@ -117,7 +124,7 @@ resource "aws_cognito_user_pool_client" "default" {
 }
 
 resource "aws_iam_role" "landlord_sms_cognito_role" {
-  name = "Landlord-SMS-Cognito-Role"
+  name = "LandlordSMSCognitoRole"
 
   force_detach_policies = true
 

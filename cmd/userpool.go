@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 
@@ -87,7 +89,8 @@ func userpoolArn(region, account, userPoolID string) string {
 }
 
 func userPoolListCmd() *cobra.Command {
-	return &cobra.Command{
+	var showArn bool
+	c := &cobra.Command{
 		Use:   "list",
 		Short: "List the user pools",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -100,15 +103,28 @@ func userPoolListCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			for _, up := range userPools {
-				cmd.Printf("%s (id=%s) (arn=%s)\n",
-					aws.ToString(up.Name),
-					aws.ToString(up.Id),
-					userpoolArn(cs.Cfg().Region, aws.ToString(id.Account), aws.ToString(up.Id)))
+			for _, upDesc := range userPools {
+				up, err := authx.GetUserPoolByID(cs.Ctx(), cs.CogIdp(), aws.ToString(upDesc.Id))
+				if err != nil {
+					return err
+				}
+				adv := types.AdvancedSecurityModeTypeOff
+				if up.UserPoolAddOns != nil {
+					adv = up.UserPoolAddOns.AdvancedSecurityMode
+				}
+				cmd.Printf("%s id=%s advanced-security=%s\n",
+					aws.ToString(up.Name), aws.ToString(up.Id), adv)
+				if showArn {
+					cmd.Printf("  %s\n", userpoolArn(
+						cs.Cfg().Region, aws.ToString(id.Account), aws.ToString(up.Id)))
+				}
 			}
 			return nil
 		},
 	}
+	c.PersistentFlags().BoolVarP(
+		&showArn, "arn", "", false, "Show ARN")
+	return c
 }
 
 func userPoolCmd() *cobra.Command {

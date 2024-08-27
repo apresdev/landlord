@@ -1,5 +1,5 @@
 variable "app_domain_name" {
-  description = "The FDQN of the app."
+  description = "The FQDN of the app."
   type        = string
 }
 
@@ -23,4 +23,13 @@ variable "aws_region" {
     description = "The AWS region."
     type        = string
     default     = "us-east-2"
+}
+
+variable "environment" {
+  description = "Environment Name, used for naming and tagging AWS resources."
+  type        = string
+  validation {
+    condition     = can(regex("^[A-Z][a-zA-Z0-9]*$", var.environment))
+    error_message = "Environment name must be alphanumeric and capitalized."
+  }
 }
