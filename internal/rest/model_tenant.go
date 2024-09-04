@@ -3,7 +3,7 @@
 
 package rest
 
-type TenantsResponseTenantsInner struct {
+type Tenant struct {
 	Id string `json:"id"`
 
 	Name string `json:"name"`

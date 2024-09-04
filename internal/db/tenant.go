@@ -2,8 +2,8 @@ package db
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/apresdev/landlord/internal/apperr"
 
@@ -66,7 +66,8 @@ func StoreTenant(ctx context.Context, ddb AWSDynamoDB, ten *multi.Tenant) error 
 	}
 	_, err = ddb.PutItem(ctx, input)
 	if err != nil {
-		return fmt.Errorf("failed to put item to %s: %w", tenantsTable, err)
+		return apperr.NewInternalE(
+			fmt.Errorf("failed to put item to %s: %w", tenantsTable, err))
 	}
 	return err
 }
@@ -74,7 +75,8 @@ func StoreTenant(ctx context.Context, ddb AWSDynamoDB, ten *multi.Tenant) error 
 func GetTenantByID(ctx context.Context, ddb AWSDynamoDB, id uuid.UUID) (*multi.Tenant, error) {
 	b, err := id.MarshalBinary()
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal UUID to binary: %w", err)
+		return nil, apperr.NewBadRequestE(
+			fmt.Errorf("failed to marshal UUID to binary: %w", err))
 	}
 	input := &dynamodb.GetItemInput{
 		TableName: aws.String(tenantsTable),
@@ -84,7 +86,8 @@ func GetTenantByID(ctx context.Context, ddb AWSDynamoDB, id uuid.UUID) (*multi.T
 	}
 	result, err := ddb.GetItem(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get item from DynamoDB: %w", err)
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to get item from DynamoDB: %w", err))
 	}
 	if result.Item == nil {
 		return nil, apperr.NewNotFound("item not found")
@@ -92,7 +95,8 @@ func GetTenantByID(ctx context.Context, ddb AWSDynamoDB, id uuid.UUID) (*multi.T
 	var tenant multi.Tenant
 	err = attributevalue.UnmarshalMap(result.Item, &tenant)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal DynamoDB item to Tenant: %w", err)
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to unmarshal DynamoDB item to Tenant: %w", err))
 	}
 	return &tenant, nil
 }
@@ -111,7 +115,8 @@ func GetTenantByName(ctx context.Context, ddb AWSDynamoDB, name string) (*multi.
 	}
 	o, err := ddb.Query(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query DynamoDB: %w", err)
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to query DynamoDB: %w", err))
 	}
 	if o.Items == nil || len(o.Items) == 0 {
 		return nil, apperr.NewNotFound("item not found")
@@ -122,7 +127,8 @@ func GetTenantByName(ctx context.Context, ddb AWSDynamoDB, name string) (*multi.
 	var tenant multi.Tenant
 	err = attributevalue.UnmarshalMap(o.Items[0], &tenant)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal DynamoDB item to Tenant: %w", err)
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to unmarshal DynamoDB item to Tenant: %w", err))
 	}
 	return &tenant, nil
 }
@@ -137,23 +143,35 @@ func GetAllTenants(ctx context.Context, ddb AWSDynamoDB) ([]*multi.Tenant, error
 	}
 	result, err := ddb.Scan(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("failed to scan DynamoDB: %w", err)
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to scan DynamoDB: %w", err))
 	}
 	var tenants []*multi.Tenant
 	for _, item := range result.Items {
 		var tenant multi.Tenant
 		err = attributevalue.UnmarshalMap(item, &tenant)
 		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal DynamoDB item to Tenant: %w", err)
+			return nil, apperr.NewInternalE(
+				fmt.Errorf("failed to unmarshal DynamoDB item to Tenant: %w", err))
 		}
 		tenants = append(tenants, &tenant)
 	}
+	// Sort tenants by name, with root tenant always first
+	sort.Slice(tenants, func(i, j int) bool {
+		if tenants[i].Name == multi.RootTenantName {
+			return true
+		}
+		if tenants[j].Name == multi.RootTenantName {
+			return false
+		}
+		return tenants[i].Name < tenants[j].Name
+	})
 	return tenants, nil
 }
 
 func ResolveTenant(ctx context.Context, ddb AWSDynamoDB, h multi.TenantHandle) (*multi.Tenant, error) {
 	if !h.IsSet() {
-		return nil, errors.New("tenant ID or tenant name must be set")
+		return nil, apperr.NewBadRequest("tenant ID or tenant name must be set")
 	}
 	if h.ID.Version() != 0 {
 		return GetTenantByID(ctx, ddb, h.ID)

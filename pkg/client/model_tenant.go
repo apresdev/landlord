@@ -9,25 +9,25 @@ import (
 	"fmt"
 )
 
-// checks if the TenantsResponseTenantsInner type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &TenantsResponseTenantsInner{}
+// checks if the Tenant type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &Tenant{}
 
-// TenantsResponseTenantsInner struct for TenantsResponseTenantsInner
-type TenantsResponseTenantsInner struct {
+// Tenant struct for Tenant
+type Tenant struct {
 	Id          string   `json:"id"`
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Roles       []string `json:"roles"`
 }
 
-type _TenantsResponseTenantsInner TenantsResponseTenantsInner
+type _Tenant Tenant
 
-// NewTenantsResponseTenantsInner instantiates a new TenantsResponseTenantsInner object
+// NewTenant instantiates a new Tenant object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTenantsResponseTenantsInner(id string, name string, description string, roles []string) *TenantsResponseTenantsInner {
-	this := TenantsResponseTenantsInner{}
+func NewTenant(id string, name string, description string, roles []string) *Tenant {
+	this := Tenant{}
 	this.Id = id
 	this.Name = name
 	this.Description = description
@@ -35,16 +35,16 @@ func NewTenantsResponseTenantsInner(id string, name string, description string, 
 	return &this
 }
 
-// NewTenantsResponseTenantsInnerWithDefaults instantiates a new TenantsResponseTenantsInner object
+// NewTenantWithDefaults instantiates a new Tenant object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewTenantsResponseTenantsInnerWithDefaults() *TenantsResponseTenantsInner {
-	this := TenantsResponseTenantsInner{}
+func NewTenantWithDefaults() *Tenant {
+	this := Tenant{}
 	return &this
 }
 
 // GetId returns the Id field value
-func (o *TenantsResponseTenantsInner) GetId() string {
+func (o *Tenant) GetId() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -55,7 +55,7 @@ func (o *TenantsResponseTenantsInner) GetId() string {
 
 // GetIdOk returns a tuple with the Id field value
 // and a boolean to check if the value has been set.
-func (o *TenantsResponseTenantsInner) GetIdOk() (*string, bool) {
+func (o *Tenant) GetIdOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -63,12 +63,12 @@ func (o *TenantsResponseTenantsInner) GetIdOk() (*string, bool) {
 }
 
 // SetId sets field value
-func (o *TenantsResponseTenantsInner) SetId(v string) {
+func (o *Tenant) SetId(v string) {
 	o.Id = v
 }
 
 // GetName returns the Name field value
-func (o *TenantsResponseTenantsInner) GetName() string {
+func (o *Tenant) GetName() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -79,7 +79,7 @@ func (o *TenantsResponseTenantsInner) GetName() string {
 
 // GetNameOk returns a tuple with the Name field value
 // and a boolean to check if the value has been set.
-func (o *TenantsResponseTenantsInner) GetNameOk() (*string, bool) {
+func (o *Tenant) GetNameOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -87,12 +87,12 @@ func (o *TenantsResponseTenantsInner) GetNameOk() (*string, bool) {
 }
 
 // SetName sets field value
-func (o *TenantsResponseTenantsInner) SetName(v string) {
+func (o *Tenant) SetName(v string) {
 	o.Name = v
 }
 
 // GetDescription returns the Description field value
-func (o *TenantsResponseTenantsInner) GetDescription() string {
+func (o *Tenant) GetDescription() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -103,7 +103,7 @@ func (o *TenantsResponseTenantsInner) GetDescription() string {
 
 // GetDescriptionOk returns a tuple with the Description field value
 // and a boolean to check if the value has been set.
-func (o *TenantsResponseTenantsInner) GetDescriptionOk() (*string, bool) {
+func (o *Tenant) GetDescriptionOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -111,12 +111,12 @@ func (o *TenantsResponseTenantsInner) GetDescriptionOk() (*string, bool) {
 }
 
 // SetDescription sets field value
-func (o *TenantsResponseTenantsInner) SetDescription(v string) {
+func (o *Tenant) SetDescription(v string) {
 	o.Description = v
 }
 
 // GetRoles returns the Roles field value
-func (o *TenantsResponseTenantsInner) GetRoles() []string {
+func (o *Tenant) GetRoles() []string {
 	if o == nil {
 		var ret []string
 		return ret
@@ -127,7 +127,7 @@ func (o *TenantsResponseTenantsInner) GetRoles() []string {
 
 // GetRolesOk returns a tuple with the Roles field value
 // and a boolean to check if the value has been set.
-func (o *TenantsResponseTenantsInner) GetRolesOk() ([]string, bool) {
+func (o *Tenant) GetRolesOk() ([]string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -135,11 +135,11 @@ func (o *TenantsResponseTenantsInner) GetRolesOk() ([]string, bool) {
 }
 
 // SetRoles sets field value
-func (o *TenantsResponseTenantsInner) SetRoles(v []string) {
+func (o *Tenant) SetRoles(v []string) {
 	o.Roles = v
 }
 
-func (o TenantsResponseTenantsInner) MarshalJSON() ([]byte, error) {
+func (o Tenant) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -147,7 +147,7 @@ func (o TenantsResponseTenantsInner) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o TenantsResponseTenantsInner) ToMap() (map[string]interface{}, error) {
+func (o Tenant) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["name"] = o.Name
@@ -156,7 +156,7 @@ func (o TenantsResponseTenantsInner) ToMap() (map[string]interface{}, error) {
 	return toSerialize, nil
 }
 
-func (o *TenantsResponseTenantsInner) UnmarshalJSON(data []byte) (err error) {
+func (o *Tenant) UnmarshalJSON(data []byte) (err error) {
 	// This validates that all required properties are included in the JSON object
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
@@ -181,53 +181,53 @@ func (o *TenantsResponseTenantsInner) UnmarshalJSON(data []byte) (err error) {
 		}
 	}
 
-	varTenantsResponseTenantsInner := _TenantsResponseTenantsInner{}
+	varTenant := _Tenant{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varTenantsResponseTenantsInner)
+	err = decoder.Decode(&varTenant)
 
 	if err != nil {
 		return err
 	}
 
-	*o = TenantsResponseTenantsInner(varTenantsResponseTenantsInner)
+	*o = Tenant(varTenant)
 
 	return err
 }
 
-type NullableTenantsResponseTenantsInner struct {
-	value *TenantsResponseTenantsInner
+type NullableTenant struct {
+	value *Tenant
 	isSet bool
 }
 
-func (v NullableTenantsResponseTenantsInner) Get() *TenantsResponseTenantsInner {
+func (v NullableTenant) Get() *Tenant {
 	return v.value
 }
 
-func (v *NullableTenantsResponseTenantsInner) Set(val *TenantsResponseTenantsInner) {
+func (v *NullableTenant) Set(val *Tenant) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableTenantsResponseTenantsInner) IsSet() bool {
+func (v NullableTenant) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableTenantsResponseTenantsInner) Unset() {
+func (v *NullableTenant) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableTenantsResponseTenantsInner(val *TenantsResponseTenantsInner) *NullableTenantsResponseTenantsInner {
-	return &NullableTenantsResponseTenantsInner{value: val, isSet: true}
+func NewNullableTenant(val *Tenant) *NullableTenant {
+	return &NullableTenant{value: val, isSet: true}
 }
 
-func (v NullableTenantsResponseTenantsInner) MarshalJSON() ([]byte, error) {
+func (v NullableTenant) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableTenantsResponseTenantsInner) UnmarshalJSON(src []byte) error {
+func (v *NullableTenant) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

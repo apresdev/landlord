@@ -3,6 +3,8 @@ package multi
 import (
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/google/uuid"
 )
@@ -10,10 +12,29 @@ import (
 type UserStatus string
 
 const (
-	UserStatusInactive UserStatus = "inactive"
 	UserStatusInvited  UserStatus = "invited"
+	UserStatusInactive UserStatus = "inactive"
 	UserStatusActive   UserStatus = "active"
 )
+
+func ParseUserStatus(s string) (UserStatus, error) {
+	switch s {
+	case "invited":
+		return UserStatusInvited, nil
+	case "inactive":
+		return UserStatusInactive, nil
+	case "active":
+		return UserStatusActive, nil
+	default:
+		zap.L().Info("invalid user status", zap.String("status", s))
+		return UserStatusInvited, apperr.NewBadRequestE(
+			fmt.Errorf("invalid user status: %s", s))
+	}
+}
+
+func (u UserStatus) String() string {
+	return string(u)
+}
 
 // MFAPolicy is the policy for multi-factor authentication. Note that this
 // value is serialized to the database as an integer -- do not re-order.
@@ -36,6 +57,10 @@ func ParseMFAPolicy(s string) (MFAPolicy, error) {
 		return MFAPolicyNone, apperr.NewBadRequestE(
 			fmt.Errorf("invalid mfa policy: %s", s))
 	}
+}
+
+func MFAPolicyStrings() []string {
+	return []string{MFAPolicyNone.String(), MFAPolicyRequired.String()}
 }
 
 func (m MFAPolicy) String() string {

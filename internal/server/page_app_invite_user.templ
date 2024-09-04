@@ -1,0 +1,40 @@
+package server
+
+const inviteUserPageTitle = "Invite User"
+
+templ inviteUserPage(
+    appName string,
+    tenantID string,
+    initialUsername string,
+    roles []string,
+    mfaPolicies []string) {
+<!DOCTYPE html>
+<html lang="en">
+@headerFragment(appName, inviteUserPageTitle)
+<body>
+    <div class="container">
+        <h2>{ appName } | { inviteUserPageTitle }</h2>
+        <form action={ templ.SafeURL("/admin/tenants/" + tenantID + "/invite/submit") } method="POST">
+            <label>Email:
+                <input type="text" name="username" value={ initialUsername } />
+            </label>
+            <label>Role:
+                <select id="role" name="role">
+                    for _, role := range roles {
+                        <option value={ role }>{ role }</option>
+                    }
+                </select>
+            </label>
+            <label>MFA Policy:
+                <select id="mfaPolicy" name="mfaPolicy">
+                    for _, mfaPolicy := range mfaPolicies {
+                        <option value={ mfaPolicy }>{ mfaPolicy }</option>
+                    }
+                </select>
+            </label>
+            <button type="submit">Invite</button>
+        </form>
+    </div>
+</body>
+</html>
+}

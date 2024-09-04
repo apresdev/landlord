@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/apresdev/landlord/internal/multi"
@@ -58,6 +60,8 @@ func initUsers(ctx context.Context, dynamo AWSDynamoDB) error {
 	return ensureTable(ctx, dynamo, usersTable, attrs, keySchema, secIndexes)
 }
 
+// StoreUser stores the given user in the database, creating a new item if
+// it does not already exist.
 func StoreUser(ctx context.Context, ddb AWSDynamoDB, ten *multi.User) error {
 	av, err := attributevalue.MarshalMap(ten)
 	if err != nil {
@@ -69,11 +73,13 @@ func StoreUser(ctx context.Context, ddb AWSDynamoDB, ten *multi.User) error {
 	}
 	_, err = ddb.PutItem(ctx, input)
 	if err != nil {
-		return fmt.Errorf("failed to put item to %s: %w", usersTable, err)
+		return apperr.NewInternalE(
+			fmt.Errorf("failed to put item to %s: %w", usersTable, err))
 	}
 	return err
 }
 
+// DeleteUser removes the user with the given username.
 func DeleteUser(
 	ctx context.Context,
 	ddb AWSDynamoDB,
@@ -89,12 +95,24 @@ func DeleteUser(
 			tenantAttr:   &types.AttributeValueMemberB{Value: b},
 			usernameAttr: &types.AttributeValueMemberS{Value: username},
 		},
-		TableName: aws.String(usersTable),
+		TableName:    aws.String(usersTable),
+		ReturnValues: types.ReturnValueAllOld,
 	}
-	_, err = ddb.DeleteItem(ctx, input)
-	return err
+	o, err := ddb.DeleteItem(ctx, input)
+	if err != nil {
+		return apperr.NewInternalE(
+			fmt.Errorf("failed to delete item from %s: %w", usersTable, err))
+	}
+	if o.Attributes == nil || o.Attributes[tenantAttr] == nil {
+		return apperr.NewNotFound("user not found: " + username)
+	}
+	zap.L().Info("deleted user",
+		zap.String("username", username),
+		zap.Any("output", o))
+	return nil
 }
 
+// GetUser returns the user with the given username.
 func GetUser(ctx context.Context, ddb AWSDynamoDB, username string) (*multi.User, error) {
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(usersTable),
@@ -109,22 +127,47 @@ func GetUser(ctx context.Context, ddb AWSDynamoDB, username string) (*multi.User
 	}
 	q, err := ddb.Query(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query DynamoDB: %w", err)
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to query DynamoDB: %w", err))
 	}
 	if len(q.Items) == 0 {
 		return nil, apperr.NewNotFound("username not found: " + username)
 	}
 	if len(q.Items) > 1 {
-		return nil, fmt.Errorf("multiple users found with username: %s", username)
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("multiple users found with username: %s", username))
 	}
 	var result multi.User
 	if err = attributevalue.UnmarshalMap(q.Items[0], &result); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal DynamoDB item to User: %w", err)
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to unmarshal DynamoDB item to User: %w", err))
 	}
 	return &result, nil
 }
 
-func GetUsersForTenant(ctx context.Context, ddb AWSDynamoDB, tenantID uuid.UUID) ([]*multi.User, error) {
+// GetUserInTenant returns a user, but only if it belongs to the given tenant.
+func GetUserInTenant(
+	ctx context.Context, ddb AWSDynamoDB, tenantID uuid.UUID, username string) (
+	*multi.User, error) {
+
+	user, err := GetUser(ctx, ddb, username)
+	if err != nil {
+		return nil, err
+	}
+	if user.TenantID != tenantID {
+		zap.L().Info("found user but not in tenant",
+			zap.String("username", username),
+			zap.String("tenantID", tenantID.String()))
+		return nil, apperr.NewNotFound("user not found")
+	}
+	return user, nil
+}
+
+// GetUsersForTenant returns all users for the given tenant.
+func GetUsersForTenant(
+	ctx context.Context, ddb AWSDynamoDB, tenantID uuid.UUID) (
+	[]*multi.User, error) {
+
 	b, err := tenantID.MarshalBinary()
 	if err != nil {
 		return nil, err
@@ -141,16 +184,22 @@ func GetUsersForTenant(ctx context.Context, ddb AWSDynamoDB, tenantID uuid.UUID)
 	}
 	result, err := ddb.Query(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query DynamoDB: %w", err)
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to query DynamoDB: %w", err))
 	}
 	var users []*multi.User
 	if err = attributevalue.UnmarshalListOfMaps(result.Items, &users); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal DynamoDB item to User: %w", err)
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to unmarshal DynamoDB item to User: %w", err))
 	}
 	return users, nil
 }
 
-func GetUserAndTenant(ctx context.Context, ddb AWSDynamoDB, username string) (*multi.User, *multi.Tenant, error) {
+// GetUserAndTenant returns the user and tenant for the given username.
+func GetUserAndTenant(
+	ctx context.Context, ddb AWSDynamoDB, username string) (
+	*multi.User, *multi.Tenant, error) {
+
 	user, err := GetUser(ctx, ddb, username)
 	if err != nil {
 		return nil, nil, err
@@ -160,4 +209,29 @@ func GetUserAndTenant(ctx context.Context, ddb AWSDynamoDB, username string) (*m
 		return nil, nil, err
 	}
 	return user, ten, nil
+}
+
+func SetUserStatus(
+	ctx context.Context,
+	ddb AWSDynamoDB,
+	tenantID uuid.UUID,
+	username string,
+	targetStatus multi.UserStatus) (*multi.User, error) {
+
+	user, err := GetUserInTenant(ctx, ddb, tenantID, username)
+	if err != nil {
+		return nil, err
+	}
+	if user.Status == targetStatus {
+		return user, nil
+	}
+	if user.Status == multi.UserStatusInvited {
+		return nil, apperr.NewBadRequest(
+			"cannot set status to " + targetStatus.String() + " for invited user")
+	}
+	user.Status = targetStatus
+	if err := StoreUser(ctx, ddb, user); err != nil {
+		return nil, err
+	}
+	return user, nil
 }

@@ -30,10 +30,22 @@ func getRoutes() []Route {
 			ginAssociateOTP,
 		},
 		{
+			"CancelInvitation",
+			http.MethodDelete,
+			"/ll-auth/api/invite/:username",
+			ginCancelInvitation,
+		},
+		{
 			"ClearImpersonate",
 			http.MethodPost,
 			"/ll-auth/api/clear-impersonate",
 			ginClearImpersonate,
+		},
+		{
+			"CreateTenant",
+			http.MethodPost,
+			"/ll-auth/api/tenants",
+			ginCreateTenant,
 		},
 		{
 			"GetTenants",
@@ -88,6 +100,18 @@ func getRoutes() []Route {
 			http.MethodPost,
 			"/ll-auth/api/new-password",
 			ginSetNewPassword,
+		},
+		{
+			"SetTenantState",
+			http.MethodPut,
+			"/ll-auth/api/tenants/:tenantID/state/:tenantState",
+			ginSetTenantState,
+		},
+		{
+			"SetUserStatus",
+			http.MethodPut,
+			"/ll-auth/api/tenants/:tenantID/users/:username/status",
+			ginSetUserStatus,
 		},
 		{
 			"UpdateUser",

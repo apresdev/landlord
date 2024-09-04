@@ -15,7 +15,7 @@ servers:
 paths:
   /ll-auth/api/login:
     post:
-      operationId: login
+      operationId: Login
       summary: Login with a username and password.
       tags:
         - Auth
@@ -38,7 +38,7 @@ paths:
       security: []
   /ll-auth/api/validate-mfa-code:
     post:
-      operationId: validateMFACode
+      operationId: ValidateMFACode
       summary: Validate an MFA code.
       tags:
         - Auth
@@ -61,7 +61,7 @@ paths:
       security: [ ]
   /ll-auth/api/associate-otp:
     get:
-      operationId: associateOTP
+      operationId: AssociateOTP
       summary: Associate OTP with a user.
       tags:
         - Auth
@@ -81,7 +81,7 @@ paths:
       security:
         - bearerAuth: []
     post:
-      operationId: verifyOTPAssociation
+      operationId: VerifyOTPAssociation
       summary: Verify the association of an OTP device.
       tags:
         - Auth
@@ -104,7 +104,7 @@ paths:
         - bearerAuth: []
   /ll-auth/api/tenants:
     get:
-      operationId: getTenants
+      operationId: GetTenants
       summary: Get a list of tenants.
       tags:
       - Auth
@@ -123,9 +123,65 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
+    post:
+      operationId: CreateTenant
+      summary: Create a new tenant
+      tags:
+        - Auth
+      parameters: [ ]
+      requestBody:
+        $ref: "#/components/requestBodies/CreateTenantRequest"
+      responses:
+        "200":
+          $ref: '#/components/responses/TenantResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: [ ]
+  /ll-auth/api/tenants/{tenantID}/state/{tenantState}:
+    put:
+      operationId: SetTenantState
+      summary: Set a tenant's state
+      tags:
+        - Auth
+      parameters:
+        - name: tenantID
+          in: path
+          required: true
+          description: The ID of the tenant to get users for.
+          schema:
+            type: string
+        - name: tenantState
+          in: path
+          required: true
+          description: The state to set the tenant to.
+          schema:
+            type: string
+            enum:
+              - active
+              - inactive
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: [ ]
   /ll-auth/api/tenants/{tenantID}/users:
     get:
-      operationId: getUsersForTenant
+      operationId: GetUsersForTenant
       summary: Get a list of users for a tenant.
       tags:
         - Auth
@@ -136,7 +192,6 @@ paths:
           description: The ID of the tenant to get users for.
           schema:
             type: string
-      description: Get a list of users for a tenant.
       responses:
         "200":
           $ref: '#/components/responses/TenantUsersResponse'
@@ -152,8 +207,8 @@ paths:
         - bearerAuth: []
   /ll-auth/api/tenants/{tenantID}/users/{username}:
     put:
-      operationId: updateUser
-      summary: Update the user
+      operationId: UpdateUser
+      summary: Update a user's settings.
       tags:
         - Auth
       parameters:
@@ -171,7 +226,40 @@ paths:
             type: string
       requestBody:
         $ref: "#/components/requestBodies/UpdateUserRequest"
-      description: Update a user's settings.
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: [ ]
+  /ll-auth/api/tenants/{tenantID}/users/{username}/status:
+    put:
+      operationId: SetUserStatus
+      summary: Set a user's status.
+      tags:
+        - Auth
+      parameters:
+        - name: tenantID
+          in: path
+          required: true
+          description: The ID of the tenant to get users for.
+          schema:
+            type: string
+        - name: username
+          in: path
+          required: true
+          description: The username of the user to update.
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateUserStatusRequest"
       responses:
         "204":
           description: No content
@@ -187,14 +275,13 @@ paths:
         - bearerAuth: [ ]
   /ll-auth/api/invite:
     post:
-      operationId: inviteToTenant
-      summary: Invite a user to a tenant.
+      operationId: InviteToTenant
+      summary: Invite a user to join a tenant.
       tags:
         - Auth
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/InviteRequest"
-      description: Invite a new user to join a tenant.
       responses:
         "204":
           description: No content
@@ -208,16 +295,41 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
+  /ll-auth/api/invite/{username}:
+    delete:
+      operationId: CancelInvitation
+      summary: Cancel an invitation to a tenant.
+      tags:
+        - Auth
+      parameters:
+        - name: username
+          in: path
+          required: true
+          description: The username of the user to update.
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: [ ]
   /ll-auth/api/impersonate-role:
     post:
-      operationId: impersonateRole
+      operationId: ImpersonateRole
       summary: Impersonate a role within a tenant.
       tags:
         - Auth
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/ImpersonateRoleRequest"
-      description: Impersonate a role within a tenant.
       responses:
         "200":
           $ref: '#/components/responses/ImpersonateResponse'
@@ -233,14 +345,13 @@ paths:
         - bearerAuth: []
   /ll-auth/api/impersonate-user:
     post:
-      operationId: impersonateUser
+      operationId: ImpersonateUser
       summary: Impersonate a user within a tenant.
       tags:
         - Auth
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/ImpersonateUserRequest"
-      description: Impersonate a user within a tenant.
       responses:
         "200":
           $ref: '#/components/responses/ImpersonateResponse'
@@ -256,14 +367,13 @@ paths:
         - bearerAuth: []
   /ll-auth/api/clear-impersonate:
     post:
-      operationId: clearImpersonate
-      summary: Clear any impersonation.
+      operationId: ClearImpersonate
+      summary: Clear any impersonation for the current user.
       tags:
         - Auth
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/ClearImpersonateRequest"
-      description: Clear any impersonation for the current user.
       responses:
         "200":
           $ref: '#/components/responses/ClearImpersonateResponse'
@@ -279,14 +389,13 @@ paths:
         - bearerAuth: []
   /ll-auth/api/new-password:
     post:
-      operationId: setNewPassword
-      summary: Set a new password.
+      operationId: SetNewPassword
+      summary: Set a new password after being issued a temporary password.
       tags:
         - Auth
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/SetNewPasswordRequest"
-      description: Set a new password after being issued a temporary password.
       responses:
         "200":
           $ref: '#/components/responses/SetNewPasswordResponse'
@@ -303,14 +412,13 @@ paths:
       security: []
   /ll-auth/api/recover-password:
     post:
-      operationId: recoverPassword
+      operationId: RecoverPassword
       summary: Recover a password.
       tags:
         - Auth
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/RecoverPasswordRequest"
-      description: Recover a password.
       responses:
         "200":
           $ref: '#/components/responses/RecoverPasswordResponse'
@@ -327,14 +435,13 @@ paths:
       security: []
   /ll-auth/api/reset-password:
     post:
-      operationId: resetPassword
+      operationId: ResetPassword
       summary: Reset a password.
       tags:
         - Auth
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/ResetPasswordRequest"
-      description: Complete resetting a password.
       responses:
         "204":
           description: No content
@@ -412,12 +519,24 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/InviteRequest'
+    CreateTenantRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateTenantRequest'
     UpdateUserRequest:
       required: true
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/UpdateUserRequest'
+    UpdateUserStatusRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateUserStatusRequest'
   responses:
     NoContent:
       description: |
@@ -434,6 +553,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AssociateOTPResponse'
+    TenantResponse:
+      description: A single tenant response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TenantResponse'
     TenantsResponse:
       description: Return the tenants available to the user.
       content:
@@ -680,29 +805,38 @@ components:
           type: string
         accessToken:
           type: string
+    Tenant:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - roles
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+    TenantResponse:
+      type: object
+      required:
+        - tenant
+      properties:
+        tenant:
+          $ref: '#/components/schemas/Tenant'
     TenantsResponse:
       type: object
       properties:
         tenants:
           type: array
           items:
-            type: object
-            required:
-              - id
-              - name
-              - description
-              - roles
-            properties:
-              id:
-                type: string
-              name:
-                type: string
-              description:
-                type: string
-              roles:
-                type: array
-                items:
-                  type: string
+            $ref: '#/components/schemas/Tenant'
     TenantUsersResponse:
       type: object
       properties:
@@ -838,10 +972,10 @@ components:
     InviteRequest:
       type: object
       required:
-      - tenant
-      - username
-      - role
-      - mfaPolicy
+        - tenant
+        - username
+        - role
+        - mfaPolicy
       properties:
         tenant:
           type: string
@@ -852,6 +986,15 @@ components:
           default: guest
         mfaPolicy:
           $ref: '#/components/schemas/MFAPolicy'
+    CreateTenantRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
     UpdateUserRequest:
       type: object
       required:
@@ -860,3 +1003,20 @@ components:
        role:
         type: string
         default: guest
+    UserStatus:
+      type: string
+      enum:
+        - invited
+        - active
+        - inactive
+      x-enum-varnames:
+        - UserStatusInvited
+        - UserStatusActive
+        - UserStatusInactive
+    UpdateUserStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        role:
+          $ref: '#/components/schemas/UserStatus'

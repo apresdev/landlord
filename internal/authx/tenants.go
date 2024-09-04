@@ -53,6 +53,7 @@ func CreateRootTenant(
 	return db.StoreTenant(ctx, ddb, &rootTenant)
 }
 
+// CreateTenant creates a new tenant in the system.
 func CreateTenant(
 	ctx context.Context,
 	ddb db.AWSDynamoDB,
@@ -61,18 +62,19 @@ func CreateTenant(
 	description string) (multi.Tenant, error) {
 
 	if err := multi.ValidateTenantName(name); err != nil {
-		return multi.Tenant{}, err
+		return multi.Tenant{}, apperr.NewBadRequestE(err)
 	}
 	_, err := db.GetTenantByName(ctx, ddb, name)
 	if err == nil {
-		return multi.Tenant{}, fmt.Errorf("tenant already exists: %s", name)
+		return multi.Tenant{}, apperr.NewBadRequestE(
+			fmt.Errorf("tenant already exists: %s", name))
 	}
 	if !apperr.IsNotFound(err) {
-		return multi.Tenant{}, err
+		return multi.Tenant{}, apperr.NewInternalE(err)
 	}
 	rootTenant, err := db.GetRootTenant(ctx, ddb)
 	if err != nil {
-		return multi.Tenant{}, err
+		return multi.Tenant{}, apperr.NewInternalE(err)
 	}
 	ten := multi.NewTenant()
 	ten.Name = strcase.ToKebab(name)
@@ -86,10 +88,10 @@ func CreateTenant(
 		UserPoolId: aws.String(ten.UserPoolID),
 	})
 	if err != nil {
-		return multi.Tenant{}, err
+		return multi.Tenant{}, apperr.NewInternalE(err)
 	}
 	if err := db.StoreTenant(ctx, ddb, &ten); err != nil {
-		return multi.Tenant{}, err
+		return multi.Tenant{}, apperr.NewInternalE(err)
 	}
 	return ten, nil
 }
@@ -105,7 +107,7 @@ func SetTenantOnUser(
 		Username:   aws.String(user.Username),
 		UserAttributes: []cogidptypes.AttributeType{
 			{
-				Name:  aws.String(TenantClaim),
+				Name:  aws.String(CustomTenantClaim),
 				Value: aws.String(ten.ID.String()),
 			},
 		},
@@ -211,4 +213,22 @@ func RemoveRoleFromTenant(ctx context.Context, ddb db.AWSDynamoDB, tenantID uuid
 	}
 	ten.Roles = append(ten.Roles[:idx], ten.Roles[idx+1:]...)
 	return db.StoreTenant(ctx, ddb, ten)
+}
+
+func SetTenantState(
+	ctx context.Context,
+	ddb db.AWSDynamoDB,
+	th multi.TenantHandle,
+	state multi.TenantState) (*multi.Tenant, error) {
+
+	ten, err := db.ResolveTenant(ctx, ddb, th)
+	if err != nil {
+		return nil, err
+	}
+	ten.State = state
+	err = db.StoreTenant(ctx, ddb, ten)
+	if err != nil {
+		return nil, err
+	}
+	return ten, nil
 }

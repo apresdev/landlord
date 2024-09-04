@@ -12,9 +12,19 @@ func ginAssociateOTP(c *gin.Context) {
 	callImpl(c, handleAssociateOTP)
 }
 
-// ClearImpersonate - Clear any impersonation.
+// CancelInvitation - Cancel an invitation to a tenant.
+func ginCancelInvitation(c *gin.Context) {
+	callImpl(c, handleCancelInvitation)
+}
+
+// ClearImpersonate - Clear any impersonation for the current user.
 func ginClearImpersonate(c *gin.Context) {
 	callImpl(c, handleClearImpersonate)
+}
+
+// CreateTenant - Create a new tenant
+func ginCreateTenant(c *gin.Context) {
+	callImpl(c, handleCreateTenant)
 }
 
 // GetTenants - Get a list of tenants.
@@ -37,7 +47,7 @@ func ginImpersonateUser(c *gin.Context) {
 	callImpl(c, handleImpersonateUser)
 }
 
-// InviteToTenant - Invite a user to a tenant.
+// InviteToTenant - Invite a user to join a tenant.
 func ginInviteToTenant(c *gin.Context) {
 	callImpl(c, handleInviteToTenant)
 }
@@ -57,12 +67,22 @@ func ginResetPassword(c *gin.Context) {
 	callImpl(c, handleResetPassword)
 }
 
-// SetNewPassword - Set a new password.
+// SetNewPassword - Set a new password after being issued a temporary password.
 func ginSetNewPassword(c *gin.Context) {
 	callImpl(c, handleSetNewPassword)
 }
 
-// UpdateUser - Update the user
+// SetTenantState - Set a tenant's state
+func ginSetTenantState(c *gin.Context) {
+	callImpl(c, handleSetTenantState)
+}
+
+// SetUserStatus - Set a user's status.
+func ginSetUserStatus(c *gin.Context) {
+	callImpl(c, handleSetUserStatus)
+}
+
+// UpdateUser - Update a user's settings.
 func ginUpdateUser(c *gin.Context) {
 	callImpl(c, handleUpdateUser)
 }

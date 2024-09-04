@@ -60,7 +60,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		zap.L().Error("error fetching root tenant", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	if !authx.IsAuthorizedForTenant(rootTenant, roles) {
+	if !authx.IsAuthorizedForTenant(c.Request.Context(), app.DDB(), rootTenant, roles) {
 		zap.L().Info("not authorized for root",
 			zap.String("clientID", string(cid)),
 			zap.Any("groups", groups))

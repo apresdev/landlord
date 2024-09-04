@@ -18,11 +18,19 @@ func handleInviteToTenant(app App, c *gin.Context) error {
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	h, err := multi.ParseTenantHandle(req.Tenant)
+	if err := HandleInviteToTenant(app, c, req); err != nil {
+		return err
+	}
+	c.JSON(http.StatusNoContent, nil)
+	return nil
+}
+
+func HandleInviteToTenant(app App, c *gin.Context, req InviteRequest) error {
+	th, err := multi.ParseTenantHandle(req.Tenant)
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), h)
+	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
 	if err != nil {
 		return err
 	}
@@ -39,6 +47,5 @@ func handleInviteToTenant(app App, c *gin.Context) error {
 			zap.Error(err))
 		return apperr.NewBadRequest(err.Error())
 	}
-	c.JSON(http.StatusNoContent, nil)
 	return nil
 }

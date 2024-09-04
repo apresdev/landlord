@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/apresdev/landlord/internal/apptest"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/stretchr/testify/mock"
@@ -70,7 +69,8 @@ func (s *InviteTestSuite) TestInviteNewUser() {
 	ctx := context.Background()
 	ddb := mocks.NewAWSDynamoDB(s.T())
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, apperr.NewNotFound("user not found"))
+	result := dynamodb.QueryOutput{}
+	ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&result, nil)
 	cogIdp.EXPECT().AdminCreateUser(mock.Anything, mock.Anything).Return(nil, nil)
 	ddb.EXPECT().PutItem(mock.Anything, mock.Anything).Return(nil, nil)
 	tenant := multi.NewTenant()

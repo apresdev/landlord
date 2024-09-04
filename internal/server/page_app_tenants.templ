@@ -1,0 +1,34 @@
+package server
+
+import "github.com/apresdev/landlord/internal/multi"
+
+const tenantsPageTitle = "Tenants"
+
+templ tenantsPage(appName string, tenants []*multi.Tenant) {
+<!DOCTYPE html>
+<html lang="en">
+@headerFragment(appName, tenantsPageTitle)
+<body>
+    <h2>{ appName } | { tenantsPageTitle }</h2>
+    <div class="container">
+        <a href="/admin/tenants/new"><button>Create Tenant</button></a>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Description</th>
+                    <th>User Pool</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody hx-target="closest tr" hx-swap="outerHTML">
+            for _, tenant := range tenants {
+                @tenantFragment(tenant)
+            }
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+}
