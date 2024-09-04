@@ -117,3 +117,28 @@ To assign a role to a user:
 ./landlord user role \
   --email "user1@example.com" --role "admin" --tenant "example-tenant"
 ```
+
+## On the Commitment of Auto-Generated Sources
+
+The `landlord` tool uses a few types of generated sources:
+
+  * openapi-generator that creates server stubs (`internal/rest/model_*` and 
+    `internal/rest/routers.go`) and a client package (`pkg/client`).
+  * .go files associated with [templ](https://templ.guide/) templates in the 
+    `internal/server` directory. The .go files here are each created from 
+    one .templ file.
+  * mocks for unit testing in the `internal/mocks` directory.
+
+Our decision is to commit these sources. The argument for not including 
+generated sources typically mentions the DRY principle: "Don't Repeat 
+Yourself." Admittedly, the inclusion does present a potential issue if there is 
+ever drift between the two. Adhering to a DRY principle would avoid such an 
+issue.
+
+All that said, we choose to include the auto-generated sources to support 
+downstream users that want to include the library as a dependency or build 
+the application without need for additional tooling / steps. They should only 
+need to use `go build`. 
+
+This places the burden of ensuring that the generated sources are in sync on 
+the maintainers of the `landlord` tool, which we believe is a good thing.
