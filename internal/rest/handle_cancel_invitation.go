@@ -75,9 +75,6 @@ func HandleCancelInvitation(app App, c *gin.Context, username string) error {
 		return apperr.NewUnauthorized("not authorized")
 	}
 
-	// TODO: ten is wrong here -- should be the tenant of the user that the invite
-	// is being cancelled for instead of the tenant of the user that is performing
-	// the cancelling.
 	// TODO: check if the caller's role is allowed to cancel invitations
 
 	return authx.CancelInvitation(
