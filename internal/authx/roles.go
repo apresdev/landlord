@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/apresdev/landlord/internal/db"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"go.uber.org/zap"
@@ -19,8 +21,20 @@ type Role struct {
 	Tenant uuid.UUID
 }
 
+func (r Role) String() string {
+	return fmt.Sprintf("tenant-%s-%s", r.Tenant, r.Name)
+}
+
 type Roles struct {
 	Roles []Role
+}
+
+func (r Roles) String() string {
+	result := make([]string, len(r.Roles))
+	for i, role := range r.Roles {
+		result[i] = role.String()
+	}
+	return strings.Join(result, ", ")
 }
 
 func ParseRolesFromGroups(groups []string) (Roles, error) {
@@ -47,9 +61,24 @@ func ParseRoleFromGroup(group string) (Role, error) {
 	return Role{Name: parts[6], Tenant: tenantID}, nil
 }
 
-func IsAuthorizedForTenant(ten *multi.Tenant, roles Roles) bool {
+func IsAuthorizedForTenant(
+	ctx context.Context,
+	ddb db.AWSDynamoDB,
+	ten *multi.Tenant,
+	roles Roles) bool {
+
 	for _, role := range roles.Roles {
 		if role.Tenant == ten.ID {
+			return true
+		}
+	}
+	rootTenant, err := db.GetRootTenant(ctx, ddb)
+	if err != nil {
+		zap.L().Error("error fetching root tenant", zap.Error(err))
+		return false
+	}
+	for _, role := range roles.Roles {
+		if role.Tenant == rootTenant.ID {
 			return true
 		}
 	}

@@ -23,6 +23,17 @@ const (
 	TenantStateInactive TenantState = "inactive"
 )
 
+func ParseTenantState(state string) (TenantState, error) {
+	switch state {
+	case string(TenantStateActive):
+		return TenantStateActive, nil
+	case string(TenantStateInactive):
+		return TenantStateInactive, nil
+	default:
+		return "", errors.New("invalid tenant state")
+	}
+}
+
 type Tenant struct {
 	ID           uuid.UUID   `dynamodbav:"id"`
 	State        TenantState `dynamodbav:"state"`

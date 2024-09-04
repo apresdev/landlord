@@ -52,7 +52,7 @@ func resolveUser(c *gin.Context) (*UserResolution, error) {
 			zap.Any("token", tok))
 		return nil, apperr.NewUnauthorized("no username")
 	}
-	tenant, err := jwx.GetClaimString(tok, authx.TenantClaim)
+	tenant, err := jwx.GetClaimString(tok, authx.CustomTenantClaim)
 	if err != nil {
 		zap.L().Error("could not get tenant",
 			zap.String("clientID", string(cid)),

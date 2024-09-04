@@ -18,15 +18,15 @@ func handleGetTenants(app App, c *gin.Context) error {
 		return err
 	}
 	var resp TenantsResponse
-	resp.Tenants = make([]TenantsResponseTenantsInner, 0)
+	resp.Tenants = make([]Tenant, 0)
 	allTenants, err := db.GetAllTenants(c.Request.Context(), app.DDB())
 	if err != nil {
 		zap.L().Error("error fetching tenants", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
 	for _, ten := range allTenants {
-		if authx.IsAuthorizedForTenant(ten, ur.Roles) {
-			resp.Tenants = append(resp.Tenants, TenantsResponseTenantsInner{
+		if authx.IsAuthorizedForTenant(c.Request.Context(), app.DDB(), ten, ur.Roles) {
+			resp.Tenants = append(resp.Tenants, Tenant{
 				Id:          ten.ID.String(),
 				Name:        ten.Name,
 				Description: ten.Description,

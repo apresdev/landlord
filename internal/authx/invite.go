@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
@@ -38,7 +40,7 @@ func SendInvite(
 		return err
 	}
 	ua := []types.AttributeType{
-		{Name: aws.String(TenantClaim), Value: aws.String(ten.ID.String())},
+		{Name: aws.String(CustomTenantClaim), Value: aws.String(ten.ID.String())},
 	}
 	args := cognitoidentityprovider.AdminCreateUserInput{
 		UserPoolId:     aws.String(ten.UserPoolID),
@@ -59,4 +61,34 @@ func SendInvite(
 		Status:    multi.UserStatusInvited,
 		MFAPolicy: mfaPolicy,
 	})
+}
+
+func CancelInvitation(
+	ctx context.Context,
+	ddb db.AWSDynamoDB,
+	cogIdp AWSCognitoIdentityProvider,
+	username string) error {
+
+	e, err := ParseEmail(username)
+	if err != nil {
+		return errors.New("invalid email")
+	}
+	u, ten, err := db.GetUserAndTenant(ctx, ddb, e.Address())
+	if err != nil {
+		return err
+	}
+	if u.Status != multi.UserStatusInvited {
+		return apperr.NewBadRequest(
+			fmt.Sprintf("cannot cancel invite, user '%s' is not invited", e.Address()))
+	}
+	args := cognitoidentityprovider.AdminDeleteUserInput{
+		UserPoolId: aws.String(ten.UserPoolID),
+		Username:   aws.String(e.Address()),
+	}
+	if _, err := cogIdp.AdminDeleteUser(ctx, &args); err != nil {
+		zap.L().Error("could not delete user from Cognito",
+			zap.String("username", e.Address()),
+			zap.Error(err))
+	}
+	return db.DeleteUser(ctx, ddb, ten.ID, e.Address())
 }

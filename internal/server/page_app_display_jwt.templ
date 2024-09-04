@@ -2,7 +2,8 @@ package server
 
 templ displayJWTPage(idToken, accessToken string) {
     <div>
-        <a href="/logout">Logout</a>
+        <a href="/logout">Logout</a> |
+        <a href="/admin/tenants">Tenants</a>
         <pre>
             { idToken }
         </pre>

@@ -52,19 +52,15 @@ func handleRoot(
 		return nil
 	}
 	validationURL := jwx.ValidationURL(awsCfg.Region, tenant.UserPoolID)
-	tks, err := jwx.ValidateAllTokens(
+	_, err = jwx.ValidateAllTokens(
 		c.Request.Context(), clientID(c), validator, validationURL, rawTokens)
 	if err != nil {
+		c.Redirect(http.StatusFound, "/login")
 		return err
 	}
-	idTokDesc, err := jwx.Describe("ID Token", tks.IdToken)
-	if err != nil {
-		return err
-	}
-	accessTokDesc, err := jwx.Describe("Access Token", tks.AccessToken)
-	if err != nil {
-		return err
-	}
-	render(c, displayJWTPage(idTokDesc, accessTokDesc))
+
+	// TODO: make this redirect conditional on the user we just validated
+	c.Redirect(http.StatusFound, "/admin/home")
+
 	return nil
 }

@@ -11,6 +11,13 @@ type TenantHandle struct {
 	Name string
 }
 
+func (h TenantHandle) String() string {
+	if h.ID.String() != "" {
+		return h.ID.String()
+	}
+	return h.Name
+}
+
 func ParseTenantHandle(s string) (TenantHandle, error) {
 	if s == "" {
 		return TenantHandle{}, errors.New("tenant handle must be set")

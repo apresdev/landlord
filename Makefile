@@ -65,3 +65,7 @@ api-spec:
 	mkdir -p ./tmp
 	yq eval -o=json ./api/landlord-openapi.yaml > ./tmp/landlord-openapi.json
 	./scripts/add-openapi-extensions.py ./tmp/landlord-openapi.json > ./api/landlord-openapi-ext.json
+
+.PHONY: get-htmx
+get-htmx:
+	curl -o ./internal/server/static/htmx.min.js https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js

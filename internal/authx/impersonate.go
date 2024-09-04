@@ -20,11 +20,11 @@ func ImpersonateRole(
 		Username:   aws.String(username),
 		UserAttributes: []cogidptypes.AttributeType{
 			{
-				Name:  aws.String(ImpersonateGroupClaim),
+				Name:  aws.String(CustomImpersonateGroupClaim),
 				Value: aws.String(roleName),
 			},
 			{
-				Name:  aws.String(ImpersonateUserClaim),
+				Name:  aws.String(CustomImpersonateUserClaim),
 				Value: aws.String(""),
 			},
 		},
@@ -45,11 +45,11 @@ func ImpersonateUser(
 		Username:   aws.String(username),
 		UserAttributes: []cogidptypes.AttributeType{
 			{
-				Name:  aws.String(ImpersonateGroupClaim),
+				Name:  aws.String(CustomImpersonateGroupClaim),
 				Value: aws.String(""),
 			},
 			{
-				Name:  aws.String(ImpersonateUserClaim),
+				Name:  aws.String(CustomImpersonateUserClaim),
 				Value: aws.String(impersonateUsername),
 			},
 		},
@@ -69,11 +69,11 @@ func ClearImpersonate(
 		Username:   aws.String(username),
 		UserAttributes: []cogidptypes.AttributeType{
 			{
-				Name:  aws.String(ImpersonateGroupClaim),
+				Name:  aws.String(CustomImpersonateGroupClaim),
 				Value: aws.String(""),
 			},
 			{
-				Name:  aws.String(ImpersonateUserClaim),
+				Name:  aws.String(CustomImpersonateUserClaim),
 				Value: aws.String(""),
 			},
 		},

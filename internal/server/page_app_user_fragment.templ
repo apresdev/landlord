@@ -1,0 +1,43 @@
+package server
+
+import "github.com/apresdev/landlord/internal/multi"
+import "net/url"
+
+templ userFragment(user *multi.User) {
+<tr>
+    <td>{ user.Username }</td>
+    <td>{ user.Role }</td>
+    <td>{ user.MFAPolicy.String() }</td>
+    <td>{ user.Status.String() }</td>
+    <td>
+        if user.Status == multi.UserStatusActive {
+            <button
+                class="btn danger"
+                hx-post={ "/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/deactivate" }
+            >
+                Deactivate
+            </button>
+        } else if user.Status == multi.UserStatusInvited {
+            <button
+                class="btn warning"
+                hx-get={ "/admin/tenants/" + user.TenantID.String() + "/invite?username=" + url.QueryEscape(user.Username) }
+            >
+                Resend Invite
+            </button>
+            <button
+                class="btn danger"
+                hx-post={ "/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/cancel-invite" }
+            >
+                Cancel Invite
+            </button>
+        } else if user.Status == multi.UserStatusInactive {
+            <button
+                class="btn success"
+                hx-post={ "/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/activate" }
+            >
+                Activate
+            </button>
+        }
+    </td>
+</tr>
+}

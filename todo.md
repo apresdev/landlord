@@ -1,5 +1,6 @@
 # TODOs
 
+* encode username as base64 in APIs when used in the URL
 * reapply the IAM permissions from landlord
 * terraform for the lambda
 * add ability to give a cross-tenant impersonation permission

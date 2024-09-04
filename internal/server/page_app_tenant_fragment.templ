@@ -1,0 +1,23 @@
+package server
+
+import "github.com/apresdev/landlord/internal/multi"
+
+templ tenantFragment(tenant *multi.Tenant) {
+<tr>
+    <td><a href={ templ.SafeURL("/admin/tenants/" + tenant.ID.String()) }>{ tenant.Name }</a></td>
+    <td>{ string(tenant.State) }</td>
+    <td>{ tenant.Description }</td>
+    <td>{ tenant.UserPoolName } ({ tenant.UserPoolID })</td>
+    <td>
+        if tenant.State == multi.TenantStateActive {
+            <button class="btn danger" hx-post={ "/admin/tenants/deactivate/" + tenant.ID.String() }>
+                Deactivate
+            </button>
+        } else {
+            <button class="btn success" hx-post={ "/admin/tenants/activate/" + tenant.ID.String() }>
+                Activate
+            </button>
+        }
+    </td>
+</tr>
+}
