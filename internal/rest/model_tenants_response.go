@@ -4,5 +4,5 @@
 package rest
 
 type TenantsResponse struct {
-	Tenants []TenantsResponseTenantsInner `json:"tenants,omitempty"`
+	Tenants []Tenant `json:"tenants,omitempty"`
 }
