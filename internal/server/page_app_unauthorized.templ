@@ -1,0 +1,17 @@
+package server
+
+const errorPageTitle = "Error"
+
+templ unauthorizedPage(appName string, errMsg string) {
+<!DOCTYPE html>
+<html lang="en">
+@headerFragment(appName, errorPageTitle)
+<body>
+    <h2>{ appName } | { errorPageTitle }</h2>
+    <div class="container">
+        <a href="/login">Return to Login</a>
+        <p>{ errMsg }</p>
+    </div>
+</body>
+</html>
+}
