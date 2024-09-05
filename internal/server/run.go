@@ -323,36 +323,45 @@ func clientID(c *gin.Context) jwx.OpaqueClientID {
 	return jwx.OpaqueClientID(c.ClientIP())
 }
 
+func unauthorizedResponse(c *gin.Context) {
+	// This redirect ensures that the user is sent back to the login page
+	// if they are in an HTMX context where responses are being handling
+	// inline.
+	c.Header("HX-Redirect", "/login")
+	c.Status(http.StatusUnauthorized)
+	// The message here is purposefully vague to avoid leaking information.
+	// See the logs for diagnosing the issue.
+	render(c, unauthorizedPage(
+		appenv.AppName(), "Credentials are invalid or expired"))
+	c.Abort()
+}
+
 func setupContext(app *app) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cid := clientID(c)
 		rawAccessToken, err := c.Cookie(LandlordAccessTokenCookie)
 		if rawAccessToken == "" || err != nil {
-			zap.L().Info("no access token found",
+			zap.L().Info("unauthorized: no access token cookie",
 				zap.String("clientID", string(cid)),
 				zap.Error(err))
-			c.Redirect(http.StatusFound, "/login")
-			c.Abort()
+			unauthorizedResponse(c)
 			return
 		}
 		username, err := c.Cookie(LandlordUsernameCookie)
 		if username == "" || err != nil {
-			zap.L().Info("no username found",
+			zap.L().Info("unauthorized: no username cookie",
 				zap.String("clientID", string(cid)),
 				zap.Error(err))
-			c.Redirect(http.StatusFound, "/login")
-			c.Abort()
+			unauthorizedResponse(c)
 			return
 		}
-		_, ten, err := db.GetUserAndTenant(
-			c.Request.Context(), app.DDB(), username)
+		_, ten, err := db.GetUserAndTenant(c.Request.Context(), app.DDB(), username)
 		if err != nil {
 			zap.L().Info("unauthorized: could not find user",
 				zap.String("clientID", string(cid)),
 				zap.String("username", username),
 				zap.Error(err))
-			c.Redirect(http.StatusFound, "/login")
-			c.Abort()
+			unauthorizedResponse(c)
 			return
 		}
 		up, err := authx.GetUserPoolByNameOrID(
@@ -361,9 +370,9 @@ func setupContext(app *app) gin.HandlerFunc {
 			zap.L().Info("unauthorized: could not resolve user pool",
 				zap.String("clientID", string(cid)),
 				zap.String("tenantID", ten.ID.String()),
+				zap.String("userPoolID", ten.UserPoolID),
 				zap.Error(err))
-			c.Redirect(http.StatusFound, "/login")
-			c.Abort()
+			unauthorizedResponse(c)
 			return
 		}
 		validationURL := jwx.ValidationURL(app.Cfg().Region, aws.ToString(up.Id))
@@ -374,8 +383,7 @@ func setupContext(app *app) gin.HandlerFunc {
 				zap.String("clientID", string(cid)),
 				zap.String("tenantID", ten.ID.String()),
 				zap.Error(err))
-			c.Redirect(http.StatusFound, "/login")
-			c.Abort()
+			unauthorizedResponse(c)
 			return
 		}
 		c.Set(rest.TokenKey, tok)
