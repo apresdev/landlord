@@ -24,7 +24,7 @@
   "paths": {
     "/ll-auth/api/login": {
       "post": {
-        "operationId": "login",
+        "operationId": "Login",
         "summary": "Login with a username and password.",
         "tags": [
           "Auth"
@@ -87,9 +87,182 @@
         }
       }
     },
+    "/ll-auth/api/validate-mfa-code": {
+      "post": {
+        "operationId": "ValidateMFACode",
+        "summary": "Validate an MFA code.",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ValidateMFACodeRequest"
+        },
+        "description": "Validate a one-time multi-factor authentication (MFA) code.",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/LoginResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/validate-mfa-code",
+          "payloadFormatVersion": "1.0"
+        }
+      },
+      "options": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ll-auth/api/associate-otp": {
+      "get": {
+        "operationId": "AssociateOTP",
+        "summary": "Associate OTP with a user.",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [],
+        "description": "Begins the process of associating an OTP provider with a user.",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/AssociateOTPResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/associate-otp",
+          "payloadFormatVersion": "1.0"
+        }
+      },
+      "post": {
+        "operationId": "VerifyOTPAssociation",
+        "summary": "Verify the association of an OTP device.",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/VerifyOTPAssociationRequest"
+        },
+        "description": "Verify the association of an OTP device.",
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/associate-otp",
+          "payloadFormatVersion": "1.0"
+        }
+      },
+      "options": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
     "/ll-auth/api/tenants": {
       "get": {
-        "operationId": "getTenants",
+        "operationId": "GetTenants",
         "summary": "Get a list of tenants.",
         "tags": [
           "Auth"
@@ -99,6 +272,47 @@
         "responses": {
           "200": {
             "$ref": "#/components/responses/TenantsResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/tenants",
+          "payloadFormatVersion": "1.0"
+        }
+      },
+      "post": {
+        "operationId": "CreateTenant",
+        "summary": "Create a new tenant",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateTenantRequest"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/TenantResponse"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -153,9 +367,120 @@
         }
       }
     },
+    "/ll-auth/api/tenants/{tenantID}/state/{tenantState}": {
+      "put": {
+        "operationId": "SetTenantState",
+        "summary": "Set a tenant's state",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantState",
+            "in": "path",
+            "required": true,
+            "description": "The state to set the tenant to.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/state/{tenantState}",
+          "payloadFormatVersion": "1.0"
+        }
+      },
+      "options": {
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenantState",
+            "in": "path",
+            "required": true,
+            "description": "The state to set the tenant to.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
     "/ll-auth/api/tenants/{tenantID}/users": {
       "get": {
-        "operationId": "getUsersForTenant",
+        "operationId": "GetUsersForTenant",
         "summary": "Get a list of users for a tenant.",
         "tags": [
           "Auth"
@@ -171,7 +496,6 @@
             }
           }
         ],
-        "description": "Get a list of users for a tenant.",
         "responses": {
           "200": {
             "$ref": "#/components/responses/TenantUsersResponse"
@@ -241,8 +565,8 @@
     },
     "/ll-auth/api/tenants/{tenantID}/users/{username}": {
       "put": {
-        "operationId": "updateUser",
-        "summary": "Update the user",
+        "operationId": "UpdateUser",
+        "summary": "Update a user's settings.",
         "tags": [
           "Auth"
         ],
@@ -269,7 +593,6 @@
         "requestBody": {
           "$ref": "#/components/requestBodies/UpdateUserRequest"
         },
-        "description": "Update a user's settings.",
         "responses": {
           "204": {
             "description": "No content"
@@ -346,10 +669,116 @@
         }
       }
     },
+    "/ll-auth/api/tenants/{tenantID}/users/{username}/status": {
+      "put": {
+        "operationId": "SetUserStatus",
+        "summary": "Set a user's status.",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "description": "The username of the user to update.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/UpdateUserStatusRequest"
+        },
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{username}/status",
+          "payloadFormatVersion": "1.0"
+        }
+      },
+      "options": {
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "description": "The username of the user to update.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
     "/ll-auth/api/invite": {
       "post": {
-        "operationId": "inviteToTenant",
-        "summary": "Invite a user to a tenant.",
+        "operationId": "InviteToTenant",
+        "summary": "Invite a user to join a tenant.",
         "tags": [
           "Auth"
         ],
@@ -357,7 +786,6 @@
         "requestBody": {
           "$ref": "#/components/requestBodies/InviteRequest"
         },
-        "description": "Invite a new user to join a tenant.",
         "responses": {
           "204": {
             "description": "No content"
@@ -415,18 +843,102 @@
         }
       }
     },
-    "/ll-auth/api/impersonate": {
+    "/ll-auth/api/invite/{username}": {
+      "delete": {
+        "operationId": "CancelInvitation",
+        "summary": "Cancel an invitation to a tenant.",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "description": "The username of the user to update.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/invite/{username}",
+          "payloadFormatVersion": "1.0"
+        }
+      },
+      "options": {
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "description": "The username of the user to update.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ll-auth/api/impersonate-role": {
       "post": {
-        "operationId": "impersonate",
+        "operationId": "ImpersonateRole",
         "summary": "Impersonate a role within a tenant.",
         "tags": [
           "Auth"
         ],
         "parameters": [],
         "requestBody": {
-          "$ref": "#/components/requestBodies/ImpersonateRequest"
+          "$ref": "#/components/requestBodies/ImpersonateRoleRequest"
         },
-        "description": "Impersonate a role within a tenant.",
         "responses": {
           "200": {
             "$ref": "#/components/responses/ImpersonateResponse"
@@ -454,7 +966,75 @@
           "connectionType": "VPC_LINK",
           "httpMethod": "any",
           "type": "http_proxy",
-          "uri": "${nlb_uri}/ll-auth/api/impersonate",
+          "uri": "${nlb_uri}/ll-auth/api/impersonate-role",
+          "payloadFormatVersion": "1.0"
+        }
+      },
+      "options": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ll-auth/api/impersonate-user": {
+      "post": {
+        "operationId": "ImpersonateUser",
+        "summary": "Impersonate a user within a tenant.",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ImpersonateUserRequest"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ImpersonateResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/impersonate-user",
           "payloadFormatVersion": "1.0"
         }
       },
@@ -486,8 +1066,8 @@
     },
     "/ll-auth/api/clear-impersonate": {
       "post": {
-        "operationId": "clearImpersonate",
-        "summary": "Clear any impersonation.",
+        "operationId": "ClearImpersonate",
+        "summary": "Clear any impersonation for the current user.",
         "tags": [
           "Auth"
         ],
@@ -495,7 +1075,6 @@
         "requestBody": {
           "$ref": "#/components/requestBodies/ClearImpersonateRequest"
         },
-        "description": "Clear any impersonation for the current user.",
         "responses": {
           "200": {
             "$ref": "#/components/responses/ClearImpersonateResponse"
@@ -555,8 +1134,8 @@
     },
     "/ll-auth/api/new-password": {
       "post": {
-        "operationId": "setNewPassword",
-        "summary": "Set a new password.",
+        "operationId": "SetNewPassword",
+        "summary": "Set a new password after being issued a temporary password.",
         "tags": [
           "Auth"
         ],
@@ -564,7 +1143,6 @@
         "requestBody": {
           "$ref": "#/components/requestBodies/SetNewPasswordRequest"
         },
-        "description": "Set a new password after being issued a temporary password.",
         "responses": {
           "200": {
             "$ref": "#/components/responses/SetNewPasswordResponse"
@@ -620,7 +1198,7 @@
     },
     "/ll-auth/api/recover-password": {
       "post": {
-        "operationId": "recoverPassword",
+        "operationId": "RecoverPassword",
         "summary": "Recover a password.",
         "tags": [
           "Auth"
@@ -629,7 +1207,6 @@
         "requestBody": {
           "$ref": "#/components/requestBodies/RecoverPasswordRequest"
         },
-        "description": "Recover a password.",
         "responses": {
           "200": {
             "$ref": "#/components/responses/RecoverPasswordResponse"
@@ -685,7 +1262,7 @@
     },
     "/ll-auth/api/reset-password": {
       "post": {
-        "operationId": "resetPassword",
+        "operationId": "ResetPassword",
         "summary": "Reset a password.",
         "tags": [
           "Auth"
@@ -694,7 +1271,6 @@
         "requestBody": {
           "$ref": "#/components/requestBodies/ResetPasswordRequest"
         },
-        "description": "Complete resetting a password.",
         "responses": {
           "204": {
             "description": "No content"
@@ -762,12 +1338,42 @@
           }
         }
       },
-      "ImpersonateRequest": {
+      "ValidateMFACodeRequest": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ImpersonateRequest"
+              "$ref": "#/components/schemas/ValidateMFACodeRequest"
+            }
+          }
+        }
+      },
+      "VerifyOTPAssociationRequest": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VerifyOTPAssociationRequest"
+            }
+          }
+        }
+      },
+      "ImpersonateRoleRequest": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ImpersonateRoleRequest"
+            }
+          }
+        }
+      },
+      "ImpersonateUserRequest": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ImpersonateUserRequest"
             }
           }
         }
@@ -822,12 +1428,32 @@
           }
         }
       },
+      "CreateTenantRequest": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateTenantRequest"
+            }
+          }
+        }
+      },
       "UpdateUserRequest": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/UpdateUserRequest"
+            }
+          }
+        }
+      },
+      "UpdateUserStatusRequest": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UpdateUserStatusRequest"
             }
           }
         }
@@ -843,6 +1469,26 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/LoginResponse"
+            }
+          }
+        }
+      },
+      "AssociateOTPResponse": {
+        "description": "Return the secret for associating an OTP device.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AssociateOTPResponse"
+            }
+          }
+        }
+      },
+      "TenantResponse": {
+        "description": "A single tenant response.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TenantResponse"
             }
           }
         }
@@ -902,7 +1548,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/LoginResponse"
+              "$ref": "#/components/schemas/SetNewPasswordResponse"
             }
           }
         }
@@ -1114,12 +1760,16 @@
         "enum": [
           "success",
           "new-password-required",
-          "password-reset-required"
+          "password-reset-required",
+          "mfa-setup-required",
+          "mfa-code-required"
         ],
         "x-enum-varnames": [
           "LoginStatusSuccess",
           "LoginStatusNewPasswordRequired",
-          "LoginStatusPasswordResetRequired"
+          "LoginStatusPasswordResetRequired",
+          "LoginStatusMFASetupRequired",
+          "LoginStatusMFACodeRequired"
         ]
       },
       "LoginRequest": {
@@ -1144,7 +1794,8 @@
           "session",
           "idToken",
           "accessToken",
-          "refreshToken"
+          "refreshToken",
+          "optURI"
         ],
         "properties": {
           "status": {
@@ -1161,6 +1812,122 @@
           },
           "refreshToken": {
             "type": "string"
+          },
+          "otpURI": {
+            "type": "string"
+          }
+        }
+      },
+      "SetNewPasswordResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "idToken",
+          "accessToken",
+          "refreshToken",
+          "otpURI"
+        ],
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/LoginStatus"
+          },
+          "idToken": {
+            "type": "string"
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "otpURI": {
+            "type": "string"
+          }
+        }
+      },
+      "AssociateOTPResponse": {
+        "type": "object",
+        "required": [
+          "otpURI"
+        ],
+        "properties": {
+          "otpURI": {
+            "type": "string"
+          }
+        }
+      },
+      "ValidateMFACodeRequest": {
+        "type": "object",
+        "required": [
+          "username",
+          "mfaCode",
+          "session"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "mfaCode": {
+            "type": "string"
+          },
+          "session": {
+            "type": "string"
+          }
+        }
+      },
+      "VerifyOTPAssociationRequest": {
+        "type": "object",
+        "required": [
+          "username",
+          "otpCode",
+          "accessToken"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "otpCode": {
+            "type": "string"
+          },
+          "accessToken": {
+            "type": "string"
+          }
+        }
+      },
+      "Tenant": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "roles"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TenantResponse": {
+        "type": "object",
+        "required": [
+          "tenant"
+        ],
+        "properties": {
+          "tenant": {
+            "$ref": "#/components/schemas/Tenant"
           }
         }
       },
@@ -1170,30 +1937,7 @@
           "tenants": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": [
-                "id",
-                "name",
-                "description",
-                "roles"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "description": {
-                  "type": "string"
-                },
-                "roles": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Tenant"
             }
           }
         }
@@ -1230,7 +1974,7 @@
           }
         }
       },
-      "ImpersonateRequest": {
+      "ImpersonateRoleRequest": {
         "type": "object",
         "required": [
           "tenant",
@@ -1243,6 +1987,26 @@
           },
           "role": {
             "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        }
+      },
+      "ImpersonateUserRequest": {
+        "type": "object",
+        "required": [
+          "tenant",
+          "username",
+          "refreshToken"
+        ],
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string",
+            "format": "uuid"
           },
           "refreshToken": {
             "type": "string"
@@ -1359,12 +2123,24 @@
           }
         }
       },
+      "MFAPolicy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "required"
+        ],
+        "x-enum-varnames": [
+          "MFAPolicyNone",
+          "MFAPolicyRequired"
+        ]
+      },
       "InviteRequest": {
         "type": "object",
         "required": [
           "tenant",
           "username",
-          "role"
+          "role",
+          "mfaPolicy"
         ],
         "properties": {
           "tenant": {
@@ -1376,6 +2152,23 @@
           "role": {
             "type": "string",
             "default": "guest"
+          },
+          "mfaPolicy": {
+            "$ref": "#/components/schemas/MFAPolicy"
+          }
+        }
+      },
+      "CreateTenantRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
           }
         }
       },
@@ -1388,6 +2181,30 @@
           "role": {
             "type": "string",
             "default": "guest"
+          }
+        }
+      },
+      "UserStatus": {
+        "type": "string",
+        "enum": [
+          "invited",
+          "active",
+          "inactive"
+        ],
+        "x-enum-varnames": [
+          "UserStatusInvited",
+          "UserStatusActive",
+          "UserStatusInactive"
+        ]
+      },
+      "UpdateUserStatusRequest": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/UserStatus"
           }
         }
       }
