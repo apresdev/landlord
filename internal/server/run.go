@@ -33,8 +33,7 @@ func Run() error {
 		return err
 	}
 
-	cs := MustClients()
-	a := &app{clients: cs}
+	a := newApp(MustClients())
 	rest.AddRestRoutes(a, unauthorizedRoutes)
 	authorizedRoutes := unauthorizedRoutes.Group("/")
 	authorizedRoutes.Use(setupContext(a))
@@ -44,18 +43,18 @@ func Run() error {
 	// a token for the authorized routes.
 
 	unauthorizedRoutes.GET("/", func(c *gin.Context) {
-		if err := handleRoot(c, cs.DDB(), cs.Cfg(), cs.Validator()); err != nil {
+		if err := handleRoot(a, c); err != nil {
 			c.String(http.StatusInternalServerError, "Error handling root: %v", err)
 		}
 	})
 
 	unauthorizedRoutes.GET("/help", func(c *gin.Context) {
-		render(c, helpPage(appenv.AppName(), appenv.AppAdminEmail(), mailToAdminLink()))
+		render(c, helpPage(a.Settings().AppName(), a.Settings().AdminEmail(), mailToAdminLink(a.Settings().AdminEmail())))
 	})
 
 	unauthorizedRoutes.GET("/login", func(c *gin.Context) {
 		username, _ := c.Cookie(LandlordUsernameCookie)
-		render(c, loginPage(appenv.AppName(), username))
+		render(c, loginPage(a.Settings().AppName(), username))
 	})
 	unauthorizedRoutes.POST("/login/submit", func(c *gin.Context) {
 		if err := handleLoginSubmit(a, c); err != nil {
@@ -74,7 +73,7 @@ func Run() error {
 		otpImageURI := fmt.Sprintf(
 			"/qrcode?uri=%s", base64.URLEncoding.EncodeToString([]byte(otpURI)))
 		username, _ := c.Cookie(LandlordUsernameCookie)
-		render(c, setupOTPPage(appenv.AppName(), otpImageURI, username))
+		render(c, setupOTPPage(a.Settings().AppName(), otpImageURI, username))
 	})
 	unauthorizedRoutes.POST("/setup-otp/submit", func(c *gin.Context) {
 		if err := handleSetupOTPSubmit(a, c); err != nil {
@@ -84,7 +83,7 @@ func Run() error {
 
 	unauthorizedRoutes.GET("/otp", func(c *gin.Context) {
 		username, _ := c.Cookie(LandlordUsernameCookie)
-		render(c, otpCodePage(appenv.AppName(), username))
+		render(c, otpCodePage(a.Settings().AppName(), username))
 	})
 	unauthorizedRoutes.POST("/otp/submit", func(c *gin.Context) {
 		if err := handleOTPSubmit(a, c); err != nil {
@@ -94,7 +93,7 @@ func Run() error {
 
 	unauthorizedRoutes.GET("/new-password", func(c *gin.Context) {
 		username, _ := c.Cookie(LandlordUsernameCookie)
-		render(c, newPasswordPage(appenv.AppName(), username))
+		render(c, newPasswordPage(a.Settings().AppName(), username))
 	})
 	unauthorizedRoutes.POST("/new-password/submit", func(c *gin.Context) {
 		if err := handleNewPasswordSubmit(a, c); err != nil {
@@ -104,7 +103,7 @@ func Run() error {
 
 	unauthorizedRoutes.GET("/recovery", func(c *gin.Context) {
 		username, _ := c.Cookie(LandlordUsernameCookie)
-		render(c, recoveryPage(appenv.AppName(), username))
+		render(c, recoveryPage(a.Settings().AppName(), username))
 	})
 	unauthorizedRoutes.POST("/recovery/submit", func(c *gin.Context) {
 		if err := handleRecoverySubmit(a, c); err != nil {
@@ -115,7 +114,7 @@ func Run() error {
 	unauthorizedRoutes.GET("/reset-password", func(c *gin.Context) {
 		username, _ := c.Cookie(LandlordUsernameCookie)
 		errMsg, _ := c.Cookie(LandlordLastError)
-		render(c, resetPasswordPage(appenv.AppName(), username, errMsg))
+		render(c, resetPasswordPage(a.Settings().AppName(), username, errMsg))
 	})
 	unauthorizedRoutes.POST("/reset-password/submit", func(c *gin.Context) {
 		if err := handleResetPassword(a, c); err != nil {
@@ -125,7 +124,7 @@ func Run() error {
 	})
 
 	unauthorizedRoutes.GET("/logout", func(c *gin.Context) {
-		clearLandlordCookies(c, appenv.AppURL())
+		clearLandlordCookies(c, a.Settings().URL())
 		c.Redirect(http.StatusFound, "/")
 	})
 
@@ -138,15 +137,15 @@ func Run() error {
 	})
 
 	authorizedRoutes.GET("/admin/tenants", func(c *gin.Context) {
-		tens, err := db.GetAllTenants(cs.Ctx(), cs.DDB())
+		tens, err := db.GetAllTenants(c.Request.Context(), a.DDB())
 		if err != nil {
 			c.String(http.StatusInternalServerError, "Error getting tenants: %v", err)
 			return
 		}
-		render(c, tenantsPage(appenv.AppName(), tens))
+		render(c, tenantsPage(a.Settings().AppName(), tens))
 	})
 	authorizedRoutes.GET("/admin/tenants/new", func(c *gin.Context) {
-		render(c, newTenantPage(appenv.AppName()))
+		render(c, newTenantPage(a.Settings().AppName()))
 	})
 	authorizedRoutes.POST("/admin/tenants/new/submit", func(c *gin.Context) {
 		if err := handleNewTenant(a, c); err != nil {
@@ -174,7 +173,7 @@ func Run() error {
 			c.String(http.StatusBadRequest, "Error parsing tenant ID: %v", err)
 			return
 		}
-		ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), th)
+		ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
 		if err != nil && !apperr.IsNotFound(err) {
 			c.String(http.StatusNotFound, "Error getting tenant: %v", err)
 			return
@@ -183,12 +182,12 @@ func Run() error {
 			c.String(http.StatusInternalServerError, "Error getting tenants: %v", err)
 			return
 		}
-		users, err := db.GetUsersForTenant(cs.Ctx(), cs.DDB(), ten.ID)
+		users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), ten.ID)
 		if err != nil {
 			c.String(http.StatusInternalServerError, "Error getting users: %v", err)
 			return
 		}
-		render(c, tenantPage(appenv.AppName(), ten, users))
+		render(c, tenantPage(a.Settings().AppName(), ten, users))
 	})
 	authorizedRoutes.GET("/admin/tenants/:tenantID/invite",
 		func(c *gin.Context) {
@@ -198,7 +197,7 @@ func Run() error {
 				c.String(http.StatusBadRequest, "Error parsing tenant ID: %v", err)
 				return
 			}
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), th)
+			ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
 			if err != nil && !apperr.IsNotFound(err) {
 				c.String(http.StatusNotFound, "Error getting tenant: %v", err)
 				return
@@ -208,7 +207,7 @@ func Run() error {
 			// username.
 			username := c.Query("username")
 			render(c, inviteUserPage(
-				appenv.AppName(), id, username, ten.Roles, multi.MFAPolicyStrings()))
+				a.Settings().AppName(), id, username, ten.Roles, multi.MFAPolicyStrings()))
 		})
 	authorizedRoutes.POST("/admin/tenants/:tenantID/invite/submit",
 		func(c *gin.Context) {
@@ -296,7 +295,12 @@ func render(c *gin.Context, t templ.Component) {
 }
 
 type app struct {
-	clients Clients
+	clients  Clients
+	settings appenv.Settings
+}
+
+func newApp(cs Clients) *app {
+	return &app{clients: cs, settings: appenv.MustSettings()}
 }
 
 func (a *app) Cfg() aws.Config {
@@ -319,11 +323,15 @@ func (a *app) DDB() db.AWSDynamoDB {
 	return a.clients.DDB()
 }
 
+func (a *app) Settings() appenv.Settings {
+	return a.settings
+}
+
 func clientID(c *gin.Context) jwx.OpaqueClientID {
 	return jwx.OpaqueClientID(c.ClientIP())
 }
 
-func unauthorizedResponse(c *gin.Context) {
+func unauthorizedResponse(app *app, c *gin.Context) {
 	// This redirect ensures that the user is sent back to the login page
 	// if they are in an HTMX context where responses are being handling
 	// inline.
@@ -332,7 +340,7 @@ func unauthorizedResponse(c *gin.Context) {
 	// The message here is purposefully vague to avoid leaking information.
 	// See the logs for diagnosing the issue.
 	render(c, unauthorizedPage(
-		appenv.AppName(), "Credentials are invalid or expired"))
+		app.Settings().AppName(), "Credentials are invalid or expired"))
 	c.Abort()
 }
 
@@ -344,7 +352,7 @@ func setupContext(app *app) gin.HandlerFunc {
 			zap.L().Info("unauthorized: no access token cookie",
 				zap.String("clientID", string(cid)),
 				zap.Error(err))
-			unauthorizedResponse(c)
+			unauthorizedResponse(app, c)
 			return
 		}
 		username, err := c.Cookie(LandlordUsernameCookie)
@@ -352,7 +360,7 @@ func setupContext(app *app) gin.HandlerFunc {
 			zap.L().Info("unauthorized: no username cookie",
 				zap.String("clientID", string(cid)),
 				zap.Error(err))
-			unauthorizedResponse(c)
+			unauthorizedResponse(app, c)
 			return
 		}
 		_, ten, err := db.GetUserAndTenant(c.Request.Context(), app.DDB(), username)
@@ -361,7 +369,7 @@ func setupContext(app *app) gin.HandlerFunc {
 				zap.String("clientID", string(cid)),
 				zap.String("username", username),
 				zap.Error(err))
-			unauthorizedResponse(c)
+			unauthorizedResponse(app, c)
 			return
 		}
 		up, err := authx.GetUserPoolByNameOrID(
@@ -372,7 +380,7 @@ func setupContext(app *app) gin.HandlerFunc {
 				zap.String("tenantID", ten.ID.String()),
 				zap.String("userPoolID", ten.UserPoolID),
 				zap.Error(err))
-			unauthorizedResponse(c)
+			unauthorizedResponse(app, c)
 			return
 		}
 		validationURL := jwx.ValidationURL(app.Cfg().Region, aws.ToString(up.Id))
@@ -383,7 +391,7 @@ func setupContext(app *app) gin.HandlerFunc {
 				zap.String("clientID", string(cid)),
 				zap.String("tenantID", ten.ID.String()),
 				zap.Error(err))
-			unauthorizedResponse(c)
+			unauthorizedResponse(app, c)
 			return
 		}
 		c.Set(rest.TokenKey, tok)

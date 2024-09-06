@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/apresdev/landlord/internal/appenv"
+
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/db"
 	"github.com/apresdev/landlord/internal/jwx"
@@ -20,6 +22,7 @@ type MockApp struct {
 	cogIdp    mocks.AWSCognitoIdentityProvider
 	validator mocks.TokenValidator
 	ddb       mocks.AWSDynamoDB
+	settings  appenv.Settings
 }
 
 func (m *MockApp) Cfg() aws.Config {
@@ -42,8 +45,12 @@ func (m *MockApp) DDB() db.AWSDynamoDB {
 	return &m.ddb
 }
 
+func (m *MockApp) Settings() appenv.Settings {
+	return m.settings
+}
+
 func NewMockApp() *MockApp {
-	return &MockApp{}
+	return &MockApp{settings: appenv.Settings{}}
 }
 
 type ginTest struct {

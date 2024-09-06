@@ -4,26 +4,25 @@ import (
 	"fmt"
 
 	"github.com/a-h/templ"
-	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/gin-gonic/gin"
 )
 
-func mailToAdminLink() templ.SafeURL {
-	return templ.URL(fmt.Sprintf("mailto:%s", appenv.AppAdminEmail()))
+func mailToAdminLink(adminEmail string) templ.SafeURL {
+	return templ.URL(fmt.Sprintf("mailto:%s", adminEmail))
 }
 
-func renderErrorPage(c *gin.Context, errMsg, navMsg, navURL string) {
+func renderErrorPage(a *app, c *gin.Context, errMsg, navMsg, navURL string) {
 	render(c, errorPage(
-		appenv.AppName(),
-		appenv.AppAdminEmail(),
-		mailToAdminLink(),
+		a.Settings().AppName(),
+		a.Settings().AdminEmail(),
+		mailToAdminLink(a.Settings().AdminEmail()),
 		errMsg,
 		navMsg,
 		templ.URL(navURL)))
 }
 
-func renderCannotBeRegistered(c *gin.Context, email string) {
-	renderErrorPage(c,
+func renderCannotBeRegistered(a *app, c *gin.Context, email string) {
+	renderErrorPage(a, c,
 		fmt.Sprintf("Username address: \"%s\" cannot be registered at this time.", email),
 		"Help",
 		"/help")
