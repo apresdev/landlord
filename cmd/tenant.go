@@ -53,8 +53,7 @@ func tenantActivateCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Name/ID of the tenant to delete")
+	addTenantFlag(c, &tenant)
 	return c
 }
 
@@ -84,8 +83,7 @@ func tenantApplyCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Name/ID of the tenant to apply")
+	addTenantFlag(c, &tenant)
 	return c
 }
 
@@ -139,8 +137,7 @@ func tenantDeactivateCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Name/ID of the tenant to delete")
+	addTenantFlag(c, &tenant)
 	return c
 }
 
@@ -211,10 +208,8 @@ func tenantEmailDomainAddCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Name/ID of the tenant to add email domain to")
-	c.PersistentFlags().StringVarP(
-		&domain, "domain", "d", "", "Username domain to add to tenant")
+	addTenantFlag(c, &tenant)
+	addDomainFlag(c, &domain)
 	c.PersistentFlags().BoolVarP(
 		&allowed, "allowed", "", false, "Add the email domain as allowed")
 	return c
@@ -223,7 +218,6 @@ func tenantEmailDomainAddCmd() *cobra.Command {
 func tenantEmailDomainRemoveCmd() *cobra.Command {
 	var tenant string
 	var domain string
-	var allowed bool
 	c := &cobra.Command{
 		Use:   "remove",
 		Short: "Remove an email domain from a tenant",
@@ -267,12 +261,8 @@ func tenantEmailDomainRemoveCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Name/ID of the tenant to add email domain to")
-	c.PersistentFlags().StringVarP(
-		&domain, "domain", "d", "", "Username domain to add to tenant")
-	c.PersistentFlags().BoolVarP(
-		&allowed, "allowed", "", false, "Add the email domain as allowed")
+	addTenantFlag(c, &tenant)
+	addDomainFlag(c, &domain)
 	return c
 }
 
@@ -337,12 +327,9 @@ func tenantInviteCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Name/ID of the tenant to add user to")
-	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username of user to add to tenant")
-	c.PersistentFlags().StringVarP(
-		&role, "role", "r", multi.RoleGuest, "Role to assign to user")
+	addTenantFlag(c, &tenant)
+	addUsernameFlag(c, &username)
+	addRoleFlag(c, &role)
 	c.PersistentFlags().StringVarP(
 		&mfa, "mfa", "M", "required", "MFA policy for user. One of 'none', 'required'")
 	return c
@@ -354,24 +341,34 @@ func displayTenant(cmd *cobra.Command, ten *multi.Tenant) {
 	} else {
 		cmd.Printf("> %s -- %s\n", ten.Name, ten.Description)
 	}
-	cmd.Printf("    ID: %s\n", ten.ID.String())
-	cmd.Printf("    State: %s\n", ten.State)
-	cmd.Printf("    User Pool: %s (%s)\n", ten.UserPoolName, ten.UserPoolID)
-	cmd.Printf("    Roles:\n")
+	cmd.Printf("  ID: %s\n", ten.ID.String())
+	cmd.Printf("  State: %s\n", ten.State)
+	cmd.Printf("  User Pool: %s (%s)\n", ten.UserPoolName, ten.UserPoolID)
+	cmd.Printf("  Roles:\n")
 	for _, role := range ten.Roles {
 		cmd.Printf("    * %s\n", role)
+	}
+	if !ten.UsingDefaultSubTenantRoles() {
+		if len(ten.SubTenantRoles) == 0 {
+			cmd.Printf("  Sub-Tenant Roles: None\n")
+		} else {
+			cmd.Printf("  Sub-Tenant Roles:\n")
+			for _, role := range ten.SubTenantRoles {
+				cmd.Printf("    * %s\n", role)
+			}
+		}
 	}
 	users, err := db.GetUsersForTenant(cmd.Context(), MustClients().DDB(), ten.ID)
 	if err != nil {
 		zap.L().Error("Error getting users for tenant", zap.Error(err))
 	} else {
 		if len(users) > 0 {
-			cmd.Printf("    Users:\n")
+			cmd.Printf("  Users:\n")
 			for _, user := range users {
 				cmd.Printf("    * %s - %s - %s\n", user.Username, user.Role, user.Status)
 			}
 		} else {
-			cmd.Printf("    No Users\n")
+			cmd.Printf("  No users\n")
 		}
 	}
 }
@@ -407,17 +404,18 @@ func tenantRoleCmd() *cobra.Command {
 			return cmd.Help()
 		},
 	}
-	c.AddCommand(tenantRoleCreateCmd())
-	c.AddCommand(tenantRoleDeleteCmd())
+	c.AddCommand(tenantRoleAddCmd())
+	c.AddCommand(tenantRoleEnsureCmd())
+	c.AddCommand(tenantRoleRemoveCmd())
 	return c
 }
 
-func tenantRoleCreateCmd() *cobra.Command {
+func tenantRoleAddCmd() *cobra.Command {
 	var tenant string
 	var role string
 	c := &cobra.Command{
-		Use:   "create",
-		Short: "Create a role on a tenant",
+		Use:   "add",
+		Short: "Add a role to a tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if tenant == "" {
 				return errors.New("--tenant must be set")
@@ -449,18 +447,66 @@ func tenantRoleCreateCmd() *cobra.Command {
 			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
 				return err
 			}
-			cmd.Printf("Create role %s for tenant %s\n", role, ten.Name)
+			cmd.Printf("Added role %s to tenant %s\n", role, ten.Name)
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Name/ID of the tenant to create a role for")
-	c.PersistentFlags().StringVarP(
-		&role, "role", "", "", "Role to create")
+	addTenantFlag(c, &tenant)
+	addRoleFlag(c, &role)
 	return c
 }
 
-func tenantRoleDeleteCmd() *cobra.Command {
+func tenantRoleEnsureCmd() *cobra.Command {
+	var tenant string
+	var role string
+	c := &cobra.Command{
+		Use:   "ensure",
+		Short: "Ensure a role exists for a tenant",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if tenant == "" {
+				return errors.New("--tenant must be set")
+			}
+			if role == "" {
+				return errors.New("--role must be set")
+			}
+			h, err := multi.ParseTenantHandle(tenant)
+			if err != nil {
+				return err
+			}
+			cs := MustClients()
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			if err != nil {
+				return err
+			}
+			if ten.HasRole(role) {
+				cmd.Printf("Role %s exists for tenant %s\n", role, ten.Name)
+				return nil
+			}
+			if err = ten.AddRole(role); err != nil {
+				return err
+			}
+			groupName := ten.GroupName(role)
+			_, err = cs.CogIdp().CreateGroup(cs.Ctx(),
+				&cognitoidentityprovider.CreateGroupInput{
+					GroupName:  aws.String(groupName),
+					UserPoolId: aws.String(ten.UserPoolID),
+				})
+			if err != nil {
+				return err
+			}
+			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+				return err
+			}
+			cmd.Printf("Added role %s to tenant %s\n", role, ten.Name)
+			return nil
+		},
+	}
+	addTenantFlag(c, &tenant)
+	addRoleFlag(c, &role)
+	return c
+}
+
+func tenantRoleRemoveCmd() *cobra.Command {
 	var tenant string
 	var role string
 	c := &cobra.Command{
@@ -472,6 +518,9 @@ func tenantRoleDeleteCmd() *cobra.Command {
 			}
 			if role == "" {
 				return errors.New("--role must be set")
+			}
+			if multi.IsBuiltinRole(role) {
+				return errors.New("cannot remove built-in role")
 			}
 			h, err := multi.ParseTenantHandle(tenant)
 			if err != nil {
@@ -510,10 +559,98 @@ func tenantRoleDeleteCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Name/ID of the tenant to add email domain to")
-	c.PersistentFlags().StringVarP(
-		&role, "role", "", "", "Role to add to tenant")
+	addTenantFlag(c, &tenant)
+	addRoleFlag(c, &role)
+	return c
+}
+
+func tenantSubTenantRoleCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "sub-tenant-role",
+		Short: "Sub-tenant role sub-command",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+	}
+	c.AddCommand(tenantSubTenantRoleAddCmd())
+	c.AddCommand(tenantSubTenantRoleRemoveCmd())
+	return c
+}
+
+func tenantSubTenantRoleAddCmd() *cobra.Command {
+	var tenant string
+	var role string
+	c := &cobra.Command{
+		Use:   "add",
+		Short: "Add a role for sub-tenants",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if tenant == "" {
+				return errors.New("--tenant must be set")
+			}
+			if role == "" {
+				return errors.New("--role must be set")
+			}
+			h, err := multi.ParseTenantHandle(tenant)
+			if err != nil {
+				return err
+			}
+			cs := MustClients()
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			if err != nil {
+				return err
+			}
+			if err = ten.AddSubTenantRole(role); err != nil {
+				return err
+			}
+			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+				return err
+			}
+			cmd.Printf("Added role %s for new sub-tenants %s\n", role, ten.Name)
+			return nil
+		},
+	}
+	addTenantFlag(c, &tenant)
+	addRoleFlag(c, &role)
+	return c
+}
+
+func tenantSubTenantRoleRemoveCmd() *cobra.Command {
+	var tenant string
+	var role string
+	c := &cobra.Command{
+		Use:   "remove",
+		Short: "Remove a role for sub-tenants",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if tenant == "" {
+				return errors.New("--tenant must be set")
+			}
+			if role == "" {
+				return errors.New("--role must be set")
+			}
+			if multi.IsBuiltinRole(role) {
+				return errors.New("cannot remove built-in role")
+			}
+			h, err := multi.ParseTenantHandle(tenant)
+			if err != nil {
+				return err
+			}
+			cs := MustClients()
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			if err != nil {
+				return err
+			}
+			if err := ten.RemoveSubTenantRole(role); err != nil {
+				return err
+			}
+			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+				return err
+			}
+			cmd.Printf("Removed sub-role %s from tenant %s\n", role, ten.Name)
+			return nil
+		},
+	}
+	addTenantFlag(c, &tenant)
+	addRoleFlag(c, &role)
 	return c
 }
 
@@ -568,8 +705,7 @@ func tenantUserAssociateOTP() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username of user to add to tenant")
+	addUsernameFlag(c, &username)
 	return c
 }
 
@@ -626,10 +762,8 @@ func tenantUserListEvents() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Tenant of the user")
-	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "List events for this username")
+	addTenantFlag(c, &tenant)
+	addUsernameFlag(c, &username)
 	c.PersistentFlags().Int32VarP(
 		&results, "results", "r", 10, "Number of results to return")
 	return c
@@ -675,10 +809,8 @@ func tenantUserVerifyOTP() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Name/ID of the tenant to add email domain to")
-	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username of user to add to tenant")
+	addTenantFlag(c, &tenant)
+	addUsernameFlag(c, &username)
 	c.PersistentFlags().StringVarP(
 		&code, "code", "", "", "MFA one-time code")
 	return c
@@ -722,10 +854,8 @@ func tenantUserRemoveCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Name/ID of the tenant to add email domain to")
-	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username of user to add to tenant")
+	addTenantFlag(c, &tenant)
+	addUsernameFlag(c, &username)
 	return c
 }
 
@@ -771,12 +901,9 @@ func tenantUserRoleCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Name/ID of the tenant")
-	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username to assign role to")
-	c.PersistentFlags().StringVarP(
-		&role, "role", "r", "", "Role to assign to user")
+	addTenantFlag(c, &tenant)
+	addUsernameFlag(c, &username)
+	addRoleFlag(c, &role)
 	return c
 }
 
@@ -821,10 +948,8 @@ func tenantUserPoolCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&tenant, "tenant", "T", "", "Name/ID of the tenant")
-	c.PersistentFlags().StringVarP(
-		&userpool, "userpool", "U", "", "User pool set for tenant")
+	addTenantFlag(c, &tenant)
+	addUserPoolFlag(c, &userpool)
 	return c
 }
 
@@ -845,7 +970,33 @@ func tenantCmd() *cobra.Command {
 	c.AddCommand(tenantInviteCmd())
 	c.AddCommand(tenantListCmd())
 	c.AddCommand(tenantRoleCmd())
+	c.AddCommand(tenantSubTenantRoleCmd())
 	c.AddCommand(tenantUserCmd())
 	c.AddCommand(tenantUserPoolCmd())
 	return c
+}
+
+func addTenantFlag(c *cobra.Command, tenant *string) {
+	c.PersistentFlags().StringVarP(
+		tenant, "tenant", "T", "", "Name or ID of the tenant")
+}
+
+func addUsernameFlag(c *cobra.Command, username *string) {
+	c.PersistentFlags().StringVarP(
+		username, "username", "u", "", "Username")
+}
+
+func addRoleFlag(c *cobra.Command, username *string) {
+	c.PersistentFlags().StringVarP(
+		username, "role", "r", "", "Role name")
+}
+
+func addDomainFlag(c *cobra.Command, domain *string) {
+	c.PersistentFlags().StringVarP(
+		domain, "domain", "d", "", "Email domain name")
+}
+
+func addUserPoolFlag(c *cobra.Command, userpool *string) {
+	c.PersistentFlags().StringVarP(
+		userpool, "userpool", "U", "", "Name or ID of the userpool")
 }

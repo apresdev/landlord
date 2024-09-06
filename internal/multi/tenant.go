@@ -16,6 +16,12 @@ const (
 	RootTenantDescription = "Root Tenant"
 )
 
+var builtinRoles = []string{RoleGuest, RoleAdmin}
+
+func IsBuiltinRole(role string) bool {
+	return slices.Contains(builtinRoles, role)
+}
+
 type TenantState string
 
 const (
@@ -35,13 +41,14 @@ func ParseTenantState(state string) (TenantState, error) {
 }
 
 type Tenant struct {
-	ID           uuid.UUID   `dynamodbav:"id"`
-	State        TenantState `dynamodbav:"state"`
-	Name         string      `dynamodbav:"name"`
-	Description  string      `dynamodbav:"description"`
-	Roles        []string    `dynamodbav:"roles"`
-	UserPoolName string      `dynamodbav:"user_pool_name"`
-	UserPoolID   string      `dynamodbav:"user_pool_id"`
+	ID             uuid.UUID   `dynamodbav:"id"`
+	State          TenantState `dynamodbav:"state"`
+	Name           string      `dynamodbav:"name"`
+	Description    string      `dynamodbav:"description"`
+	Roles          []string    `dynamodbav:"roles"`
+	UserPoolName   string      `dynamodbav:"user_pool_name"`
+	UserPoolID     string      `dynamodbav:"user_pool_id"`
+	SubTenantRoles []string    `dynamodbav:"sub_tenant_roles"`
 }
 
 func MustNewTenantID() uuid.UUID {
@@ -50,10 +57,15 @@ func MustNewTenantID() uuid.UUID {
 
 func NewTenant() Tenant {
 	return Tenant{
-		State: TenantStateActive,
-		Roles: []string{RoleGuest},
-		ID:    MustNewTenantID(),
+		State:          TenantStateActive,
+		Roles:          builtinRoles,
+		ID:             MustNewTenantID(),
+		SubTenantRoles: builtinRoles,
 	}
+}
+
+func (ten *Tenant) IsRoot() bool {
+	return ten.Name == RootTenantName
 }
 
 func (ten *Tenant) AddRole(role string) error {
@@ -72,6 +84,34 @@ func (ten *Tenant) HasRole(role string) bool {
 // for the given role.
 func (ten *Tenant) GroupName(role string) string {
 	return fmt.Sprintf("tenant-%s-%s", ten.ID.String(), role)
+}
+
+func (ten *Tenant) HasSubTenantRole(role string) bool {
+	return slices.Contains(ten.SubTenantRoles, role)
+}
+
+func (ten *Tenant) AddSubTenantRole(role string) error {
+	if ten.HasSubTenantRole(role) {
+		return errors.New("role already exists")
+	}
+	ten.SubTenantRoles = append(ten.SubTenantRoles, role)
+	return nil
+}
+
+func (ten *Tenant) RemoveSubTenantRole(role string) error {
+	idx := slices.Index(ten.SubTenantRoles, role)
+	if idx == -1 {
+		return errors.New("role not found")
+	}
+	if role == RoleGuest || role == RoleAdmin {
+		return errors.New("cannot remove guest or admin role")
+	}
+	ten.SubTenantRoles = append(ten.SubTenantRoles[:idx], ten.SubTenantRoles[idx+1:]...)
+	return nil
+}
+
+func (ten *Tenant) UsingDefaultSubTenantRoles() bool {
+	return slices.Equal(ten.SubTenantRoles, builtinRoles)
 }
 
 const (
