@@ -124,7 +124,7 @@ func GetTenantByName(ctx context.Context, ddb AWSDynamoDB, name string) (*multi.
 	if len(o.Items) > 1 {
 		return nil, apperr.NewInternal("multiple items found")
 	}
-	var tenant multi.Tenant
+	tenant := multi.NewTenant()
 	err = attributevalue.UnmarshalMap(o.Items[0], &tenant)
 	if err != nil {
 		return nil, apperr.NewInternalE(

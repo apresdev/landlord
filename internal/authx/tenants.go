@@ -50,6 +50,7 @@ func CreateRootTenant(
 	if err != nil {
 		return err
 	}
+	rootTenant.Roles = []string{multi.RoleGuest, multi.RoleAdmin}
 	return db.StoreTenant(ctx, ddb, &rootTenant)
 }
 
@@ -82,14 +83,16 @@ func CreateTenant(
 	ten.Description = description
 	ten.UserPoolName = rootTenant.UserPoolName
 	ten.UserPoolID = rootTenant.UserPoolID
-	guestGroupName := ten.GroupName(multi.RoleGuest)
-	_, err = cogIdp.CreateGroup(ctx, &cognitoidentityprovider.CreateGroupInput{
-		GroupName:  aws.String(guestGroupName),
-		UserPoolId: aws.String(ten.UserPoolID),
-	})
-	if err != nil {
-		return multi.Tenant{}, apperr.NewInternalE(err)
+	for _, role := range rootTenant.SubTenantRoles {
+		_, err = cogIdp.CreateGroup(ctx, &cognitoidentityprovider.CreateGroupInput{
+			GroupName:  aws.String(ten.GroupName(role)),
+			UserPoolId: aws.String(ten.UserPoolID),
+		})
+		if err != nil {
+			return multi.Tenant{}, apperr.NewInternalE(err)
+		}
 	}
+	ten.Roles = rootTenant.SubTenantRoles
 	if err := db.StoreTenant(ctx, ddb, &ten); err != nil {
 		return multi.Tenant{}, apperr.NewInternalE(err)
 	}
@@ -224,6 +227,9 @@ func SetTenantState(
 	ten, err := db.ResolveTenant(ctx, ddb, th)
 	if err != nil {
 		return nil, err
+	}
+	if ten.IsRoot() {
+		return nil, apperr.NewBadRequest("cannot change the root tenant's state")
 	}
 	ten.State = state
 	err = db.StoreTenant(ctx, ddb, ten)
