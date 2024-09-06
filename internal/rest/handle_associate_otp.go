@@ -23,7 +23,7 @@ func HandleAssociateOTP(app App, c *gin.Context) (*AssociateOtpResponse, error) 
 		return nil, err
 	}
 	result, err := authx.AssociateSoftwareToken(
-		ctx, app.CogIdp(), ur.AccessToken, ur.Username)
+		ctx, app.CogIdp(), app.Settings().AppName(), ur.AccessToken, ur.Username)
 	if err != nil {
 		return nil, err
 	}

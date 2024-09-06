@@ -5,6 +5,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/apresdev/landlord/internal/appenv"
+
 	"github.com/apresdev/landlord/internal/jwx"
 
 	"github.com/apresdev/landlord/internal/apperr"
@@ -25,6 +27,7 @@ type App interface {
 	CogIdp() authx.AWSCognitoIdentityProvider
 	Validator() jwx.TokenValidator
 	DDB() db.AWSDynamoDB
+	Settings() appenv.Settings
 }
 
 const (

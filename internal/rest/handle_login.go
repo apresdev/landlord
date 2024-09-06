@@ -134,7 +134,11 @@ func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, err
 		idx := slices.Index(u.UserMFASettingList, "SOFTWARE_TOKEN_MFA")
 		if idx == -1 {
 			result, err := authx.AssociateSoftwareToken(
-				ctx, app.CogIdp(), aws.ToString(o.AuthenticationResult.AccessToken), req.Username)
+				ctx,
+				app.CogIdp(),
+				app.Settings().AppName(),
+				aws.ToString(o.AuthenticationResult.AccessToken),
+				req.Username)
 			if err != nil {
 				return nil, apperr.NewInternalE(fmt.Errorf("error associating software token: %w", err))
 			}

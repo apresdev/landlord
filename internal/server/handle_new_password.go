@@ -7,7 +7,6 @@ import (
 
 	"github.com/apresdev/landlord/internal/rest"
 
-	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,8 +26,8 @@ func handleNewPasswordSubmit(a *app, c *gin.Context) error {
 		return err
 	}
 	if resp.Status == rest.LoginStatusMFASetupRequired {
-		setCookie(c, appenv.AppURL(), LandlordOTPURI, resp.OtpURI)
-		setCookie(c, appenv.AppURL(), LandlordAccessTokenCookie, resp.AccessToken)
+		setCookie(c, a.Settings().URL(), LandlordOTPURI, resp.OtpURI)
+		setCookie(c, a.Settings().URL(), LandlordAccessTokenCookie, resp.AccessToken)
 		c.Redirect(http.StatusFound, "/setup-otp")
 		return nil
 	}
@@ -39,10 +38,10 @@ func handleNewPasswordSubmit(a *app, c *gin.Context) error {
 		c.String(http.StatusUnauthorized, "unauthorized")
 		return nil
 	}
-	setCookie(c, appenv.AppURL(), LandlordIDTokenCookie, resp.IdToken)
-	setCookie(c, appenv.AppURL(), LandlordAccessTokenCookie, resp.AccessToken)
-	setCookie(c, appenv.AppURL(), LandlordRefreshTokenCookie, resp.RefreshToken)
-	clearCookie(c, appenv.AppURL(), LandlordChallengeSessionCookie)
+	setCookie(c, a.Settings().URL(), LandlordIDTokenCookie, resp.IdToken)
+	setCookie(c, a.Settings().URL(), LandlordAccessTokenCookie, resp.AccessToken)
+	setCookie(c, a.Settings().URL(), LandlordRefreshTokenCookie, resp.RefreshToken)
+	clearCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie)
 	c.Redirect(http.StatusFound, "/")
 	return nil
 }

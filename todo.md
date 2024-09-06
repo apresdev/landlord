@@ -1,8 +1,7 @@
 # TODOs
 
+* handle the "remember me" flag on login
 * encode username as base64 in APIs when used in the URL
-* reapply the IAM permissions from landlord
-* terraform for the lambda
 * add ability to give a cross-tenant impersonation permission
 * replace terraform for initializing the user pool with the landlord tool
   itself -- replace `landord tenant init` with just `landlord init`
@@ -21,7 +20,7 @@
 * last error handling 
   * remove the last error cookie and put it in the session
   * add points where the error is cleared
-* change the userpool and reconcile users in the user pool
+* adapt an existing userpool and reconcile users
 * general styling improvements for the htmx version
   * add password fields that have the little eyeball to reveal the password
     * maybe save this for the React version only?

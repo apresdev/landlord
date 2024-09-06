@@ -5,8 +5,6 @@ import (
 
 	"github.com/apresdev/landlord/internal/rest"
 
-	"github.com/apresdev/landlord/internal/appenv"
-
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -21,27 +19,27 @@ func handleLoginSubmit(a *app, c *gin.Context) error {
 	}
 	switch resp.Status {
 	case rest.LoginStatusSuccess:
-		setCookie(c, appenv.AppURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, appenv.AppURL(), LandlordAccessTokenCookie, resp.AccessToken)
-		setCookie(c, appenv.AppURL(), LandlordIDTokenCookie, resp.IdToken)
-		setCookie(c, appenv.AppURL(), LandlordRefreshTokenCookie, resp.RefreshToken)
+		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().URL(), LandlordAccessTokenCookie, resp.AccessToken)
+		setCookie(c, a.Settings().URL(), LandlordIDTokenCookie, resp.IdToken)
+		setCookie(c, a.Settings().URL(), LandlordRefreshTokenCookie, resp.RefreshToken)
 		c.Redirect(http.StatusFound, "/")
 	case rest.LoginStatusNewPasswordRequired:
-		setCookie(c, appenv.AppURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, appenv.AppURL(), LandlordChallengeSessionCookie, resp.Session)
+		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie, resp.Session)
 		c.Redirect(http.StatusFound, "/new-password")
 	case rest.LoginStatusPasswordResetRequired:
-		setCookie(c, appenv.AppURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, appenv.AppURL(), LandlordChallengeSessionCookie, resp.Session)
+		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie, resp.Session)
 		c.Redirect(http.StatusFound, "/reset-password")
 	case rest.LoginStatusMFASetupRequired:
-		setCookie(c, appenv.AppURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, appenv.AppURL(), LandlordAccessTokenCookie, resp.AccessToken)
-		setCookie(c, appenv.AppURL(), LandlordOTPURI, resp.OtpURI)
+		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().URL(), LandlordAccessTokenCookie, resp.AccessToken)
+		setCookie(c, a.Settings().URL(), LandlordOTPURI, resp.OtpURI)
 		c.Redirect(http.StatusFound, "/setup-otp")
 	case rest.LoginStatusMFACodeRequired:
-		setCookie(c, appenv.AppURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, appenv.AppURL(), LandlordChallengeSessionCookie, resp.Session)
+		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie, resp.Session)
 		c.Redirect(http.StatusFound, "/otp")
 	default:
 		zap.L().Error("unexpected login status value",
