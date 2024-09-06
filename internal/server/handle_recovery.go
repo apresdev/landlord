@@ -5,7 +5,6 @@ import (
 
 	"github.com/apresdev/landlord/internal/rest"
 
-	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +17,7 @@ func handleRecoverySubmit(a *app, c *gin.Context) error {
 	}
 	// TODO: put the details from the response into front-end
 	_ = resp
-	setCookie(c, appenv.AppURL(), LandlordUsernameCookie, req.Username)
+	setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
 	c.Redirect(http.StatusFound, "/reset-password")
 	return err
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/apresdev/landlord/internal/db"
 	"go.uber.org/zap"
 
-	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/apresdev/landlord/internal/jwx"
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +29,7 @@ func handleAdminHome(a *app, c *gin.Context) error {
 		zap.L().Warn("error finding tenant for username",
 			zap.String("username", username),
 			zap.Error(err))
-		clearLandlordCookies(c, appenv.AppURL())
+		clearLandlordCookies(c, a.Settings().URL())
 		c.Redirect(http.StatusFound, "/login")
 		return nil
 	}

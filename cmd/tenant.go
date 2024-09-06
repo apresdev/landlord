@@ -368,7 +368,7 @@ func displayTenant(cmd *cobra.Command, ten *multi.Tenant) {
 		if len(users) > 0 {
 			cmd.Printf("    Users:\n")
 			for _, user := range users {
-				cmd.Printf("    * %s\n", user.Username)
+				cmd.Printf("    * %s - %s - %s\n", user.Username, user.Role, user.Status)
 			}
 		} else {
 			cmd.Printf("    No Users\n")
@@ -552,7 +552,7 @@ func tenantUserAssociateOTP() *cobra.Command {
 			}
 			cs := MustClients()
 			result, err := authx.AssociateSoftwareToken(
-				cs.Ctx(), cs.CogIdp(), s.AccessToken, e.Address())
+				cs.Ctx(), cs.CogIdp(), "Landlord CLI", s.AccessToken, e.Address())
 			if err != nil {
 				return err
 			}

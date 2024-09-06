@@ -93,40 +93,40 @@ func OverrideLocalStack(v bool) func() {
 	}
 }
 
-var (
-	appURL        *url.URL
-	appName       string
-	appAdminEmail string
-)
-
-func AppURL() *url.URL {
-	return appURL
+type Settings struct {
+	url        *url.URL
+	appName    string
+	adminEmail string
 }
 
-func AppName() string {
-	return appName
+func (s Settings) URL() *url.URL {
+	return s.url
 }
 
-func AppAdminEmail() string {
-	return appAdminEmail
+func (s Settings) AppName() string {
+	return s.appName
 }
 
-func init() {
+func (s Settings) AdminEmail() string {
+	return s.adminEmail
+}
+
+func MustSettings() Settings {
 	u := os.Getenv("LANDLORD_APP_URL")
 	if u == "" {
-		panicDuringInit("LANDLORD_APP_URL not set")
+		zap.L().Fatal("LANDLORD_APP_URL not set")
 	}
-	var err error
-	appURL, err = url.Parse(u)
+	up, err := url.Parse(u)
 	if err != nil {
-		panicDuringInit("LANDLORD_APP_URL is not a valid URL", zap.Error(err))
+		zap.L().Fatal("LANDLORD_APP_URL is not a valid URL", zap.Error(err))
 	}
-	appName = os.Getenv("LANDLORD_APP_NAME")
-	if appName == "" {
-		panicDuringInit("LANDLORD_APP_NAME not set")
+	n := os.Getenv("LANDLORD_APP_NAME")
+	if n == "" {
+		zap.L().Fatal("LANDLORD_APP_NAME not set")
 	}
-	appAdminEmail = os.Getenv("LANDLORD_APP_ADMIN_EMAIL")
-	if appAdminEmail == "" {
+	e := os.Getenv("LANDLORD_APP_ADMIN_EMAIL")
+	if e == "" {
 		zap.L().Fatal("LANDLORD_APP_ADMIN_EMAIL not set")
 	}
+	return Settings{url: up, appName: n, adminEmail: e}
 }

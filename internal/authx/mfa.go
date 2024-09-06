@@ -7,8 +7,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
-	"github.com/apresdev/landlord/internal/appenv"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 )
@@ -20,6 +18,7 @@ type UserMFAResult struct {
 func AssociateSoftwareToken(
 	ctx context.Context,
 	idp AWSCognitoIdentityProvider,
+	appName string,
 	accessToken string,
 	email string) (*UserMFAResult, error) {
 
@@ -31,7 +30,7 @@ func AssociateSoftwareToken(
 		return nil, err
 	}
 	otpAuthURI := fmt.Sprintf("otpauth://totp/%s:%s?secret=%s",
-		url.PathEscape(appenv.AppName()), url.PathEscape(email), url.QueryEscape(*o.SecretCode))
+		url.PathEscape(appName), url.PathEscape(email), url.QueryEscape(*o.SecretCode))
 
 	return &UserMFAResult{
 		OtpAuthURI: otpAuthURI,

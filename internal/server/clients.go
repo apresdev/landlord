@@ -17,7 +17,6 @@ import (
 )
 
 type Clients interface {
-	Ctx() context.Context
 	Cfg() aws.Config
 	Sts() authx.AWSSTS
 	CogIdp() authx.AWSCognitoIdentityProvider
@@ -27,17 +26,12 @@ type Clients interface {
 }
 
 type clients struct {
-	ctx       context.Context
 	cfg       aws.Config
 	sts       authx.AWSSTS
 	cogIdp    authx.AWSCognitoIdentityProvider
 	ses       authx.AWSSES
 	validator jwx.TokenValidator
 	ddb       db.AWSDynamoDB
-}
-
-func (c *clients) Ctx() context.Context {
-	return c.ctx
 }
 
 func (c *clients) Cfg() aws.Config {
@@ -71,7 +65,6 @@ func newClients() (*clients, error) {
 		return nil, err
 	}
 	return &clients{
-		ctx:       ctx,
 		cfg:       awsCfg,
 		sts:       sts.NewFromConfig(awsCfg),
 		cogIdp:    cognitoidentityprovider.NewFromConfig(awsCfg),

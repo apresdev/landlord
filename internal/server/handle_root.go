@@ -4,23 +4,16 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/apresdev/landlord/internal/appenv"
 	"go.uber.org/zap"
 
 	"github.com/apresdev/landlord/internal/jwx"
 
 	"github.com/apresdev/landlord/internal/db"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/gin-gonic/gin"
 )
 
-func handleRoot(
-	c *gin.Context,
-	ddb db.AWSDynamoDB,
-	awsCfg aws.Config,
-	validator jwx.TokenValidator) error {
-
+func handleRoot(a *app, c *gin.Context) error {
 	ua := c.GetHeader("User-Agent")
 	if strings.Contains(strings.ToLower(ua), "healthcheck") {
 		c.JSON(http.StatusNoContent, nil)
@@ -42,18 +35,18 @@ func handleRoot(
 		return nil
 	}
 
-	_, tenant, err := db.GetUserAndTenant(c.Request.Context(), ddb, username)
+	_, tenant, err := db.GetUserAndTenant(c.Request.Context(), a.DDB(), username)
 	if err != nil {
 		zap.L().Warn("error finding tenant for username",
 			zap.String("username", username),
 			zap.Error(err))
-		clearLandlordCookies(c, appenv.AppURL())
+		clearLandlordCookies(c, a.Settings().URL())
 		c.Redirect(http.StatusFound, "/login")
 		return nil
 	}
-	validationURL := jwx.ValidationURL(awsCfg.Region, tenant.UserPoolID)
+	validationURL := jwx.ValidationURL(a.Cfg().Region, tenant.UserPoolID)
 	_, err = jwx.ValidateAllTokens(
-		c.Request.Context(), clientID(c), validator, validationURL, rawTokens)
+		c.Request.Context(), clientID(c), a.Validator(), validationURL, rawTokens)
 	if err != nil {
 		c.Redirect(http.StatusFound, "/login")
 		return err
