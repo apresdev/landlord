@@ -2,11 +2,11 @@
 all: build
 
 .PHONY: build
-build:
+build: gen
 	./scripts/go-dev-bld
 
 .PHONY: rel
-rel:
+rel: gen
 	./scripts/go-rel-bld
 
 .PHONY: completion
@@ -34,7 +34,9 @@ sim-test:
 	cd ./test && ./sim-cleanup.sh && ./sim-test-01.sh && ./sim-cleanup.sh
 
 .PHONY: gen
-gen:
+gen: ./api/landlord-openapi-ext.json
+
+./api/landlord-openapi-ext.json: ./api/landlord-openapi.yaml
 	./scripts/generate-go-server.sh \
 		./api/landlord-openapi.yaml \
 		apresdev \
@@ -47,6 +49,9 @@ gen:
 		landlord \
 		client \
 		pkg/client
+	mkdir -p ./tmp
+	yq eval -o=json ./api/landlord-openapi.yaml > ./tmp/landlord-openapi.json
+	./scripts/add-openapi-extensions.py ./tmp/landlord-openapi.json > ./api/landlord-openapi-ext.json
 
 .PHONY: docker-pull
 docker-pull:	## - docker pull latest images
@@ -59,12 +64,6 @@ docker: docker-pull	## - Build the smallest and secured golang docker image base
 	$(eval BUILDER_IMAGE=$(shell docker inspect --format='{{index .RepoDigests 0}}' golang:alpine))
 	@export DOCKER_CONTENT_TRUST=1
 	@docker build -f Dockerfile --build-arg "BUILDER_IMAGE=$(BUILDER_IMAGE)" -t landlord .
-
-.PHONY: api-spec
-api-spec:
-	mkdir -p ./tmp
-	yq eval -o=json ./api/landlord-openapi.yaml > ./tmp/landlord-openapi.json
-	./scripts/add-openapi-extensions.py ./tmp/landlord-openapi.json > ./api/landlord-openapi-ext.json
 
 .PHONY: get-htmx
 get-htmx:
