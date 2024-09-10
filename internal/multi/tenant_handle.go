@@ -18,6 +18,10 @@ func (h TenantHandle) String() string {
 	return h.Name
 }
 
+func NewTenantHandleName(name string) TenantHandle {
+	return TenantHandle{Name: name}
+}
+
 func ParseTenantHandle(s string) (TenantHandle, error) {
 	if s == "" {
 		return TenantHandle{}, errors.New("tenant handle must be set")

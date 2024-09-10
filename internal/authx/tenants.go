@@ -27,7 +27,13 @@ func CreateRootTenant(
 	ddb db.AWSDynamoDB,
 	cogIdp AWSCognitoIdentityProvider) error {
 
-	rootTenant := multi.NewTenant()
+	rootTenant, err := db.GetTenantByName(ctx, ddb, multi.RootTenantName)
+	if err != nil && !apperr.IsNotFound(err) {
+		return err
+	}
+	if rootTenant == nil {
+		rootTenant = multi.NewTenant()
+	}
 	rootTenant.Name = multi.RootTenantName
 	rootTenant.Description = multi.RootTenantDescription
 	rootTenant.UserPoolName = os.Getenv("LANDLORD_DEFAULT_USER_POOL")
@@ -36,22 +42,17 @@ func CreateRootTenant(
 		return err
 	}
 	rootTenant.UserPoolID = aws.ToString(up.Id)
-	_, err = cogIdp.CreateGroup(ctx, &cognitoidentityprovider.CreateGroupInput{
-		GroupName:  aws.String(rootTenant.GroupName(multi.RoleGuest)),
-		UserPoolId: aws.String(rootTenant.UserPoolID),
-	})
-	if err != nil {
-		return err
+	for _, role := range multi.BuiltInRoles {
+		_, err = cogIdp.CreateGroup(ctx, &cognitoidentityprovider.CreateGroupInput{
+			GroupName:  aws.String(rootTenant.GroupName(role)),
+			UserPoolId: aws.String(rootTenant.UserPoolID),
+		})
+		if err != nil {
+			return err
+		}
 	}
-	_, err = cogIdp.CreateGroup(ctx, &cognitoidentityprovider.CreateGroupInput{
-		GroupName:  aws.String(rootTenant.GroupName(multi.RoleAdmin)),
-		UserPoolId: aws.String(rootTenant.UserPoolID),
-	})
-	if err != nil {
-		return err
-	}
-	rootTenant.Roles = []string{multi.RoleGuest, multi.RoleAdmin}
-	return db.StoreTenant(ctx, ddb, &rootTenant)
+	rootTenant.Roles = multi.BuiltInRoles
+	return db.StoreTenant(ctx, ddb, rootTenant)
 }
 
 // CreateTenant creates a new tenant in the system.
@@ -60,22 +61,22 @@ func CreateTenant(
 	ddb db.AWSDynamoDB,
 	cogIdp AWSCognitoIdentityProvider,
 	name string,
-	description string) (multi.Tenant, error) {
+	description string) (*multi.Tenant, error) {
 
 	if err := multi.ValidateTenantName(name); err != nil {
-		return multi.Tenant{}, apperr.NewBadRequestE(err)
+		return nil, apperr.NewBadRequestE(err)
 	}
 	_, err := db.GetTenantByName(ctx, ddb, name)
 	if err == nil {
-		return multi.Tenant{}, apperr.NewBadRequestE(
+		return nil, apperr.NewBadRequestE(
 			fmt.Errorf("tenant already exists: %s", name))
 	}
 	if !apperr.IsNotFound(err) {
-		return multi.Tenant{}, apperr.NewInternalE(err)
+		return nil, apperr.NewInternalE(err)
 	}
 	rootTenant, err := db.GetRootTenant(ctx, ddb)
 	if err != nil {
-		return multi.Tenant{}, apperr.NewInternalE(err)
+		return nil, apperr.NewInternalE(err)
 	}
 	ten := multi.NewTenant()
 	ten.Name = strcase.ToKebab(name)
@@ -89,12 +90,12 @@ func CreateTenant(
 			UserPoolId: aws.String(ten.UserPoolID),
 		})
 		if err != nil {
-			return multi.Tenant{}, apperr.NewInternalE(err)
+			return nil, apperr.NewInternalE(err)
 		}
 	}
 	ten.Roles = rootTenant.SubTenantRoles
-	if err := db.StoreTenant(ctx, ddb, &ten); err != nil {
-		return multi.Tenant{}, apperr.NewInternalE(err)
+	if err := db.StoreTenant(ctx, ddb, ten); err != nil {
+		return nil, apperr.NewInternalE(err)
 	}
 	return ten, nil
 }

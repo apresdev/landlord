@@ -30,7 +30,7 @@ func (s *InviteTestSuite) TestBadEmail() {
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
 	tenant := multi.NewTenant()
 	err := authx.SendInvite(
-		ctx, ddb, cogIdp, &tenant, "not-an-email-address", "guest", multi.MFAPolicyNone)
+		ctx, ddb, cogIdp, tenant, "not-an-email-address", "guest", multi.MFAPolicyNone)
 	s.Error(err)
 	s.Equal(err.Error(), "invalid email")
 }
@@ -42,7 +42,7 @@ func (s *InviteTestSuite) TestInviteDBFailure() {
 	ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
 	tenant := multi.NewTenant()
 	err := authx.SendInvite(
-		ctx, ddb, cogIdp, &tenant, "foo@example.com", "guest", multi.MFAPolicyNone)
+		ctx, ddb, cogIdp, tenant, "foo@example.com", "guest", multi.MFAPolicyNone)
 	s.Error(err)
 	s.Contains(err.Error(), "db error")
 }
@@ -60,7 +60,7 @@ func (s *InviteTestSuite) TestInviteInactiveUser() {
 	ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	tenant := multi.NewTenant()
 	err := authx.SendInvite(
-		ctx, ddb, cogIdp, &tenant, "foo@example.com", "guest", multi.MFAPolicyNone)
+		ctx, ddb, cogIdp, tenant, "foo@example.com", "guest", multi.MFAPolicyNone)
 	s.Error(err)
 	s.Equal(err.Error(), "cannot send invite, user 'foo@example.com' is inactive")
 }
@@ -75,6 +75,6 @@ func (s *InviteTestSuite) TestInviteNewUser() {
 	ddb.EXPECT().PutItem(mock.Anything, mock.Anything).Return(nil, nil)
 	tenant := multi.NewTenant()
 	err := authx.SendInvite(
-		ctx, ddb, cogIdp, &tenant, "foo@example.com", "guest", multi.MFAPolicyNone)
+		ctx, ddb, cogIdp, tenant, "foo@example.com", "guest", multi.MFAPolicyNone)
 	s.NoError(err)
 }

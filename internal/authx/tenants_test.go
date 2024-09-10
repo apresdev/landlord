@@ -28,7 +28,7 @@ func (s *TenantsTestSuite) TestSetTenantStateOnRoot() {
 	t := multi.NewTenant()
 	t.Name = "root"
 	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(t))
+	o.Items = append(o.Items, apptest.MustStructToDynamoMap(*t))
 	ddb.EXPECT().Query(ctx, mock.Anything).Return(&o, nil)
 	th, err := multi.ParseTenantHandle("root")
 	s.Assert().NoError(err)
@@ -48,7 +48,7 @@ func (s *TenantsTestSuite) TestSetTenantStateOnRegularTenant() {
 	t := multi.NewTenant()
 	t.Name = "regular"
 	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(t))
+	o.Items = append(o.Items, apptest.MustStructToDynamoMap(*t))
 	ddb.EXPECT().Query(ctx, mock.Anything).Return(&o, nil)
 	ddb.EXPECT().PutItem(ctx, mock.Anything).Return(nil, nil)
 	th, err := multi.ParseTenantHandle("regular")
