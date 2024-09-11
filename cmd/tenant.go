@@ -305,6 +305,9 @@ func tenantInviteCmd() *cobra.Command {
 			if username == "" {
 				return errors.New("--username must be set")
 			}
+			if role == "" {
+				return errors.New("--role must be set")
+			}
 			h, err := multi.ParseTenantHandle(tenant)
 			if err != nil {
 				return err
@@ -365,7 +368,8 @@ func displayTenant(cmd *cobra.Command, ten *multi.Tenant) {
 		if len(users) > 0 {
 			cmd.Printf("  Users:\n")
 			for _, user := range users {
-				cmd.Printf("    * %s - %s - %s\n", user.Username, user.Role, user.Status)
+				cmd.Printf("    * %s - %s - %s - MFA: %s\n",
+					user.Username, user.Role, user.Status, user.MFAPolicy.String())
 			}
 		} else {
 			cmd.Printf("  No users\n")
@@ -374,11 +378,24 @@ func displayTenant(cmd *cobra.Command, ten *multi.Tenant) {
 }
 
 func tenantListCmd() *cobra.Command {
-	return &cobra.Command{
+	var id string
+	c := &cobra.Command{
 		Use:   "list",
 		Short: "List the tenants",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cs := MustClients()
+			if id != "" {
+				h, err := multi.ParseTenantHandle(id)
+				if err != nil {
+					return err
+				}
+				ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+				if err != nil {
+					return err
+				}
+				displayTenant(cmd, ten)
+				return nil
+			}
 			tens, err := db.GetAllTenants(cs.Ctx(), cs.DDB())
 			if err != nil {
 				return err
@@ -394,6 +411,9 @@ func tenantListCmd() *cobra.Command {
 		},
 		Aliases: []string{"ls"},
 	}
+	c.PersistentFlags().StringVarP(
+		&id, "id", "i", "", "ID of the tenant to list")
+	return c
 }
 
 func tenantRoleCmd() *cobra.Command {
@@ -478,26 +498,23 @@ func tenantRoleEnsureCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if ten.HasRole(role) {
-				cmd.Printf("Role %s exists for tenant %s\n", role, ten.Name)
-				return nil
+			if !ten.HasRole(role) {
+				if err = ten.AddRole(role); err != nil {
+					return err
+				}
+				cmd.Printf("Role %s created for tenant %s\n", role, ten.Name)
+			} else {
+				cmd.Printf("Role %s already exists for tenant %s\n", role, ten.Name)
 			}
-			if err = ten.AddRole(role); err != nil {
-				return err
-			}
-			groupName := ten.GroupName(role)
-			_, err = cs.CogIdp().CreateGroup(cs.Ctx(),
-				&cognitoidentityprovider.CreateGroupInput{
-					GroupName:  aws.String(groupName),
-					UserPoolId: aws.String(ten.UserPoolID),
-				})
-			if err != nil {
+			err = authx.CreateGroupForTenant(cs.Ctx(), cs.CogIdp(), ten, role)
+			if err != nil && apperr.IsAlreadyExists(err) {
+				cmd.Printf("Group %s already exists for tenant %s\n", ten.GroupName(role), ten.Name)
+			} else if err != nil {
 				return err
 			}
 			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
 				return err
 			}
-			cmd.Printf("Added role %s to tenant %s\n", role, ten.Name)
 			return nil
 		},
 	}
@@ -520,7 +537,8 @@ func tenantRoleRemoveCmd() *cobra.Command {
 				return errors.New("--role must be set")
 			}
 			if multi.IsBuiltinRole(role) {
-				return errors.New("cannot remove built-in role")
+				return apperr.NewBadRequestE(
+					fmt.Errorf("cannot remove built-in role: %s", role))
 			}
 			h, err := multi.ParseTenantHandle(tenant)
 			if err != nil {

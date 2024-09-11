@@ -16,10 +16,10 @@ const (
 	RootTenantDescription = "Root Tenant"
 )
 
-var builtinRoles = []string{RoleGuest, RoleAdmin}
+var BuiltInRoles = []string{RoleGuest, RoleAdmin}
 
 func IsBuiltinRole(role string) bool {
-	return slices.Contains(builtinRoles, role)
+	return slices.Contains(BuiltInRoles, role)
 }
 
 type TenantState string
@@ -55,12 +55,12 @@ func MustNewTenantID() uuid.UUID {
 	return uuid.New()
 }
 
-func NewTenant() Tenant {
-	return Tenant{
+func NewTenant() *Tenant {
+	return &Tenant{
 		State:          TenantStateActive,
-		Roles:          builtinRoles,
+		Roles:          BuiltInRoles,
 		ID:             MustNewTenantID(),
-		SubTenantRoles: builtinRoles,
+		SubTenantRoles: BuiltInRoles,
 	}
 }
 
@@ -111,7 +111,7 @@ func (ten *Tenant) RemoveSubTenantRole(role string) error {
 }
 
 func (ten *Tenant) UsingDefaultSubTenantRoles() bool {
-	return slices.Equal(ten.SubTenantRoles, builtinRoles)
+	return slices.Equal(ten.SubTenantRoles, BuiltInRoles)
 }
 
 const (

@@ -134,7 +134,7 @@ func (s *HandleImpersonateUserTestSuite) TestNotAuthorizedForRoot() {
 	gt1.c.Set(TokenKey, tok)
 	o := dynamodb.QueryOutput{}
 	mt := multi.NewTenant()
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(mt))
+	o.Items = append(o.Items, apptest.MustStructToDynamoMap(*mt))
 	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	err := handleImpersonateUser(app, gt1.c)
 	s.Error(err)
@@ -150,7 +150,7 @@ func (s *HandleImpersonateUserTestSuite) TestNoEmailClaim() {
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
 	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(mt))
+	o.Items = append(o.Items, apptest.MustStructToDynamoMap(*mt))
 	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	err := handleImpersonateUser(app, gt1.c)
 	s.Error(err)
@@ -167,7 +167,7 @@ func (s *HandleImpersonateUserTestSuite) TestFailedToUpdateUserAttributes() {
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
 	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(mt))
+	o.Items = append(o.Items, apptest.MustStructToDynamoMap(*mt))
 	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, errors.New("could not update user attributes"))
@@ -186,7 +186,7 @@ func (s *HandleImpersonateUserTestSuite) TestNoSubClaim() {
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
 	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(mt))
+	o.Items = append(o.Items, apptest.MustStructToDynamoMap(*mt))
 	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, nil)
@@ -217,7 +217,7 @@ func (s *HandleImpersonateUserTestSuite) TestSuccess() {
 	gt1.c.Set(TokenKey, tok)
 	o := dynamodb.QueryOutput{}
 	mt.Roles = append(mt.Roles, "guest")
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(mt))
+	o.Items = append(o.Items, apptest.MustStructToDynamoMap(*mt))
 	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(
 		gt1.c.Request.Context(), mock.Anything, mock.Anything).Return(

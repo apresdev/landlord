@@ -30,6 +30,13 @@ func SendInvite(
 	if err != nil {
 		return errors.New("invalid email")
 	}
+	if role == "" {
+		return apperr.NewBadRequest("role is required")
+	}
+	if !ten.HasRole(role) {
+		return apperr.NewBadRequest(
+			fmt.Sprintf("role '%s' is not valid for tenant '%s'", role, ten.ID))
+	}
 	u, err := db.GetUser(ctx, ddb, e.Address())
 	if err == nil {
 		if u.Status == multi.UserStatusInactive {

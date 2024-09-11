@@ -130,7 +130,7 @@ func GetTenantByName(ctx context.Context, ddb AWSDynamoDB, name string) (*multi.
 		return nil, apperr.NewInternalE(
 			fmt.Errorf("failed to unmarshal DynamoDB item to Tenant: %w", err))
 	}
-	return &tenant, nil
+	return tenant, nil
 }
 
 func GetRootTenant(ctx context.Context, ddb AWSDynamoDB) (*multi.Tenant, error) {

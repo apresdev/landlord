@@ -2,8 +2,12 @@ package authx
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/apresdev/landlord/internal/apperr"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
 	"github.com/apresdev/landlord/internal/db"
 
@@ -113,4 +117,35 @@ func SetCognitoGroup(
 			zap.String("user", user.Username))
 	}
 	return err
+}
+
+func CreateGroupForTenant(
+	ctx context.Context,
+	cogIdp AWSCognitoIdentityProvider,
+	ten *multi.Tenant,
+	role string) error {
+
+	groupName := ten.GroupName(role)
+	_, err := cogIdp.CreateGroup(ctx,
+		&cognitoidentityprovider.CreateGroupInput{
+			GroupName:  aws.String(groupName),
+			UserPoolId: aws.String(ten.UserPoolID),
+		})
+	var groupExists *types.GroupExistsException
+	if err != nil && errors.As(err, &groupExists) {
+		return apperr.NewAlreadyExistsE(err)
+	}
+	if err != nil {
+		zap.L().Error("failed to create group",
+			zap.Error(err),
+			zap.String("user-pool-id", ten.UserPoolID),
+			zap.String("tenant-id", ten.ID.String()),
+			zap.String("group", groupName))
+		return err
+	}
+	zap.L().Info("created group",
+		zap.String("user-pool-id", ten.UserPoolID),
+		zap.String("tenant-id", ten.ID.String()),
+		zap.String("group", groupName))
+	return nil
 }

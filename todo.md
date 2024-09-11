@@ -1,5 +1,8 @@
 # TODOs
 
+* command to remove otp from user
+* in the URL we send for signing up a new account, make the URL navigate to a
+spot in the UI that forces a logout and then redirects back to the login page.
 * handle the "remember me" flag on login
 * encode username as base64 in APIs when used in the URL
 * add ability to give a cross-tenant impersonation permission
