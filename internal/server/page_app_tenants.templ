@@ -4,14 +4,14 @@ import "github.com/apresdev/landlord/internal/multi"
 
 const tenantsPageTitle = "Tenants"
 
-templ tenantsPage(appName string, tenants []*multi.Tenant) {
+templ tenantsPage(appName string, tenants []*multi.Tenant, user *multi.User) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, tenantsPageTitle)
 <body>
-    <h2>{ appName } | { tenantsPageTitle }</h2>
+    @navBarFragment(user)
     <div class="container">
-        <a href="/admin/tenants/new"><button>Create Tenant</button></a>
+        <a href="/admin/tenants/new"><button class="button">Create New Tenant</button></a>
         <table>
             <thead>
                 <tr>
@@ -19,7 +19,7 @@ templ tenantsPage(appName string, tenants []*multi.Tenant) {
                     <th>Status</th>
                     <th>Description</th>
                     <th>User Pool</th>
-                    <th></th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody hx-target="closest tr" hx-swap="outerHTML">

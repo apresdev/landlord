@@ -44,12 +44,16 @@ func tenantActivateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if ten.State == multi.TenantStateActive {
+				cmd.Printf("Tenant %s is already active\n", ten.Name)
+				return nil
+			}
 			ten.State = multi.TenantStateActive
 			err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten)
 			if err != nil {
 				return err
 			}
-			cmd.Printf("Deactivated tenant: %s\n", ten.Name)
+			cmd.Printf("Activated tenant: %s\n", ten.Name)
 			return nil
 		},
 	}
@@ -127,6 +131,10 @@ func tenantDeactivateCmd() *cobra.Command {
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
+			}
+			if ten.State == multi.TenantStateInactive {
+				cmd.Printf("Tenant %s is already deactivated\n", ten.Name)
+				return nil
 			}
 			ten.State = multi.TenantStateInactive
 			err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten)

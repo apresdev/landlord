@@ -142,3 +142,16 @@ need to use `go build`.
 
 This places the burden of ensuring that the generated sources are in sync on 
 the maintainers of the `landlord` tool, which we believe is a good thing.
+
+
+## DynamoDB
+
+| PK                     | SK                     | Data              | Reason                                         |
+|------------------------|------------------------|-------------------|------------------------------------------------|
+| `TENANT#<tenant-id>`   | `TENANT`               | Tenant JSON       | Lookup tenant by ID                            |
+| `TENANT#<tenant-name>` | `TENANT`               | tenant-id         | Lookup tenant by name                          |
+| `TENANT#<tenant-id>`   | `USER#<username>`      | User JSON         | Lookup user in tenant                          |
+| `USER#<username>`      | `USER`                 | tenant-id         | Lookup tenant-id for user                      |
+| `TENANT#<tenant-id>`   | `ROLE#<role-name>`     | list of usernames | Lookup usernames belonging to a role           |
+| `TENANT#<tenant-id>`   | `EMAIL#<email-domain>` | Email domain JSON | Lookup email domain for tenant                 | 
+| `EMAIL#<email-domain>` | `EMAIL`                | tenant-id         | Lookup email domain when exclusive to a tenant |

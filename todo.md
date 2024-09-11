@@ -1,5 +1,9 @@
 # TODOs
 
+* select browser storage based on login
+* grab details from the user pool and user pool client to show in UI
+* cancel invitation action button in the tenant space
+* shake out only the icons we need from font-awesome
 * command to remove otp from user
 * in the URL we send for signing up a new account, make the URL navigate to a
 spot in the UI that forces a logout and then redirects back to the login page.

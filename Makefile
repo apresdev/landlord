@@ -67,6 +67,6 @@ docker: docker-pull	## - Build the smallest and secured golang docker image base
 
 .PHONY: get-htmx
 get-htmx:
-	curl -o ./internal/server/static/htmx.min.js https://unpkg.com/htmx.org@2.0.2
+	curl -o ./internal/server/static/htmx.min.js https://unpkg.com/htmx.org@2.0.2/dist/htmx.min.js
 	# We download the unminified version for development purposes, but exclude it from repo.
 	curl -o ./internal/server/static/htmx.js https://unpkg.com/htmx.org@2.0.2/dist/htmx.js

@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleAdminHome(a *app, c *gin.Context) error {
+func handleAdminProfile(a *app, c *gin.Context) error {
 	var rawTokens jwx.RawTokens
 	rawTokens.IdToken, _ = c.Cookie(LandlordIDTokenCookie)
 	rawTokens.AccessToken, _ = c.Cookie(LandlordAccessTokenCookie)
