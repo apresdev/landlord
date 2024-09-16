@@ -9,7 +9,7 @@ tags:
   - name: Auth
     description: Authentication operations
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:42001
     description: The default testing URL.
     variables: {}
 paths:
@@ -36,6 +36,28 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       # No security as this is the call to obtain a token
       security: []
+  /ll-auth/api/refresh:
+    post:
+      operationId: Refresh
+      summary: Refresh the access token via the refresh token found in a cookie.
+      tags:
+        - Auth
+      requestBody:
+        $ref: "#/components/requestBodies/RefreshRequest"
+      responses:
+        "200":
+          $ref: '#/components/responses/LoginResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      # No security at the OpenAPI as this is the call to obtain a token. However,
+      # the request will only succeed with a valid refresh token.
+      security: [ ]
   /ll-auth/api/validate-mfa-code:
     post:
       operationId: ValidateMFACode
@@ -465,6 +487,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/LoginRequest'
+    RefreshRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RefreshRequest'
     ValidateMFACodeRequest:
       required: true
       content:
@@ -752,6 +780,16 @@ components:
         refreshToken:
           type: string
         otpURI:
+          type: string
+    RefreshRequest:
+      type: object
+      required:
+        - username
+        - refreshToken
+      properties:
+        username:
+          type: string
+        refreshToken:
           type: string
     SetNewPasswordResponse:
       type: object

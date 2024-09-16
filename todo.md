@@ -1,5 +1,8 @@
 # TODOs
 
+* landlord login is broken
+* ensure the backend app does not accept user tokens for authorization,
+should only accept access tokens
 * select browser storage based on login
 * grab details from the user pool and user pool client to show in UI
 * cancel invitation action button in the tenant space
@@ -11,7 +14,7 @@ spot in the UI that forces a logout and then redirects back to the login page.
 * encode username as base64 in APIs when used in the URL
 * add ability to give a cross-tenant impersonation permission
 * replace terraform for initializing the user pool with the landlord tool
-  itself -- replace `landord tenant init` with just `landlord init`
+  itself -- replace `landlord tenant init` with just `landlord init`
 * how to handle abuse of the unauthenticated landlord APIs? 
     * what does the WAF do to help here?
 * apply handling

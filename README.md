@@ -143,7 +143,6 @@ need to use `go build`.
 This places the burden of ensuring that the generated sources are in sync on 
 the maintainers of the `landlord` tool, which we believe is a good thing.
 
-
 ## DynamoDB
 
 | PK                     | SK                     | Data              | Reason                                         |

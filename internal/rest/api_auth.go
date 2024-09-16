@@ -62,6 +62,11 @@ func ginRecoverPassword(c *gin.Context) {
 	callImpl(c, handleRecoverPassword)
 }
 
+// Refresh - Refresh the access token via the refresh token found in a cookie.
+func ginRefresh(c *gin.Context) {
+	callImpl(c, handleRefresh)
+}
+
 // ResetPassword - Reset a password.
 func ginResetPassword(c *gin.Context) {
 	callImpl(c, handleResetPassword)

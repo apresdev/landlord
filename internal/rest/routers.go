@@ -90,6 +90,12 @@ func getRoutes() []Route {
 			ginRecoverPassword,
 		},
 		{
+			"Refresh",
+			http.MethodPost,
+			"/ll-auth/api/refresh",
+			ginRefresh,
+		},
+		{
 			"ResetPassword",
 			http.MethodPost,
 			"/ll-auth/api/reset-password",

@@ -16,7 +16,7 @@
   ],
   "servers": [
     {
-      "url": "http://localhost:8080",
+      "url": "http://localhost:42001",
       "description": "The default testing URL.",
       "variables": {}
     }
@@ -58,6 +58,69 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/login",
+          "payloadFormatVersion": "1.0"
+        }
+      },
+      "options": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ll-auth/api/refresh": {
+      "post": {
+        "operationId": "Refresh",
+        "summary": "Refresh the access token via the refresh token found in a cookie.",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/RefreshRequest"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/LoginResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/refresh",
           "payloadFormatVersion": "1.0"
         }
       },
@@ -1338,6 +1401,16 @@
           }
         }
       },
+      "RefreshRequest": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RefreshRequest"
+            }
+          }
+        }
+      },
       "ValidateMFACodeRequest": {
         "required": true,
         "content": {
@@ -1814,6 +1887,21 @@
             "type": "string"
           },
           "otpURI": {
+            "type": "string"
+          }
+        }
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "required": [
+          "username",
+          "refreshToken"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "refreshToken": {
             "type": "string"
           }
         }
