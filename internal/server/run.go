@@ -7,9 +7,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/apresdev/landlord/internal/apperr"
-	"github.com/apresdev/landlord/internal/multi"
-
 	"github.com/apresdev/landlord/internal/jwx"
 
 	"github.com/apresdev/landlord/internal/db"
@@ -128,21 +125,18 @@ func Run() error {
 		c.Redirect(http.StatusFound, "/")
 	})
 
-	authorizedRoutes.GET("/admin/home", func(c *gin.Context) {
-		if err := handleAdminHome(a, c); err != nil {
+	authorizedRoutes.GET("/admin/dashboard", func(c *gin.Context) {
+		if err := handleAdminDashboard(a, c); err != nil {
 			c.String(http.StatusInternalServerError,
-				"Error creating a new tenant: %v", err)
+				"Error handling admin dashboard: %v", err)
 		}
-
 	})
 
 	authorizedRoutes.GET("/admin/tenants", func(c *gin.Context) {
-		tens, err := db.GetAllTenants(c.Request.Context(), a.DDB())
-		if err != nil {
-			c.String(http.StatusInternalServerError, "Error getting tenants: %v", err)
-			return
+		if err := handleAdminTenants(a, c); err != nil {
+			c.String(http.StatusInternalServerError,
+				"Error handling admin tenants: %v", err)
 		}
-		render(c, tenantsPage(a.Settings().AppName(), tens))
 	})
 	authorizedRoutes.GET("/admin/tenants/new", func(c *gin.Context) {
 		render(c, newTenantPage(a.Settings().AppName()))
@@ -166,48 +160,19 @@ func Run() error {
 		}
 	})
 
-	authorizedRoutes.GET("/admin/tenants/:tenantID", func(c *gin.Context) {
-		id := c.Param("tenantID")
-		th, err := multi.ParseTenantHandle(id)
-		if err != nil {
-			c.String(http.StatusBadRequest, "Error parsing tenant ID: %v", err)
-			return
-		}
-		ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-		if err != nil && !apperr.IsNotFound(err) {
-			c.String(http.StatusNotFound, "Error getting tenant: %v", err)
-			return
-		}
-		if err != nil {
-			c.String(http.StatusInternalServerError, "Error getting tenants: %v", err)
-			return
-		}
-		users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), ten.ID)
-		if err != nil {
-			c.String(http.StatusInternalServerError, "Error getting users: %v", err)
-			return
-		}
-		render(c, tenantPage(a.Settings().AppName(), ten, users))
-	})
+	authorizedRoutes.GET("/admin/tenants/:tenantID",
+		func(c *gin.Context) {
+			if err := handleAdminTenant(a, c); err != nil {
+				c.String(http.StatusInternalServerError,
+					"Error deactivating tenant: %v", err)
+			}
+		})
 	authorizedRoutes.GET("/admin/tenants/:tenantID/invite",
 		func(c *gin.Context) {
-			id := c.Param("tenantID")
-			th, err := multi.ParseTenantHandle(id)
-			if err != nil {
-				c.String(http.StatusBadRequest, "Error parsing tenant ID: %v", err)
-				return
+			if err := handleAdminInvite(a, c); err != nil {
+				c.String(http.StatusInternalServerError,
+					"Error sending invite: %v", err)
 			}
-			ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-			if err != nil && !apperr.IsNotFound(err) {
-				c.String(http.StatusNotFound, "Error getting tenant: %v", err)
-				return
-			}
-			// Okay for the `username` to be empty. Simply provides a default value
-			// for the UI in situations where we navigate from a place with a known
-			// username.
-			username := c.Query("username")
-			render(c, inviteUserPage(
-				a.Settings().AppName(), id, username, ten.Roles, multi.MFAPolicyStrings()))
 		})
 	authorizedRoutes.POST("/admin/tenants/:tenantID/invite/submit",
 		func(c *gin.Context) {
@@ -237,6 +202,13 @@ func Run() error {
 					"Error cancelling invite: %v", err)
 			}
 		})
+
+	authorizedRoutes.GET("/admin/profile", func(c *gin.Context) {
+		if err := handleAdminProfile(a, c); err != nil {
+			c.String(http.StatusInternalServerError,
+				"Error handling admin profile: %v", err)
+		}
+	})
 
 	if appenv.DevMode() {
 		unauthorizedRoutes.StaticFS(

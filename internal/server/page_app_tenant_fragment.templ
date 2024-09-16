@@ -10,13 +10,20 @@ templ tenantFragment(tenant *multi.Tenant) {
     <td>{ tenant.UserPoolName } ({ tenant.UserPoolID })</td>
     <td>
         if tenant.State == multi.TenantStateActive {
-            <button class="btn danger" hx-post={ "/admin/tenants/deactivate/" + tenant.ID.String() }>
-                Deactivate
-            </button>
-        } else {
-            <button class="btn success" hx-post={ "/admin/tenants/activate/" + tenant.ID.String() }>
-                Activate
-            </button>
+            <a href={ templ.SafeURL("/admin/tenants/" + tenant.ID.String() + "/invite") }>
+                <button class="button">Invite</button>
+            </a>
+        }
+        if !tenant.IsRoot() {
+            if tenant.State == multi.TenantStateActive {
+                <button class="button" hx-post={ "/admin/tenants/deactivate/" + tenant.ID.String() }>
+                    Deactivate
+                </button>
+            } else {
+                <button class="button" hx-post={ "/admin/tenants/activate/" + tenant.ID.String() }>
+                    Activate
+                </button>
+            }
         }
     </td>
 </tr>

@@ -53,7 +53,7 @@ func handleRoot(a *app, c *gin.Context) error {
 	}
 
 	// TODO: make this redirect conditional on the user we just validated
-	c.Redirect(http.StatusFound, "/admin/home")
+	c.Redirect(http.StatusFound, "/admin/dashboard")
 
 	return nil
 }

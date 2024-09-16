@@ -4,12 +4,12 @@ import "github.com/apresdev/landlord/internal/multi"
 
 const tenantPageTitle = "Tenant"
 
-templ tenantPage(appName string, tenant *multi.Tenant, users []*multi.User) {
+templ tenantPage(appName string, tenant *multi.Tenant, users []*multi.User, loggedInUser *multi.User) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, tenantPageTitle)
 <body>
-    <h2>{ appName } | { tenantPageTitle }</h2>
+    @navBarFragment(loggedInUser)
     <div class="container">
         <a href="/admin/tenants"><button>Tenants</button></a>
         <a href={ templ.SafeURL("/admin/tenants/" + tenant.ID.String() + "/invite") }><button>Invite User</button></a>
@@ -20,7 +20,7 @@ templ tenantPage(appName string, tenant *multi.Tenant, users []*multi.User) {
                     <th>Role</th>
                     <th>MFA</th>
                     <th>Status</th>
-                    <th></th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody hx-target="closest tr" hx-swap="outerHTML">

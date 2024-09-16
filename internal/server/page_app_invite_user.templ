@@ -1,5 +1,7 @@
 package server
 
+import "github.com/apresdev/landlord/internal/multi"
+
 const inviteUserPageTitle = "Invite User"
 
 templ inviteUserPage(
@@ -7,11 +9,13 @@ templ inviteUserPage(
     tenantID string,
     initialUsername string,
     roles []string,
-    mfaPolicies []string) {
+    mfaPolicies []string,
+    user *multi.User) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, inviteUserPageTitle)
 <body>
+    @navBarFragment(user)
     <div class="container">
         <h2>{ appName } | { inviteUserPageTitle }</h2>
         <form action={ templ.SafeURL("/admin/tenants/" + tenantID + "/invite/submit") } method="POST">
