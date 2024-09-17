@@ -2040,7 +2040,8 @@
               "required": [
                 "username",
                 "role",
-                "status"
+                "status",
+                "cognitoID"
               ],
               "properties": {
                 "username": {
@@ -2056,6 +2057,9 @@
                     "invited",
                     "active"
                   ]
+                },
+                "cognitoID": {
+                  "type": "string"
                 }
               }
             }
