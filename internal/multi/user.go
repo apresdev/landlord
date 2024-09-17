@@ -81,3 +81,10 @@ type User struct {
 	TenantID  uuid.UUID  `dynamodbav:"tenant"`
 	MFAPolicy MFAPolicy  `dynamodbav:"mfa_policy"`
 }
+
+func NewUser(username string, tenantID uuid.UUID) *User {
+	return &User{
+		Username: username,
+		TenantID: tenantID,
+	}
+}

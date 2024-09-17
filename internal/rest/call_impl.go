@@ -42,6 +42,7 @@ func pathFor(path string) string {
 var unauthorizedPaths = []string{
 	pathFor("/api/login"),
 	pathFor("/api/logout"),
+	pathFor("/api/refresh"),
 	pathFor("/api/validate-mfa-code"),
 	pathFor("/api/recover-password"),
 	pathFor("/api/reset-password"),

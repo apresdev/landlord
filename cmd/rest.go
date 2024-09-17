@@ -18,7 +18,7 @@ import (
 func apiClient(token, server string) (*client.APIClient, error) {
 	cfg := client.NewConfiguration()
 	if server == "" {
-		server = "http://localhost:8080"
+		server = "http://localhost:42001"
 	}
 	cfg.Servers[0] = client.ServerConfiguration{URL: server}
 	if token != "" {
@@ -422,6 +422,60 @@ func restNewPassword() *cobra.Command {
 	return c
 }
 
+func restRefreshCmd() *cobra.Command {
+	var username string
+	var refreshToken string
+	var server string
+	c := &cobra.Command{
+		Use:   "refresh",
+		Short: "Refresh the access and ID tokens given a refresh token",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := MustSession()
+			if username == "" {
+				return errors.New("--username required")
+			}
+			if refreshToken == "" {
+				refreshToken = s.RefreshToken
+				if refreshToken == "" {
+					return errors.New("--refresh-token required")
+				}
+			}
+			cl, err := apiClient("", server)
+			if err != nil {
+				return err
+			}
+			ctx := context.Background()
+			r, _, err := cl.AuthAPI.Refresh(ctx).
+				RefreshRequest(client.RefreshRequest{
+					Username:     username,
+					RefreshToken: refreshToken,
+				}).Execute()
+			if err != nil {
+				return err
+			}
+			if r.Status == client.LoginStatusSuccess {
+				s := MustSession()
+				s.AccessToken = r.AccessToken
+				s.IdToken = r.IdToken
+				if err = s.SaveToFile(); err != nil {
+					return err
+				}
+				cmd.Printf("Login success. Tokens stored.\n")
+				return nil
+			}
+			cmd.Printf("refresh failed with status=%s\n", r.Status)
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&username, "username", "u", "", "Username to login with")
+	c.PersistentFlags().StringVarP(
+		&refreshToken, "refresh-token", "r", "", "Refresh token")
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
+	return c
+}
+
 func restTenantsCmd() *cobra.Command {
 	var token string
 	var server string
@@ -619,6 +673,7 @@ func restCmd() *cobra.Command {
 	c.AddCommand(restInviteCmd())
 	c.AddCommand(restLoginCmd())
 	c.AddCommand(restNewPassword())
+	c.AddCommand(restRefreshCmd())
 	c.AddCommand(restTenantsCmd())
 	c.AddCommand(restUsersCmd())
 	c.AddCommand(restValidateMFACodeCmd())

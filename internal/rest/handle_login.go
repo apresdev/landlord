@@ -29,7 +29,7 @@ func clientID(c *gin.Context) jwx.OpaqueClientID {
 func handleLogin(app App, c *gin.Context) error {
 	var req LoginRequest
 	if err := c.BindJSON(&req); err != nil {
-		return apperr.NewBadRequest(err.Error())
+		return apperr.NewBadRequestE(err)
 	}
 	resp, err := HandleLogin(app, c, req)
 	if err != nil {
