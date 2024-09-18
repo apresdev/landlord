@@ -5,6 +5,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+
 	"github.com/apresdev/landlord/internal/appenv"
 
 	"github.com/apresdev/landlord/internal/jwx"
@@ -14,8 +16,6 @@ import (
 	"github.com/apresdev/landlord/internal/db"
 
 	"github.com/apresdev/landlord/internal/authx"
-	"github.com/aws/aws-sdk-go-v2/aws"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -43,6 +43,7 @@ var unauthorizedPaths = []string{
 	pathFor("/api/login"),
 	pathFor("/api/logout"),
 	pathFor("/api/refresh"),
+	pathFor("/api/oauth2/token"),
 	pathFor("/api/validate-mfa-code"),
 	pathFor("/api/recover-password"),
 	pathFor("/api/reset-password"),

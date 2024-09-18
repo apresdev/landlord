@@ -7,13 +7,13 @@ resource "aws_cognito_user_pool" "default" {
   admin_create_user_config {
     allow_admin_create_user_only = true
     invite_message_template {
-      email_subject = format("Invitation for %s", var.app_domain_name)
+      email_subject = format("Invitation for %s", var.app_url)
       email_message = format(
-        "{username} login here: https://%s with temporary password: {####}",
-        var.app_domain_name)
+        "{username} login here: %s with temporary password: {####}",
+        var.app_url)
       sms_message = format(
-        "{username} login here: https://%s with temporary password: {####}",
-        var.app_domain_name)
+        "{username} login here: %s with temporary password: {####}",
+        var.app_url)
     }
   }
 
@@ -115,9 +115,9 @@ resource "aws_cognito_user_pool_client" "default" {
   name                 = "landlord-default-user-pool-client"
   explicit_auth_flows  = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"]
   user_pool_id         = aws_cognito_user_pool.default.id
-  default_redirect_uri = format("https://%s", var.app_domain_name)
-  callback_urls        = [format("https://%s", var.app_domain_name)]
-  logout_urls          = [format("https://%s/logout", var.app_domain_name)]
+  default_redirect_uri = var.app_url
+  callback_urls        = [var.app_url]
+  logout_urls          = [var.app_url+"/logout"]
   generate_secret = true
   allowed_oauth_flows = ["code"]
   allowed_oauth_scopes = ["email", "openid"]
@@ -168,6 +168,7 @@ resource "aws_iam_role_policy" "landlord_sms_cognito_role_policy" {
         "Action" : [
           "sns:publish"
         ],
+        // TODO: tighten this up
         "Resource" : [
           "*"
         ]
