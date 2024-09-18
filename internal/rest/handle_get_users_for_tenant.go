@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/apresdev/landlord/internal/authx"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"go.uber.org/zap"
 
 	"github.com/apresdev/landlord/internal/multi"
@@ -45,10 +47,24 @@ func handleGetUsersForTenant(app App, c *gin.Context) error {
 	}
 	var resp TenantUsersResponse
 	for _, user := range users {
+		u, err := app.CogIdp().AdminGetUser(
+			c.Request.Context(),
+			&cognitoidentityprovider.AdminGetUserInput{
+				UserPoolId: aws.String(ten.UserPoolID),
+				Username:   aws.String(user.Username),
+			})
+		if err != nil {
+			zap.L().Error("error getting user",
+				zap.String("username", user.Username),
+				zap.String("tenantID", ten.ID.String()),
+				zap.Error(err))
+			return apperr.NewInternal(err.Error())
+		}
 		resp.Users = append(resp.Users, TenantUsersResponseUsersInner{
-			Username: user.Username,
-			Role:     user.Role,
-			Status:   string(user.Status),
+			Username:  user.Username,
+			Role:      user.Role,
+			Status:    string(user.Status),
+			CognitoID: aws.ToString(u.Username),
 		})
 	}
 	c.JSON(http.StatusOK, resp)

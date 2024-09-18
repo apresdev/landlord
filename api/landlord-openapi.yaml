@@ -886,6 +886,7 @@ components:
               - username
               - role
               - status
+              - cognitoID
             properties:
               username:
                 type: string
@@ -897,6 +898,8 @@ components:
                   - inactive
                   - invited
                   - active
+              cognitoID:
+                type: string
     ImpersonateRoleRequest:
       type: object
       required:

@@ -14,9 +14,10 @@ var _ MappedNullable = &TenantUsersResponseUsersInner{}
 
 // TenantUsersResponseUsersInner struct for TenantUsersResponseUsersInner
 type TenantUsersResponseUsersInner struct {
-	Username string `json:"username"`
-	Role     string `json:"role"`
-	Status   string `json:"status"`
+	Username  string `json:"username"`
+	Role      string `json:"role"`
+	Status    string `json:"status"`
+	CognitoID string `json:"cognitoID"`
 }
 
 type _TenantUsersResponseUsersInner TenantUsersResponseUsersInner
@@ -25,11 +26,12 @@ type _TenantUsersResponseUsersInner TenantUsersResponseUsersInner
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTenantUsersResponseUsersInner(username string, role string, status string) *TenantUsersResponseUsersInner {
+func NewTenantUsersResponseUsersInner(username string, role string, status string, cognitoID string) *TenantUsersResponseUsersInner {
 	this := TenantUsersResponseUsersInner{}
 	this.Username = username
 	this.Role = role
 	this.Status = status
+	this.CognitoID = cognitoID
 	return &this
 }
 
@@ -113,6 +115,30 @@ func (o *TenantUsersResponseUsersInner) SetStatus(v string) {
 	o.Status = v
 }
 
+// GetCognitoID returns the CognitoID field value
+func (o *TenantUsersResponseUsersInner) GetCognitoID() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.CognitoID
+}
+
+// GetCognitoIDOk returns a tuple with the CognitoID field value
+// and a boolean to check if the value has been set.
+func (o *TenantUsersResponseUsersInner) GetCognitoIDOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.CognitoID, true
+}
+
+// SetCognitoID sets field value
+func (o *TenantUsersResponseUsersInner) SetCognitoID(v string) {
+	o.CognitoID = v
+}
+
 func (o TenantUsersResponseUsersInner) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -126,6 +152,7 @@ func (o TenantUsersResponseUsersInner) ToMap() (map[string]interface{}, error) {
 	toSerialize["username"] = o.Username
 	toSerialize["role"] = o.Role
 	toSerialize["status"] = o.Status
+	toSerialize["cognitoID"] = o.CognitoID
 	return toSerialize, nil
 }
 
@@ -137,6 +164,7 @@ func (o *TenantUsersResponseUsersInner) UnmarshalJSON(data []byte) (err error) {
 		"username",
 		"role",
 		"status",
+		"cognitoID",
 	}
 
 	allProperties := make(map[string]interface{})

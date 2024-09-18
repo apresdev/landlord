@@ -539,13 +539,18 @@ func restUsersCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if len(o.Users) > 0 {
-				for _, user := range o.Users {
-					cmd.Printf("%s -- %s -- %s\n", user.Username, user.Role, user.Status)
-				}
-			} else {
+			if len(o.Users) == 0 {
 				cmd.Printf("No users for tenant\n")
+				return nil
 			}
+			table := NewTable([]string{"Username", "Role", "Status", "CognitoID"})
+			for _, user := range o.Users {
+				err := table.AddRow([]string{user.Username, user.Role, user.Status, user.CognitoID})
+				if err != nil {
+					return err
+				}
+			}
+			cmd.Println(table.String())
 			return nil
 		},
 	}
