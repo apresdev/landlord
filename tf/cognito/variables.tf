@@ -1,6 +1,10 @@
-variable "app_domain_name" {
-  description = "The FQDN of the app."
+variable "app_url" {
+  description = "The base URL of the app with its protocol scheme"
   type        = string
+  validation {
+    condition = can(regex("^(http|https)://[a-zA-Z0-9.-]+$", var.app_url))
+    error_message = "The app URL must include the scheme and domain, but no path information. Do not include a trailing slash."
+  }
 }
 
 variable "tags" {

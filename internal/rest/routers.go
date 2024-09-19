@@ -84,6 +84,12 @@ func getRoutes() []Route {
 			ginLogin,
 		},
 		{
+			"ObtainAccessToken",
+			http.MethodPost,
+			"/ll-auth/api/oauth2/token",
+			ginObtainAccessToken,
+		},
+		{
 			"RecoverPassword",
 			http.MethodPost,
 			"/ll-auth/api/recover-password",

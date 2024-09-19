@@ -150,6 +150,69 @@
         }
       }
     },
+    "/ll-auth/api/oauth2/token": {
+      "post": {
+        "operationId": "ObtainAccessToken",
+        "summary": "Obtain an access token via Oauth2 PKCE flow",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ObtainTokenRequest"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ObtainTokenResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/oauth2/token",
+          "payloadFormatVersion": "1.0"
+        }
+      },
+      "options": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
     "/ll-auth/api/validate-mfa-code": {
       "post": {
         "operationId": "ValidateMFACode",
@@ -1411,6 +1474,16 @@
           }
         }
       },
+      "ObtainTokenRequest": {
+        "required": true,
+        "content": {
+          "application/x-www-form-urlencoded": {
+            "schema": {
+              "$ref": "#/components/schemas/ObtainTokenRequest"
+            }
+          }
+        }
+      },
       "ValidateMFACodeRequest": {
         "required": true,
         "content": {
@@ -1542,6 +1615,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/LoginResponse"
+            }
+          }
+        }
+      },
+      "ObtainTokenResponse": {
+        "description": "A response to obtain tokens via the OAuth2 PKCE flow",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ObtainTokenResponse"
             }
           }
         }
@@ -1906,6 +1989,33 @@
           }
         }
       },
+      "ObtainTokenRequest": {
+        "type": "object",
+        "required": [
+          "grant_type",
+          "code",
+          "client_id",
+          "redirect_uri",
+          "code_verifier"
+        ],
+        "properties": {
+          "grant_type": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "redirect_uri": {
+            "type": "string"
+          },
+          "code_verifier": {
+            "type": "string"
+          }
+        }
+      },
       "SetNewPasswordResponse": {
         "type": "object",
         "required": [
@@ -1930,6 +2040,33 @@
           },
           "otpURI": {
             "type": "string"
+          }
+        }
+      },
+      "ObtainTokenResponse": {
+        "type": "object",
+        "required": [
+          "id_token",
+          "access_token",
+          "refresh_token",
+          "token_type",
+          "expires_in"
+        ],
+        "properties": {
+          "id_token": {
+            "type": "string"
+          },
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "integer"
           }
         }
       },
