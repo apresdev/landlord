@@ -64,7 +64,7 @@ func newTenantPage(appName string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><form action=\"/admin/tenants/new/submit\" method=\"POST\"><label>Name: <input type=\"text\" name=\"name\"></label> <label>Description: <input type=\"text\" name=\"description\"></label> <button type=\"submit\">Create</button></form><a href=\"/admin/tenants\">Cancel</a></div></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><form action=\"/ll-auth/app/admin/tenants/new/submit\" method=\"POST\"><label>Name: <input type=\"text\" name=\"name\"></label> <label>Description: <input type=\"text\" name=\"description\"></label> <button type=\"submit\">Create</button></form><a href=\"/ll-auth/app/admin/tenants\">Cancel</a></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -24,15 +24,15 @@ func handleOTPSubmit(a *app, c *gin.Context) error {
 		setCookie(c, a.Settings().URL(), LandlordAccessTokenCookie, resp.AccessToken)
 		setCookie(c, a.Settings().URL(), LandlordIDTokenCookie, resp.IdToken)
 		setCookie(c, a.Settings().URL(), LandlordRefreshTokenCookie, resp.RefreshToken)
-		c.Redirect(http.StatusFound, "/")
+		redirectToAppRoot(c)
 	case rest.LoginStatusNewPasswordRequired:
 		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
 		setCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie, resp.Session)
-		c.Redirect(http.StatusFound, "/new-password")
+		redirectTo(c, "new-password")
 	case rest.LoginStatusPasswordResetRequired:
 		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
 		setCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie, resp.Session)
-		c.Redirect(http.StatusFound, "/reset-password")
+		redirectTo(c, "reset-password")
 	default:
 		zap.L().Error("unexpected login status value",
 			zap.String("status", string(resp.Status)))

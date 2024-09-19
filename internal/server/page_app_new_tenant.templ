@@ -9,7 +9,7 @@ templ newTenantPage(appName string) {
 <body>
     <div class="container">
         <h2>{ appName } | { newTenantPageTitle }</h2>
-        <form action="/admin/tenants/new/submit" method="POST">
+        <form action="/ll-auth/app/admin/tenants/new/submit" method="POST">
             <label>Name:
                 <input type="text" name="name" />
             </label>
@@ -18,7 +18,7 @@ templ newTenantPage(appName string) {
             </label>
             <button type="submit">Create</button>
         </form>
-        <a href="/admin/tenants">Cancel</a>
+        <a href="/ll-auth/app/admin/tenants">Cancel</a>
     </div>
 </body>
 </html>

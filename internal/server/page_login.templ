@@ -7,12 +7,12 @@ templ loginPage(appName string, username string) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{ appName } | Login</title>
-    <link rel="stylesheet" href="/static/landlord-login.css">
+    <link rel="stylesheet" href="/ll-auth/app/static/landlord-login.css">
 </head>
 <body>
     <div class="container">
         <h2>{ appName } | Login</h2>
-        <form action="/login/submit" method="POST">
+        <form action="/ll-auth/app/login/submit" method="POST">
             <label>Email
                 <input type="email" name="username" placeholder="Email" value={ username } required>
             </label>
@@ -22,9 +22,9 @@ templ loginPage(appName string, username string) {
             <button type="submit">Login</button>
         </form>
         <div class="recovery">
-            <a href="/recovery">Account Recovery</a>
+            <a href="/ll-auth/app/recovery">Account Recovery</a>
             |
-            <a href="/logout">Logout</a>
+            <a href="/ll-auth/app/logout">Logout</a>
         </div>
     </div>
 </body>

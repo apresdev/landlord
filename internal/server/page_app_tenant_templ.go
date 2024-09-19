@@ -47,7 +47,7 @@ func tenantPage(appName string, tenant *multi.Tenant, users []*multi.User, logge
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container\"><a href=\"/admin/tenants\"><button>Tenants</button></a> <a href=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container\"><a href=\"/ll-auth/app/admin/tenants\"><button>Tenants</button></a> <a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

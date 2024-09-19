@@ -1,8 +1,6 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/apresdev/landlord/internal/db"
 	"go.uber.org/zap"
 
@@ -16,12 +14,12 @@ func handleAdminProfile(a *app, c *gin.Context) error {
 	rawTokens.AccessToken, _ = c.Cookie(LandlordAccessTokenCookie)
 	rawTokens.RefreshToken, _ = c.Cookie(LandlordRefreshTokenCookie)
 	if rawTokens.IdToken == "" || rawTokens.AccessToken == "" || rawTokens.RefreshToken == "" {
-		c.Redirect(http.StatusFound, "/login")
+		redirectToLogin(c)
 		return nil
 	}
 	username, _ := c.Cookie(LandlordUsernameCookie)
 	if username == "" {
-		c.Redirect(http.StatusFound, "/login")
+		redirectToLogin(c)
 		return nil
 	}
 	_, tenant, err := db.GetUserAndTenant(c.Request.Context(), a.DDB(), username)
@@ -30,14 +28,14 @@ func handleAdminProfile(a *app, c *gin.Context) error {
 			zap.String("username", username),
 			zap.Error(err))
 		clearLandlordCookies(c, a.Settings().URL())
-		c.Redirect(http.StatusFound, "/login")
+		redirectToLogin(c)
 		return nil
 	}
 	validationURL := jwx.ValidationURL(a.Cfg().Region, tenant.UserPoolID)
 	tks, err := jwx.ValidateAllTokens(
 		c.Request.Context(), clientID(c), a.Validator(), validationURL, rawTokens)
 	if err != nil {
-		c.Redirect(http.StatusFound, "/login")
+		redirectToLogin(c)
 		return err
 	}
 

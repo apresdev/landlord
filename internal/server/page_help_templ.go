@@ -41,7 +41,7 @@ func helpPage(appName, appAdminEmail string, mailToAdminLink templ.SafeURL) temp
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Help</title><link rel=\"stylesheet\" href=\"/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Help</title><link rel=\"stylesheet\" href=\"/ll-auth/app/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -54,7 +54,7 @@ func helpPage(appName, appAdminEmail string, mailToAdminLink templ.SafeURL) temp
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Help</h2><div>Custom content related to the application that could also provide links to additional resources found here.</div><div class=\"recovery\"><a href=\"/recovery\">Account Recovery</a></div></div></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Help</h2><div>Custom content related to the application that could also provide links to additional resources found here.</div><div class=\"recovery\"><a href=\"/ll-auth/app/recovery\">Account Recovery</a></div></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -22,7 +22,7 @@ func handleRoot(a *app, c *gin.Context) error {
 
 	username, _ := c.Cookie(LandlordUsernameCookie)
 	if username == "" {
-		c.Redirect(http.StatusFound, "/login")
+		redirectToLogin(c)
 		return nil
 	}
 
@@ -31,7 +31,7 @@ func handleRoot(a *app, c *gin.Context) error {
 	rawTokens.AccessToken, _ = c.Cookie(LandlordAccessTokenCookie)
 	rawTokens.RefreshToken, _ = c.Cookie(LandlordRefreshTokenCookie)
 	if rawTokens.IdToken == "" || rawTokens.AccessToken == "" || rawTokens.RefreshToken == "" {
-		c.Redirect(http.StatusFound, "/login")
+		redirectToLogin(c)
 		return nil
 	}
 
@@ -41,19 +41,19 @@ func handleRoot(a *app, c *gin.Context) error {
 			zap.String("username", username),
 			zap.Error(err))
 		clearLandlordCookies(c, a.Settings().URL())
-		c.Redirect(http.StatusFound, "/login")
+		redirectToLogin(c)
 		return nil
 	}
 	validationURL := jwx.ValidationURL(a.Cfg().Region, tenant.UserPoolID)
 	_, err = jwx.ValidateAllTokens(
 		c.Request.Context(), clientID(c), a.Validator(), validationURL, rawTokens)
 	if err != nil {
-		c.Redirect(http.StatusFound, "/login")
+		redirectToLogin(c)
 		return err
 	}
 
 	// TODO: make this redirect conditional on the user we just validated
-	c.Redirect(http.StatusFound, "/admin/dashboard")
+	redirectTo(c, "admin/dashboard")
 
 	return nil
 }

@@ -28,7 +28,7 @@ templ dashboardPage(appName string, user *multi.User, stats DashboardStats) {
                 </div>
                 <div class="card-body">
                     <p>There are { stats.OutstandingInvites } outstanding invites</p>
-                    <p><a href="/admin/invites">Manage Invites <i class="fa-sharp fa-arrow-right"></i></a></p>
+                    <p><a href="/ll-auth/app/admin/invites">Manage Invites <i class="fa-sharp fa-arrow-right"></i></a></p>
                 </div>
             </div>
             <div class="card">
@@ -38,8 +38,8 @@ templ dashboardPage(appName string, user *multi.User, stats DashboardStats) {
                 </div>
                 <div class="card-body">
                     <p>There are { stats.ConfiguredTenantCount } tenants configured.</p>
-                    <p><a href="/admin/tenants">Manage Tenants <i class="fa-sharp fa-arrow-right"></i></a></p>
-                    <p><a href="/admin/tenants/new">Create New Tenant <i class="fa-sharp fa-arrow-right"></i></a></p>
+                    <p><a href="/ll-auth/app/admin/tenants">Manage Tenants <i class="fa-sharp fa-arrow-right"></i></a></p>
+                    <p><a href="/ll-auth/app/admin/tenants/new">Create New Tenant <i class="fa-sharp fa-arrow-right"></i></a></p>
                 </div>
             </div>
             <div class="card">
@@ -49,7 +49,7 @@ templ dashboardPage(appName string, user *multi.User, stats DashboardStats) {
                 </div>
                 <div class="card-body">
                     <p>There are { stats.ConfiguredUserCount } users configured.</p>
-                    <p><a href="/admin/all-users">Manage Users <i class="fa-sharp fa-arrow-right"></i></a></p>
+                    <p><a href="/ll-auth/app/admin/all-users">Manage Users <i class="fa-sharp fa-arrow-right"></i></a></p>
                 </div>
             </div>
         </div>
