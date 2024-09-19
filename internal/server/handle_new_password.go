@@ -28,7 +28,7 @@ func handleNewPasswordSubmit(a *app, c *gin.Context) error {
 	if resp.Status == rest.LoginStatusMFASetupRequired {
 		setCookie(c, a.Settings().URL(), LandlordOTPURI, resp.OtpURI)
 		setCookie(c, a.Settings().URL(), LandlordAccessTokenCookie, resp.AccessToken)
-		c.Redirect(http.StatusFound, "/setup-otp")
+		redirectTo(c, "setup-otp")
 		return nil
 	}
 	if resp.Status != rest.LoginStatusSuccess {
@@ -42,6 +42,6 @@ func handleNewPasswordSubmit(a *app, c *gin.Context) error {
 	setCookie(c, a.Settings().URL(), LandlordAccessTokenCookie, resp.AccessToken)
 	setCookie(c, a.Settings().URL(), LandlordRefreshTokenCookie, resp.RefreshToken)
 	clearCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie)
-	c.Redirect(http.StatusFound, "/")
+	redirectToAppRoot(c)
 	return nil
 }

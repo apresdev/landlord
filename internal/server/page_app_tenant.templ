@@ -11,7 +11,7 @@ templ tenantPage(appName string, tenant *multi.Tenant, users []*multi.User, logg
 <body>
     @navBarFragment(loggedInUser)
     <div class="container">
-        <a href="/admin/tenants"><button>Tenants</button></a>
+        <a href="/ll-auth/app/admin/tenants"><button>Tenants</button></a>
         <a href={ templ.SafeURL("/admin/tenants/" + tenant.ID.String() + "/invite") }><button>Invite User</button></a>
         <table>
             <thead>

@@ -23,6 +23,6 @@ func handleSetupOTPSubmit(a *app, c *gin.Context) error {
 		return nil
 	}
 	// TODO: add refresh token to request and re-fetch tokens here
-	c.Redirect(http.StatusFound, "/")
+	redirectToAppRoot(c)
 	return nil
 }

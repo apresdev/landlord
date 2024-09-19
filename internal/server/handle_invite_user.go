@@ -1,8 +1,6 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/apresdev/landlord/internal/rest"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +15,6 @@ func handleInviteUser(a *app, c *gin.Context) error {
 	if err := rest.HandleInviteToTenant(a, c, req); err != nil {
 		return err
 	}
-	c.Redirect(http.StatusFound, "/admin/tenants/"+req.Tenant)
+	redirectTo(c, "admin/tenants/"+req.Tenant)
 	return nil
 }

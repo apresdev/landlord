@@ -54,7 +54,7 @@ func headerFragment(appName string, title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title><link rel=\"stylesheet\" href=\"/static/landlord-mgmt.css\"><link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/static/apple-touch-icon.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/static/favicon-32x32.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"/static/favicon-16x16.png\"><link rel=\"manifest\" href=\"/static/site.webmanifest\"><script src=\"/static/htmx.min.js\"></script><script src=\"/static/sharp-solid.min.js\"></script><script src=\"/static/fontawesome.min.js\"></script></head>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title><link rel=\"stylesheet\" href=\"/ll-auth/app/static/landlord-mgmt.css\"><link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/ll-auth/app/static/apple-touch-icon.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/ll-auth/app/static/favicon-32x32.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"/ll-auth/app/static/favicon-16x16.png\"><link rel=\"manifest\" href=\"/ll-auth/app/static/site.webmanifest\"><script src=\"/static/htmx.min.js\"></script><script src=\"/static/sharp-solid.min.js\"></script><script src=\"/static/fontawesome.min.js\"></script></head>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
