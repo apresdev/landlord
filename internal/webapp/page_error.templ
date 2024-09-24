@@ -1,0 +1,23 @@
+package webapp
+
+templ errorPage(appName, appAdminEmail string, mailToAdminLink templ.SafeURL, errMsg, navText string, navURL templ.SafeURL) {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{ appName } | Error</title>
+    <link rel="stylesheet" href="/ll-auth/app/static/landlord-login.css">
+</head>
+<body>
+    <div class="container">
+        <h2>{ appName } | Error</h2>
+        <h3>{ errMsg }</h3>
+        <div>For assistance, contact: <a href={ mailToAdminLink }>{ appAdminEmail }</a></div>
+        <div class="recovery">
+            <a href={ navURL } >{ navText }</a>
+        </div>
+    </div>
+</body>
+</html>
+}

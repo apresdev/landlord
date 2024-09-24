@@ -51,7 +51,7 @@ var unauthorizedPaths = []string{
 	pathFor("/api/verify-otp-association"),
 }
 
-func AddRestRoutes(app App, router *gin.Engine) http.Handler {
+func AddRoutes(app App, router *gin.Engine) http.Handler {
 	router.Use(func(c *gin.Context) {
 		c.Set(AppContextKey, app)
 	})

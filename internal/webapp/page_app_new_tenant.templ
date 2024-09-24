@@ -1,0 +1,25 @@
+package webapp
+
+const newTenantPageTitle = "Create Tenant"
+
+templ newTenantPage(appName string) {
+<!DOCTYPE html>
+<html lang="en">
+@headerFragment(appName, newTenantPageTitle)
+<body>
+    <div class="container">
+        <h2>{ appName } | { newTenantPageTitle }</h2>
+        <form action="/ll-auth/app/admin/tenants/new/submit" method="POST">
+            <label>Name:
+                <input type="text" name="name" />
+            </label>
+            <label>Description:
+                <input type="text" name="description" />
+            </label>
+            <button type="submit">Create</button>
+        </form>
+        <a href="/ll-auth/app/admin/tenants">Cancel</a>
+    </div>
+</body>
+</html>
+}

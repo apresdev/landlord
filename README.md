@@ -55,6 +55,10 @@ aws sso login
 
 ## Environment Variables
 
+* `LANDLORD_ROUTES`: 
+  * `rest` - only register the REST/JSON endpoints
+  * `webapp` - only register the HTML/Web app endpoints
+  * `both` (default) - register both `rest` and `webapp`
 * `LANDLORD_DEV_MODE`: If set, the landlord tool will run in development mode.
   This enables various development features, such as:
     * Use of the zap development logger.
