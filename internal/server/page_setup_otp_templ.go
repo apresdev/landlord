@@ -41,7 +41,7 @@ func setupOTPPage(appName string, otpImageURI string, username string) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Login</title><link rel=\"stylesheet\" href=\"/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Login</title><link rel=\"stylesheet\" href=\"/ll-auth/app/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -67,7 +67,7 @@ func setupOTPPage(appName string, otpImageURI string, username string) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" alt=\"QR Code\" style=\"display: block; margin: 0 auto;\"><form action=\"/setup-otp/submit\" method=\"POST\"><label>Code <input type=\"text\" name=\"code\" placeholder=\"OTP Code\" required></label> <input type=\"hidden\" name=\"username\" value=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" alt=\"QR Code\" style=\"display: block; margin: 0 auto;\"><form action=\"/ll-auth/app/setup-otp/submit\" method=\"POST\"><label>Code <input type=\"text\" name=\"code\" placeholder=\"OTP Code\" required></label> <input type=\"hidden\" name=\"username\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -80,7 +80,7 @@ func setupOTPPage(appName string, otpImageURI string, username string) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <button type=\"submit\">Submit</button></form><div class=\"recovery\"><a href=\"/recovery\">Account Recovery</a> | <a href=\"/logout\">Logout</a></div></div></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <button type=\"submit\">Submit</button></form><div class=\"recovery\"><a href=\"/ll-auth/app/recovery\">Account Recovery</a> | <a href=\"/ll-auth/app/logout\">Logout</a></div></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

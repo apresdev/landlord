@@ -41,7 +41,7 @@ func resetPasswordPage(appName, username, errMsg string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Reset Password</title><link rel=\"stylesheet\" href=\"/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Reset Password</title><link rel=\"stylesheet\" href=\"/ll-auth/app/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -67,7 +67,7 @@ func resetPasswordPage(appName, username, errMsg string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><form action=\"/reset-password/submit\" method=\"POST\"><label>Confirmation Code: <input type=\"number\" max=\"1000000\" name=\"confirmation-code\"></label> <label>New Password: <input type=\"password\" name=\"password-one\"></label> <label>Confirm Password: <input type=\"password\" name=\"password-two\"></label> <input type=\"hidden\" name=\"username\" value=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><form action=\"/ll-auth/app/reset-password/submit\" method=\"POST\"><label>Confirmation Code: <input type=\"number\" max=\"1000000\" name=\"confirmation-code\"></label> <label>New Password: <input type=\"password\" name=\"password-one\"></label> <label>Confirm Password: <input type=\"password\" name=\"password-two\"></label> <input type=\"hidden\" name=\"username\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -93,7 +93,7 @@ func resetPasswordPage(appName, username, errMsg string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><div class=\"recovery\"><a href=\"/logout\">Logout</a></div></div></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><div class=\"recovery\"><a href=\"/ll-auth/app/logout\">Logout</a></div></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

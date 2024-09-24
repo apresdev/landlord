@@ -18,7 +18,7 @@ templ inviteUserPage(
     @navBarFragment(user)
     <div class="container">
         <h2>{ appName } | { inviteUserPageTitle }</h2>
-        <form action={ templ.SafeURL("/admin/tenants/" + tenantID + "/invite/submit") } method="POST">
+        <form action={ templ.SafeURL("/ll-auth/app/admin/tenants/" + tenantID + "/invite/submit") } method="POST">
             <label>Email:
                 <input type="text" name="username" value={ initialUsername } />
             </label>

@@ -73,7 +73,7 @@ func dashboardPage(appName string, user *multi.User, stats DashboardStats) templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" outstanding invites</p><p><a href=\"/admin/invites\">Manage Invites <i class=\"fa-sharp fa-arrow-right\"></i></a></p></div></div><div class=\"card\"><div class=\"card-header\"><i class=\"fa-sharp fa-solid fa-buildings fa-2x\"></i><h3>Tenants</h3></div><div class=\"card-body\"><p>There are ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" outstanding invites</p><p><a href=\"/ll-auth/app/admin/invites\">Manage Invites <i class=\"fa-sharp fa-arrow-right\"></i></a></p></div></div><div class=\"card\"><div class=\"card-header\"><i class=\"fa-sharp fa-solid fa-buildings fa-2x\"></i><h3>Tenants</h3></div><div class=\"card-body\"><p>There are ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -86,7 +86,7 @@ func dashboardPage(appName string, user *multi.User, stats DashboardStats) templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" tenants configured.</p><p><a href=\"/admin/tenants\">Manage Tenants <i class=\"fa-sharp fa-arrow-right\"></i></a></p><p><a href=\"/admin/tenants/new\">Create New Tenant <i class=\"fa-sharp fa-arrow-right\"></i></a></p></div></div><div class=\"card\"><div class=\"card-header\"><i class=\"fa-sharp fa-solid fa-users fa-2x\"></i><h3>Users</h3></div><div class=\"card-body\"><p>There are ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" tenants configured.</p><p><a href=\"/ll-auth/app/admin/tenants\">Manage Tenants <i class=\"fa-sharp fa-arrow-right\"></i></a></p><p><a href=\"/ll-auth/app/admin/tenants/new\">Create New Tenant <i class=\"fa-sharp fa-arrow-right\"></i></a></p></div></div><div class=\"card\"><div class=\"card-header\"><i class=\"fa-sharp fa-solid fa-users fa-2x\"></i><h3>Users</h3></div><div class=\"card-body\"><p>There are ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -99,7 +99,7 @@ func dashboardPage(appName string, user *multi.User, stats DashboardStats) templ
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" users configured.</p><p><a href=\"/admin/all-users\">Manage Users <i class=\"fa-sharp fa-arrow-right\"></i></a></p></div></div></div></div></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" users configured.</p><p><a href=\"/ll-auth/app/admin/all-users\">Manage Users <i class=\"fa-sharp fa-arrow-right\"></i></a></p></div></div></div></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

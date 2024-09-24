@@ -22,6 +22,6 @@ func handleResetPassword(a *app, c *gin.Context) error {
 	if err := rest.HandleResetPassword(a, c, req); err != nil {
 		return err
 	}
-	c.Redirect(http.StatusFound, "/login")
+	redirectToLogin(c)
 	return nil
 }

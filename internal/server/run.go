@@ -25,19 +25,24 @@ import (
 )
 
 func Run() error {
-	unauthorizedRoutes, err := engine()
+	baseRoutes, err := engine()
 	if err != nil {
 		return err
 	}
 
 	a := newApp(MustClients())
-	rest.AddRestRoutes(a, unauthorizedRoutes)
-	authorizedRoutes := unauthorizedRoutes.Group("/")
+	rest.AddRestRoutes(a, baseRoutes)
+	authorizedRoutes := baseRoutes.Group(appPath(""))
 	authorizedRoutes.Use(setupContext(a))
+	unauthorizedRoutes := baseRoutes.Group(appPath(""))
 
 	// The routes associated with login, logout, and account recovery are
-	// unauthorized because they are the routes that resut in the user obtaining
+	// unauthorized because they are the routes that result in the user obtaining
 	// a token for the authorized routes.
+
+	baseRoutes.GET("/", func(c *gin.Context) {
+		redirectToAppRoot(c)
+	})
 
 	unauthorizedRoutes.GET("/", func(c *gin.Context) {
 		if err := handleRoot(a, c); err != nil {
@@ -46,7 +51,10 @@ func Run() error {
 	})
 
 	unauthorizedRoutes.GET("/help", func(c *gin.Context) {
-		render(c, helpPage(a.Settings().AppName(), a.Settings().AdminEmail(), mailToAdminLink(a.Settings().AdminEmail())))
+		render(c, helpPage(
+			a.Settings().AppName(),
+			a.Settings().AdminEmail(),
+			mailToAdminLink(a.Settings().AdminEmail())))
 	})
 
 	unauthorizedRoutes.GET("/login", func(c *gin.Context) {
@@ -122,7 +130,7 @@ func Run() error {
 
 	unauthorizedRoutes.GET("/logout", func(c *gin.Context) {
 		clearLandlordCookies(c, a.Settings().URL())
-		c.Redirect(http.StatusFound, "/")
+		redirectToAppRoot(c)
 	})
 
 	authorizedRoutes.GET("/admin/dashboard", func(c *gin.Context) {
@@ -213,7 +221,7 @@ func Run() error {
 	if appenv.DevMode() {
 		unauthorizedRoutes.StaticFS(
 			"/static", http.Dir("internal/server/static"))
-		unauthorizedRoutes.StaticFileFS(
+		baseRoutes.StaticFileFS(
 			"/favicon.ico", "favicon.ico", http.Dir("internal/server/static"))
 	} else {
 		sfs, err := fs.Sub(staticFS, "static")
@@ -222,7 +230,7 @@ func Run() error {
 		}
 		unauthorizedRoutes.StaticFS(
 			"/static", http.FS(sfs))
-		unauthorizedRoutes.StaticFileFS(
+		baseRoutes.StaticFileFS(
 			"/favicon.ico", "static/favicon.ico", http.FS(sfs))
 	}
 	listenAddr, err := parseListenAddr(os.Getenv("LANDLORD_LISTEN_ADDR"))
@@ -230,9 +238,9 @@ func Run() error {
 		return err
 	}
 	if listenAddr.UseTLS {
-		return runTLS(listenAddr.Addr, unauthorizedRoutes)
+		return runTLS(listenAddr.Addr, baseRoutes)
 	} else {
-		return runLocal(listenAddr.Addr, unauthorizedRoutes)
+		return runLocal(listenAddr.Addr, baseRoutes)
 	}
 }
 
@@ -370,4 +378,20 @@ func setupContext(app *app) gin.HandlerFunc {
 		c.Set(rest.TenantIDKey, ten.ID.String())
 		c.Next()
 	}
+}
+
+func appPath(s string) string {
+	return fmt.Sprintf("/ll-auth/app/%s", s)
+}
+
+func redirectTo(c *gin.Context, path string) {
+	c.Redirect(http.StatusFound, appPath(path))
+}
+
+func redirectToLogin(c *gin.Context) {
+	redirectTo(c, "login")
+}
+
+func redirectToAppRoot(c *gin.Context) {
+	redirectTo(c, "")
 }

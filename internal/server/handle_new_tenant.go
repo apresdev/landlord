@@ -1,8 +1,6 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/apresdev/landlord/internal/rest"
 
 	"github.com/gin-gonic/gin"
@@ -16,6 +14,6 @@ func handleNewTenant(a *app, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	c.Redirect(http.StatusFound, "/admin/tenants")
+	redirectTo(c, "admin/tenants")
 	return nil
 }

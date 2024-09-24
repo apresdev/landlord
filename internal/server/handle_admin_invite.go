@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/apresdev/landlord/internal/multi"
@@ -15,7 +14,7 @@ func handleAdminInvite(a *app, c *gin.Context) error {
 	cUser, err := resolveClientUser(a, c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
-		c.Redirect(http.StatusFound, "/login")
+		redirectToLogin(c)
 		return nil
 	}
 	tenantID := c.Param("tenantID")

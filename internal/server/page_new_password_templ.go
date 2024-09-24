@@ -41,7 +41,7 @@ func newPasswordPage(appName, username string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Login</title><link rel=\"stylesheet\" href=\"/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Login</title><link rel=\"stylesheet\" href=\"/ll-auth/app/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -67,7 +67,7 @@ func newPasswordPage(appName, username string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><form action=\"/new-password/submit\" method=\"POST\"><label>New Password: <input type=\"password\" name=\"password-one\"></label> <label>Confirm Password: <input type=\"password\" name=\"password-two\"></label> <input type=\"hidden\" name=\"username\" value=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h3><form action=\"/ll-auth/app/new-password/submit\" method=\"POST\"><label>New Password: <input type=\"password\" name=\"password-one\"></label> <label>Confirm Password: <input type=\"password\" name=\"password-two\"></label> <input type=\"hidden\" name=\"username\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -80,7 +80,7 @@ func newPasswordPage(appName, username string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <button type=\"submit\">Update</button></form><div class=\"recovery\"><a href=\"/logout\">Logout</a></div></div></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <button type=\"submit\">Update</button></form><div class=\"recovery\"><a href=\"/ll-auth/app/logout\">Logout</a></div></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

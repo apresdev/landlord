@@ -41,7 +41,7 @@ func errorPage(appName, appAdminEmail string, mailToAdminLink templ.SafeURL, err
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Error</title><link rel=\"stylesheet\" href=\"/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Error</title><link rel=\"stylesheet\" href=\"/ll-auth/app/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

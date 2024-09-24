@@ -41,7 +41,7 @@ func recoveryPage(appName string, username string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Account Recovery</title><link rel=\"stylesheet\" href=\"/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Account Recovery</title><link rel=\"stylesheet\" href=\"/ll-auth/app/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -54,7 +54,7 @@ func recoveryPage(appName string, username string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Recovery Account</h2><form action=\"/recovery/submit\" method=\"POST\"><label>Email <input type=\"email\" name=\"username\" placeholder=\"Enter email address to start recovery...\" value=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Recovery Account</h2><form action=\"/ll-auth/app/recovery/submit\" method=\"POST\"><label>Email <input type=\"email\" name=\"username\" placeholder=\"Enter email address to start recovery...\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

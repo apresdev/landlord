@@ -6,11 +6,13 @@ templ navBarFragment(user *multi.User) {
 <div class="nav-bar">
     <div class="nav-left">
         <ul>
-            <li><a href="/admin/dashboard"><img src="/static/favicon-32x32.png"  alt="Search" /></a></li>
-            <li><a href="/admin/dashboard">Dashboard</a></li>
-            <li><a href="/admin/tenants">Tenants</a></li>
-            <li><a href="/admin/invites">Invites</a></li>
-            <li><a href="/admin/users">Users</a></li>
+            <li><a href="/ll-auth/app/admin/dashboard">
+                <img src="/ll-auth/app/static/favicon-32x32.png"  alt="Search" />
+            </a></li>
+            <li><a href="/ll-auth/app/admin/dashboard">Dashboard</a></li>
+            <li><a href="/ll-auth/app/admin/tenants">Tenants</a></li>
+            <li><a href="/ll-auth/app/admin/invites">Invites</a></li>
+            <li><a href="/ll-auth/app/admin/users">Users</a></li>
             <li>
                 <label>
                     <input type="text" placeholder="Search...">
@@ -25,8 +27,8 @@ templ navBarFragment(user *multi.User) {
     </div>
     <div class="nav-right">
         <div class="profile">
-            <a href="/admin/profile">Profile</a>
-            <a href="/logout">Logout</a>
+            <a href="/ll-auth/app/admin/profile">Profile</a>
+            <a href="/ll-auth/app/logout">Logout</a>
         </div>
     </div>
 </div>

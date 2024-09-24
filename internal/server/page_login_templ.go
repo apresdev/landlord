@@ -41,7 +41,7 @@ func loginPage(appName string, username string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Login</title><link rel=\"stylesheet\" href=\"/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Login</title><link rel=\"stylesheet\" href=\"/ll-auth/app/static/landlord-login.css\"></head><body><div class=\"container\"><h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -54,7 +54,7 @@ func loginPage(appName string, username string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Login</h2><form action=\"/login/submit\" method=\"POST\"><label>Email <input type=\"email\" name=\"username\" placeholder=\"Email\" value=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" | Login</h2><form action=\"/ll-auth/app/login/submit\" method=\"POST\"><label>Email <input type=\"email\" name=\"username\" placeholder=\"Email\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -67,7 +67,7 @@ func loginPage(appName string, username string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" required></label> <label>Password <input type=\"password\" name=\"password\" placeholder=\"Password\" required></label> <button type=\"submit\">Login</button></form><div class=\"recovery\"><a href=\"/recovery\">Account Recovery</a> | <a href=\"/logout\">Logout</a></div></div></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" required></label> <label>Password <input type=\"password\" name=\"password\" placeholder=\"Password\" required></label> <button type=\"submit\">Login</button></form><div class=\"recovery\"><a href=\"/ll-auth/app/recovery\">Account Recovery</a> | <a href=\"/ll-auth/app/logout\">Logout</a></div></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

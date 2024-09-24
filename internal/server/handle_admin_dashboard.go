@@ -1,8 +1,6 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +25,7 @@ func handleAdminDashboard(a *app, c *gin.Context) error {
 	cUser, err := resolveClientUser(a, c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
-		c.Redirect(http.StatusFound, "/login")
+		redirectToLogin(c)
 		return nil
 	}
 	stats := newDashboardStats()
