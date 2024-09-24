@@ -1,0 +1,31 @@
+package webapp
+
+templ setupOTPPage(appName string, otpImageURI string, username string) {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{ appName } | Login</title>
+    <link rel="stylesheet" href="/ll-auth/app/static/landlord-login.css">
+</head>
+<body>
+    <div class="container">
+        <h2>{ appName } | Setup OTP</h2>
+        <img src={ otpImageURI } alt="QR Code" style="display: block; margin: 0 auto;">
+        <form action="/ll-auth/app/setup-otp/submit" method="POST">
+            <label>Code
+                <input type="text" name="code" placeholder="OTP Code" required>
+            </label>
+            <input type="hidden" name="username" value={ username } />
+            <button type="submit">Submit</button>
+        </form>
+        <div class="recovery">
+            <a href="/ll-auth/app/recovery">Account Recovery</a>
+            |
+            <a href="/ll-auth/app/logout">Logout</a>
+        </div>
+    </div>
+</body>
+</html>
+}

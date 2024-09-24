@@ -1,0 +1,24 @@
+package webapp
+
+templ recoveryPage(appName string, username string) {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{ appName } | Account Recovery</title>
+    <link rel="stylesheet" href="/ll-auth/app/static/landlord-login.css">
+</head>
+<body>
+    <div class="container">
+        <h2>{ appName } | Recovery Account</h2>
+        <form action="/ll-auth/app/recovery/submit" method="POST">
+            <label>Email
+                <input type="email" name="username" placeholder="Enter email address to start recovery..." value={ username } required>
+            </label>
+            <button type="submit">Recover</button>
+        </form>
+    </div>
+</body>
+</html>
+}

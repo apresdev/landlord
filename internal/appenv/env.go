@@ -93,10 +93,19 @@ func OverrideLocalStack(v bool) func() {
 	}
 }
 
+type RouteSetting int
+
+const (
+	RouteSettingBoth RouteSetting = iota
+	RouteSettingRest
+	RouteSettingWebApp
+)
+
 type Settings struct {
 	url        *url.URL
 	appName    string
 	adminEmail string
+	routes     RouteSetting
 }
 
 func (s Settings) URL() *url.URL {
@@ -109,6 +118,10 @@ func (s Settings) AppName() string {
 
 func (s Settings) AdminEmail() string {
 	return s.adminEmail
+}
+
+func (s Settings) Routes() RouteSetting {
+	return s.routes
 }
 
 func MustSettings() Settings {
@@ -128,5 +141,19 @@ func MustSettings() Settings {
 	if e == "" {
 		zap.L().Fatal("LANDLORD_APP_ADMIN_EMAIL not set")
 	}
-	return Settings{url: up, appName: n, adminEmail: e}
+	r := os.Getenv("LANDLORD_APP_ROUTES")
+	rs := RouteSettingBoth
+	if r != "" {
+		switch r {
+		case "both":
+			rs = RouteSettingBoth
+		case "rest":
+			rs = RouteSettingRest
+		case "webapp":
+			rs = RouteSettingWebApp
+		default:
+			zap.L().Fatal("LANDLORD_APP_ROUTES must be one of 'both', 'rest', or 'webapp'")
+		}
+	}
+	return Settings{url: up, appName: n, adminEmail: e, routes: rs}
 }
