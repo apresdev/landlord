@@ -55,10 +55,13 @@ aws sso login
 
 ## Environment Variables
 
-* `LANDLORD_ROUTES`: 
-  * `rest` - only register the REST/JSON endpoints
-  * `webapp` - only register the HTML/Web app endpoints
-  * `both` (default) - register both `rest` and `webapp`
+* `LANDLORD_DB_TABLE_NAME`: The name of the DynamoDB table to use for storing
+  tenant and user information. If not set, the table name defaults to
+  `landlord-db`.
+* `LANDLORD_ROUTES`:
+    * `rest` - only register the REST/JSON endpoints
+    * `webapp` - only register the HTML/Web app endpoints
+    * `both` (default) - register both `rest` and `webapp`
 * `LANDLORD_DEV_MODE`: If set, the landlord tool will run in development mode.
   This enables various development features, such as:
     * Use of the zap development logger.
@@ -126,35 +129,59 @@ To assign a role to a user:
 
 The `landlord` tool uses a few types of generated sources:
 
-  * openapi-generator that creates server stubs (`internal/rest/model_*` and 
-    `internal/rest/routers.go`) and a client package (`pkg/client`).
-  * .go files associated with [templ](https://templ.guide/) templates in the 
-    `internal/server` directory. The .go files here are each created from 
-    one .templ file.
-  * mocks for unit testing in the `internal/mocks` directory.
+* openapi-generator that creates server stubs (`internal/rest/model_*` and
+  `internal/rest/routers.go`) and a client package (`pkg/client`).
+* .go files associated with [templ](https://templ.guide/) templates in the
+  `internal/server` directory. The .go files here are each created from
+  one .templ file.
+* mocks for unit testing in the `internal/mocks` directory.
 
-Our decision is to commit these sources. The argument for not including 
-generated sources typically mentions the DRY principle: "Don't Repeat 
-Yourself." Admittedly, the inclusion does present a potential issue if there is 
-ever drift between the two. Adhering to a DRY principle would avoid such an 
+Our decision is to commit these sources. The argument for not including
+generated sources typically mentions the DRY principle: "Don't Repeat
+Yourself." Admittedly, the inclusion does present a potential issue if there is
+ever drift between the two. Adhering to a DRY principle would avoid such an
 issue.
 
-All that said, we choose to include the auto-generated sources to support 
-downstream users that want to include the library as a dependency or build 
-the application without need for additional tooling / steps. They should only 
-need to use `go build`. 
+All that said, we choose to include the auto-generated sources to support
+downstream users that want to include the library as a dependency or build
+the application without need for additional tooling / steps. They should only
+need to use `go build`.
 
-This places the burden of ensuring that the generated sources are in sync on 
+This places the burden of ensuring that the generated sources are in sync on
 the maintainers of the `landlord` tool, which we believe is a good thing.
 
 ## DynamoDB
 
-| PK                     | SK                     | Data              | Reason                                         |
-|------------------------|------------------------|-------------------|------------------------------------------------|
-| `TENANT#<tenant-id>`   | `TENANT`               | Tenant JSON       | Lookup tenant by ID                            |
-| `TENANT#<tenant-name>` | `TENANT`               | tenant-id         | Lookup tenant by name                          |
-| `TENANT#<tenant-id>`   | `USER#<username>`      | User JSON         | Lookup user in tenant                          |
-| `USER#<username>`      | `USER`                 | tenant-id         | Lookup tenant-id for user                      |
-| `TENANT#<tenant-id>`   | `ROLE#<role-name>`     | list of usernames | Lookup usernames belonging to a role           |
-| `TENANT#<tenant-id>`   | `EMAIL#<email-domain>` | Email domain JSON | Lookup email domain for tenant                 | 
-| `EMAIL#<email-domain>` | `EMAIL`                | tenant-id         | Lookup email domain when exclusive to a tenant |
+The DynamoDB table has the following attributes:
+
+  * PK - String - Partition Key
+  * SK - String - Sort Key
+  * AltNameIndex - String - A global secondary index used to lookup entities 
+    by their alternate (usually human-oriented) names.
+
+| # | PK                  | SK                  | GSI AltNameIndex      | Data        |
+|---|---------------------|---------------------|-----------------------|-------------|
+| 1 | `Global:*`          | `Tenant:<tenantID>` | `Tenant:<tenantName>` | Tenant JSON |
+| 2 | `Tenant:<tenantID>` | `User:<userID>`     | `User:<email>`        | User JSON   |
+
+Supported queries:
+
+  * Get tenant by ID: GetItem like row 1
+  * Get tenant by name: Query AltNameIndex like row 1
+  * Get user by userID with tenant ID: GetItem like row 2
+  * Get user by email without tenant ID: Query AltNameIndex GSI like row 2
+  * List users for tenant: Query PK = tenant ID on 2 with "User:" prefix
+  * List all tenants: Query PK = Global:* with "Tenant:" prefix
+
+Unsupported (or, maybe "queries that require a Scan or other more expensive
+operation"):
+
+  * Get user by userID without tenantID -- no contexts currently where we 
+    don't have both of these values as this lookup is only done in a 
+    troubleshooting case when you are looking for a user in DynamoDB. The more 
+    common case is when a user enters an email address, and we have to determine
+    the tenant (and get the user details).
+  * Get all users in a role -- only use case for this is in a context where we
+    check to see if there are any users in a role for a tenant before deleting
+    it. A rare case, and not performance sensitive, so we query all users for a 
+    tenant and then filter by role in the application.

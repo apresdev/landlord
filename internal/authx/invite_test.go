@@ -5,8 +5,13 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/apresdev/landlord/internal/appcore"
+	"github.com/apresdev/landlord/internal/appenv"
+	"github.com/apresdev/landlord/internal/db"
+	"github.com/apresdev/landlord/internal/localstack"
+	"github.com/google/uuid"
+
 	"github.com/apresdev/landlord/internal/apptest"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/apresdev/landlord/internal/multi"
@@ -21,16 +26,29 @@ type InviteTestSuite struct {
 }
 
 func TestInviteTestSuite(t *testing.T) {
+	if !localstack.IsRunning() {
+		t.Skip("localstack not running")
+	}
 	suite.Run(t, &InviteTestSuite{})
 }
 
+func (s *InviteTestSuite) SetupTest() {
+	apptest.DangerousDeleteAllItems(appenv.MustSettings().DBTableName())
+	apptest.DangerousRecreateUserPool()
+}
+
 func (s *InviteTestSuite) TestBadEmail() {
-	ctx := context.Background()
-	ddb := mocks.NewAWSDynamoDB(s.T())
-	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	tenant := multi.NewTenant()
-	err := authx.SendInvite(
-		ctx, ddb, cogIdp, tenant, "not-an-email-address", "guest", multi.MFAPolicyNone)
+	a := appcore.Must()
+	rootTenant, err := db.GetRootTenant(a.Ctx(), a.DDB(), a.RootTenantID())
+	s.Require().NoError(err)
+	err = authx.SendInvite(
+		a.Ctx(),
+		a.DDB(),
+		a.CogIdp(),
+		rootTenant,
+		"not-an-email-address",
+		"guest",
+		multi.MFAPolicyNone)
 	s.Error(err)
 	s.Equal(err.Error(), "invalid email")
 }
@@ -48,33 +66,49 @@ func (s *InviteTestSuite) TestInviteDBFailure() {
 }
 
 func (s *InviteTestSuite) TestInviteInactiveUser() {
-	ctx := context.Background()
-	ddb := mocks.NewAWSDynamoDB(s.T())
-	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	user := multi.User{
+	a := appcore.Must()
+
+	ten, err := authx.CreateTenant(
+		a.Ctx(), a.DDB(), a.RootTenantID(), a.CogIdp(), "foo", "Foo")
+	s.Require().NoError(err)
+	s.Require().NotNil(ten)
+
+	err = db.StoreUser(a.Ctx(), a.DDB(), &multi.User{
+		ID:       uuid.New(),
+		TenantID: ten.ID,
 		Username: "foo@example.com",
+		Role:     multi.RoleGuest,
 		Status:   multi.UserStatusInactive,
-	}
-	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(user))
-	ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
-	tenant := multi.NewTenant()
-	err := authx.SendInvite(
-		ctx, ddb, cogIdp, tenant, "foo@example.com", "guest", multi.MFAPolicyNone)
+	})
+	s.Require().NoError(err)
+
+	err = authx.SendInvite(
+		a.Ctx(),
+		a.DDB(),
+		a.CogIdp(),
+		ten,
+		"foo@example.com",
+		"guest",
+		multi.MFAPolicyNone)
 	s.Error(err)
 	s.Equal(err.Error(), "cannot send invite, user 'foo@example.com' is inactive")
 }
 
 func (s *InviteTestSuite) TestInviteNewUser() {
-	ctx := context.Background()
-	ddb := mocks.NewAWSDynamoDB(s.T())
-	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
-	result := dynamodb.QueryOutput{}
-	ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&result, nil)
-	cogIdp.EXPECT().AdminCreateUser(mock.Anything, mock.Anything).Return(nil, nil)
-	ddb.EXPECT().PutItem(mock.Anything, mock.Anything).Return(nil, nil)
-	tenant := multi.NewTenant()
-	err := authx.SendInvite(
-		ctx, ddb, cogIdp, tenant, "foo@example.com", "guest", multi.MFAPolicyNone)
+	a := appcore.Must()
+
+	ten, err := authx.CreateTenant(
+		a.Ctx(), a.DDB(), a.RootTenantID(), a.CogIdp(), "foo", "Foo")
+	s.Require().NoError(err)
+	s.Require().NotNil(ten)
+
+	err = authx.SendInvite(
+		a.Ctx(),
+		a.DDB(),
+		a.CogIdp(),
+		ten,
+		"foo@example.com",
+		"guest",
+		multi.MFAPolicyNone)
 	s.NoError(err)
 }

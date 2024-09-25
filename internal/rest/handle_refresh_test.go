@@ -7,6 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/google/uuid"
+
+	"github.com/apresdev/landlord/internal/db"
+
 	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/apresdev/landlord/internal/apptest"
 	"github.com/apresdev/landlord/internal/multi"
@@ -15,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	ddbtypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/gin-gonic/gin"
@@ -47,6 +52,13 @@ func fakeUserRequest() client.RefreshRequest {
 	return client.RefreshRequest{
 		Username:     "user@example.com",
 		RefreshToken: "fake-refresh-token",
+	}
+}
+
+func newTestUser(username string, tenantID uuid.UUID) *multi.User {
+	return &multi.User{
+		Username: username,
+		TenantID: tenantID,
 	}
 }
 
@@ -95,7 +107,7 @@ func (s *HandleRefreshTestSuite) TestNoUserPoolClient() {
 	s.NoError(err)
 	app := NewMockApp()
 	mt := multi.NewTenant()
-	mu := multi.NewUser("user@example.com", mt.ID)
+	mu := newTestUser("user@example.com", mt.ID)
 
 	// User is queried first...
 	o1 := dynamodb.QueryOutput{}
@@ -122,7 +134,7 @@ func (s *HandleRefreshTestSuite) TestUserLookupFailure() {
 	s.NoError(err)
 	app := NewMockApp()
 	mt := multi.NewTenant()
-	mu := multi.NewUser("user@example.com", mt.ID)
+	mu := newTestUser("user@example.com", mt.ID)
 
 	// User is queried first...
 	o1 := dynamodb.QueryOutput{}
@@ -158,7 +170,7 @@ func (s *HandleRefreshTestSuite) TestNoSubInUser() {
 	s.NoError(err)
 	app := NewMockApp()
 	mt := multi.NewTenant()
-	mu := multi.NewUser("user@example.com", mt.ID)
+	mu := newTestUser("user@example.com", mt.ID)
 
 	// User is queried first...
 	o1 := dynamodb.QueryOutput{}
@@ -198,7 +210,7 @@ func (s *HandleRefreshTestSuite) TestInitiateAuthFailure() {
 	s.NoError(err)
 	app := NewMockApp()
 	mt := multi.NewTenant()
-	mu := multi.NewUser("user@example.com", mt.ID)
+	mu := newTestUser("user@example.com", mt.ID)
 
 	// User is queried first...
 	o1 := dynamodb.QueryOutput{}
@@ -240,18 +252,35 @@ func (s *HandleRefreshTestSuite) TestInitiateAuthFailure() {
 
 func (s *HandleRefreshTestSuite) TestHappyPath() {
 	app := NewMockApp()
+
 	mt := multi.NewTenant()
-	mu := multi.NewUser("user@example.com", mt.ID)
 
 	// User is queried first...
+	username := "user@example.com"
+	usernameUUID := uuid.New()
+	kv := make(map[string]ddbtypes.AttributeValue)
+	kv[":altName"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(username)}
+	i1 := &dynamodb.QueryInput{
+		TableName:                 aws.String(db.TableName()),
+		IndexName:                 aws.String("altNameIndex"),
+		KeyConditionExpression:    aws.String("altName = :altName"),
+		ExpressionAttributeValues: kv,
+	}
 	o1 := dynamodb.QueryOutput{}
-	o1.Items = append(o1.Items, apptest.MustStructToDynamoMap(*mu))
-	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o1, nil).Once()
+	item := make(map[string]ddbtypes.AttributeValue)
+	item["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(mt.ID.String())}
+	item["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(usernameUUID.String())}
+	item["altName"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(username)}
+	o1.Items = append(o1.Items, item)
+	app.ddb.On("Query", mock.Anything, i1).Return(&o1, nil)
 
 	// ...then tenant
 	o2 := dynamodb.GetItemOutput{}
 	o2.Item = apptest.MustStructToDynamoMap(*mt)
-	app.ddb.EXPECT().GetItem(mock.Anything, mock.Anything).Return(&o2, nil).Once()
+	o2.Item["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
+	o2.Item["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(mt.ID.String())}
+	o2.Item["altName"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(mt.Name)}
+	app.ddb.EXPECT().GetItem(mock.Anything, mock.Anything).Return(&o2, nil)
 
 	app.cogIdp.EXPECT().ListUserPoolClients(mock.Anything, mock.Anything).Return(
 		&cognitoidentityprovider.ListUserPoolClientsOutput{
@@ -281,7 +310,7 @@ func (s *HandleRefreshTestSuite) TestHappyPath() {
 		&o3, nil).Once()
 
 	req := client.RefreshRequest{}
-	req.Username = "user@xample.com"
+	req.Username = "user@example.com"
 	req.RefreshToken = "fake-refresh-token"
 	b, err := json.Marshal(req)
 	s.NoError(err)

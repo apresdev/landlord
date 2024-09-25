@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/apresdev/landlord/internal/apptest"
+
 	"github.com/apresdev/landlord/internal/localstack"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -68,7 +70,7 @@ func (s *InfoTestSuite) TestSimple() {
 }
 
 func (s *InfoTestSuite) TestVerboseInValid() {
-	m, reset := MockClientsOverride(s.T())
+	m, reset := apptest.MockClientsOverride(s.T())
 	defer reset()
 	m.MockCogIdp.EXPECT().DescribeUserPool(m.Ctx(), mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
@@ -112,7 +114,7 @@ Tokens:
 }
 
 func (s *InfoTestSuite) TestVerboseValid() {
-	m, reset := MockClientsOverride(s.T())
+	m, reset := apptest.MockClientsOverride(s.T())
 	defer reset()
 	m.MockCogIdp.EXPECT().DescribeUserPool(m.Ctx(), mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{
@@ -180,7 +182,7 @@ Tokens:
 }
 
 func (s *InfoTestSuite) TestVerboseRaw() {
-	m, reset := MockClientsOverride(s.T())
+	m, reset := apptest.MockClientsOverride(s.T())
 	defer reset()
 	m.MockCogIdp.EXPECT().DescribeUserPool(m.Ctx(), mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolOutput{

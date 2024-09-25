@@ -25,7 +25,9 @@ func handleGetTenants(app App, c *gin.Context) error {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	for _, ten := range allTenants {
-		if authx.IsAuthorizedForTenant(c.Request.Context(), app.DDB(), ten, ur.Roles) {
+		if authx.IsAuthorizedForTenant(
+			c.Request.Context(), app.DDB(), app.RootTenantID(), ten, ur.Roles) {
+
 			resp.Tenants = append(resp.Tenants, Tenant{
 				Id:          ten.ID.String(),
 				Name:        ten.Name,

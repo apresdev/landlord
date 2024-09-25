@@ -29,7 +29,8 @@ func HandleCreateTenant(
 	ddb := app.DDB()
 	cogIdp := app.CogIdp()
 	ctx := c.Request.Context()
-	tenant, err := authx.CreateTenant(ctx, ddb, cogIdp, req.Name, req.Description)
+	tenant, err := authx.CreateTenant(
+		ctx, ddb, app.RootTenantID(), cogIdp, req.Name, req.Description)
 	if err != nil {
 		return nil, fmt.Errorf("error creating tenant: %w", err)
 	}

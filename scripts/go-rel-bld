@@ -5,20 +5,16 @@ set -x
 
 go get -v
 
-GO_FILES=$(find . -name "*.go")
-GOFMT_DIFF=$(gofmt -l -d $GO_FILES)
-if [[ "$GOFMT_DIFF" != "" ]];
-then
-    echo "gofmt failed:"
-    echo "files that differ: $GOFMT_DIFF"
-    exit 1
-fi
+go generate ./...
+templ generate
 
-GOIMPORTS_DIFF=$(goimports -d .)
-if [[ "$GOIMPORTS_DIFF" != "" ]];
+goimports -w .
+
+go fmt ./...
+
+if ! git diff --exit-code;
 then
-    echo "goimports failed:"
-    echo "files that differ: $GOIMPORTS_DIFF"
+    echo "Generated code is out of sync"
     exit 1
 fi
 

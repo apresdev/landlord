@@ -39,7 +39,7 @@ jobs:
           go-version: ${{ matrix.go-version }}
 
       - name: Build the release target
-        run: make setup-rel && make rel
+        run: make setup && make rel
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

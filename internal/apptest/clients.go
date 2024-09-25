@@ -1,14 +1,19 @@
-package cmd_test
+package apptest
 
 import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
+
+	"github.com/apresdev/landlord/internal/appenv"
+
+	"github.com/apresdev/landlord/internal/appcore"
+
 	"github.com/apresdev/landlord/internal/jwx"
 
 	"github.com/apresdev/landlord/internal/db"
 
-	"github.com/apresdev/landlord/cmd"
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/mocks"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -17,11 +22,12 @@ import (
 type MockClients struct {
 	ctx           context.Context
 	cfg           aws.Config
-	MockSts       *mocks.AWSSTS
 	MockCogIdp    *mocks.AWSCognitoIdentityProvider
 	MockSES       *mocks.AWSSES
 	MockValidator *mocks.TokenValidator
 	MockDynamo    *mocks.AWSDynamoDB
+	settings      appenv.Settings
+	rootTenantID  uuid.UUID
 }
 
 func (c *MockClients) Ctx() context.Context {
@@ -30,10 +36,6 @@ func (c *MockClients) Ctx() context.Context {
 
 func (c *MockClients) Cfg() aws.Config {
 	return c.cfg
-}
-
-func (c *MockClients) Sts() authx.AWSSTS {
-	return c.MockSts
 }
 
 func (c *MockClients) CogIdp() authx.AWSCognitoIdentityProvider {
@@ -52,18 +54,27 @@ func (c *MockClients) DDB() db.AWSDynamoDB {
 	return c.MockDynamo
 }
 
+func (c *MockClients) Settings() appenv.Settings {
+	return c.settings
+}
+
+func (c *MockClients) RootTenantID() uuid.UUID {
+	return c.rootTenantID
+}
+
 func MockClientsOverride(t *testing.T) (*MockClients, func()) {
 	cs := &MockClients{
 		ctx:           context.Background(),
 		cfg:           aws.Config{Region: "mock-region"},
-		MockSts:       mocks.NewAWSSTS(t),
 		MockCogIdp:    mocks.NewAWSCognitoIdentityProvider(t),
 		MockSES:       mocks.NewAWSSES(t),
 		MockValidator: mocks.NewTokenValidator(t),
 		MockDynamo:    mocks.NewAWSDynamoDB(t),
+		settings:      appenv.MustSettings(),
+		rootTenantID:  uuid.New(),
 	}
-	cmd.OverrideClient = cs
+	appcore.OverrideClient = cs
 	return cs, func() {
-		cmd.OverrideClient = nil
+		appcore.OverrideClient = nil
 	}
 }

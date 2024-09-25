@@ -18,11 +18,6 @@ type AWSDynamoDB interface {
 		params *dynamodb.DescribeTableInput,
 		optFns ...func(*dynamodb.Options)) (
 		*dynamodb.DescribeTableOutput, error)
-	DeleteTable(
-		ctx context.Context,
-		params *dynamodb.DeleteTableInput,
-		optFns ...func(*dynamodb.Options)) (
-		*dynamodb.DeleteTableOutput, error)
 	PutItem(
 		ctx context.Context,
 		params *dynamodb.PutItemInput,

@@ -68,6 +68,7 @@ func ParseRoleFromGroup(group string) (Role, error) {
 func IsAuthorizedForTenant(
 	ctx context.Context,
 	ddb db.AWSDynamoDB,
+	rootTenantID uuid.UUID,
 	ten *multi.Tenant,
 	roles Roles) bool {
 
@@ -76,7 +77,7 @@ func IsAuthorizedForTenant(
 			return true
 		}
 	}
-	rootTenant, err := db.GetRootTenant(ctx, ddb)
+	rootTenant, err := db.GetRootTenant(ctx, ddb, rootTenantID)
 	if err != nil {
 		zap.L().Error("error fetching root tenant", zap.Error(err))
 		return false

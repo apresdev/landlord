@@ -5,15 +5,17 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
+
+	"github.com/apresdev/landlord/internal/db"
 
 	"github.com/apresdev/landlord/internal/appenv"
 
 	"github.com/apresdev/landlord/internal/jwx"
 
 	"github.com/apresdev/landlord/internal/apperr"
-
-	"github.com/apresdev/landlord/internal/db"
 
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/gin-contrib/cors"
@@ -23,11 +25,11 @@ import (
 
 type App interface {
 	Cfg() aws.Config
-	Sts() authx.AWSSTS
 	CogIdp() authx.AWSCognitoIdentityProvider
 	Validator() jwx.TokenValidator
 	DDB() db.AWSDynamoDB
 	Settings() appenv.Settings
+	RootTenantID() uuid.UUID
 }
 
 const (

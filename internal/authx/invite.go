@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"go.uber.org/zap"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -37,14 +39,18 @@ func SendInvite(
 		return apperr.NewBadRequest(
 			fmt.Sprintf("role '%s' is not valid for tenant '%s'", role, ten.ID))
 	}
-	u, err := db.GetUser(ctx, ddb, e.Address())
+	existingUser, err := db.GetUserByName(ctx, ddb, e.Address())
 	if err == nil {
-		if u.Status == multi.UserStatusInactive {
+		if existingUser.TenantID != ten.ID {
 			return apperr.NewBadRequest(
-				fmt.Sprintf("cannot send invite, user '%s' is inactive", e.Address()))
+				fmt.Sprintf("user '%s' already belongs to another tenant", e.Address()))
 		}
-	} else if !apperr.IsNotFound(err) {
+	} else if err != nil && !apperr.IsNotFound(err) {
 		return err
+	}
+	if existingUser != nil && existingUser.Status == multi.UserStatusInactive {
+		return apperr.NewBadRequest(
+			fmt.Sprintf("cannot send invite, user '%s' is inactive", e.Address()))
 	}
 	ua := []types.AttributeType{
 		{Name: aws.String(CustomTenantClaim), Value: aws.String(ten.ID.String())},
@@ -54,16 +60,29 @@ func SendInvite(
 		Username:       aws.String(e.Address()),
 		UserAttributes: ua,
 	}
-	// User has already been activated, so we need to resend the invite.
-	if u != nil {
+	// User has already been activated, so we need "resend" the invite, instead
+	// of just a regular old send.
+	if existingUser != nil {
 		args.MessageAction = types.MessageActionTypeResend
 	}
-	if _, err := cogIdp.AdminCreateUser(ctx, &args); err != nil {
+	o, err := cogIdp.AdminCreateUser(ctx, &args)
+	if err != nil {
 		return err
 	}
+	var cognitoUserID uuid.UUID
+	for _, attr := range o.User.Attributes {
+		if aws.ToString(attr.Name) == "sub" {
+			cognitoUserID, err = uuid.Parse(aws.ToString(attr.Value))
+			if err != nil {
+				return err
+			}
+			break
+		}
+	}
 	return db.StoreUser(ctx, ddb, &multi.User{
-		Username:  e.Address(),
 		TenantID:  ten.ID,
+		ID:        cognitoUserID,
+		Username:  e.Address(),
 		Role:      role,
 		Status:    multi.UserStatusInvited,
 		MFAPolicy: mfaPolicy,
@@ -97,5 +116,5 @@ func CancelInvitation(
 			zap.String("username", e.Address()),
 			zap.Error(err))
 	}
-	return db.DeleteUser(ctx, ddb, ten.ID, e.Address())
+	return db.DeleteUser(ctx, ddb, u)
 }

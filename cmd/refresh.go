@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/apresdev/landlord/internal/appcore"
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/spf13/cobra"
 )
@@ -11,7 +12,7 @@ func refreshCmd() *cobra.Command {
 		Short: "Refresh the current session's tokens",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := MustSession()
-			cs := MustClients()
+			cs := appcore.Must()
 			up, err := authx.GetUserPoolByNameOrID(cs.Ctx(), cs.CogIdp(), s.UserPool)
 			if err != nil {
 				return err

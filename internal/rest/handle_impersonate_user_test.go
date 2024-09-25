@@ -7,14 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/apresdev/landlord/internal/apptest"
-
 	"github.com/apresdev/landlord/internal/authx"
-	"github.com/apresdev/landlord/internal/multi"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -117,7 +113,7 @@ func (s *HandleImpersonateUserTestSuite) TestNoRootTenant() {
 		fmt.Sprintf("tenant-%s-guest", tenantUUID)}
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
-	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(
+	app.ddb.EXPECT().GetItem(mock.Anything, mock.Anything).Return(
 		nil, fmt.Errorf("error"))
 	err := handleImpersonateUser(app, gt1.c)
 	s.Error(err)
@@ -132,10 +128,7 @@ func (s *HandleImpersonateUserTestSuite) TestNotAuthorizedForRoot() {
 		fmt.Sprintf("tenant-%s-guest", tenantUUID)}
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
-	o := dynamodb.QueryOutput{}
-	mt := multi.NewTenant()
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(*mt))
-	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
+	_ = withSetupRootTenant(app)
 	err := handleImpersonateUser(app, gt1.c)
 	s.Error(err)
 }
@@ -143,15 +136,13 @@ func (s *HandleImpersonateUserTestSuite) TestNotAuthorizedForRoot() {
 func (s *HandleImpersonateUserTestSuite) TestNoEmailClaim() {
 	app := NewMockApp()
 	gt1 := withDefaultImpersonateUserRequest(newGinTest(s.T()))
-	mt := multi.NewTenant()
+	rt := withSetupRootTenant(app)
+	withSetupQueryTenant(app)
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{
-		fmt.Sprintf("tenant-%s-guest", mt.ID.String())}
+		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
-	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(*mt))
-	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	err := handleImpersonateUser(app, gt1.c)
 	s.Error(err)
 }
@@ -159,16 +150,14 @@ func (s *HandleImpersonateUserTestSuite) TestNoEmailClaim() {
 func (s *HandleImpersonateUserTestSuite) TestFailedToUpdateUserAttributes() {
 	app := NewMockApp()
 	gt1 := withDefaultImpersonateUserRequest(newGinTest(s.T()))
-	mt := multi.NewTenant()
+	rt := withSetupRootTenant(app)
+	withSetupQueryTenant(app)
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{
-		fmt.Sprintf("tenant-%s-guest", mt.ID.String())}
+		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	claims[authx.EmailClaim] = "foo@example.com"
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
-	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(*mt))
-	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, errors.New("could not update user attributes"))
 	err := handleImpersonateUser(app, gt1.c)
@@ -178,16 +167,14 @@ func (s *HandleImpersonateUserTestSuite) TestFailedToUpdateUserAttributes() {
 func (s *HandleImpersonateUserTestSuite) TestNoSubClaim() {
 	app := NewMockApp()
 	gt1 := withDefaultImpersonateUserRequest(newGinTest(s.T()))
-	mt := multi.NewTenant()
+	rt := withSetupRootTenant(app)
+	withSetupQueryTenant(app)
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{
-		fmt.Sprintf("tenant-%s-guest", mt.ID.String())}
+		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	claims[authx.EmailClaim] = "foo@example.com"
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
-	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(*mt))
-	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, nil)
 	app.cogIdp.EXPECT().ListUserPoolClients(gt1.c.Request.Context(), mock.Anything).Return(
@@ -207,18 +194,18 @@ func (s *HandleImpersonateUserTestSuite) TestNoSubClaim() {
 func (s *HandleImpersonateUserTestSuite) TestSuccess() {
 	app := NewMockApp()
 	gt1 := withDefaultImpersonateUserRequest(newGinTest(s.T()))
-	mt := multi.NewTenant()
+
+	rt := withSetupRootTenant(app)
+	withSetupQueryTenant(app)
+
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{
-		fmt.Sprintf("tenant-%s-guest", mt.ID.String())}
+		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	claims[authx.EmailClaim] = "foo@example.com"
 	claims[authx.SubClaim] = "sub-123"
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
-	o := dynamodb.QueryOutput{}
-	mt.Roles = append(mt.Roles, "guest")
-	o.Items = append(o.Items, apptest.MustStructToDynamoMap(*mt))
-	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o, nil)
+
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(
 		gt1.c.Request.Context(), mock.Anything, mock.Anything).Return(
 		nil, nil)

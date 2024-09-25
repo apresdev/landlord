@@ -16,151 +16,111 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	usersTable   = "landlord-users"
-	usernameAttr = "username"
-	tenantAttr   = "tenant"
-)
-
-func initUsers(ctx context.Context, dynamo AWSDynamoDB) error {
-	attrs := []types.AttributeDefinition{
-		{
-			AttributeName: aws.String(tenantAttr),
-			AttributeType: types.ScalarAttributeTypeB,
-		},
-		{
-			AttributeName: aws.String(usernameAttr),
-			AttributeType: types.ScalarAttributeTypeS,
-		},
-	}
-	keySchema := []types.KeySchemaElement{
-		{
-			AttributeName: aws.String(tenantAttr),
-			KeyType:       types.KeyTypeHash,
-		},
-		{
-			AttributeName: aws.String(usernameAttr),
-			KeyType:       types.KeyTypeRange,
-		},
-	}
-	secIndexes := []types.GlobalSecondaryIndex{
-		{
-			IndexName: aws.String("sec_index_" + usernameAttr),
-			KeySchema: []types.KeySchemaElement{
-				{
-					AttributeName: aws.String(usernameAttr),
-					KeyType:       types.KeyTypeHash,
-				},
-			},
-			Projection: &types.Projection{
-				ProjectionType: types.ProjectionTypeAll,
-			},
-		},
-	}
-	return ensureTable(ctx, dynamo, usersTable, attrs, keySchema, secIndexes)
-}
-
 // StoreUser stores the given user in the database, creating a new item if
 // it does not already exist.
-func StoreUser(ctx context.Context, ddb AWSDynamoDB, ten *multi.User) error {
-	av, err := attributevalue.MarshalMap(ten)
+func StoreUser(ctx context.Context, ddb AWSDynamoDB, user *multi.User) error {
+	if user.TenantID == uuid.Nil {
+		return apperr.NewInternal("cannot store user with nil tenant ID")
+	}
+	if user.ID == uuid.Nil {
+		return apperr.NewInternal("cannot store user with nil ID")
+	}
+	if user.Username == "" {
+		return apperr.NewInternal("cannot store user with empty username")
+	}
+	if user.Role == "" {
+		return apperr.NewInternal("cannot store user with empty role")
+	}
+
+	av, err := attributevalue.MarshalMap(user)
 	if err != nil {
 		return err
 	}
-	input := &dynamodb.PutItemInput{
+	av["pk"] = &types.AttributeValueMemberS{Value: TenantEntityID(user.TenantID.String())}
+	av["sk"] = &types.AttributeValueMemberS{Value: UserEntityID(user.ID.String())}
+	av["altName"] = &types.AttributeValueMemberS{Value: UserEntityID(user.Username)}
+	_, err = ddb.PutItem(ctx, &dynamodb.PutItemInput{
 		Item:      av,
-		TableName: aws.String(usersTable),
-	}
-	_, err = ddb.PutItem(ctx, input)
+		TableName: aws.String(tableName),
+	})
 	if err != nil {
 		return apperr.NewInternalE(
-			fmt.Errorf("failed to put item to %s: %w", usersTable, err))
+			fmt.Errorf("failed to put item to %s: %w", tableName, err))
 	}
-	return err
+	return nil
 }
 
 // DeleteUser removes the user with the given username.
-func DeleteUser(
-	ctx context.Context,
-	ddb AWSDynamoDB,
-	tenantID uuid.UUID,
-	username string) error {
-
-	b, err := tenantID.MarshalBinary()
-	if err != nil {
-		return err
-	}
+func DeleteUser(ctx context.Context, ddb AWSDynamoDB, user *multi.User) error {
+	kv := make(map[string]types.AttributeValue)
+	kv["pk"] = &types.AttributeValueMemberS{Value: TenantEntityID(user.TenantID.String())}
+	kv["sk"] = &types.AttributeValueMemberS{Value: UserEntityID(user.ID.String())}
 	input := &dynamodb.DeleteItemInput{
-		Key: map[string]types.AttributeValue{
-			tenantAttr:   &types.AttributeValueMemberB{Value: b},
-			usernameAttr: &types.AttributeValueMemberS{Value: username},
-		},
-		TableName:    aws.String(usersTable),
+		Key:          kv,
+		TableName:    aws.String(tableName),
 		ReturnValues: types.ReturnValueAllOld,
 	}
 	o, err := ddb.DeleteItem(ctx, input)
 	if err != nil {
 		return apperr.NewInternalE(
-			fmt.Errorf("failed to delete item from %s: %w", usersTable, err))
+			fmt.Errorf("failed to delete item: %w", err))
 	}
-	if o.Attributes == nil || o.Attributes[tenantAttr] == nil {
-		return apperr.NewNotFound("user not found: " + username)
+	if o.Attributes == nil {
+		return apperr.NewNotFound("user not found: " + user.Username)
 	}
 	zap.L().Info("deleted user",
-		zap.String("username", username),
+		zap.String("tenant", user.TenantID.String()),
+		zap.String("username", user.Username),
+		zap.String("userID", user.ID.String()),
 		zap.Any("output", o))
 	return nil
 }
 
-// GetUser returns the user with the given username.
-func GetUser(ctx context.Context, ddb AWSDynamoDB, username string) (*multi.User, error) {
+// GetUserByName returns the user with the given username.
+func GetUserByName(ctx context.Context, ddb AWSDynamoDB, username string) (*multi.User, error) {
+	kv := make(map[string]types.AttributeValue)
+	kv[":altName"] = &types.AttributeValueMemberS{Value: UserEntityID(username)}
 	input := &dynamodb.QueryInput{
-		TableName:              aws.String(usersTable),
-		IndexName:              aws.String("sec_index_" + usernameAttr),
-		KeyConditionExpression: aws.String("#username = :username"),
-		ExpressionAttributeNames: map[string]string{
-			"#username": usernameAttr,
-		},
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":username": &types.AttributeValueMemberS{Value: username},
-		},
+		TableName:                 aws.String(tableName),
+		IndexName:                 aws.String("altNameIndex"),
+		KeyConditionExpression:    aws.String("altName = :altName"),
+		ExpressionAttributeValues: kv,
 	}
-	q, err := ddb.Query(ctx, input)
+	o1, err := ddb.Query(ctx, input)
 	if err != nil {
 		return nil, apperr.NewInternalE(
-			fmt.Errorf("failed to query DynamoDB: %w", err))
+			fmt.Errorf("failed to get item from DynamoDB: %w", err))
 	}
-	if len(q.Items) == 0 {
-		return nil, apperr.NewNotFound("username not found: " + username)
-	}
-	if len(q.Items) > 1 {
-		return nil, apperr.NewInternalE(
-			fmt.Errorf("multiple users found with username: %s", username))
-	}
-	var result multi.User
-	if err = attributevalue.UnmarshalMap(q.Items[0], &result); err != nil {
-		return nil, apperr.NewInternalE(
-			fmt.Errorf("failed to unmarshal DynamoDB item to User: %w", err))
-	}
-	return &result, nil
-}
-
-// GetUserInTenant returns a user, but only if it belongs to the given tenant.
-func GetUserInTenant(
-	ctx context.Context, ddb AWSDynamoDB, tenantID uuid.UUID, username string) (
-	*multi.User, error) {
-
-	user, err := GetUser(ctx, ddb, username)
-	if err != nil {
-		return nil, err
-	}
-	if user.TenantID != tenantID {
-		zap.L().Info("found user but not in tenant",
-			zap.String("username", username),
-			zap.String("tenantID", tenantID.String()))
+	if len(o1.Items) == 0 {
 		return nil, apperr.NewNotFound("user not found")
 	}
-	return user, nil
+	if len(o1.Items) > 1 {
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("found multiple users with username: %s", username))
+	}
+	return unmarshalUser(o1.Items[0])
+}
+
+// GetUserInTenantByID returns a user belonging to a tenant.
+func GetUserInTenantByID(
+	ctx context.Context, ddb AWSDynamoDB, tenantID uuid.UUID, userID uuid.UUID) (
+	*multi.User, error) {
+
+	kv := make(map[string]types.AttributeValue)
+	kv["pk"] = &types.AttributeValueMemberS{Value: TenantEntityID(tenantID.String())}
+	kv["sk"] = &types.AttributeValueMemberS{Value: UserEntityID(userID.String())}
+	result, err := ddb.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
+		Key:       kv,
+	})
+	if err != nil {
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to get item from DynamoDB: %w", err))
+	}
+	if result.Item == nil {
+		return nil, apperr.NewNotFound("item not found")
+	}
+	return unmarshalUser(result.Item)
 }
 
 // GetUsersForTenant returns all users for the given tenant.
@@ -168,19 +128,13 @@ func GetUsersForTenant(
 	ctx context.Context, ddb AWSDynamoDB, tenantID uuid.UUID) (
 	[]*multi.User, error) {
 
-	b, err := tenantID.MarshalBinary()
-	if err != nil {
-		return nil, err
-	}
+	kv := make(map[string]types.AttributeValue)
+	kv[":pk"] = &types.AttributeValueMemberS{Value: TenantEntityID(tenantID.String())}
+	kv[":skPrefix"] = &types.AttributeValueMemberS{Value: UserEntityID("")}
 	input := &dynamodb.QueryInput{
-		TableName:              aws.String(usersTable),
-		KeyConditionExpression: aws.String("#tenant = :tenant"),
-		ExpressionAttributeNames: map[string]string{
-			"#tenant": tenantAttr,
-		},
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":tenant": &types.AttributeValueMemberB{Value: b},
-		},
+		TableName:                 aws.String(tableName),
+		KeyConditionExpression:    aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
+		ExpressionAttributeValues: kv,
 	}
 	result, err := ddb.Query(ctx, input)
 	if err != nil {
@@ -188,9 +142,12 @@ func GetUsersForTenant(
 			fmt.Errorf("failed to query DynamoDB: %w", err))
 	}
 	var users []*multi.User
-	if err = attributevalue.UnmarshalListOfMaps(result.Items, &users); err != nil {
-		return nil, apperr.NewInternalE(
-			fmt.Errorf("failed to unmarshal DynamoDB item to User: %w", err))
+	for _, item := range result.Items {
+		user, err := unmarshalUser(item)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
 	}
 	return users, nil
 }
@@ -200,7 +157,7 @@ func GetUserAndTenant(
 	ctx context.Context, ddb AWSDynamoDB, username string) (
 	*multi.User, *multi.Tenant, error) {
 
-	user, err := GetUser(ctx, ddb, username)
+	user, err := GetUserByName(ctx, ddb, username)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -214,14 +171,9 @@ func GetUserAndTenant(
 func SetUserStatus(
 	ctx context.Context,
 	ddb AWSDynamoDB,
-	tenantID uuid.UUID,
-	username string,
+	user *multi.User,
 	targetStatus multi.UserStatus) (*multi.User, error) {
 
-	user, err := GetUserInTenant(ctx, ddb, tenantID, username)
-	if err != nil {
-		return nil, err
-	}
 	if user.Status == targetStatus {
 		return user, nil
 	}
@@ -234,4 +186,29 @@ func SetUserStatus(
 		return nil, err
 	}
 	return user, nil
+}
+
+func unmarshalUser(item map[string]types.AttributeValue) (*multi.User, error) {
+	var user multi.User
+	if err := attributevalue.UnmarshalMap(item, &user); err != nil {
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to unmarshal DynamoDB item to User: %w", err))
+	}
+	var err error
+	user.TenantID, err = parseEntityUUID(item["pk"], EntityNameTenant)
+	if err != nil {
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to parse user's tenant ID: %w", err))
+	}
+	user.ID, err = parseEntityUUID(item["sk"], EntityNameUser)
+	if err != nil {
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to parse user ID: %w", err))
+	}
+	user.Username, err = parseEntityName(item["altName"], EntityNameUser)
+	if err != nil {
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to strip entity ID: %w", err))
+	}
+	return &user, nil
 }

@@ -22,6 +22,7 @@ func handleCancelInvitation(app App, c *gin.Context) error {
 	return HandleCancelInvitation(app, c, username)
 }
 
+// TODO: change this API to use a User UUID
 func HandleCancelInvitation(app App, c *gin.Context, username string) error {
 	t, ok := c.Get(TokenKey)
 	if !ok {
@@ -71,7 +72,8 @@ func HandleCancelInvitation(app App, c *gin.Context, username string) error {
 			zap.String("tenantID", th.String()))
 		return apperr.NewBadRequest("invalid tenant")
 	}
-	if !authx.IsAuthorizedForTenant(c.Request.Context(), app.DDB(), ten, roles) {
+	if !authx.IsAuthorizedForTenant(
+		c.Request.Context(), app.DDB(), app.RootTenantID(), ten, roles) {
 		return apperr.NewUnauthorized("not authorized")
 	}
 

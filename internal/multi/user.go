@@ -75,16 +75,10 @@ func (m MFAPolicy) String() string {
 }
 
 type User struct {
-	Username  string     `dynamodbav:"username"`
+	TenantID  uuid.UUID  `dynamodbav:"-"` // pk
+	ID        uuid.UUID  `dynamodbav:"-"` // sk
+	Username  string     `dynamodbav:"-"` // altName
 	Role      string     `dynamodbav:"role"`
 	Status    UserStatus `dynamodbav:"status"`
-	TenantID  uuid.UUID  `dynamodbav:"tenant"`
-	MFAPolicy MFAPolicy  `dynamodbav:"mfa_policy"`
-}
-
-func NewUser(username string, tenantID uuid.UUID) *User {
-	return &User{
-		Username: username,
-		TenantID: tenantID,
-	}
+	MFAPolicy MFAPolicy  `dynamodbav:"mfaPolicy"`
 }
