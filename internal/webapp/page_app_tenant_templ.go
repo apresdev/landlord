@@ -47,7 +47,7 @@ func tenantPage(appName string, tenant *multi.Tenant, users []*multi.User, logge
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container\"><a href=\"/ll-auth/app/admin/tenants\"><button>Tenants</button></a> <a href=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container\"><a href=\"/ll-auth/app/admin/tenants\"><button class=\"button\">Tenants</button></a> <a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -56,7 +56,7 @@ func tenantPage(appName string, tenant *multi.Tenant, users []*multi.User, logge
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><button>Invite User</button></a><table><thead><tr><th>Name</th><th>Role</th><th>MFA</th><th>Status</th><th>Actions</th></tr></thead> <tbody hx-target=\"closest tr\" hx-swap=\"outerHTML\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"><button class=\"button\">Invite User</button></a><table><thead><tr><th>Name</th><th>Role</th><th>MFA</th><th>Status</th><th>Actions</th></tr></thead> <tbody hx-target=\"closest tr\" hx-swap=\"outerHTML\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

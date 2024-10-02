@@ -10,32 +10,40 @@ templ userFragment(user *multi.User) {
     <td>{ user.MFAPolicy.String() }</td>
     <td>{ user.Status.String() }</td>
     <td>
-        if user.Status == multi.UserStatusActive {
+        if user.Status == multi.UserStatusActive || user.Status == multi.UserStatusPendingMFA {
             <button
-                class="btn danger"
+                class="button"
                 hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/deactivate" }
             >
                 Deactivate
             </button>
         } else if user.Status == multi.UserStatusInvited {
             <button
-                class="btn warning"
+                class="button"
                 hx-get={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/invite?username=" + url.QueryEscape(user.Username) }
             >
                 Resend Invite
             </button>
             <button
-                class="btn danger"
+                class="button"
                 hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/cancel-invite" }
             >
                 Cancel Invite
             </button>
         } else if user.Status == multi.UserStatusInactive {
             <button
-                class="btn success"
+                class="button"
                 hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/activate" }
             >
                 Activate
+            </button>
+        }
+        if user.MFAPolicy == multi.MFAPolicyNone {
+            <button
+                class="button"
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/mfa" }
+            >
+                Attach MFA
             </button>
         }
     </td>

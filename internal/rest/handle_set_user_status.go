@@ -3,7 +3,6 @@ package rest
 import (
 	"fmt"
 
-	"github.com/apresdev/landlord/internal/jwx"
 	"github.com/apresdev/landlord/internal/multi"
 	"github.com/google/uuid"
 
@@ -13,7 +12,6 @@ import (
 
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 )
 
@@ -39,7 +37,7 @@ func HandleSetUserStatus(
 	app App, c *gin.Context, tenantID, username, rawTargetStatus string) (
 	*multi.User, error) {
 
-	actorTenantID, err := uuid.Parse(tenantID)
+	targetTenantID, err := uuid.Parse(tenantID)
 	if err != nil {
 		zap.L().Error("error parsing tenant handle",
 			zap.Error(err),
@@ -51,34 +49,12 @@ func HandleSetUserStatus(
 		return nil, apperr.NewBadRequestE(err)
 	}
 
-	t, ok := c.Get(TokenKey)
-	if !ok {
-		return nil, apperr.NewUnauthorized("no token")
-	}
-	tok, ok := t.(*jwt.Token)
-	if !ok {
-		zap.L().Error("could not convert token to *jwt.Token")
-		return nil, apperr.NewUnauthorized("no token")
-	}
-	cid := clientID(c)
-	actorGroups, err := jwx.GetClaimStrings(tok, authx.CognitoGroupsClaim)
-	if !ok {
-		zap.L().Error("could get groups",
-			zap.String("clientID", string(cid)),
-			zap.Error(err),
-			zap.Any("token", tok))
-		return nil, apperr.NewUnauthorized("no groups")
-	}
-	actorRoles, err := authx.ParseRolesFromGroups(actorGroups)
+	rc, err := requesterContext(c)
 	if err != nil {
-		zap.L().Error("could not parse roles from groups",
-			zap.String("clientID", string(cid)),
-			zap.Error(err),
-			zap.Any("groups", actorGroups))
-		return nil, apperr.NewUnauthorized("no groups")
+		return nil, err
 	}
 
-	actorTenant, err := db.GetTenantByID(c.Request.Context(), app.DDB(), actorTenantID)
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), app.DDB(), targetTenantID)
 	if err != nil {
 		zap.L().Error("error resolving tenant",
 			zap.Error(err),
@@ -89,12 +65,12 @@ func HandleSetUserStatus(
 	// TODO: check if role is able to set user status. Currently all roles within
 	// the root tenant are permitted.
 	if !authx.IsAuthorizedForTenant(
-		c.Request.Context(), app.DDB(), app.RootTenantID(), actorTenant, actorRoles) {
+		c.Request.Context(), app.DDB(), app.RootTenantID(), targetTenant, rc.roles) {
 
 		zap.L().Info("user not authorized for tenant when setting user status",
-			zap.String("clientID", string(cid)),
+			zap.String("clientID", string(rc.cid)),
 			zap.String("tenantID", tenantID),
-			zap.String("roles", actorRoles.String()))
+			zap.String("roles", rc.roles.String()))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
 

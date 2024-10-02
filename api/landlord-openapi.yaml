@@ -317,6 +317,40 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: [ ]
+  /ll-auth/api/tenants/{tenantID}/users/{username}/mfa:
+    put:
+      operationId: UpdateUserMFA
+      summary: Update a user's MFA settings
+      tags:
+        - Auth
+      parameters:
+        - name: tenantID
+          in: path
+          required: true
+          description: The ID of the tenant to get users for.
+          schema:
+            type: string
+        - name: username
+          in: path
+          required: true
+          description: The username of the user to update.
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateUserMFARequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: [ ]
   /ll-auth/api/invite:
     post:
       operationId: InviteToTenant
@@ -593,6 +627,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/UpdateUserStatusRequest'
+    UpdateUserMFARequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateUserMFARequest'
   responses:
     NoContent:
       description: |
@@ -1134,3 +1174,10 @@ components:
       properties:
         role:
           $ref: '#/components/schemas/UserStatus'
+    UpdateUserMFARequest:
+      type: object
+      required:
+        - status
+      properties:
+        mfaPolicy:
+          $ref: '#/components/schemas/MFAPolicy'

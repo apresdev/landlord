@@ -198,6 +198,7 @@ func (s *HandleClearImpersonateTestSuite) TestNoEmailClaim() {
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{
 		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
+	claims[authx.CustomTenantClaim] = rt.ID.String()
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
 	err := handleClearImpersonate(app, gt1.c)
@@ -212,6 +213,7 @@ func (s *HandleClearImpersonateTestSuite) TestFailedToUpdateUserAttributes() {
 	claims[authx.CognitoGroupsClaim] = []string{
 		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	claims[authx.EmailClaim] = "foo@example.com"
+	claims[authx.CustomTenantClaim] = rt.ID.String()
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
@@ -228,6 +230,7 @@ func (s *HandleClearImpersonateTestSuite) TestNoSubClaim() {
 	claims[authx.CognitoGroupsClaim] = []string{
 		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	claims[authx.EmailClaim] = "foo@example.com"
+	claims[authx.CustomTenantClaim] = rt.ID.String()
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
@@ -255,6 +258,7 @@ func (s *HandleClearImpersonateTestSuite) TestSuccess() {
 		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	claims[authx.EmailClaim] = "foo@example.com"
 	claims[authx.SubClaim] = "sub-123"
+	claims[authx.CustomTenantClaim] = rt.ID.String()
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(
