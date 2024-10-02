@@ -1,9 +1,9 @@
 # TODOs
 
-* landlord login is broken
-* ensure the backend app does not accept user tokens for authorization,
-should only accept access tokens
-* select browser storage based on login
+* change API responses to send back tenant IDs instead of names
+* add global secondary index to the tenant table for lookup by name and also
+lookup all tenants
+* select browser storage based on login kind
 * grab details from the user pool and user pool client to show in UI
 * cancel invitation action button in the tenant space
 * shake out only the icons we need from font-awesome
@@ -13,11 +13,10 @@ spot in the UI that forces a logout and then redirects back to the login page.
 * handle the "remember me" flag on login
 * encode username as base64 in APIs when used in the URL
 * add ability to give a cross-tenant impersonation permission
-* replace terraform for initializing the user pool with the landlord tool
-  itself -- replace `landlord tenant init` with just `landlord init`
 * how to handle abuse of the unauthenticated landlord APIs? 
     * what does the WAF do to help here?
 * apply handling
+    * handle resolving cognito users that are not in dynamo
     * remove a user from their old group in apply if applicable
     * remove a group from a tenant if it no longer exists
 * REST API for refresh token handling

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/aws/aws-sdk-go-v2/service/sts"
-
 	"github.com/apresdev/landlord/internal/db"
 
 	"github.com/apresdev/landlord/internal/authx"
@@ -53,13 +51,12 @@ func methods[T any](prefix string) []string {
 
 func wildcardResourceCalls() []string {
 	result := make([]string, 0)
-	result = append(result, methods[authx.AWSSTS]("sts")...)
 	result = append(result, methods[authx.AWSSES]("ses")...)
 	result = append(result, methods[authx.AWSCognitoIdentityProvider]("cognito-idp")...)
 	return result
 }
 
-func policyDoc(cs Clients) (*PolicyDocument, error) {
+func policyDoc(tableArn string) (*PolicyDocument, error) {
 	result := NewPolicyDocument()
 	wildcardResourcePolicy := PolicyStatement{
 		Effect:   "Allow",
@@ -67,38 +64,30 @@ func policyDoc(cs Clients) (*PolicyDocument, error) {
 	}
 	wildcardResourcePolicy.Action = wildcardResourceCalls()
 	result.Statement = append(result.Statement, wildcardResourcePolicy)
-	tables := db.TableNames()
 	dynamoMethods := methods[db.AWSDynamoDB]("dynamodb")
-	o, err := cs.Sts().GetCallerIdentity(cs.Ctx(), &sts.GetCallerIdentityInput{})
-	if err != nil {
-		return nil, err
-	}
-	for _, table := range tables {
-		result.Statement = append(result.Statement, PolicyStatement{
-			Effect: "Allow",
-			Action: dynamoMethods,
-			Resource: aws.String(fmt.Sprintf(
-				"arn:aws:dynamodb:%s:%s:table/%s",
-				cs.Cfg().Region, aws.ToString(o.Account), table)),
-		})
-		result.Statement = append(result.Statement, PolicyStatement{
-			Effect: "Allow",
-			Action: []string{"dynamodb:Query"},
-			Resource: aws.String(fmt.Sprintf(
-				"arn:aws:dynamodb:%s:%s:table/%s/index/*",
-				cs.Cfg().Region, aws.ToString(o.Account), table)),
-		})
-	}
+	result.Statement = append(result.Statement, PolicyStatement{
+		Effect:   "Allow",
+		Action:   dynamoMethods,
+		Resource: aws.String(tableArn),
+	})
+	result.Statement = append(result.Statement, PolicyStatement{
+		Effect:   "Allow",
+		Action:   []string{"dynamodb:Query"},
+		Resource: aws.String(tableArn + "/index*"),
+	})
 	return result, nil
 }
 
 func iamCmd() *cobra.Command {
+	var tableArn string
 	c := &cobra.Command{
 		Use:   "iam",
 		Short: "Describe the IAM policy needed for the app",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cs := MustClients()
-			p, err := policyDoc(cs)
+			if tableArn == "" {
+				return fmt.Errorf("--table-arn must be set")
+			}
+			p, err := policyDoc(tableArn)
 			if err != nil {
 				return err
 			}
@@ -110,5 +99,6 @@ func iamCmd() *cobra.Command {
 			return nil
 		},
 	}
+	c.Flags().StringVar(&tableArn, "table-arn", "", "ARN of the Landlord DynamoDB")
 	return c
 }

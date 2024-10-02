@@ -15,14 +15,11 @@ completion: build
 	./landlord completion zsh > $t
 	echo "source $t"
 
-.PHONY: setup-rel
-setup-rel:
-	go install golang.org/x/tools/cmd/goimports@latest
-
 .PHONY: setup
-setup: setup-rel
+setup:
+	go install golang.org/x/tools/cmd/goimports@latest
 	go install github.com/vektra/mockery/v2@v2.43.0
-	go install github.com/a-h/templ/cmd/templ@latest
+	go install github.com/a-h/templ/cmd/templ@v0.2.747
 
 .PHONY: install
 install: build

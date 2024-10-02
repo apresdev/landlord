@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"strings"
+
+	"github.com/google/uuid"
 
 	"github.com/apresdev/landlord/internal/jwx"
 
@@ -25,11 +28,11 @@ import (
 
 type App interface {
 	Cfg() aws.Config
-	Sts() authx.AWSSTS
 	CogIdp() authx.AWSCognitoIdentityProvider
 	Validator() jwx.TokenValidator
 	DDB() db.AWSDynamoDB
 	Settings() appenv.Settings
+	RootTenantID() uuid.UUID
 }
 
 func AddRoutes(a App, baseRoutes *gin.Engine) {
@@ -76,8 +79,8 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 
 	unauthorizedRoutes.GET("/setup-otp", func(c *gin.Context) {
 		otpURI, _ := c.Cookie(LandlordOTPURI)
-		otpImageURI := fmt.Sprintf(
-			"/qrcode?uri=%s", base64.URLEncoding.EncodeToString([]byte(otpURI)))
+		otpImageURI := appPath(fmt.Sprintf(
+			"/qrcode?uri=%s", base64.URLEncoding.EncodeToString([]byte(otpURI))))
 		username, _ := c.Cookie(LandlordUsernameCookie)
 		render(c, setupOTPPage(a.Settings().AppName(), otpImageURI, username))
 	})
@@ -221,9 +224,9 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 
 	if appenv.DevMode() {
 		unauthorizedRoutes.StaticFS(
-			"/static", http.Dir("internal/server/static"))
+			"/static", http.Dir("internal/webapp/static"))
 		baseRoutes.StaticFileFS(
-			"/favicon.ico", "favicon.ico", http.Dir("internal/server/static"))
+			"/favicon.ico", "favicon.ico", http.Dir("internal/webapp/static"))
 	} else {
 		sfs, err := fs.Sub(staticFS, "static")
 		if err != nil {
@@ -318,6 +321,7 @@ func setupContext(app App) gin.HandlerFunc {
 }
 
 func appPath(s string) string {
+	s = strings.TrimPrefix(s, "/")
 	return fmt.Sprintf("/ll-auth/app/%s", s)
 }
 

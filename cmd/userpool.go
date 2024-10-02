@@ -2,14 +2,13 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
+
+	"github.com/apresdev/landlord/internal/appcore"
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
-
 	"github.com/apresdev/landlord/internal/db"
+	"github.com/aws/aws-sdk-go-v2/aws"
 
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/spf13/cobra"
@@ -25,8 +24,8 @@ func userPoolCreateCmd() *cobra.Command {
 			if userpool == "" {
 				return errors.New("userpool must be set")
 			}
-			cs := MustClients()
-			rootTenant, err := db.GetRootTenant(cs.Ctx(), cs.DDB())
+			cs := appcore.Must()
+			rootTenant, err := db.GetRootTenant(cs.Ctx(), cs.DDB(), cs.RootTenantID())
 			if err != nil {
 				return err
 			}
@@ -59,7 +58,7 @@ func userPoolDeleteCmd() *cobra.Command {
 			if userpool != "" && all {
 				return errors.New("cannot specify both --name and --all")
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			if all {
 				err := authx.DeleteAllUserPools(cs.Ctx(), cs.CogIdp())
 				if err != nil {
@@ -83,22 +82,13 @@ func userPoolDeleteCmd() *cobra.Command {
 	return c
 }
 
-func userpoolArn(region, account, userPoolID string) string {
-	return fmt.Sprintf("arn:aws:cognito-idp:%s:%s:userpool/%s",
-		region, account, userPoolID)
-}
-
 func userPoolListCmd() *cobra.Command {
 	var showArn bool
 	c := &cobra.Command{
 		Use:   "list",
 		Short: "List the user pools",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cs := MustClients()
-			id, err := cs.Sts().GetCallerIdentity(cs.Ctx(), &sts.GetCallerIdentityInput{})
-			if err != nil {
-				return err
-			}
+			cs := appcore.Must()
 			userPools, err := authx.GetUserPoolDescriptions(cs.Ctx(), cs.CogIdp())
 			if err != nil {
 				return err
@@ -115,8 +105,7 @@ func userPoolListCmd() *cobra.Command {
 				cmd.Printf("%s id=%s advanced-security=%s\n",
 					aws.ToString(up.Name), aws.ToString(up.Id), adv)
 				if showArn {
-					cmd.Printf("  %s\n", userpoolArn(
-						cs.Cfg().Region, aws.ToString(id.Account), aws.ToString(up.Id)))
+					cmd.Printf("  %s\n", aws.ToString(up.Arn))
 				}
 			}
 			return nil

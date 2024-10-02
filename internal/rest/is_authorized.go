@@ -68,7 +68,8 @@ func isAuthorized(app App) gin.HandlerFunc {
 			}
 			ten = t
 		} else {
-			rootTenant, err := db.GetRootTenant(c.Request.Context(), app.DDB())
+			rootTenant, err := db.GetRootTenant(
+				c.Request.Context(), app.DDB(), app.RootTenantID())
 			if err != nil {
 				zap.L().Error("could not get root tenant", zap.Error(err))
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -146,12 +147,15 @@ func isRequestAuthorizedForRoot(app App, c *gin.Context) (*jwt.Token, error) {
 			zap.Any("groups", groups))
 		return nil, apperr.NewUnauthorized("no groups")
 	}
-	rootTenant, err := db.GetRootTenant(c.Request.Context(), app.DDB())
+	rootTenant, err := db.GetRootTenant(
+		c.Request.Context(), app.DDB(), app.RootTenantID())
 	if err != nil {
 		zap.L().Error("error fetching root tenant", zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
-	if !authx.IsAuthorizedForTenant(c.Request.Context(), app.DDB(), rootTenant, roles) {
+	if !authx.IsAuthorizedForTenant(
+		c.Request.Context(), app.DDB(), app.RootTenantID(), rootTenant, roles) {
+
 		zap.L().Info("not authorized for root",
 			zap.String("clientID", string(cid)),
 			zap.Any("groups", groups))

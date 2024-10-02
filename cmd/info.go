@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/apresdev/landlord/internal/appcore"
 	"github.com/apresdev/landlord/internal/jwx"
 	"github.com/golang-jwt/jwt/v5"
 
@@ -32,7 +33,7 @@ func infoCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := MustSession()
 			cmd.Printf("Tokens:\n")
-			cs := MustClients()
+			cs := appcore.Must()
 			if verbose {
 				if s.AccessToken == "" {
 					cmd.Printf("  Access  : empty\n")

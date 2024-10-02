@@ -22,24 +22,26 @@ import (
 	"github.com/ettle/strcase"
 )
 
-func CreateRootTenant(
+func MustRootTenant(
 	ctx context.Context,
 	ddb db.AWSDynamoDB,
-	cogIdp AWSCognitoIdentityProvider) error {
+	cogIdp AWSCognitoIdentityProvider) uuid.UUID {
 
 	rootTenant, err := db.GetTenantByName(ctx, ddb, multi.RootTenantName)
 	if err != nil && !apperr.IsNotFound(err) {
-		return err
+		zap.L().Fatal("unexpected error getting root tenant", zap.Error(err))
 	}
-	if rootTenant == nil {
-		rootTenant = multi.NewTenant()
+	if rootTenant != nil {
+		return rootTenant.ID
 	}
+
+	rootTenant = multi.NewTenant()
 	rootTenant.Name = multi.RootTenantName
 	rootTenant.Description = multi.RootTenantDescription
 	rootTenant.UserPoolName = os.Getenv("LANDLORD_DEFAULT_USER_POOL")
 	up, err := GetUserPoolByNameOrID(ctx, cogIdp, rootTenant.UserPoolName)
 	if err != nil {
-		return err
+		zap.L().Fatal("error getting user pool for root tenant", zap.Error(err))
 	}
 	rootTenant.UserPoolID = aws.ToString(up.Id)
 	for _, role := range multi.BuiltInRoles {
@@ -47,18 +49,27 @@ func CreateRootTenant(
 			GroupName:  aws.String(rootTenant.GroupName(role)),
 			UserPoolId: aws.String(rootTenant.UserPoolID),
 		})
-		if err != nil {
-			return err
+		var groupExists *cogidptypes.GroupExistsException
+		if err != nil && !errors.As(err, &groupExists) {
+			zap.L().Fatal("error creating group for root tenant", zap.Error(err))
 		}
 	}
 	rootTenant.Roles = multi.BuiltInRoles
-	return db.StoreTenant(ctx, ddb, rootTenant)
+	err = db.StoreTenant(ctx, ddb, rootTenant)
+	if err != nil {
+		zap.L().Fatal("error storing root tenant", zap.Error(err))
+	} else {
+		zap.L().Info("created root tenant",
+			zap.String("id", rootTenant.ID.String()))
+	}
+	return rootTenant.ID
 }
 
 // CreateTenant creates a new tenant in the system.
 func CreateTenant(
 	ctx context.Context,
 	ddb db.AWSDynamoDB,
+	rootTenantID uuid.UUID,
 	cogIdp AWSCognitoIdentityProvider,
 	name string,
 	description string) (*multi.Tenant, error) {
@@ -74,7 +85,7 @@ func CreateTenant(
 	if !apperr.IsNotFound(err) {
 		return nil, apperr.NewInternalE(err)
 	}
-	rootTenant, err := db.GetRootTenant(ctx, ddb)
+	rootTenant, err := db.GetRootTenant(ctx, ddb, rootTenantID)
 	if err != nil {
 		return nil, apperr.NewInternalE(err)
 	}

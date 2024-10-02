@@ -69,7 +69,7 @@ func HandleObtainAccessToken(app App, c *gin.Context, req obtainAccessTokenForm)
 		return nil, apperr.NewBadRequest("missing code verifier in request")
 	}
 	ctx := c.Request.Context()
-	rootTenant, err := db.GetRootTenant(ctx, app.DDB())
+	rootTenant, err := db.GetRootTenant(ctx, app.DDB(), app.RootTenantID())
 	if err != nil {
 		zap.L().Error("Error getting root tenant", zap.Error(err))
 		return nil, apperr.NewUnauthorized("unauthorized")

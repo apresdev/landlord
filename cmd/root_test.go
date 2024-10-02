@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/apresdev/landlord/internal/appcore"
+
 	"github.com/apresdev/landlord/internal/localstack"
 
 	"github.com/apresdev/landlord/internal/authx"
@@ -34,14 +36,14 @@ func TestRootTestSuite(t *testing.T) {
 func (s *RootTestSuite) SetupTest() {
 	s.cmd = cmd.Root()
 	s.cmd.SetOut(&s.out)
-	cs := cmd.MustClients()
+	cs := appcore.Must()
 	err := authx.DeleteAllUserPools(cs.Ctx(), cs.CogIdp())
 	s.NoError(err)
 }
 
 func (s *RootTestSuite) TearDownTest() {
 	s.out.Reset()
-	cs := cmd.MustClients()
+	cs := appcore.Must()
 	err := authx.DeleteAllUserPools(cs.Ctx(), cs.CogIdp())
 	s.NoError(err)
 }

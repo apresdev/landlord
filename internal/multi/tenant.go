@@ -41,14 +41,15 @@ func ParseTenantState(state string) (TenantState, error) {
 }
 
 type Tenant struct {
-	ID             uuid.UUID   `dynamodbav:"id"`
+	ID             uuid.UUID   `dynamodbav:"-"` // sk -- pk is 'Global:*'
+	Name           string      `dynamodbav:"-"` // altName
 	State          TenantState `dynamodbav:"state"`
-	Name           string      `dynamodbav:"name"`
 	Description    string      `dynamodbav:"description"`
 	Roles          []string    `dynamodbav:"roles"`
-	UserPoolName   string      `dynamodbav:"user_pool_name"`
-	UserPoolID     string      `dynamodbav:"user_pool_id"`
-	SubTenantRoles []string    `dynamodbav:"sub_tenant_roles"`
+	UserPoolID     string      `dynamodbav:"userPoolID"`
+	UserPoolName   string      `dynamodbav:"userPoolName"`
+	SubTenantRoles []string    `dynamodbav:"subTenantRoles"`
+	EmailDomains   []string    `dynamodbav:"emailDomains"`
 }
 
 func MustNewTenantID() uuid.UUID {

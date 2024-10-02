@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/google/uuid"
+
 	"github.com/apresdev/landlord/internal/appenv"
 
 	"github.com/apresdev/landlord/internal/authx"
@@ -17,20 +19,16 @@ import (
 )
 
 type MockApp struct {
-	cfg       aws.Config
-	sts       mocks.AWSSTS
-	cogIdp    mocks.AWSCognitoIdentityProvider
-	validator mocks.TokenValidator
-	ddb       mocks.AWSDynamoDB
-	settings  appenv.Settings
+	cfg          aws.Config
+	cogIdp       mocks.AWSCognitoIdentityProvider
+	validator    mocks.TokenValidator
+	ddb          mocks.AWSDynamoDB
+	settings     appenv.Settings
+	rootTenantID uuid.UUID
 }
 
 func (m *MockApp) Cfg() aws.Config {
 	return m.cfg
-}
-
-func (m *MockApp) Sts() authx.AWSSTS {
-	return &m.sts
 }
 
 func (m *MockApp) CogIdp() authx.AWSCognitoIdentityProvider {
@@ -49,8 +47,15 @@ func (m *MockApp) Settings() appenv.Settings {
 	return m.settings
 }
 
+func (m *MockApp) RootTenantID() uuid.UUID {
+	return m.rootTenantID
+}
+
 func NewMockApp() *MockApp {
-	return &MockApp{settings: appenv.Settings{}}
+	return &MockApp{
+		settings:     appenv.Settings{},
+		rootTenantID: uuid.New(),
+	}
 }
 
 type ginTest struct {

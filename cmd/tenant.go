@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/apresdev/landlord/internal/appcore"
+
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
 	"github.com/skip2/go-qrcode"
@@ -18,8 +20,6 @@ import (
 
 	"github.com/apresdev/landlord/internal/db"
 	"github.com/apresdev/landlord/internal/multi"
-	"github.com/google/uuid"
-
 	"go.uber.org/zap"
 
 	"github.com/apresdev/landlord/internal/authx"
@@ -39,7 +39,7 @@ func tenantActivateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
@@ -74,7 +74,7 @@ func tenantApplyCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
@@ -98,8 +98,9 @@ func tenantCreateCmd() *cobra.Command {
 		Use:   "create",
 		Short: "Create a tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cs := MustClients()
-			ten, err := authx.CreateTenant(cs.Ctx(), cs.DDB(), cs.CogIdp(), name, description)
+			cs := appcore.Must()
+			ten, err := authx.CreateTenant(
+				cs.Ctx(), cs.DDB(), cs.RootTenantID(), cs.CogIdp(), name, description)
 			if err != nil {
 				return err
 			}
@@ -127,7 +128,7 @@ func tenantDeactivateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
@@ -152,7 +153,7 @@ func tenantDeactivateCmd() *cobra.Command {
 func tenantEmailDomainCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "email-domain",
-		Short: "Username domain sub-command",
+		Short: "Email domain sub-command",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
 		},
@@ -165,7 +166,6 @@ func tenantEmailDomainCmd() *cobra.Command {
 func tenantEmailDomainAddCmd() *cobra.Command {
 	var tenant string
 	var domain string
-	var allowed bool
 	c := &cobra.Command{
 		Use:   "add",
 		Short: "Add an email domain to a tenant",
@@ -180,37 +180,18 @@ func tenantEmailDomainAddCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
 			}
-			dom, err := db.GetEmailDomain(cs.Ctx(), cs.DDB(), domain)
-			if err != nil && !apperr.IsNotFound(err) {
-				return err
+			if slices.Contains(ten.EmailDomains, domain) {
+				cmd.Printf("Email domain %s already added to tenant %s\n", domain, ten.Name)
+				return nil
 			}
-			if apperr.IsNotFound(err) {
-				dom = &db.EmailDomain{Domain: domain, TenantIDs: []uuid.UUID{h.ID}}
-				if !allowed {
-					dom.Exclusive = true
-				}
-				if err := db.StoreEmailDomain(cs.Ctx(), cs.DDB(), dom); err != nil {
-					return err
-				}
-			} else {
-				if allowed {
-					if dom.Exclusive {
-						return errors.New("domain already configured as exclusive")
-					}
-					if idx := slices.Index(dom.TenantIDs, h.ID); idx == -1 {
-						cmd.Printf("domain already configured as allowed for tenant\n")
-						return nil
-					}
-					dom.TenantIDs = append(dom.TenantIDs, h.ID)
-					if err := db.StoreEmailDomain(cs.Ctx(), cs.DDB(), dom); err != nil {
-						return err
-					}
-				}
+			ten.EmailDomains = append(ten.EmailDomains, domain)
+			if err := db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+				return err
 			}
 			cmd.Printf("Added email domain %s to tenant %s\n", domain, ten.Name)
 			return nil
@@ -218,8 +199,6 @@ func tenantEmailDomainAddCmd() *cobra.Command {
 	}
 	addTenantFlag(c, &tenant)
 	addDomainFlag(c, &domain)
-	c.PersistentFlags().BoolVarP(
-		&allowed, "allowed", "", false, "Add the email domain as allowed")
 	return c
 }
 
@@ -240,30 +219,19 @@ func tenantEmailDomainRemoveCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
 			}
-			dom, err := db.GetEmailDomain(cs.Ctx(), cs.DDB(), domain)
-			if err != nil {
-				return err
-			}
-			idx := slices.Index(dom.TenantIDs, ten.ID)
+			idx := slices.Index(ten.EmailDomains, domain)
 			if idx == -1 {
-				return errors.New("domain not configured for tenant")
+				cmd.Printf("Email domain %s not found for tenant %s\n", domain, ten.Name)
+				return nil
 			}
-			dom.TenantIDs = append(dom.TenantIDs[:idx], dom.TenantIDs[idx+1:]...)
-			if len(dom.TenantIDs) == 0 {
-				err = db.DeleteEmailDomain(cs.Ctx(), cs.DDB(), domain)
-				if err != nil {
-					return err
-				}
-			} else {
-				err = db.StoreEmailDomain(cs.Ctx(), cs.DDB(), dom)
-				if err != nil {
-					return err
-				}
+			ten.EmailDomains = append(ten.EmailDomains[:idx], ten.EmailDomains[idx+1:]...)
+			if err := db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+				return err
 			}
 			cmd.Printf("Removed email domain %s from tenant %s\n", domain, ten.Name)
 			return nil
@@ -271,30 +239,6 @@ func tenantEmailDomainRemoveCmd() *cobra.Command {
 	}
 	addTenantFlag(c, &tenant)
 	addDomainFlag(c, &domain)
-	return c
-}
-
-func tenantInitCmd() *cobra.Command {
-	var reinit bool
-	c := &cobra.Command{
-		Use:   "init",
-		Short: "Initialize the tenant database",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cs := MustClients()
-			if reinit {
-				if err := db.DeleteTables(cs.Ctx(), cs.DDB()); err != nil {
-					return err
-				}
-			}
-			err := db.Init(cs.Ctx(), cs.DDB())
-			if err != nil {
-				return err
-			}
-			return authx.CreateRootTenant(cs.Ctx(), cs.DDB(), cs.CogIdp())
-		},
-	}
-	c.PersistentFlags().BoolVarP(
-		&reinit, "reinit", "", false, "Reinitialize the tenant database")
 	return c
 }
 
@@ -320,7 +264,7 @@ func tenantInviteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
@@ -369,7 +313,10 @@ func displayTenant(cmd *cobra.Command, ten *multi.Tenant) {
 			}
 		}
 	}
-	users, err := db.GetUsersForTenant(cmd.Context(), MustClients().DDB(), ten.ID)
+	if len(ten.EmailDomains) > 0 {
+		cmd.Printf("  Email Domains: %s\n", strings.Join(ten.EmailDomains, ", "))
+	}
+	users, err := db.GetUsersForTenant(cmd.Context(), appcore.Must().DDB(), ten.ID)
 	if err != nil {
 		zap.L().Error("Error getting users for tenant", zap.Error(err))
 	} else {
@@ -391,7 +338,7 @@ func tenantListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List the tenants",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cs := MustClients()
+			cs := appcore.Must()
 			if id != "" {
 				h, err := multi.ParseTenantHandle(id)
 				if err != nil {
@@ -455,7 +402,7 @@ func tenantRoleAddCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
@@ -501,7 +448,7 @@ func tenantRoleEnsureCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
@@ -552,7 +499,7 @@ func tenantRoleRemoveCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
@@ -620,7 +567,7 @@ func tenantSubTenantRoleAddCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
@@ -660,7 +607,7 @@ func tenantSubTenantRoleRemoveCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
@@ -713,7 +660,7 @@ func tenantUserAssociateOTP() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			result, err := authx.AssociateSoftwareToken(
 				cs.Ctx(), cs.CogIdp(), "Landlord CLI", s.AccessToken, e.Address())
 			if err != nil {
@@ -754,7 +701,7 @@ func tenantUserListEvents() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			result, err := cs.CogIdp().AdminListUserAuthEvents(cs.Ctx(),
 				&cognitoidentityprovider.AdminListUserAuthEventsInput{
 					UserPoolId: aws.String(s.UserPool),
@@ -821,7 +768,7 @@ func tenantUserVerifyOTP() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
@@ -863,7 +810,7 @@ func tenantUserRemoveCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
@@ -873,7 +820,12 @@ func tenantUserRemoveCmd() *cobra.Command {
 			if err != nil {
 				zap.L().Info("Error deleting user from user pool", zap.Error(err))
 			}
-			if err = db.DeleteUser(cs.Ctx(), cs.DDB(), ten.ID, e.Address()); err != nil {
+			user, err := db.GetUserByName(cs.Ctx(), cs.DDB(), username)
+			if err != nil {
+				zap.L().Info("Error getting user", zap.Error(err))
+				return err
+			}
+			if err = db.DeleteUser(cs.Ctx(), cs.DDB(), user); err != nil {
 				return err
 			}
 			cmd.Printf("Removed user %s from tenant %s\n", e.Address(), ten.Name)
@@ -903,7 +855,7 @@ func tenantUserRoleCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
 			if err != nil {
 				return err
@@ -912,7 +864,7 @@ func tenantUserRoleCmd() *cobra.Command {
 				return fmt.Errorf("role '%s' does not exist, pick one of: %s\n",
 					role, strings.Join(ten.Roles, ", "))
 			}
-			user, err := db.GetUser(cs.Ctx(), cs.DDB(), username)
+			user, err := db.GetUserByName(cs.Ctx(), cs.DDB(), username)
 			if err != nil {
 				return err
 			}
@@ -950,7 +902,7 @@ func tenantUserPoolCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := MustClients()
+			cs := appcore.Must()
 			up, err := authx.GetUserPoolByNameOrID(cs.Ctx(), cs.CogIdp(), userpool)
 			if err != nil {
 				return err
@@ -992,7 +944,6 @@ func tenantCmd() *cobra.Command {
 	c.AddCommand(tenantCreateCmd())
 	c.AddCommand(tenantDeactivateCmd())
 	c.AddCommand(tenantEmailDomainCmd())
-	c.AddCommand(tenantInitCmd())
 	c.AddCommand(tenantInviteCmd())
 	c.AddCommand(tenantListCmd())
 	c.AddCommand(tenantRoleCmd())

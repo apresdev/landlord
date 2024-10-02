@@ -50,7 +50,9 @@ func handleUpdateUser(app App, c *gin.Context) error {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	for _, ten := range allTenants {
-		if authx.IsAuthorizedForTenant(c.Request.Context(), app.DDB(), ten, roles) {
+		if authx.IsAuthorizedForTenant(
+			c.Request.Context(), app.DDB(), app.RootTenantID(), ten, roles) {
+
 			resp.Tenants = append(resp.Tenants, Tenant{
 				Id:          ten.ID.String(),
 				Name:        ten.Name,

@@ -102,10 +102,11 @@ const (
 )
 
 type Settings struct {
-	url        *url.URL
-	appName    string
-	adminEmail string
-	routes     RouteSetting
+	url         *url.URL
+	appName     string
+	adminEmail  string
+	routes      RouteSetting
+	dbTableName string
 }
 
 func (s Settings) URL() *url.URL {
@@ -122,6 +123,10 @@ func (s Settings) AdminEmail() string {
 
 func (s Settings) Routes() RouteSetting {
 	return s.routes
+}
+
+func (s Settings) DBTableName() string {
+	return s.dbTableName
 }
 
 func MustSettings() Settings {
@@ -155,5 +160,9 @@ func MustSettings() Settings {
 			zap.L().Fatal("LANDLORD_APP_ROUTES must be one of 'both', 'rest', or 'webapp'")
 		}
 	}
-	return Settings{url: up, appName: n, adminEmail: e, routes: rs}
+	t := os.Getenv("LANDLORD_DB_TABLE_NAME")
+	if t == "" {
+		zap.L().Fatal("LANDLORD_DB_TABLE_NAME not set")
+	}
+	return Settings{url: up, appName: n, adminEmail: e, routes: rs, dbTableName: t}
 }

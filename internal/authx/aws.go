@@ -5,19 +5,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 
-	"github.com/aws/aws-sdk-go-v2/service/sts"
-
 	"github.com/aws/aws-sdk-go-v2/service/ses"
 )
-
-//go:generate mockery --output ../mocks --name AWSSTS --with-expecter=true
-type AWSSTS interface {
-	GetCallerIdentity(
-		ctx context.Context,
-		params *sts.GetCallerIdentityInput,
-		optFns ...func(*sts.Options)) (
-		*sts.GetCallerIdentityOutput, error)
-}
 
 //go:generate mockery --output ../mocks --name AWSSES --with-expecter=true
 type AWSSES interface {

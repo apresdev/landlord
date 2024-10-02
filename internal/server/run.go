@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/apresdev/landlord/internal/appcore"
+
 	"go.uber.org/zap"
 
 	"github.com/apresdev/landlord/internal/webapp"
@@ -20,17 +22,17 @@ func Run() error {
 		return err
 	}
 
-	a := newApp(MustClients())
+	a := appcore.Must()
 
-	if a.settings.Routes() == appenv.RouteSettingBoth {
+	if a.Settings().Routes() == appenv.RouteSettingBoth {
 		rest.AddRoutes(a, baseRoutes)
 		webapp.AddRoutes(a, baseRoutes)
-	} else if a.settings.Routes() == appenv.RouteSettingRest {
+	} else if a.Settings().Routes() == appenv.RouteSettingRest {
 		rest.AddRoutes(a, baseRoutes)
-	} else if a.settings.Routes() == appenv.RouteSettingWebApp {
+	} else if a.Settings().Routes() == appenv.RouteSettingWebApp {
 		webapp.AddRoutes(a, baseRoutes)
 	} else {
-		zap.L().Fatal("Invalid route setting", zap.Any("setting", a.settings.Routes()))
+		zap.L().Fatal("Invalid route setting", zap.Any("setting", a.Settings().Routes()))
 	}
 
 	listenAddr, err := parseListenAddr(os.Getenv("LANDLORD_LISTEN_ADDR"))

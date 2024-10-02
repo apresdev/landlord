@@ -15,74 +15,40 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	tenantsTable = "landlord-tenants"
-	idAttr       = "id"
-	nameAttr     = "name"
-)
-
-func initTenants(ctx context.Context, ddb AWSDynamoDB) error {
-	attrs := []types.AttributeDefinition{
-		{
-			AttributeName: aws.String(idAttr),
-			AttributeType: types.ScalarAttributeTypeB,
-		},
-		{
-			AttributeName: aws.String(nameAttr),
-			AttributeType: types.ScalarAttributeTypeS,
-		},
-	}
-	keySchema := []types.KeySchemaElement{
-		{
-			AttributeName: aws.String(idAttr),
-			KeyType:       types.KeyTypeHash,
-		},
-	}
-	secIndexes := []types.GlobalSecondaryIndex{
-		{
-			IndexName: aws.String("sec_index_" + nameAttr),
-			KeySchema: []types.KeySchemaElement{
-				{
-					AttributeName: aws.String(nameAttr),
-					KeyType:       types.KeyTypeHash,
-				},
-			},
-			Projection: &types.Projection{
-				ProjectionType: types.ProjectionTypeAll,
-			},
-		},
-	}
-	return ensureTable(ctx, ddb, tenantsTable, attrs, keySchema, secIndexes)
-}
-
 func StoreTenant(ctx context.Context, ddb AWSDynamoDB, ten *multi.Tenant) error {
+	if ten.ID == uuid.Nil {
+		return apperr.NewInternal("cannot store tenant with nil ID")
+	}
+	if ten.Name == "" {
+		return apperr.NewInternal("cannot store tenant with empty name")
+	}
+
 	av, err := attributevalue.MarshalMap(ten)
 	if err != nil {
 		return err
 	}
+	av["pk"] = &types.AttributeValueMemberS{Value: GlobalEntityID("*")}
+	av["sk"] = &types.AttributeValueMemberS{Value: TenantEntityID(ten.ID.String())}
+	av["altName"] = &types.AttributeValueMemberS{Value: TenantEntityID(ten.Name)}
 	input := &dynamodb.PutItemInput{
 		Item:      av,
-		TableName: aws.String(tenantsTable),
+		TableName: aws.String(tableName),
 	}
 	_, err = ddb.PutItem(ctx, input)
 	if err != nil {
 		return apperr.NewInternalE(
-			fmt.Errorf("failed to put item to %s: %w", tenantsTable, err))
+			fmt.Errorf("failed to put item to %s: %w", tableName, err))
 	}
 	return err
 }
 
 func GetTenantByID(ctx context.Context, ddb AWSDynamoDB, id uuid.UUID) (*multi.Tenant, error) {
-	b, err := id.MarshalBinary()
-	if err != nil {
-		return nil, apperr.NewBadRequestE(
-			fmt.Errorf("failed to marshal UUID to binary: %w", err))
-	}
+	kv := make(map[string]types.AttributeValue)
+	kv["pk"] = &types.AttributeValueMemberS{Value: GlobalEntityID("*")}
+	kv["sk"] = &types.AttributeValueMemberS{Value: TenantEntityID(id.String())}
 	input := &dynamodb.GetItemInput{
-		TableName: aws.String(tenantsTable),
-		Key: map[string]types.AttributeValue{
-			idAttr: &types.AttributeValueMemberB{Value: b},
-		},
+		TableName: aws.String(tableName),
+		Key:       kv,
 	}
 	result, err := ddb.GetItem(ctx, input)
 	if err != nil {
@@ -92,69 +58,62 @@ func GetTenantByID(ctx context.Context, ddb AWSDynamoDB, id uuid.UUID) (*multi.T
 	if result.Item == nil {
 		return nil, apperr.NewNotFound("item not found")
 	}
-	var tenant multi.Tenant
-	err = attributevalue.UnmarshalMap(result.Item, &tenant)
-	if err != nil {
-		return nil, apperr.NewInternalE(
-			fmt.Errorf("failed to unmarshal DynamoDB item to Tenant: %w", err))
-	}
-	return &tenant, nil
+	return unmarshalTenant(result.Item)
 }
 
 func GetTenantByName(ctx context.Context, ddb AWSDynamoDB, name string) (*multi.Tenant, error) {
+	kv := make(map[string]types.AttributeValue)
+	kv[":altName"] = &types.AttributeValueMemberS{Value: TenantEntityID(name)}
 	input := &dynamodb.QueryInput{
-		TableName:              aws.String(tenantsTable),
-		IndexName:              aws.String("sec_index_name"),
-		KeyConditionExpression: aws.String("#name = :n"),
-		ExpressionAttributeNames: map[string]string{
-			"#name": nameAttr,
-		},
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":n": &types.AttributeValueMemberS{Value: name},
-		},
+		TableName:                 aws.String(tableName),
+		IndexName:                 aws.String("altNameIndex"),
+		KeyConditionExpression:    aws.String("altName = :altName"),
+		ExpressionAttributeValues: kv,
 	}
-	o, err := ddb.Query(ctx, input)
+	result, err := ddb.Query(ctx, input)
 	if err != nil {
 		return nil, apperr.NewInternalE(
-			fmt.Errorf("failed to query DynamoDB: %w", err))
+			fmt.Errorf("failed to get item from DynamoDB: %w", err))
 	}
-	if o.Items == nil || len(o.Items) == 0 {
+	if len(result.Items) == 0 {
 		return nil, apperr.NewNotFound("item not found")
 	}
-	if len(o.Items) > 1 {
-		return nil, apperr.NewInternal("multiple items found")
-	}
-	tenant := multi.NewTenant()
-	err = attributevalue.UnmarshalMap(o.Items[0], &tenant)
-	if err != nil {
+	if len(result.Items) > 1 {
 		return nil, apperr.NewInternalE(
-			fmt.Errorf("failed to unmarshal DynamoDB item to Tenant: %w", err))
+			fmt.Errorf("unexpected multiple items found for tenant name %s", name))
 	}
-	return tenant, nil
+	return unmarshalTenant(result.Items[0])
 }
 
-func GetRootTenant(ctx context.Context, ddb AWSDynamoDB) (*multi.Tenant, error) {
-	return GetTenantByName(ctx, ddb, multi.RootTenantName)
+func GetRootTenant(
+	ctx context.Context,
+	ddb AWSDynamoDB,
+	rootTenantID uuid.UUID) (*multi.Tenant, error) {
+
+	return GetTenantByID(ctx, ddb, rootTenantID)
 }
 
 func GetAllTenants(ctx context.Context, ddb AWSDynamoDB) ([]*multi.Tenant, error) {
-	input := &dynamodb.ScanInput{
-		TableName: aws.String(tenantsTable),
+	kv := make(map[string]types.AttributeValue)
+	kv[":pk"] = &types.AttributeValueMemberS{Value: GlobalEntityID("*")}
+	kv[":skPrefix"] = &types.AttributeValueMemberS{Value: TenantEntityID("")}
+	input := &dynamodb.QueryInput{
+		TableName:                 aws.String(tableName),
+		KeyConditionExpression:    aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
+		ExpressionAttributeValues: kv,
 	}
-	result, err := ddb.Scan(ctx, input)
+	result, err := ddb.Query(ctx, input)
 	if err != nil {
 		return nil, apperr.NewInternalE(
 			fmt.Errorf("failed to scan DynamoDB: %w", err))
 	}
 	var tenants []*multi.Tenant
 	for _, item := range result.Items {
-		var tenant multi.Tenant
-		err = attributevalue.UnmarshalMap(item, &tenant)
+		tenant, err := unmarshalTenant(item)
 		if err != nil {
-			return nil, apperr.NewInternalE(
-				fmt.Errorf("failed to unmarshal DynamoDB item to Tenant: %w", err))
+			return nil, err
 		}
-		tenants = append(tenants, &tenant)
+		tenants = append(tenants, tenant)
 	}
 	// Sort tenants by name, with root tenant always first
 	sort.Slice(tenants, func(i, j int) bool {
@@ -177,4 +136,48 @@ func ResolveTenant(ctx context.Context, ddb AWSDynamoDB, h multi.TenantHandle) (
 		return GetTenantByID(ctx, ddb, h.ID)
 	}
 	return GetTenantByName(ctx, ddb, h.Name)
+}
+
+func parseEntityUUID(v types.AttributeValue, entityPrefix string) (uuid.UUID, error) {
+	if v == nil {
+		return uuid.Nil, apperr.NewInternal("missing entity ID")
+	}
+	s, ok := v.(*types.AttributeValueMemberS)
+	if !ok {
+		return uuid.Nil, apperr.NewInternal("entity ID is not a string")
+	}
+	idStr, err := StripEntityID(entityPrefix, s.Value)
+	if err != nil {
+		return uuid.Nil, apperr.NewInternalE(
+			fmt.Errorf("failed to strip entity ID: %w", err))
+	}
+	return uuid.Parse(idStr)
+}
+
+func parseEntityName(v types.AttributeValue, entityPrefix string) (string, error) {
+	s, err := resolveStr(v)
+	if err != nil {
+		return "", err
+	}
+	return StripEntityID(entityPrefix, s)
+}
+
+func unmarshalTenant(kv map[string]types.AttributeValue) (*multi.Tenant, error) {
+	var tenant multi.Tenant
+	err := attributevalue.UnmarshalMap(kv, &tenant)
+	if err != nil {
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to unmarshal DynamoDB item to Tenant: %w", err))
+	}
+	tenant.ID, err = parseEntityUUID(kv["sk"], EntityNameTenant)
+	if err != nil {
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to parse tenant ID: %w", err))
+	}
+	tenant.Name, err = parseEntityName(kv["altName"], EntityNameTenant)
+	if err != nil {
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("failed to strip entity ID: %w", err))
+	}
+	return &tenant, nil
 }

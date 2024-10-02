@@ -23,7 +23,7 @@ func GetUserPoolDescriptions(
 
 	result := make([]types.UserPoolDescriptionType, 0)
 	maxResults := MaxPagingResults
-	nextToken := newNextToken()
+	nextToken := NewNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
 		NextToken:  &nextToken,
@@ -64,7 +64,7 @@ func getUserPoolDescriptions(
 	[]types.UserPoolDescriptionType, error) {
 
 	maxResults := MaxPagingResults
-	nextToken := newNextToken()
+	nextToken := NewNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
 		NextToken:  &nextToken,
@@ -256,7 +256,7 @@ func DeleteAllUserPools(
 	cogIdp AWSCognitoIdentityProvider) error {
 
 	maxResults := MaxPagingResults
-	nextToken := newNextToken()
+	nextToken := NewNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
 		NextToken:  &nextToken,

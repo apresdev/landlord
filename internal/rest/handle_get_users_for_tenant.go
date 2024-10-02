@@ -34,7 +34,9 @@ func handleGetUsersForTenant(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewNotFound(err.Error())
 	}
-	if !authx.IsAuthorizedForTenant(c.Request.Context(), app.DDB(), ten, ur.Roles) {
+	if !authx.IsAuthorizedForTenant(
+		c.Request.Context(), app.DDB(), app.RootTenantID(), ten, ur.Roles) {
+
 		zap.L().Info("user not unauthorized for tenant",
 			zap.String("clientID", string(ur.ClientID)),
 			zap.String("username", ur.Username),
