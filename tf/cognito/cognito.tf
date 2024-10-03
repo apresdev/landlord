@@ -57,7 +57,7 @@ resource "aws_cognito_user_pool" "default" {
 
     string_attribute_constraints {
       min_length = 5
-      max_length = 256
+      max_length = 128
     }
   }
 
@@ -69,7 +69,23 @@ resource "aws_cognito_user_pool" "default" {
     required                 = false
 
     string_attribute_constraints {
-      max_length = 64
+      # String representation of a UUID in the form
+      # "123e4567-e89b-12d3-a456-426614174000"
+      max_length = 36
+    }
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "impersonate_tenant"
+    required                 = false
+
+    string_attribute_constraints {
+      # String representation of a UUID in the form
+      # "123e4567-e89b-12d3-a456-426614174000"
+      max_length = 36
     }
   }
 
@@ -81,7 +97,9 @@ resource "aws_cognito_user_pool" "default" {
     required                 = false
 
     string_attribute_constraints {
-      max_length = 64
+      # String of the form:
+      # tenant-<tenant-uuid>-<role-name>
+      max_length = 128
     }
   }
 
@@ -89,11 +107,26 @@ resource "aws_cognito_user_pool" "default" {
     attribute_data_type      = "String"
     developer_only_attribute = false
     mutable                  = true
-    name                     = "impersonate_user"
+    name                     = "impersonate_email"
     required                 = false
 
     string_attribute_constraints {
+      min_length = 5
       max_length = 128
+    }
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "impersonate_sub"
+    required                 = false
+
+    string_attribute_constraints {
+      # String representation of a UUID in the form
+      # "123e4567-e89b-12d3-a456-426614174000"
+      max_length = 36
     }
   }
 
