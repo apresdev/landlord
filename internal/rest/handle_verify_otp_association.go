@@ -3,6 +3,8 @@ package rest
 import (
 	"net/http"
 
+	"github.com/apresdev/landlord/internal/multi"
+
 	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/db"
@@ -28,10 +30,21 @@ func HandleVerifyOTPAssociation(
 	req VerifyOtpAssociationRequest) error {
 
 	ctx := c.Request.Context()
-	_, ten, err := db.GetUserAndTenant(ctx, app.DDB(), req.Username)
+	user, ten, err := db.GetUserAndTenant(ctx, app.DDB(), req.Username)
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	return authx.VerifySoftwareToken(
+	err = authx.VerifySoftwareToken(
 		ctx, app.CogIdp(), ten.UserPoolID, req.AccessToken, req.Username, req.OtpCode)
+	if err != nil {
+		return apperr.NewBadRequest(err.Error())
+	}
+	if user.Status == multi.UserStatusPendingMFA {
+		user.Status = multi.UserStatusActive
+		err = db.StoreUser(ctx, app.DDB(), user)
+		if err != nil {
+			return apperr.NewInternal(err.Error())
+		}
+	}
+	return nil
 }

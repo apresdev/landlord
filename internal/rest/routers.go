@@ -132,6 +132,12 @@ func getRoutes() []Route {
 			ginUpdateUser,
 		},
 		{
+			"UpdateUserMFA",
+			http.MethodPut,
+			"/ll-auth/api/tenants/:tenantID/users/:username/mfa",
+			ginUpdateUserMFA,
+		},
+		{
 			"ValidateMFACode",
 			http.MethodPost,
 			"/ll-auth/api/validate-mfa-code",

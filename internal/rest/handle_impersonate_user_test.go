@@ -203,6 +203,7 @@ func (s *HandleImpersonateUserTestSuite) TestSuccess() {
 		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	claims[authx.EmailClaim] = "foo@example.com"
 	claims[authx.SubClaim] = "sub-123"
+	claims[authx.CustomTenantClaim] = rt.ID.String()
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(TokenKey, tok)
 

@@ -18,7 +18,7 @@ import (
 )
 
 func handleGetUsersForTenant(app App, c *gin.Context) error {
-	ur, err := resolveUser(c)
+	rc, err := requesterContext(c)
 	if err != nil {
 		return err
 	}
@@ -35,11 +35,11 @@ func handleGetUsersForTenant(app App, c *gin.Context) error {
 		return apperr.NewNotFound(err.Error())
 	}
 	if !authx.IsAuthorizedForTenant(
-		c.Request.Context(), app.DDB(), app.RootTenantID(), ten, ur.Roles) {
+		c.Request.Context(), app.DDB(), app.RootTenantID(), ten, rc.roles) {
 
 		zap.L().Info("user not unauthorized for tenant",
-			zap.String("clientID", string(ur.ClientID)),
-			zap.String("username", ur.Username),
+			zap.String("clientID", string(rc.cid)),
+			zap.String("username", rc.username),
 			zap.String("tenantID", ten.ID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}

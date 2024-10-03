@@ -4,20 +4,22 @@ import (
 	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/jwx"
+	"github.com/apresdev/landlord/internal/multi"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 )
 
-type UserResolution struct {
-	Username    string
-	Tenant      string
-	Roles       authx.Roles
-	ClientID    jwx.OpaqueClientID
-	AccessToken string
+type requesterCtx struct {
+	cid         jwx.OpaqueClientID
+	accessToken *jwt.Token
+	username    string
+	groups      []string
+	roles       authx.Roles
+	th          multi.TenantHandle
 }
 
-func resolveUser(c *gin.Context) (*UserResolution, error) {
+func requesterContext(c *gin.Context) (*requesterCtx, error) {
 	t, ok := c.Get(TokenKey)
 	if !ok {
 		return nil, apperr.NewUnauthorized("no token")
@@ -30,7 +32,7 @@ func resolveUser(c *gin.Context) (*UserResolution, error) {
 	cid := clientID(c)
 	groups, err := jwx.GetClaimStrings(tok, authx.CognitoGroupsClaim)
 	if !ok {
-		zap.L().Error("could not get groups",
+		zap.L().Error("could get groups",
 			zap.String("clientID", string(cid)),
 			zap.Error(err),
 			zap.Any("token", tok))
@@ -46,25 +48,32 @@ func resolveUser(c *gin.Context) (*UserResolution, error) {
 	}
 	username, err := jwx.GetClaimString(tok, authx.EmailClaim)
 	if err != nil {
-		zap.L().Error("could not get username",
+		zap.L().Error("could not get username from token",
 			zap.String("clientID", string(cid)),
-			zap.Error(err),
-			zap.Any("token", tok))
-		return nil, apperr.NewUnauthorized("no username")
+			zap.Error(err))
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	tenant, err := jwx.GetClaimString(tok, authx.CustomTenantClaim)
 	if err != nil {
-		zap.L().Error("could not get tenant",
+		zap.L().Error("could not get tenant claim",
 			zap.String("clientID", string(cid)),
 			zap.Error(err),
 			zap.Any("token", tok))
 		return nil, apperr.NewUnauthorized("no tenant")
 	}
-	return &UserResolution{
-		Username:    username,
-		Tenant:      tenant,
-		Roles:       roles,
-		ClientID:    cid,
-		AccessToken: tok.Raw,
+	th, err := multi.ParseTenantHandle(tenant)
+	if err != nil {
+		zap.L().Error("error parsing tenant handle",
+			zap.Error(err),
+			zap.String("tenantID", tenant))
+		return nil, apperr.NewUnauthorized("invalid tenant")
+	}
+	return &requesterCtx{
+		cid:         cid,
+		accessToken: tok,
+		username:    username,
+		groups:      groups,
+		roles:       roles,
+		th:          th,
 	}, nil
 }

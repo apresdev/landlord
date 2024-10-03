@@ -214,6 +214,13 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 					"Error cancelling invite: %v", err)
 			}
 		})
+	authorizedRoutes.POST("/admin/tenants/:tenantID/users/:username/mfa",
+		func(c *gin.Context) {
+			if err := handleUpdateMFA(a, c); err != nil {
+				c.String(http.StatusInternalServerError,
+					"Error handling MFA: %v", err)
+			}
+		})
 
 	authorizedRoutes.GET("/admin/profile", func(c *gin.Context) {
 		if err := handleAdminProfile(a, c); err != nil {

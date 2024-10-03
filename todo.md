@@ -1,8 +1,12 @@
 # TODOs
 
+* React UI flow for adding MFA
+* how to remove MFA?
+* figure out terraform for how to configure email and SMS
 * change API responses to send back tenant IDs instead of names
 * add global secondary index to the tenant table for lookup by name and also
 lookup all tenants
+* why do some apps ask for two codes when signing up to MFA?
 * select browser storage based on login kind
 * grab details from the user pool and user pool client to show in UI
 * cancel invitation action button in the tenant space

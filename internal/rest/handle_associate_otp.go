@@ -18,12 +18,12 @@ func handleAssociateOTP(app App, c *gin.Context) error {
 
 func HandleAssociateOTP(app App, c *gin.Context) (*AssociateOtpResponse, error) {
 	ctx := c.Request.Context()
-	ur, err := resolveUser(c)
+	rc, err := requesterContext(c)
 	if err != nil {
 		return nil, err
 	}
 	result, err := authx.AssociateSoftwareToken(
-		ctx, app.CogIdp(), app.Settings().AppName(), ur.AccessToken, ur.Username)
+		ctx, app.CogIdp(), app.Settings().AppName(), rc.accessToken.Raw, rc.username)
 	if err != nil {
 		return nil, err
 	}

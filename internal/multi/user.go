@@ -12,9 +12,10 @@ import (
 type UserStatus string
 
 const (
-	UserStatusInvited  UserStatus = "invited"
-	UserStatusInactive UserStatus = "inactive"
-	UserStatusActive   UserStatus = "active"
+	UserStatusInvited    UserStatus = "invited"
+	UserStatusInactive   UserStatus = "inactive"
+	UserStatusPendingMFA UserStatus = "pending-mfa"
+	UserStatusActive     UserStatus = "active"
 )
 
 func ParseUserStatus(s string) (UserStatus, error) {
@@ -23,6 +24,8 @@ func ParseUserStatus(s string) (UserStatus, error) {
 		return UserStatusInvited, nil
 	case "inactive":
 		return UserStatusInactive, nil
+	case "pending-mfa":
+		return UserStatusPendingMFA, nil
 	case "active":
 		return UserStatusActive, nil
 	default:

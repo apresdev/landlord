@@ -15,7 +15,6 @@ import (
 
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 )
 
@@ -27,34 +26,10 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 	if req.RefreshToken == "" {
 		return apperr.NewBadRequest("refresh token is required")
 	}
-
-	t, ok := c.Get(TokenKey)
-	if !ok {
-		return apperr.NewUnauthorized("no token")
-	}
-	tok, ok := t.(*jwt.Token)
-	if !ok {
-		zap.L().Error("could not convert token to *jwt.Token")
-		return apperr.NewUnauthorized("no token")
-	}
-	cid := clientID(c)
-	groups, err := jwx.GetClaimStrings(tok, authx.CognitoGroupsClaim)
+	rc, err := requesterContext(c)
 	if err != nil {
-		zap.L().Error("could not get groups",
-			zap.String("clientID", string(cid)),
-			zap.Error(err),
-			zap.Any("token", tok))
-		return apperr.NewUnauthorized("no groups")
+		return err
 	}
-	roles, err := authx.ParseRolesFromGroups(groups)
-	if err != nil {
-		zap.L().Error("could not parse roles from groups",
-			zap.String("clientID", string(cid)),
-			zap.Error(err),
-			zap.Any("groups", groups))
-		return apperr.NewUnauthorized("no groups")
-	}
-
 	rootTenant, err := db.GetRootTenant(
 		c.Request.Context(), app.DDB(), app.RootTenantID())
 	if err != nil {
@@ -62,18 +37,18 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	if !authx.IsAuthorizedForTenant(
-		c.Request.Context(), app.DDB(), app.RootTenantID(), rootTenant, roles) {
+		c.Request.Context(), app.DDB(), app.RootTenantID(), rootTenant, rc.roles) {
 
 		zap.L().Info("not authorized for root",
-			zap.String("clientID", string(cid)),
-			zap.Any("groups", groups))
+			zap.String("clientID", string(rc.cid)),
+			zap.Any("groups", rc.groups))
 		return apperr.NewUnauthorized("not authorized")
 	}
 
-	username, err := jwx.GetClaimString(tok, authx.EmailClaim)
+	username, err := jwx.GetClaimString(rc.accessToken, authx.EmailClaim)
 	if err != nil {
 		zap.L().Error("could not get username from token",
-			zap.String("clientID", string(cid)),
+			zap.String("clientID", string(rc.cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -81,7 +56,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		c.Request.Context(), app.CogIdp(), rootTenant.UserPoolID, username)
 	if err != nil {
 		zap.L().Error("could not clear impersonation",
-			zap.String("clientID", string(cid)),
+			zap.String("clientID", string(rc.cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -93,10 +68,10 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 			zap.Error(err))
 		return err
 	}
-	sub, err := jwx.GetClaimString(tok, authx.SubClaim)
+	sub, err := jwx.GetClaimString(rc.accessToken, authx.SubClaim)
 	if err != nil {
 		zap.L().Error("could not get sub from token",
-			zap.String("clientID", string(cid)),
+			zap.String("clientID", string(rc.cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -119,7 +94,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		})
 	if err != nil {
 		zap.L().Error("could not initiate auth",
-			zap.String("clientID", string(cid)),
+			zap.String("clientID", string(rc.cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}

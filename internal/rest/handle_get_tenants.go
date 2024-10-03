@@ -13,7 +13,7 @@ import (
 )
 
 func handleGetTenants(app App, c *gin.Context) error {
-	ur, err := resolveUser(c)
+	rc, err := requesterContext(c)
 	if err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func handleGetTenants(app App, c *gin.Context) error {
 	}
 	for _, ten := range allTenants {
 		if authx.IsAuthorizedForTenant(
-			c.Request.Context(), app.DDB(), app.RootTenantID(), ten, ur.Roles) {
+			c.Request.Context(), app.DDB(), app.RootTenantID(), ten, rc.roles) {
 
 			resp.Tenants = append(resp.Tenants, Tenant{
 				Id:          ten.ID.String(),

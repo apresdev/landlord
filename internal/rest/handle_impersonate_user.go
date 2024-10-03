@@ -8,8 +8,6 @@ import (
 	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/apresdev/landlord/internal/db"
-	"github.com/apresdev/landlord/internal/multi"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
@@ -34,34 +32,24 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 		return apperr.NewBadRequest("refresh token is required")
 	}
 
-	tok, err := isRequestAuthorizedForRoot(app, c)
+	rc, err := requesterContext(c)
 	if err != nil {
 		return err
 	}
-	h, err := multi.ParseTenantHandle(req.Tenant)
+	if err := isRequestAuthorizedForRoot(app, c, rc); err != nil {
+		return err
+	}
+	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), rc.th)
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), h)
-	if err != nil {
-		return apperr.NewBadRequest(err.Error())
-	}
-
-	cid := clientID(c)
-	username, err := jwx.GetClaimString(tok, authx.EmailClaim)
-	if err != nil {
-		zap.L().Error("could not get username from token",
-			zap.String("clientID", string(cid)),
-			zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
 	}
 	err = authx.ImpersonateUser(
-		c.Request.Context(), app.CogIdp(), ten.UserPoolID, username, req.Username)
+		c.Request.Context(), app.CogIdp(), ten.UserPoolID, rc.username, req.Username)
 	if err != nil {
 		zap.L().Error("could not set impersonate on user",
-			zap.String("clientID", string(cid)),
+			zap.String("clientID", string(rc.cid)),
 			zap.String("userPoolID", ten.UserPoolID),
-			zap.String("username", username),
+			zap.String("username", rc.username),
 			zap.String("impersonateUsername", req.Username),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
@@ -74,10 +62,10 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 			zap.Error(err))
 		return err
 	}
-	sub, err := jwx.GetClaimString(tok, authx.SubClaim)
+	sub, err := jwx.GetClaimString(rc.accessToken, authx.SubClaim)
 	if err != nil {
 		zap.L().Error("could not get sub from token",
-			zap.String("clientID", string(cid)),
+			zap.String("clientID", string(rc.cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -100,7 +88,7 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 		})
 	if err != nil {
 		zap.L().Error("could not initiate auth",
-			zap.String("clientID", string(cid)),
+			zap.String("clientID", string(rc.cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}

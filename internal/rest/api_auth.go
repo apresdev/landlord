@@ -97,6 +97,11 @@ func ginUpdateUser(c *gin.Context) {
 	callImpl(c, handleUpdateUser)
 }
 
+// UpdateUserMFA - Update a user's MFA settings
+func ginUpdateUserMFA(c *gin.Context) {
+	callImpl(c, handleUpdateUserMFA)
+}
+
 // ValidateMFACode - Validate an MFA code.
 func ginValidateMFACode(c *gin.Context) {
 	callImpl(c, handleValidateMFACode)
