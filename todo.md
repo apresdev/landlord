@@ -10,8 +10,6 @@ lookup all tenants
 * select browser storage based on login kind
 * grab details from the user pool and user pool client to show in UI
 * cancel invitation action button in the tenant space
-* shake out only the icons we need from font-awesome
-* command to remove otp from user
 * in the URL we send for signing up a new account, make the URL navigate to a
 spot in the UI that forces a logout and then redirects back to the login page.
 * handle the "remember me" flag on login
@@ -23,7 +21,6 @@ spot in the UI that forces a logout and then redirects back to the login page.
     * handle resolving cognito users that are not in dynamo
     * remove a user from their old group in apply if applicable
     * remove a group from a tenant if it no longer exists
-* REST API for refresh token handling
 * further limit the permissions needed by landlord
 * list pending invitations
 * email domain guard rails
@@ -38,5 +35,6 @@ spot in the UI that forces a logout and then redirects back to the login page.
   * add password fields that have the little eyeball to reveal the password
     * maybe save this for the React version only?
   * front end validation that the passwords match in new-password page
+  * shake out only the icons we need from font-awesome
 * add IP address and device-fingerprinting data to signups:
   https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-adaptive-authentication.html#user-pool-settings-adaptive-authentication-device-fingerprint
