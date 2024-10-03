@@ -8,8 +8,10 @@ export const handler = function(event, context) {
                 "claimsToAddOrOverride": {
                     'email': userAttributes['email'],
                     'custom:tenant': userAttributes['custom:tenant'],
+                    'custom:impersonate_tenant': userAttributes['custom:impersonate_tenant'],
                     'custom:impersonate_group': userAttributes['custom:impersonate_group'],
-                    'custom:impersonate_user': userAttributes['custom:impersonate_user'],
+                    'custom:impersonate_email': userAttributes['custom:impersonate_email'],
+                    'custom:impersonate_sub': userAttributes['custom:impersonate_sub'],
                 },
             }
         }

@@ -32,6 +32,8 @@ resource "aws_cognito_user_pool" "default" {
     temporary_password_validity_days = 7
   }
 
+  # Landlord allows for the additional / removal of MFA. With Cognito, if you require
+  # MFA, it makes it awkward to temporarily disable in troubleshooting scenarios.
   mfa_configuration = "OPTIONAL"
 
   software_token_mfa_configuration {
@@ -57,7 +59,7 @@ resource "aws_cognito_user_pool" "default" {
 
     string_attribute_constraints {
       min_length = 5
-      max_length = 256
+      max_length = 128
     }
   }
 
@@ -69,7 +71,23 @@ resource "aws_cognito_user_pool" "default" {
     required                 = false
 
     string_attribute_constraints {
-      max_length = 64
+      # String representation of a UUID in the form
+      # "123e4567-e89b-12d3-a456-426614174000"
+      max_length = 36
+    }
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "impersonate_tenant"
+    required                 = false
+
+    string_attribute_constraints {
+      # String representation of a UUID in the form
+      # "123e4567-e89b-12d3-a456-426614174000"
+      max_length = 36
     }
   }
 
@@ -81,7 +99,9 @@ resource "aws_cognito_user_pool" "default" {
     required                 = false
 
     string_attribute_constraints {
-      max_length = 64
+      # String of the form:
+      # tenant-<tenant-uuid>-<role-name>
+      max_length = 128
     }
   }
 
@@ -89,11 +109,26 @@ resource "aws_cognito_user_pool" "default" {
     attribute_data_type      = "String"
     developer_only_attribute = false
     mutable                  = true
-    name                     = "impersonate_user"
+    name                     = "impersonate_email"
     required                 = false
 
     string_attribute_constraints {
+      min_length = 5
       max_length = 128
+    }
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "impersonate_sub"
+    required                 = false
+
+    string_attribute_constraints {
+      # String representation of a UUID in the form
+      # "123e4567-e89b-12d3-a456-426614174000"
+      max_length = 36
     }
   }
 
@@ -112,15 +147,31 @@ resource "aws_cognito_user_pool" "default" {
 }
 
 resource "aws_cognito_user_pool_client" "default" {
-  name                 = "landlord-default-user-pool-client"
-  explicit_auth_flows  = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"]
-  user_pool_id         = aws_cognito_user_pool.default.id
-  default_redirect_uri = var.app_url
-  callback_urls        = [var.app_url]
-  logout_urls          = [var.app_url+"/logout"]
-  generate_secret = true
-  allowed_oauth_flows = ["code"]
-  allowed_oauth_scopes = ["email", "openid"]
+  name                         = "landlord-default-user-pool-client"
+  explicit_auth_flows          = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"]
+  user_pool_id                 = aws_cognito_user_pool.default.id
+  default_redirect_uri         = "${var.app_url}/"
+  callback_urls                = ["${var.app_url}/"]
+  logout_urls                  = ["${var.app_url}/logout"]
+  generate_secret              = true
+  allowed_oauth_flows          = ["code"]
+  allowed_oauth_scopes         = ["email", "openid", "aws.cognito.signin.user.admin"]
+  # This enables the Cognito Hosted UI
+  supported_identity_providers = ["COGNITO"]
+}
+
+resource "aws_cognito_user_pool_domain" "default" {
+  domain       = "apres-sandbox"
+  user_pool_id = aws_cognito_user_pool.default.id
+}
+
+resource "aws_cognito_user_pool_ui_customization" "example" {
+  css        = var.hosted_ui_css_filename != "" ? file(var.hosted_ui_css_filename) : ""
+  image_file = var.hosted_ui_logo_filename != "" ? filebase64(var.hosted_ui_logo_filename) : ""
+
+  # Refer to the aws_cognito_user_pool_domain resource's
+  # user_pool_id attribute to ensure it is in an 'Active' state
+  user_pool_id = aws_cognito_user_pool_domain.default.user_pool_id
 }
 
 resource "aws_iam_role" "landlord_sms_cognito_role" {

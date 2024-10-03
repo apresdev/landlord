@@ -3,6 +3,8 @@ package authx
 import (
 	"context"
 
+	"github.com/google/uuid"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	cogidptypes "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
@@ -12,19 +14,28 @@ func ImpersonateRole(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	userPoolID string,
-	username string,
-	roleName string) error {
+	subjectUsername string,
+	impersonateTenant uuid.UUID,
+	impersonateGroup string) error {
 
 	input := &cognitoidentityprovider.AdminUpdateUserAttributesInput{
 		UserPoolId: aws.String(userPoolID),
-		Username:   aws.String(username),
+		Username:   aws.String(subjectUsername),
 		UserAttributes: []cogidptypes.AttributeType{
 			{
-				Name:  aws.String(CustomImpersonateGroupClaim),
-				Value: aws.String(roleName),
+				Name:  aws.String(CustomImpersonateTenantClaim),
+				Value: aws.String(impersonateTenant.String()),
 			},
 			{
-				Name:  aws.String(CustomImpersonateUserClaim),
+				Name:  aws.String(CustomImpersonateGroupClaim),
+				Value: aws.String(impersonateGroup),
+			},
+			{
+				Name:  aws.String(CustomImpersonateEmailClaim),
+				Value: aws.String(""),
+			},
+			{
+				Name:  aws.String(CustomImpersonateSubClaim),
 				Value: aws.String(""),
 			},
 		},
@@ -37,20 +48,31 @@ func ImpersonateUser(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	userPoolID string,
-	username string,
-	impersonateUsername string) error {
+	subjectUsername string,
+	impersonateTenant uuid.UUID,
+	impersonateGroup string,
+	impersonateEmail string,
+	impersonateSub uuid.UUID) error {
 
 	input := &cognitoidentityprovider.AdminUpdateUserAttributesInput{
 		UserPoolId: aws.String(userPoolID),
-		Username:   aws.String(username),
+		Username:   aws.String(subjectUsername),
 		UserAttributes: []cogidptypes.AttributeType{
 			{
-				Name:  aws.String(CustomImpersonateGroupClaim),
-				Value: aws.String(""),
+				Name:  aws.String(CustomImpersonateTenantClaim),
+				Value: aws.String(impersonateTenant.String()),
 			},
 			{
-				Name:  aws.String(CustomImpersonateUserClaim),
-				Value: aws.String(impersonateUsername),
+				Name:  aws.String(CustomImpersonateGroupClaim),
+				Value: aws.String(impersonateGroup),
+			},
+			{
+				Name:  aws.String(CustomImpersonateEmailClaim),
+				Value: aws.String(impersonateEmail),
+			},
+			{
+				Name:  aws.String(CustomImpersonateSubClaim),
+				Value: aws.String(impersonateSub.String()),
 			},
 		},
 	}
@@ -62,18 +84,26 @@ func ClearImpersonate(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	userPoolID string,
-	username string) error {
+	subjectUsername string) error {
 
 	input := &cognitoidentityprovider.AdminUpdateUserAttributesInput{
 		UserPoolId: aws.String(userPoolID),
-		Username:   aws.String(username),
+		Username:   aws.String(subjectUsername),
 		UserAttributes: []cogidptypes.AttributeType{
+			{
+				Name:  aws.String(CustomImpersonateTenantClaim),
+				Value: aws.String(""),
+			},
 			{
 				Name:  aws.String(CustomImpersonateGroupClaim),
 				Value: aws.String(""),
 			},
 			{
-				Name:  aws.String(CustomImpersonateUserClaim),
+				Name:  aws.String(CustomImpersonateEmailClaim),
+				Value: aws.String(""),
+			},
+			{
+				Name:  aws.String(CustomImpersonateSubClaim),
 				Value: aws.String(""),
 			},
 		},

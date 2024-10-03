@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/apresdev/landlord/internal/multi"
+
 	"github.com/apresdev/landlord/internal/jwx"
 
 	"github.com/apresdev/landlord/internal/apperr"
@@ -37,38 +39,50 @@ func handleImpersonateRole(app App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
+	// TODO: expand this permission check
 	if err := isRequestAuthorizedForRoot(app, c, rc); err != nil {
 		return err
 	}
 
-	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), rc.th)
+	targetTenantHandle, err := multi.ParseTenantHandle(req.Tenant)
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	if idx := slices.Index(ten.Roles, req.Role); idx < 0 {
+	targetTenant, err := db.ResolveTenant(
+		c.Request.Context(), app.DDB(), targetTenantHandle)
+	if err != nil {
+		return apperr.NewBadRequest(err.Error())
+	}
+	if idx := slices.Index(targetTenant.Roles, req.Role); idx < 0 {
 		zap.L().Info("tenant does not have role",
 			zap.String("clientID", string(rc.cid)),
 			zap.String("role", req.Role))
 		return apperr.NewUnauthorized("not authorized")
 	}
 
-	userGroupName := ten.GroupName(req.Role)
+	targetGroupName := targetTenant.GroupName(req.Role)
 	err = authx.ImpersonateRole(
-		c.Request.Context(), app.CogIdp(), ten.UserPoolID, rc.username, userGroupName)
+		c.Request.Context(),
+		app.CogIdp(),
+		targetTenant.UserPoolID,
+		rc.username,
+		targetTenant.ID,
+		targetGroupName)
 	if err != nil {
 		zap.L().Error("could not set impersonate on user",
 			zap.String("clientID", string(rc.cid)),
-			zap.String("userPoolID", ten.UserPoolID),
+			zap.String("userPoolID", targetTenant.UserPoolID),
 			zap.String("username", rc.username),
-			zap.String("groupName", userGroupName),
+			zap.String("targetTenantID", targetTenant.ID.String()),
+			zap.String("targetGroupName", targetGroupName),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
 	upc, err := authx.GetUserPoolClient(
-		c.Request.Context(), app.CogIdp(), ten.UserPoolID)
+		c.Request.Context(), app.CogIdp(), targetTenant.UserPoolID)
 	if err != nil {
 		zap.L().Warn("Could not resolve user pool client",
-			zap.String("userPoolID", ten.UserPoolID),
+			zap.String("userPoolID", targetTenant.UserPoolID),
 			zap.Error(err))
 		return err
 	}
