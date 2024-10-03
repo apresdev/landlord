@@ -196,7 +196,8 @@ func (s *HandleImpersonateUserTestSuite) TestSuccess() {
 	gt1 := withDefaultImpersonateUserRequest(newGinTest(s.T()))
 
 	rt := withSetupRootTenant(app)
-	withSetupQueryTenant(app)
+	t := withSetupQueryTenant(app)
+	withSetupQueryUser(app, t)
 
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{

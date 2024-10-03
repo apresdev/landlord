@@ -106,7 +106,7 @@ func withSetupQueryAllTenants(app *MockApp, additionalTenants ...*multi.Tenant) 
 	app.ddb.EXPECT().Query(mock.Anything, input).Return(&o, nil)
 }
 
-func withSetupQueryTenant(app *MockApp) {
+func withSetupQueryTenant(app *MockApp) *multi.Tenant {
 	t := multi.NewTenant()
 	t.Name = "tenant-to-impersonate"
 	t.Roles = append(t.Roles, "guest")
@@ -114,6 +114,34 @@ func withSetupQueryTenant(app *MockApp) {
 	o.Items = append(o.Items, marshalTenant(t))
 	kv := make(map[string]ddbtypes.AttributeValue)
 	kv[":altName"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t.Name)}
+	input := &dynamodb.QueryInput{
+		TableName:                 aws.String(db.TableName()),
+		IndexName:                 aws.String("altNameIndex"),
+		KeyConditionExpression:    aws.String("altName = :altName"),
+		ExpressionAttributeValues: kv,
+	}
+	app.ddb.EXPECT().Query(mock.Anything, input).Return(&o, nil)
+	return t
+}
+
+func marshalUser(u *multi.User) map[string]ddbtypes.AttributeValue {
+	result := apptest.MustStructToDynamoMap(*u)
+	result["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(u.TenantID.String())}
+	result["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(u.ID.String())}
+	result["altName"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(u.Username)}
+	return result
+}
+
+func withSetupQueryUser(app *MockApp, t *multi.Tenant) {
+	u := &multi.User{
+		TenantID: t.ID,
+		ID:       uuid.New(),
+		Username: "impersonate@example.com",
+	}
+	o := dynamodb.QueryOutput{}
+	o.Items = append(o.Items, marshalUser(u))
+	kv := make(map[string]ddbtypes.AttributeValue)
+	kv[":altName"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(u.Username)}
 	input := &dynamodb.QueryInput{
 		TableName:                 aws.String(db.TableName()),
 		IndexName:                 aws.String("altNameIndex"),

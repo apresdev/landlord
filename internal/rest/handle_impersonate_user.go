@@ -3,6 +3,8 @@ package rest
 import (
 	"net/http"
 
+	"github.com/apresdev/landlord/internal/multi"
+
 	"github.com/apresdev/landlord/internal/jwx"
 
 	"github.com/apresdev/landlord/internal/apperr"
@@ -36,29 +38,59 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
+	// TODO: expanded permissions
 	if err := isRequestAuthorizedForRoot(app, c, rc); err != nil {
 		return err
 	}
-	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), rc.th)
+
+	targetTenantHandle, err := multi.ParseTenantHandle(req.Tenant)
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
+	targetTenant, err := db.ResolveTenant(
+		c.Request.Context(), app.DDB(), targetTenantHandle)
+	if err != nil {
+		return apperr.NewBadRequest(err.Error())
+	}
+	targetUser, err := db.GetUserByName(c.Request.Context(), app.DDB(), req.Username)
+	if err != nil {
+		return apperr.NewBadRequest(err.Error())
+	}
+	if targetUser.TenantID != targetTenant.ID {
+		zap.L().Info("user does not belong to tenant",
+			zap.String("clientID", string(rc.cid)),
+			zap.String("username", req.Username),
+			zap.String("tenantID", targetTenant.ID.String()))
+		return apperr.NewUnauthorized("not authorized")
+	}
+	targetGroupName := targetTenant.GroupName(targetUser.Role)
+
 	err = authx.ImpersonateUser(
-		c.Request.Context(), app.CogIdp(), ten.UserPoolID, rc.username, req.Username)
+		c.Request.Context(),
+		app.CogIdp(),
+		targetTenant.UserPoolID,
+		rc.username,
+		targetTenant.ID,
+		targetGroupName,
+		targetUser.Username,
+		targetUser.ID)
 	if err != nil {
 		zap.L().Error("could not set impersonate on user",
 			zap.String("clientID", string(rc.cid)),
-			zap.String("userPoolID", ten.UserPoolID),
+			zap.String("userPoolID", targetTenant.UserPoolID),
 			zap.String("username", rc.username),
-			zap.String("impersonateUsername", req.Username),
+			zap.String("targetTenant", targetTenant.ID.String()),
+			zap.String("targetGroupName", targetGroupName),
+			zap.String("targetUsername", targetUser.Username),
+			zap.String("targetUserID", targetUser.ID.String()),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
 	upc, err := authx.GetUserPoolClient(
-		c.Request.Context(), app.CogIdp(), ten.UserPoolID)
+		c.Request.Context(), app.CogIdp(), targetTenant.UserPoolID)
 	if err != nil {
 		zap.L().Warn("Could not resolve user pool client",
-			zap.String("userPoolID", ten.UserPoolID),
+			zap.String("userPoolID", targetTenant.UserPoolID),
 			zap.Error(err))
 		return err
 	}
