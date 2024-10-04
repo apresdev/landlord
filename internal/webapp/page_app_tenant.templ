@@ -4,16 +4,13 @@ import "github.com/apresdev/landlord/internal/multi"
 
 const tenantPageTitle = "Tenant"
 
-templ tenantPage(appName string, tenant *multi.Tenant, users []*multi.User, loggedInUser *multi.User) {
+templ tenantPage(appName string, currentUser CurrentUser, tenant *multi.Tenant, users []*multi.User) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, tenantPageTitle)
 <body>
-    @navBarFragment(loggedInUser)
+    @navBarFragment(currentUser)
     <div class="container">
-        <a href="/ll-auth/app/admin/tenants">
-            <button class="button">Tenants</button>
-        </a>
         <a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + tenant.ID.String() + "/invite") }>
             <button class="button">Invite User</button>
         </a>

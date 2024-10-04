@@ -4,12 +4,12 @@ import "github.com/apresdev/landlord/internal/multi"
 
 const dashboardPageTitle = "Dashboard"
 
-templ dashboardPage(appName string, user *multi.User, stats DashboardStats) {
+templ dashboardPage(appName string, currentUser CurrentUser, stats DashboardStats) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, tenantsPageTitle)
 <body>
-    @navBarFragment(user)
+    @navBarFragment(currentUser)
     <div class="card-container">
         <div class="card-grid-container">
             <div class="card">

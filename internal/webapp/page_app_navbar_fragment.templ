@@ -1,8 +1,6 @@
 package webapp
 
-import "github.com/apresdev/landlord/internal/multi"
-
-templ navBarFragment(user *multi.User) {
+templ navBarFragment(currentUser CurrentUser) {
 <div class="nav-bar">
     <div class="nav-left">
         <ul>
@@ -27,6 +25,12 @@ templ navBarFragment(user *multi.User) {
     </div>
     <div class="nav-right">
         <div class="profile">
+            <a href="/ll-auth/app/admin/profile">
+                { currentUser.User.Username }
+            </a>
+            <a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + currentUser.Tenant.ID.String()) }>
+                { currentUser.Tenant.Name }
+            </a>
             <a href="/ll-auth/app/admin/profile">Profile</a>
             <a href="/ll-auth/app/logout">Logout</a>
         </div>

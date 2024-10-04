@@ -6,7 +6,7 @@ import (
 )
 
 func handleAdminTenants(a App, c *gin.Context) error {
-	cUser, err := resolveClientUser(a, c)
+	cu, err := resolveCurrentUser(a, c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
@@ -19,6 +19,6 @@ func handleAdminTenants(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	render(c, tenantsPage("Landlord", tens, cUser.User))
+	render(c, tenantsPage("Landlord", cu, tens))
 	return nil
 }

@@ -22,13 +22,13 @@ func newDashboardStats() DashboardStats {
 }
 
 func handleAdminDashboard(a App, c *gin.Context) error {
-	cUser, err := resolveClientUser(a, c)
+	cu, err := resolveCurrentUser(a, c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
 		return nil
 	}
 	stats := newDashboardStats()
-	render(c, dashboardPage("Landlord", cUser.User, stats))
+	render(c, dashboardPage("Landlord", cu, stats))
 	return nil
 }

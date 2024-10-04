@@ -8,10 +8,9 @@ package webapp
 import (
 	"github.com/a-h/templ"
 	templruntime "github.com/a-h/templ/runtime"
-	"github.com/apresdev/landlord/internal/multi"
 )
 
-func navBarFragment(user *multi.User) templ.Component {
+func navBarFragment(currentUser CurrentUser) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
@@ -29,7 +28,42 @@ func navBarFragment(user *multi.User) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"nav-bar\"><div class=\"nav-left\"><ul><li><a href=\"/ll-auth/app/admin/dashboard\"><img src=\"/ll-auth/app/static/favicon-32x32.png\" alt=\"Search\"></a></li><li><a href=\"/ll-auth/app/admin/dashboard\">Dashboard</a></li><li><a href=\"/ll-auth/app/admin/tenants\">Tenants</a></li><li><a href=\"/ll-auth/app/admin/invites\">Invites</a></li><li><a href=\"/ll-auth/app/admin/users\">Users</a></li><li><label><input type=\"text\" placeholder=\"Search...\"></label></li><li><button type=\"submit\"><i class=\"fa-sharp fa-solid fa-search fa-2x\"></i></button></li></ul></div><div class=\"nav-right\"><div class=\"profile\"><a href=\"/ll-auth/app/admin/profile\">Profile</a> <a href=\"/ll-auth/app/logout\">Logout</a></div></div></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"nav-bar\"><div class=\"nav-left\"><ul><li><a href=\"/ll-auth/app/admin/dashboard\"><img src=\"/ll-auth/app/static/favicon-32x32.png\" alt=\"Search\"></a></li><li><a href=\"/ll-auth/app/admin/dashboard\">Dashboard</a></li><li><a href=\"/ll-auth/app/admin/tenants\">Tenants</a></li><li><a href=\"/ll-auth/app/admin/invites\">Invites</a></li><li><a href=\"/ll-auth/app/admin/users\">Users</a></li><li><label><input type=\"text\" placeholder=\"Search...\"></label></li><li><button type=\"submit\"><i class=\"fa-sharp fa-solid fa-search fa-2x\"></i></button></li></ul></div><div class=\"nav-right\"><div class=\"profile\"><a href=\"/ll-auth/app/admin/profile\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var2 string
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(currentUser.User.Username)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_app_navbar_fragment.templ`, Line: 29, Col: 43}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</a> <a href=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 templ.SafeURL = templ.SafeURL("/ll-auth/app/admin/tenants/" + currentUser.Tenant.ID.String())
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var3)))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(currentUser.Tenant.Name)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_app_navbar_fragment.templ`, Line: 32, Col: 41}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</a> <a href=\"/ll-auth/app/admin/profile\">Profile</a> <a href=\"/ll-auth/app/logout\">Logout</a></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

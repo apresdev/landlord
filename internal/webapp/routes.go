@@ -122,8 +122,7 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 
 	unauthorizedRoutes.GET("/reset-password", func(c *gin.Context) {
 		username, _ := c.Cookie(LandlordUsernameCookie)
-		errMsg, _ := c.Cookie(LandlordLastError)
-		render(c, resetPasswordPage(a.Settings().AppName(), username, errMsg))
+		render(c, resetPasswordPage(a.Settings().AppName(), username))
 	})
 	unauthorizedRoutes.POST("/reset-password/submit", func(c *gin.Context) {
 		if err := handleResetPassword(a, c); err != nil {

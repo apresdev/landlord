@@ -2,6 +2,7 @@ package webapp
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/apresdev/landlord/internal/multi"
@@ -11,7 +12,7 @@ import (
 )
 
 func handleAdminTenant(a App, c *gin.Context) error {
-	cUser, err := resolveClientUser(a, c)
+	cu, err := resolveCurrentUser(a, c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
@@ -41,6 +42,9 @@ func handleAdminTenant(a App, c *gin.Context) error {
 		return apperr.NewInternalE(
 			fmt.Errorf("error getting users for tenant: %w", err))
 	}
-	render(c, tenantPage(a.Settings().AppName(), ten, users, cUser.User))
+	sort.Slice(users, func(i, j int) bool {
+		return users[i].Username < users[j].Username
+	})
+	render(c, tenantPage(a.Settings().AppName(), cu, ten, users))
 	return nil
 }
