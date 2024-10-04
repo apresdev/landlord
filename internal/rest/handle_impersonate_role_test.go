@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/apresdev/landlord/internal/authx"
-	"github.com/apresdev/landlord/internal/multi"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
@@ -45,7 +44,7 @@ func withDefaultImpersonateRoleRequest(gt *ginTest) *ginTest {
 			"/impersonate-role",
 			bytes.NewBuffer(MustJSONMarshal(
 				ImpersonateRoleRequest{
-					Tenant:       "tenant-to-impersonate",
+					Tenant:       "ten1",
 					Role:         "guest",
 					RefreshToken: "refresh_token"}))))
 }
@@ -66,7 +65,7 @@ func (s *HandleImpersonateRoleTestSuite) TestBadRequests() {
 	gt3 := newGinTest(s.T()).withRequest(
 		httptest.NewRequest(
 			"POST", "/impersonate-role", bytes.NewBuffer(MustJSONMarshal(
-				ImpersonateRoleRequest{Tenant: "tenant-to-impersonate"}))))
+				ImpersonateRoleRequest{Tenant: "ten1"}))))
 	err = handleImpersonateRole(app, gt3.c)
 	s.Error(err)
 
@@ -74,7 +73,7 @@ func (s *HandleImpersonateRoleTestSuite) TestBadRequests() {
 		httptest.NewRequest(
 			"POST", "/impersonate-role", bytes.NewBuffer(MustJSONMarshal(
 				ImpersonateRoleRequest{
-					Tenant: "tenant-to-impersonate",
+					Tenant: "ten1",
 					Role:   "role-to-impersonate"}))))
 	err = handleImpersonateRole(app, gt4.c)
 	s.Error(err)
@@ -138,8 +137,6 @@ func (s *HandleImpersonateRoleTestSuite) TestNoEmailClaim() {
 	app := NewMockApp()
 	gt1 := withDefaultImpersonateRoleRequest(newGinTest(s.T()))
 	rt := withSetupRootTenant(app)
-	t := multi.NewTenant()
-	t.Name = "tenant-to-impersonate"
 	withSetupQueryTenant(app)
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{
@@ -154,8 +151,6 @@ func (s *HandleImpersonateRoleTestSuite) TestFailedToUpdateUserAttributes() {
 	app := NewMockApp()
 	gt1 := withDefaultImpersonateRoleRequest(newGinTest(s.T()))
 	rt := withSetupRootTenant(app)
-	t := multi.NewTenant()
-	t.Name = "tenant-to-impersonate"
 	withSetupQueryTenant(app)
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{
@@ -173,8 +168,6 @@ func (s *HandleImpersonateRoleTestSuite) TestNoSubClaim() {
 	app := NewMockApp()
 	gt1 := withDefaultImpersonateRoleRequest(newGinTest(s.T()))
 	rt := withSetupRootTenant(app)
-	t := multi.NewTenant()
-	t.Name = "tenant-to-impersonate"
 	withSetupQueryTenant(app)
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{
@@ -202,10 +195,6 @@ func (s *HandleImpersonateRoleTestSuite) TestSuccess() {
 	app := NewMockApp()
 
 	rt := withSetupRootTenant(app)
-
-	t := multi.NewTenant()
-	t.Name = "tenant-to-impersonate"
-	t.Roles = append(t.Roles, "guest")
 	withSetupQueryTenant(app)
 
 	gt1 := withDefaultImpersonateRoleRequest(newGinTest(s.T()))

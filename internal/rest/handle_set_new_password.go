@@ -35,6 +35,16 @@ func HandleSetNewPassword(
 	app App, c *gin.Context, req SetNewPasswordRequest) (
 	*SetNewPasswordResponse, error) {
 
+	if req.Username == "" {
+		return nil, apperr.NewBadRequest("username is required")
+	}
+	if req.Password == "" {
+		return nil, apperr.NewBadRequest("password is required")
+	}
+	if req.Session == "" {
+		return nil, apperr.NewBadRequest("session is required")
+	}
+
 	ddb := app.DDB()
 	cogIdp := app.CogIdp()
 	ctx := c.Request.Context()
@@ -112,6 +122,10 @@ func HandleSetNewPassword(
 			resp.OtpURI = result.OtpAuthURI
 			resp.AccessToken = aws.ToString(o.AuthenticationResult.AccessToken)
 			return &resp, nil
+		}
+	} else {
+		if err := authx.OnSuccessfulLogin(ctx, ddb, cogIdp, tenant, user); err != nil {
+			return nil, err
 		}
 	}
 
