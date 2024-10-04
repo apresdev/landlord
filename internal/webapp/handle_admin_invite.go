@@ -34,7 +34,7 @@ func handleAdminInvite(a App, c *gin.Context) error {
 	usernameToInvite := c.Query("username")
 	render(c, inviteUserPage(
 		a.Settings().AppName(),
-		tenantID,
+		ten,
 		usernameToInvite,
 		ten.Roles,
 		multi.MFAPolicyStrings(),
