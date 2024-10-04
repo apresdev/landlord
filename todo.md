@@ -1,7 +1,6 @@
 # TODOs
 
 * React UI flow for adding MFA
-* how to remove MFA?
 * figure out terraform for how to configure email and SMS
 * change API responses to send back tenant IDs instead of names
 * add global secondary index to the tenant table for lookup by name and also

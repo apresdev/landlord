@@ -41,9 +41,16 @@ templ userFragment(user *multi.User) {
         if user.MFAPolicy == multi.MFAPolicyNone {
             <button
                 class="button"
-                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/mfa" }
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/mfa/enable" }
             >
                 Attach MFA
+            </button>
+        } else {
+            <button
+                class="button"
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/mfa/disable" }
+            >
+                Detach MFA
             </button>
         }
     </td>
