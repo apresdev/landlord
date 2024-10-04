@@ -6,7 +6,7 @@ const inviteUserPageTitle = "Invite User"
 
 templ inviteUserPage(
     appName string,
-    tenantID string,
+    tenant *multi.Tenant,
     initialUsername string,
     roles []string,
     mfaPolicies []string,
@@ -17,8 +17,8 @@ templ inviteUserPage(
 <body>
     @navBarFragment(user)
     <div class="container">
-        <h2>{ appName } | { inviteUserPageTitle }</h2>
-        <form action={ templ.SafeURL("/ll-auth/app/admin/tenants/" + tenantID + "/invite/submit") } method="POST">
+        <h2>Invite User to { tenant.Name }</h2>
+        <form class="form-wrapper" action={ templ.SafeURL("/ll-auth/app/admin/tenants/" + tenant.ID.String() + "/invite/submit") } method="POST">
             <label>Email:
                 <input type="text" name="username" value={ initialUsername } />
             </label>
@@ -36,7 +36,7 @@ templ inviteUserPage(
                     }
                 </select>
             </label>
-            <button type="submit">Invite</button>
+            <button class="button" type="submit">Invite</button>
         </form>
     </div>
 </body>

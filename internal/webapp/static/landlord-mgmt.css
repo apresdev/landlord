@@ -62,39 +62,7 @@ body {
   padding: 20px;
 }
 
-/* Forms */
-.form-wrapper {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
-}
-.form-wrapper label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-.form-wrapper input,
-.form-wrapper select,
-.form-wrapper textarea {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-.form-wrapper button {
-  background-color: #1abc9c;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.form-wrapper button:hover {
-  background-color: #16a085;
-}
+/* Tables */
 .table-wrapper {
   background-color: white;
   padding: 20px;
@@ -257,4 +225,73 @@ table tbody tr:hover {
 }
 .card-body {
   color: #c89f79;
+}
+
+/* Dropdown Select Styling */
+.form-wrapper select {
+  background-color: #f5f0e1; /* Beige background */
+  color: #3b2e2a; /* Dark Brown text */
+  border: 1px solid #8b5e34; /* Warm Brown border */
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 4px;
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.form-wrapper select:focus {
+  border-color: #ff7a00; /* Retro Orange focus state */
+  outline: none;
+  background-color: #fff7e6; /* Slightly lighter background to show focus */
+}
+
+.form-wrapper select:hover {
+  background-color: #fff7e6; /* Hover state background */
+}
+
+.form-wrapper select option {
+  background-color: #f5f0e1; /* Beige background for options */
+  color: #3b2e2a; /* Dark Brown text for options */
+}
+
+/* Text Input Styling */
+.form-wrapper input[type="text"],
+.form-wrapper input[type="email"],
+.form-wrapper input[type="password"],
+.form-wrapper textarea {
+  background-color: #f5f0e1; /* Beige background */
+  color: #3b2e2a; /* Dark Brown text */
+  border: 1px solid #8b5e34; /* Warm Brown border */
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 4px;
+  transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+
+.form-wrapper input[type="text"]:focus,
+.form-wrapper input[type="email"]:focus,
+.form-wrapper input[type="password"]:focus,
+.form-wrapper textarea:focus {
+  border-color: #ff7a00; /* Retro Orange focus state */
+  background-color: #fff7e6; /* Slightly lighter background on focus */
+  outline: none;
+}
+
+.form-wrapper input[type="text"]:hover,
+.form-wrapper input[type="email"]:hover,
+.form-wrapper input[type="password"]:hover,
+.form-wrapper textarea:hover {
+  background-color: #fff7e6; /* Lighter background on hover */
+}
+
+.form-wrapper input::placeholder,
+.form-wrapper textarea::placeholder {
+  color: #c89f79; /* Lighter Brown for placeholders */
+  opacity: 1; /* Make sure the placeholder is visible */
+}
+
+.form-wrapper input:disabled,
+.form-wrapper textarea:disabled {
+  background-color: #e0d6c5; /* Lighter shade for disabled state */
+  color: #8b5e34; /* Keep the warm brown text */
+  border-color: #c89f79; /* Lighter brown border for disabled */
 }
