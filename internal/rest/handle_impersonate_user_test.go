@@ -44,8 +44,8 @@ func withDefaultImpersonateUserRequest(gt *ginTest) *ginTest {
 			"/impersonate-user",
 			bytes.NewBuffer(MustJSONMarshal(
 				ImpersonateUserRequest{
-					Tenant:       "tenant-to-impersonate",
-					Username:     "impersonate@example.com",
+					Tenant:       "ten1",
+					Username:     "user1@example.com",
 					RefreshToken: "refresh_token"}))))
 }
 
@@ -65,7 +65,7 @@ func (s *HandleImpersonateUserTestSuite) TestBadRequests() {
 	gt3 := newGinTest(s.T()).withRequest(
 		httptest.NewRequest(
 			"POST", "/impersonate-user", bytes.NewBuffer(MustJSONMarshal(
-				ImpersonateUserRequest{Tenant: "tenant-to-impersonate"}))))
+				ImpersonateUserRequest{Tenant: "ten1"}))))
 	err = handleImpersonateUser(app, gt3.c)
 	s.Error(err)
 
@@ -73,8 +73,8 @@ func (s *HandleImpersonateUserTestSuite) TestBadRequests() {
 		httptest.NewRequest(
 			"POST", "/impersonate-user", bytes.NewBuffer(MustJSONMarshal(
 				ImpersonateUserRequest{
-					Tenant:   "tenant-to-impersonate",
-					Username: "impersonate@example.com"}))))
+					Tenant:   "ten1",
+					Username: "user1@example.com"}))))
 	err = handleImpersonateUser(app, gt4.c)
 	s.Error(err)
 

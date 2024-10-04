@@ -7,18 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/apresdev/landlord/internal/db"
-
-	ddbtypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-
-	"github.com/apresdev/landlord/internal/apptest"
-
 	"github.com/apresdev/landlord/internal/authx"
-	"github.com/apresdev/landlord/internal/multi"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -52,103 +44,6 @@ func withDefaultClearImpersonateRequest(gt *ginTest) *ginTest {
 			"/clear-impersonate",
 			bytes.NewBuffer(MustJSONMarshal(
 				ClearImpersonateRequest{RefreshToken: "refresh_token"}))))
-}
-
-func marshalTenant(t *multi.Tenant) map[string]ddbtypes.AttributeValue {
-	result := apptest.MustStructToDynamoMap(*t)
-	result["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
-	result["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t.ID.String())}
-	result["altName"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t.Name)}
-	return result
-}
-
-func withSetupRootTenant(app *MockApp) *multi.Tenant {
-	rt := multi.NewTenant()
-	rt.ID = app.RootTenantID()
-	rt.Name = multi.RootTenantName
-	o := dynamodb.GetItemOutput{}
-	o.Item = marshalTenant(rt)
-	kv := make(map[string]ddbtypes.AttributeValue)
-	kv["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
-	kv["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(rt.ID.String())}
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(app.Settings().DBTableName()),
-		Key:       kv,
-	}
-	app.ddb.EXPECT().GetItem(mock.Anything, input).Return(&o, nil)
-	return rt
-}
-
-func withSetupQueryAllTenants(app *MockApp, additionalTenants ...*multi.Tenant) {
-	rt := multi.NewTenant()
-	rt.ID = app.RootTenantID()
-	rt.Name = multi.RootTenantName
-
-	et := multi.NewTenant()
-	et.ID = uuid.New()
-	et.Name = "example-tenant"
-
-	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, marshalTenant(rt))
-	o.Items = append(o.Items, marshalTenant(et))
-	for _, additionalTenant := range additionalTenants {
-		o.Items = append(o.Items, marshalTenant(additionalTenant))
-	}
-
-	kv := make(map[string]ddbtypes.AttributeValue)
-	kv[":pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
-	kv[":skPrefix"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID("")}
-	input := &dynamodb.QueryInput{
-		TableName:                 aws.String(app.Settings().DBTableName()),
-		KeyConditionExpression:    aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
-		ExpressionAttributeValues: kv,
-	}
-	app.ddb.EXPECT().Query(mock.Anything, input).Return(&o, nil)
-}
-
-func withSetupQueryTenant(app *MockApp) *multi.Tenant {
-	t := multi.NewTenant()
-	t.Name = "tenant-to-impersonate"
-	t.Roles = append(t.Roles, "guest")
-	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, marshalTenant(t))
-	kv := make(map[string]ddbtypes.AttributeValue)
-	kv[":altName"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t.Name)}
-	input := &dynamodb.QueryInput{
-		TableName:                 aws.String(db.TableName()),
-		IndexName:                 aws.String("altNameIndex"),
-		KeyConditionExpression:    aws.String("altName = :altName"),
-		ExpressionAttributeValues: kv,
-	}
-	app.ddb.EXPECT().Query(mock.Anything, input).Return(&o, nil)
-	return t
-}
-
-func marshalUser(u *multi.User) map[string]ddbtypes.AttributeValue {
-	result := apptest.MustStructToDynamoMap(*u)
-	result["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(u.TenantID.String())}
-	result["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(u.ID.String())}
-	result["altName"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(u.Username)}
-	return result
-}
-
-func withSetupQueryUser(app *MockApp, t *multi.Tenant) {
-	u := &multi.User{
-		TenantID: t.ID,
-		ID:       uuid.New(),
-		Username: "impersonate@example.com",
-	}
-	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, marshalUser(u))
-	kv := make(map[string]ddbtypes.AttributeValue)
-	kv[":altName"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(u.Username)}
-	input := &dynamodb.QueryInput{
-		TableName:                 aws.String(db.TableName()),
-		IndexName:                 aws.String("altNameIndex"),
-		KeyConditionExpression:    aws.String("altName = :altName"),
-		ExpressionAttributeValues: kv,
-	}
-	app.ddb.EXPECT().Query(mock.Anything, input).Return(&o, nil)
 }
 
 func (s *HandleClearImpersonateTestSuite) TestBadRequests() {

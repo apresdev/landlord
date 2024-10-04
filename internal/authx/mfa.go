@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/apresdev/landlord/internal/apperr"
+
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -22,6 +24,16 @@ func AssociateSoftwareToken(
 	accessToken string,
 	email string) (*UserMFAResult, error) {
 
+	if appName == "" {
+		return nil, apperr.NewBadRequest("app name is required")
+	}
+	if accessToken == "" {
+		return nil, apperr.NewBadRequest("access token is required")
+	}
+	if email == "" {
+		return nil, apperr.NewBadRequest("email is required")
+	}
+
 	o, err := idp.AssociateSoftwareToken(ctx,
 		&cognitoidentityprovider.AssociateSoftwareTokenInput{
 			AccessToken: aws.String(accessToken)},
@@ -29,8 +41,11 @@ func AssociateSoftwareToken(
 	if err != nil {
 		return nil, err
 	}
+	if o.SecretCode == nil {
+		return nil, apperr.NewInternal("missing secret code, bad Cognito response")
+	}
 	otpAuthURI := fmt.Sprintf("otpauth://totp/%s:%s?secret=%s",
-		url.PathEscape(appName), url.PathEscape(email), url.QueryEscape(*o.SecretCode))
+		url.PathEscape(appName), url.PathEscape(email), url.QueryEscape(aws.ToString(o.SecretCode)))
 
 	return &UserMFAResult{
 		OtpAuthURI: otpAuthURI,
