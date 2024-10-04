@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleUpdateMFA(a App, c *gin.Context) error {
+func handleUpdateMFA(a App, c *gin.Context, policy rest.MfaPolicy) error {
 	tenantID := c.Param("tenantID")
 	if tenantID == "" {
 		return apperr.NewBadRequest("no tenant ID provided")
@@ -19,7 +19,7 @@ func handleUpdateMFA(a App, c *gin.Context) error {
 		return apperr.NewBadRequest("no user ID provided")
 	}
 	req := rest.UpdateUserMfaRequest{}
-	req.MfaPolicy = rest.MFAPolicyRequired
+	req.MfaPolicy = policy
 	if err := rest.HandleUpdateUserMFA(a, c, tenantID, username, req); err != nil {
 		return err
 	}
@@ -29,4 +29,12 @@ func handleUpdateMFA(a App, c *gin.Context) error {
 	}
 	render(c, userFragment(user))
 	return nil
+}
+
+func handleUpdateMFAEnable(a App, c *gin.Context) error {
+	return handleUpdateMFA(a, c, rest.MFAPolicyRequired)
+}
+
+func handleUpdateMFADisable(a App, c *gin.Context) error {
+	return handleUpdateMFA(a, c, rest.MFAPolicyNone)
 }
