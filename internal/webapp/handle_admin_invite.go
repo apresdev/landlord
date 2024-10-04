@@ -11,7 +11,7 @@ import (
 )
 
 func handleAdminInvite(a App, c *gin.Context) error {
-	cUser, err := resolveClientUser(a, c)
+	cu, err := resolveCurrentUser(a, c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
@@ -34,11 +34,10 @@ func handleAdminInvite(a App, c *gin.Context) error {
 	usernameToInvite := c.Query("username")
 	render(c, inviteUserPage(
 		a.Settings().AppName(),
+		cu,
 		ten,
 		usernameToInvite,
-		ten.Roles,
-		multi.MFAPolicyStrings(),
-		cUser.User))
+		multi.MFAPolicyStrings()))
 	return nil
 
 }

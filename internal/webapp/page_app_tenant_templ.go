@@ -13,7 +13,7 @@ import (
 
 const tenantPageTitle = "Tenant"
 
-func tenantPage(appName string, tenant *multi.Tenant, users []*multi.User, loggedInUser *multi.User) templ.Component {
+func tenantPage(appName string, currentUser CurrentUser, tenant *multi.Tenant, users []*multi.User) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
@@ -43,11 +43,11 @@ func tenantPage(appName string, tenant *multi.Tenant, users []*multi.User, logge
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = navBarFragment(loggedInUser).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = navBarFragment(currentUser).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container\"><a href=\"/ll-auth/app/admin/tenants\"><button class=\"button\">Tenants</button></a> <a href=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container\"><a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

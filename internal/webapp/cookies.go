@@ -7,7 +7,6 @@ import (
 )
 
 const (
-	LandlordLastError              = "landlord-last-error"
 	LandlordUsernameCookie         = "landlord-username"
 	LandlordChallengeSessionCookie = "landlord-challenge-session"
 	LandlordIDTokenCookie          = "landlord-id-token"

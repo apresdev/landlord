@@ -1,6 +1,6 @@
 package webapp
 
-templ loginPage(appName string, username string) {
+templ loginPage(appName string, initialUsername string) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +14,7 @@ templ loginPage(appName string, username string) {
         <h2>{ appName } | Login</h2>
         <form action="/ll-auth/app/login/submit" method="POST">
             <label>Email
-                <input type="email" name="username" placeholder="Email" value={ username } required>
+                <input type="email" name="username" placeholder="Email" value={ initialUsername } required>
             </label>
             <label>Password
                 <input type="password" name="password" placeholder="Password" required>

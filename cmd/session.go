@@ -9,7 +9,6 @@ import (
 )
 
 type Session struct {
-	LastError        error  `json:"last_error"`
 	ValidationURL    string `json:"validation_url"`
 	UserPool         string `json:"user_pool"`
 	AccessToken      string `json:"access_token"`
@@ -92,18 +91,6 @@ func (s *Session) SaveToFile() error {
 		return err
 	}
 	return nil
-}
-
-func (s *Session) SetLastError(err error) {
-	s.LastError = err
-}
-
-func (s *Session) ClearLastError() {
-	s.LastError = nil
-}
-
-func (s *Session) GetLastError() error {
-	return s.LastError
 }
 
 func (s *Session) GetValidationURL() *url.URL {
