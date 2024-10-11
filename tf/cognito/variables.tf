@@ -7,6 +7,20 @@ variable "app_url" {
   }
 }
 
+variable "app_name" {
+  description = "The name of the app. Used in various UI displays when authenticating"
+  type        = string
+}
+
+variable "app_admin_email" {
+  description = "The email address of an app administrator, used when sending alert notifications"
+  type        = string
+  validation {
+    condition = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.app_admin_email))
+    error_message = "The app admin email must be a valid email address."
+  }
+}
+
 variable "tags" {
   description = "Default set of tags to be applied to all resources"
   type        = map(string)
@@ -24,9 +38,9 @@ variable "user_pool_external_id" {
 }
 
 variable "aws_region" {
-    description = "The AWS region."
-    type        = string
-    default     = "us-east-2"
+  description = "The AWS region."
+  type        = string
+  default     = "us-east-2"
 }
 
 variable "environment" {
@@ -38,6 +52,16 @@ variable "environment" {
   }
 }
 
+variable "owner" {
+  description = "Owner of the resources, used for tagging AWS resources."
+  type        = string
+  default     = "Engineering"
+  validation {
+    condition     = can(regex("^[A-Z][a-zA-Z0-9]*$", var.owner))
+    error_message = "Owner must be alphanumeric and capitalized."
+  }
+}
+
 # See https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-ui-customization.html
 variable "hosted_ui_css_filename" {
     description = "Custom CSS to be applied to the hosted UI"
@@ -46,10 +70,27 @@ variable "hosted_ui_css_filename" {
 }
 
 variable "hosted_ui_logo_filename" {
-    description = <<-EOF
-      The uploaded logo image for the UI customization, provided as a base64-encoded String.
-      Drift detection is not possible for this argument."
-    EOF
-    type        = string
-    default     = ""
+  description = <<-EOF
+    The uploaded logo image for the UI customization, provided as a base64-encoded String.
+    Drift detection is not possible for this argument."
+  EOF
+  type        = string
+  default     = ""
+}
+
+variable "container_image_uri" {
+  description = <<EOF
+    URI of the container, should include the tag!
+    An example using ECR:: 012345668901.dkr.ecr.us-east-2.amazonaws.com/service:46c2c244158828aa06c90655f58f1cc55b641234
+  EOF
+  type        = string
+}
+
+variable "custom_domain_prefix" {
+  description = "The custom domain prefix for the Cognito Hosted UI"
+  type        = string
+  validation {
+    condition     = can(regex("^[a-z[a-z0-9-]+$", var.custom_domain_prefix))
+    error_message = "The custom domain prefix must be lower case alphanumeric, can contain hyphens, and has leading letter."
+  }
 }

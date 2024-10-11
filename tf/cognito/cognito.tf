@@ -161,7 +161,7 @@ resource "aws_cognito_user_pool_client" "default" {
 }
 
 resource "aws_cognito_user_pool_domain" "default" {
-  domain       = "apres-sandbox"
+  domain       = var.custom_domain_prefix
   user_pool_id = aws_cognito_user_pool.default.id
 }
 

@@ -41,7 +41,9 @@ func MustRootTenant(
 	rootTenant.UserPoolName = os.Getenv("LANDLORD_DEFAULT_USER_POOL")
 	up, err := GetUserPoolByNameOrID(ctx, cogIdp, rootTenant.UserPoolName)
 	if err != nil {
-		zap.L().Fatal("error getting user pool for root tenant", zap.Error(err))
+		zap.L().Fatal("error getting user pool for root tenant",
+			zap.String("userPoolName", rootTenant.UserPoolName),
+			zap.Error(err))
 	}
 	rootTenant.UserPoolID = aws.ToString(up.Id)
 	for _, role := range multi.BuiltInRoles {
