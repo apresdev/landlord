@@ -58,7 +58,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/login",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "options": {
@@ -249,7 +250,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/validate-mfa-code",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "options": {
@@ -315,7 +317,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/associate-otp",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "post": {
@@ -357,7 +360,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/associate-otp",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "options": {
@@ -423,7 +427,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/tenants",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "post": {
@@ -464,7 +469,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/tenants",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "options": {
@@ -552,7 +558,11 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/state/{tenantState}",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {
+            "integration.request.path.tenantID": "method.request.path.tenantID",
+            "integration.request.path.tenantState": "method.request.path.tenantState"
+          }
         }
       },
       "options": {
@@ -650,7 +660,10 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {
+            "integration.request.path.tenantID": "method.request.path.tenantID"
+          }
         }
       },
       "options": {
@@ -747,7 +760,11 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{username}",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {
+            "integration.request.path.tenantID": "method.request.path.tenantID",
+            "integration.request.path.username": "method.request.path.username"
+          }
         }
       },
       "options": {
@@ -853,7 +870,11 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{username}/status",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {
+            "integration.request.path.tenantID": "method.request.path.tenantID",
+            "integration.request.path.username": "method.request.path.username"
+          }
         }
       },
       "options": {
@@ -959,7 +980,11 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{username}/mfa",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {
+            "integration.request.path.tenantID": "method.request.path.tenantID",
+            "integration.request.path.username": "method.request.path.username"
+          }
         }
       },
       "options": {
@@ -1046,7 +1071,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/invite",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "options": {
@@ -1121,7 +1147,10 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/invite/{username}",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {
+            "integration.request.path.username": "method.request.path.username"
+          }
         }
       },
       "options": {
@@ -1199,7 +1228,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/impersonate-role",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "options": {
@@ -1267,7 +1297,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/impersonate-user",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "options": {
@@ -1335,7 +1366,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/clear-impersonate",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "options": {
@@ -1399,7 +1431,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/new-password",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "options": {
@@ -1463,7 +1496,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/recover-password",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "options": {
@@ -1527,7 +1561,8 @@
           "httpMethod": "any",
           "type": "http_proxy",
           "uri": "${nlb_uri}/ll-auth/api/reset-password",
-          "payloadFormatVersion": "1.0"
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
         }
       },
       "options": {
@@ -1932,7 +1967,6 @@
         }
       },
       "CorsResponse": {
-        "description": "built-in CORS response",
         "headers": {
           "Access-Control-Allow-Origin": {
             "schema": {

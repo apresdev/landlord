@@ -56,7 +56,7 @@ func wildcardResourceCalls() []string {
 	return result
 }
 
-func policyDoc(tableArn string) (*PolicyDocument, error) {
+func policyDoc() (*PolicyDocument, error) {
 	result := NewPolicyDocument()
 	wildcardResourcePolicy := PolicyStatement{
 		Effect:   "Allow",
@@ -68,26 +68,22 @@ func policyDoc(tableArn string) (*PolicyDocument, error) {
 	result.Statement = append(result.Statement, PolicyStatement{
 		Effect:   "Allow",
 		Action:   dynamoMethods,
-		Resource: aws.String(tableArn),
+		Resource: aws.String("${module.landlord_dynamo.table_arn}"),
 	})
 	result.Statement = append(result.Statement, PolicyStatement{
 		Effect:   "Allow",
 		Action:   []string{"dynamodb:Query"},
-		Resource: aws.String(tableArn + "/index*"),
+		Resource: aws.String("${module.landlord_dynamo.table_arn}" + "/index*"),
 	})
 	return result, nil
 }
 
 func iamCmd() *cobra.Command {
-	var tableArn string
 	c := &cobra.Command{
 		Use:   "iam",
 		Short: "Describe the IAM policy needed for the app",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if tableArn == "" {
-				return fmt.Errorf("--table-arn must be set")
-			}
-			p, err := policyDoc(tableArn)
+			p, err := policyDoc()
 			if err != nil {
 				return err
 			}
@@ -99,6 +95,5 @@ func iamCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.Flags().StringVar(&tableArn, "table-arn", "", "ARN of the Landlord DynamoDB")
 	return c
 }

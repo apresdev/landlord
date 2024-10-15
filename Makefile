@@ -33,7 +33,7 @@ sim-test:
 .PHONY: gen
 gen: ./api/landlord-openapi-ext.json
 
-./api/landlord-openapi-ext.json: ./api/landlord-openapi.yaml
+./api/landlord-openapi-ext.json: ./api/landlord-openapi.yaml ./scripts/add-openapi-extensions.py
 	./scripts/generate-go-server.sh \
 		./api/landlord-openapi.yaml \
 		apresdev \

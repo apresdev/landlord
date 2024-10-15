@@ -8,11 +8,6 @@ import (
 
 //go:generate mockery --output ../mocks --name AWSDynamoDB --with-expecter=true
 type AWSDynamoDB interface {
-	CreateTable(
-		ctx context.Context,
-		params *dynamodb.CreateTableInput,
-		optFns ...func(*dynamodb.Options)) (
-		*dynamodb.CreateTableOutput, error)
 	DescribeTable(
 		ctx context.Context,
 		params *dynamodb.DescribeTableInput,
