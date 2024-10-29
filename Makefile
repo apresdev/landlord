@@ -19,7 +19,7 @@ completion: build
 setup:
 	go install golang.org/x/tools/cmd/goimports@latest
 	go install github.com/vektra/mockery/v2@v2.43.0
-	go install github.com/a-h/templ/cmd/templ@v0.2.747
+	go install github.com/a-h/templ/cmd/templ@v0.2.778
 
 .PHONY: install
 install: build
