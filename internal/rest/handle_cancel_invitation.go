@@ -32,8 +32,7 @@ func HandleCancelInvitation(app App, c *gin.Context, username string) error {
 			zap.String("tenantID", rc.th.String()))
 		return apperr.NewBadRequest("invalid tenant")
 	}
-	if !authx.IsAuthorizedForTenant(
-		c.Request.Context(), app.DDB(), app.RootTenantID(), ten, rc.roles) {
+	if !authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.roles) {
 		return apperr.NewUnauthorized("not authorized")
 	}
 

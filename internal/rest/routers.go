@@ -48,6 +48,18 @@ func getRoutes() []Route {
 			ginCreateTenant,
 		},
 		{
+			"GetRolesForTenant",
+			http.MethodGet,
+			"/ll-auth/api/tenants/:tenantID/roles",
+			ginGetRolesForTenant,
+		},
+		{
+			"GetTenantByID",
+			http.MethodGet,
+			"/ll-auth/api/tenants/:tenantID",
+			ginGetTenantByID,
+		},
+		{
 			"GetTenants",
 			http.MethodGet,
 			"/ll-auth/api/tenants",
@@ -112,6 +124,12 @@ func getRoutes() []Route {
 			http.MethodPost,
 			"/ll-auth/api/new-password",
 			ginSetNewPassword,
+		},
+		{
+			"SetRolesForTenant",
+			http.MethodPut,
+			"/ll-auth/api/tenants/:tenantID/roles",
+			ginSetRolesForTenant,
 		},
 		{
 			"SetTenantState",

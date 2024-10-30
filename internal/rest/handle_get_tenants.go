@@ -3,6 +3,8 @@ package rest
 import (
 	"net/http"
 
+	"github.com/apresdev/landlord/internal/multi"
+
 	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/apresdev/landlord/internal/db"
@@ -11,6 +13,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
+
+func convertTenant(ten *multi.Tenant) Tenant {
+	return Tenant{
+		Id:             ten.ID.String(),
+		Name:           ten.Name,
+		Description:    ten.Description,
+		Roles:          ten.Roles,
+		SubTenantRoles: ten.SubTenantRoles,
+	}
+}
 
 func handleGetTenants(app App, c *gin.Context) error {
 	rc, err := requesterContext(c)
@@ -25,15 +37,8 @@ func handleGetTenants(app App, c *gin.Context) error {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	for _, ten := range allTenants {
-		if authx.IsAuthorizedForTenant(
-			c.Request.Context(), app.DDB(), app.RootTenantID(), ten, rc.roles) {
-
-			resp.Tenants = append(resp.Tenants, Tenant{
-				Id:          ten.ID.String(),
-				Name:        ten.Name,
-				Description: ten.Description,
-				Roles:       ten.Roles,
-			})
+		if authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.roles) {
+			resp.Tenants = append(resp.Tenants, convertTenant(ten))
 		}
 	}
 	c.JSON(http.StatusOK, resp)

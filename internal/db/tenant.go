@@ -22,7 +22,8 @@ func StoreTenant(ctx context.Context, ddb AWSDynamoDB, ten *multi.Tenant) error 
 	if ten.Name == "" {
 		return apperr.NewInternal("cannot store tenant with empty name")
 	}
-
+	sort.Strings(ten.Roles)
+	sort.Strings(ten.SubTenantRoles)
 	av, err := attributevalue.MarshalMap(ten)
 	if err != nil {
 		return err

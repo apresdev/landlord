@@ -58,16 +58,24 @@ func HandleValidateMFACode(app App, c *gin.Context, req ValidateMfaCodeRequest) 
 			ClientId:           upc.ClientId,
 			ChallengeResponses: params,
 			Session:            aws.String(req.Session)})
-	// TODO: look at output?
 	if err != nil {
 		return nil, err
 	}
-	_, err = cogIdp.AdminConfirmSignUp(ctx,
-		&cognitoidentityprovider.AdminConfirmSignUpInput{
+	u, err := cogIdp.AdminGetUser(ctx,
+		&cognitoidentityprovider.AdminGetUserInput{
 			UserPoolId: aws.String(tenant.UserPoolID),
 			Username:   aws.String(req.Username)})
 	if err != nil {
-		zap.L().Warn("error confirming user", zap.Error(err))
+		return nil, err
+	}
+	if u.UserStatus == types.UserStatusTypeUnconfirmed || u.UserStatus == types.UserStatusTypeUnknown {
+		_, err = cogIdp.AdminConfirmSignUp(ctx,
+			&cognitoidentityprovider.AdminConfirmSignUpInput{
+				UserPoolId: aws.String(tenant.UserPoolID),
+				Username:   aws.String(req.Username)})
+		if err != nil {
+			zap.L().Warn("error confirming user", zap.Error(err))
+		}
 	}
 	// It is safe to confirm the email address here as the temporary password
 	// was sent to the email address in question and secured by Cognito's

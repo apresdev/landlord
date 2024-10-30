@@ -1,0 +1,197 @@
+package rest
+
+import (
+	"bytes"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/apresdev/landlord/internal/db"
+	"github.com/apresdev/landlord/internal/multi"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	ddbtypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/stretchr/testify/mock"
+
+	"github.com/apresdev/landlord/internal/authx"
+	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/suite"
+)
+
+type HandleSetRolesForTenantTestSuite struct {
+	suite.Suite
+	ginMode string
+}
+
+func TestHandleSetRolesForTenantTestSuite(t *testing.T) {
+	suite.Run(t, &HandleSetRolesForTenantTestSuite{})
+}
+
+func (s *HandleSetRolesForTenantTestSuite) SetupTest() {
+	s.ginMode = gin.Mode()
+	gin.SetMode(gin.TestMode)
+}
+
+func (s *HandleSetRolesForTenantTestSuite) TearDownTest() {
+	gin.SetMode(s.ginMode)
+}
+
+type badRequestStruct struct {
+	Roles int
+}
+
+func testSetRolesForTenantRequest(t *testing.T, ten *multi.Tenant, user *multi.User, body []byte) *ginTest {
+	r := httptest.NewRequest("PUT", "/roles", bytes.NewBuffer(body))
+	gt := newGinTest(t).withRequest(r)
+	if ten != nil {
+		gt.c.AddParam("tenantID", ten.ID.String())
+		claims := make(jwt.MapClaims)
+		claims[authx.CustomTenantClaim] = ten.ID.String()
+		if user != nil {
+			claims[authx.CognitoGroupsClaim] = []string{ten.GroupName(user.Role)}
+			claims[authx.EmailClaim] = user.Username
+		}
+		tok := &jwt.Token{Claims: claims}
+		gt.c.Set(TokenKey, tok)
+	}
+	return gt
+}
+
+func (s *HandleSetRolesForTenantTestSuite) TestBadRequests() {
+	app := NewMockApp()
+	gt1 := testSetRolesForTenantRequest(s.T(), nil, nil, nil)
+	err := handleSetRolesForTenant(app, gt1.c)
+	s.Error(err)
+
+	gt2 := testSetRolesForTenantRequest(s.T(), nil, nil, MustJSONMarshal([]byte("{}")))
+	err = handleSetRolesForTenant(app, gt2.c)
+	s.Error(err)
+
+	gt3 := testSetRolesForTenantRequest(s.T(), nil, nil, MustJSONMarshal(
+		badRequestStruct{Roles: 1}))
+	err = handleSetRolesForTenant(app, gt3.c)
+	s.Error(err)
+
+	gt4 := testSetRolesForTenantRequest(s.T(), nil, nil, MustJSONMarshal(
+		TenantRolesRequest{Roles: []string{"role1"}}))
+	gt4.c.Params = nil
+	err = handleSetRolesForTenant(app, gt4.c)
+	s.Error(err)
+}
+
+func (s *HandleSetRolesForTenantTestSuite) TestBadRoleNames() {
+	app := NewMockApp()
+	t1 := withSetupGetTenantByID(app)
+	u1 := newTestUser(t1)
+	gt := testSetRolesForTenantRequest(s.T(), t1, u1, MustJSONMarshal(
+		TenantRolesRequest{Roles: []string{"admin", "guest", "not-a-valid-role-name-###"}}))
+	withSetupQueryUsers(app, t1, []*multi.User{u1})
+	app.cogIdp.EXPECT().CreateGroup(mock.Anything, mock.Anything).Return(nil, nil)
+	err := handleSetRolesForTenant(app, gt.c)
+	s.Error(err)
+	s.Equal("role name must be all lowercase and contain only letters, numbers, and hyphens", err.Error())
+}
+
+func (s *HandleSetRolesForTenantTestSuite) TestSuccessAdd() {
+	app := NewMockApp()
+	t1 := withSetupGetTenantByID(app)
+	u1 := newTestUser(t1)
+	u1.Role = "admin"
+	gt := testSetRolesForTenantRequest(s.T(), t1, u1, MustJSONMarshal(
+		TenantRolesRequest{Roles: []string{"admin", "role1"}}))
+	withSetupQueryUsers(app, t1, []*multi.User{u1})
+
+	t1.Roles = []string{"admin", "guest", "role1"}
+	av, _ := attributevalue.MarshalMap(t1)
+	av["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
+	av["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t1.ID.String())}
+	av["altName"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t1.Name)}
+	input := &dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(db.TableName()),
+	}
+	app.ddb.EXPECT().PutItem(mock.Anything, input).Return(nil, nil)
+	app.cogIdp.EXPECT().CreateGroup(mock.Anything, mock.Anything).Return(nil, nil)
+	err := handleSetRolesForTenant(app, gt.c)
+	s.NoError(err)
+}
+
+func (s *HandleSetRolesForTenantTestSuite) TestSuccessRemove() {
+	app := NewMockApp()
+	t1 := multi.NewTenant("ten1")
+	t1.Roles = []string{"admin", "guest", "role1"}
+	withSetupGetTenantByID2(app, t1)
+	u1 := newTestUser(t1)
+	u1.Role = "admin"
+	gt := testSetRolesForTenantRequest(s.T(), t1, u1, MustJSONMarshal(
+		TenantRolesRequest{Roles: []string{"admin", "guest"}}))
+	withSetupQueryUsers(app, t1, []*multi.User{u1})
+
+	t1.Roles = []string{"admin", "guest"}
+	t1.SubTenantRoles = []string{"admin", "guest"}
+	av, _ := attributevalue.MarshalMap(t1)
+	av["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
+	av["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t1.ID.String())}
+	av["altName"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t1.Name)}
+	input := &dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(db.TableName()),
+	}
+	app.ddb.EXPECT().PutItem(mock.Anything, input).Return(nil, nil)
+	app.cogIdp.EXPECT().DeleteGroup(mock.Anything, mock.Anything).Return(nil, nil)
+	err := handleSetRolesForTenant(app, gt.c)
+	s.NoError(err)
+}
+
+func (s *HandleSetRolesForTenantTestSuite) TestSuccessAddSubRoles() {
+	app := NewMockApp()
+	t1 := withSetupGetTenantByID(app)
+	u1 := newTestUser(t1)
+	u1.Role = "admin"
+	gt := testSetRolesForTenantRequest(s.T(), t1, u1, MustJSONMarshal(
+		TenantRolesRequest{Roles: []string{"admin", "guest"},
+			SubTenantRoles: []string{"admin", "guest", "role2", "role1"}}))
+	withSetupQueryUsers(app, t1, []*multi.User{u1})
+
+	t1.Roles = []string{"admin", "guest"}
+	t1.SubTenantRoles = []string{"admin", "guest", "role1", "role2"}
+	av, _ := attributevalue.MarshalMap(t1)
+	av["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
+	av["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t1.ID.String())}
+	av["altName"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t1.Name)}
+	input := &dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(db.TableName()),
+	}
+	app.ddb.EXPECT().PutItem(mock.Anything, input).Return(nil, nil)
+	err := handleSetRolesForTenant(app, gt.c)
+	s.NoError(err)
+}
+
+func (s *HandleSetRolesForTenantTestSuite) TestSuccessRemoveSubRole() {
+	app := NewMockApp()
+	t1 := withSetupGetTenantByID(app)
+	t1.SubTenantRoles = []string{"admin", "guest", "role1", "role2"}
+	u1 := newTestUser(t1)
+	u1.Role = "admin"
+	gt := testSetRolesForTenantRequest(s.T(), t1, u1, MustJSONMarshal(
+		TenantRolesRequest{Roles: []string{"admin", "guest"},
+			SubTenantRoles: []string{"admin", "guest", "role1"}}))
+	withSetupQueryUsers(app, t1, []*multi.User{u1})
+
+	t1.Roles = []string{"admin", "guest"}
+	t1.SubTenantRoles = []string{"admin", "guest", "role1"}
+	av, _ := attributevalue.MarshalMap(t1)
+	av["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
+	av["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t1.ID.String())}
+	av["altName"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t1.Name)}
+	input := &dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(db.TableName()),
+	}
+	app.ddb.EXPECT().PutItem(mock.Anything, input).Return(nil, nil)
+	err := handleSetRolesForTenant(app, gt.c)
+	s.NoError(err)
+}

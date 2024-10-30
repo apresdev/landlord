@@ -55,13 +55,6 @@ func fakeUserRequest() client.RefreshRequest {
 	}
 }
 
-func newTestUser(username string, tenantID uuid.UUID) *multi.User {
-	return &multi.User{
-		Username: username,
-		TenantID: tenantID,
-	}
-}
-
 func (s *HandleRefreshTestSuite) TestBadRequests() {
 	app := NewMockApp()
 	gt1 := newGinTest(s.T()).withRequest(
@@ -106,8 +99,8 @@ func (s *HandleRefreshTestSuite) TestNoUserPoolClient() {
 	b, err := json.Marshal(req)
 	s.NoError(err)
 	app := NewMockApp()
-	mt := multi.NewTenant()
-	mu := newTestUser("user@example.com", mt.ID)
+	mt := multi.NewTenant("ten1")
+	mu := newTestUser(mt)
 
 	// User is queried first...
 	o1 := dynamodb.QueryOutput{}
@@ -133,8 +126,8 @@ func (s *HandleRefreshTestSuite) TestUserLookupFailure() {
 	b, err := json.Marshal(req)
 	s.NoError(err)
 	app := NewMockApp()
-	mt := multi.NewTenant()
-	mu := newTestUser("user@example.com", mt.ID)
+	mt := multi.NewTenant("ten1")
+	mu := newTestUser(mt)
 
 	// User is queried first...
 	o1 := dynamodb.QueryOutput{}
@@ -169,17 +162,17 @@ func (s *HandleRefreshTestSuite) TestNoSubInUser() {
 	b, err := json.Marshal(req)
 	s.NoError(err)
 	app := NewMockApp()
-	mt := multi.NewTenant()
-	mu := newTestUser("user@example.com", mt.ID)
+	ten := multi.NewTenant("ten1")
+	user := newTestUser(ten)
 
 	// User is queried first...
 	o1 := dynamodb.QueryOutput{}
-	o1.Items = append(o1.Items, apptest.MustStructToDynamoMap(*mu))
+	o1.Items = append(o1.Items, apptest.MustStructToDynamoMap(*user))
 	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o1, nil).Once()
 
 	// ...then tenant
 	o2 := dynamodb.GetItemOutput{}
-	o2.Item = apptest.MustStructToDynamoMap(*mt)
+	o2.Item = apptest.MustStructToDynamoMap(*ten)
 	app.ddb.EXPECT().GetItem(mock.Anything, mock.Anything).Return(&o2, nil).Once()
 
 	app.cogIdp.EXPECT().ListUserPoolClients(mock.Anything, mock.Anything).Return(
@@ -209,17 +202,17 @@ func (s *HandleRefreshTestSuite) TestInitiateAuthFailure() {
 	b, err := json.Marshal(req)
 	s.NoError(err)
 	app := NewMockApp()
-	mt := multi.NewTenant()
-	mu := newTestUser("user@example.com", mt.ID)
+	ten := multi.NewTenant("ten1")
+	user := newTestUser(ten)
 
 	// User is queried first...
 	o1 := dynamodb.QueryOutput{}
-	o1.Items = append(o1.Items, apptest.MustStructToDynamoMap(*mu))
+	o1.Items = append(o1.Items, apptest.MustStructToDynamoMap(*user))
 	app.ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(&o1, nil).Once()
 
 	// ...then tenant
 	o2 := dynamodb.GetItemOutput{}
-	o2.Item = apptest.MustStructToDynamoMap(*mt)
+	o2.Item = apptest.MustStructToDynamoMap(*ten)
 	app.ddb.EXPECT().GetItem(mock.Anything, mock.Anything).Return(&o2, nil).Once()
 
 	app.cogIdp.EXPECT().ListUserPoolClients(mock.Anything, mock.Anything).Return(
@@ -253,7 +246,7 @@ func (s *HandleRefreshTestSuite) TestInitiateAuthFailure() {
 func (s *HandleRefreshTestSuite) TestHappyPath() {
 	app := NewMockApp()
 
-	mt := multi.NewTenant()
+	mt := multi.NewTenant("ten1")
 
 	// User is queried first...
 	username := "user@example.com"

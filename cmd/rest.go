@@ -476,6 +476,80 @@ func restRefreshCmd() *cobra.Command {
 	return c
 }
 
+func removeFromSlice(target, toDelete []string) []string {
+	deleteMap := make(map[string]struct{})
+	for _, item := range toDelete {
+		deleteMap[item] = struct{}{}
+	}
+	result := target[:0]
+	for _, item := range target {
+		if _, found := deleteMap[item]; !found {
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
+func restSetRolesCmd() *cobra.Command {
+	var token string
+	var server string
+	var tenant string
+	var addRoles []string
+	var removeRoles []string
+	var addSubRoles []string
+	var removeSubRoles []string
+	c := &cobra.Command{
+		Use:   "set-roles",
+		Short: "Set the roles for a tenant",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if token == "" {
+				s := MustSession()
+				token = s.AccessToken
+				if token == "" {
+					return errors.New("--token must be set")
+				}
+			}
+			if tenant == "" {
+				return errors.New("--tenant must be set")
+			}
+			cl, err := apiClient(token, server)
+			if err != nil {
+				return err
+			}
+			ctx := context.Background()
+			ten, _, err := cl.AuthAPI.GetTenantByID(ctx, tenant).Execute()
+			if err != nil {
+				return err
+			}
+
+			var req client.TenantRolesRequest
+			req.Roles = append(ten.Tenant.Roles, addRoles...)
+			req.Roles = removeFromSlice(req.Roles, removeRoles)
+			req.SubTenantRoles = append(ten.Tenant.SubTenantRoles, addSubRoles...)
+			req.SubTenantRoles = removeFromSlice(req.SubTenantRoles, removeSubRoles)
+
+			_, _, err = cl.AuthAPI.SetRolesForTenant(ctx, tenant).TenantRolesRequest(req).Execute()
+
+			return err
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&token, "token", "t", "", "Token to authorize with")
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
+	c.PersistentFlags().StringVarP(
+		&tenant, "tenant", "T", "", "Tenant to set roles for")
+	c.PersistentFlags().StringSliceVarP(
+		&addRoles, "add-roles", "a", []string{}, "Roles to add")
+	c.PersistentFlags().StringSliceVarP(
+		&removeRoles, "remove-roles", "r", []string{}, "Roles to remove")
+	c.PersistentFlags().StringSliceVarP(
+		&addSubRoles, "add-sub-roles", "A", []string{}, "Sub-roles to add")
+	c.PersistentFlags().StringSliceVarP(
+		&removeSubRoles, "remove-sub-roles", "R", []string{}, "Sub-roles to remove")
+	return c
+}
+
 func restTenantsCmd() *cobra.Command {
 	var token string
 	var server string
@@ -679,6 +753,7 @@ func restCmd() *cobra.Command {
 	c.AddCommand(restLoginCmd())
 	c.AddCommand(restNewPassword())
 	c.AddCommand(restRefreshCmd())
+	c.AddCommand(restSetRolesCmd())
 	c.AddCommand(restTenantsCmd())
 	c.AddCommand(restUsersCmd())
 	c.AddCommand(restValidateMFACodeCmd())

@@ -94,7 +94,7 @@ func (s *HandleSetNewPasswordTestSuite) TestSuccess() {
 		Session:  "session-token"}
 	gt1 := withDefaultSetNewPasswordRequest2(newGinTest(s.T()), &req)
 	t := withSetupGetTenantByID(app)
-	u := newUser(t)
+	u := newTestUser(t)
 	u.Status = multi.UserStatusInvited
 	withSetupQueryUser2(app, u)
 	withGetUserPoolClient(app, ctx)
@@ -149,7 +149,7 @@ func (s *HandleSetNewPasswordTestSuite) TestSuccessWithMFA() {
 		Session:  "session-token"}
 	gt1 := withDefaultSetNewPasswordRequest2(newGinTest(s.T()), &req)
 	t := withSetupGetTenantByID(app)
-	u := newUser(t)
+	u := newTestUser(t)
 	u.Status = multi.UserStatusInvited
 	u.MFAPolicy = multi.MFAPolicyRequired
 	withSetupQueryUser2(app, u)

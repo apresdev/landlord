@@ -58,7 +58,7 @@ func (s *InviteTestSuite) TestInviteDBFailure() {
 	ddb := mocks.NewAWSDynamoDB(s.T())
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
 	ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
-	tenant := multi.NewTenant()
+	tenant := multi.NewTenant("ten1")
 	err := authx.SendInvite(
 		ctx, ddb, cogIdp, tenant, "foo@example.com", "guest", multi.MFAPolicyNone)
 	s.Error(err)

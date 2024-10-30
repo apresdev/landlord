@@ -499,6 +499,94 @@
         }
       }
     },
+    "/ll-auth/api/tenants/{tenantID}": {
+      "get": {
+        "operationId": "GetTenantByID",
+        "summary": "Get a tenant by ID",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/TenantResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}",
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {
+            "integration.request.path.tenantID": "method.request.path.tenantID"
+          }
+        }
+      },
+      "options": {
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
     "/ll-auth/api/tenants/{tenantID}/state/{tenantState}": {
       "put": {
         "operationId": "SetTenantState",
@@ -587,6 +675,148 @@
                 "active",
                 "inactive"
               ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ll-auth/api/tenants/{tenantID}/roles": {
+      "get": {
+        "operationId": "GetRolesForTenant",
+        "summary": "Get the list of roles for a tenant",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/TenantRolesResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/roles",
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {
+            "integration.request.path.tenantID": "method.request.path.tenantID"
+          }
+        }
+      },
+      "put": {
+        "operationId": "SetRolesForTenant",
+        "summary": "Set the roles for a tenant.",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/TenantRolesRequest"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/TenantRolesResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/roles",
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {
+            "integration.request.path.tenantID": "method.request.path.tenantID"
+          }
+        }
+      },
+      "options": {
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -1725,6 +1955,16 @@
           }
         }
       },
+      "TenantRolesRequest": {
+        "description": "Set the roles for a tenant",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TenantRolesRequest"
+            }
+          }
+        }
+      },
       "UpdateUserRequest": {
         "required": true,
         "content": {
@@ -1806,6 +2046,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/TenantsResponse"
+            }
+          }
+        }
+      },
+      "TenantRolesResponse": {
+        "description": "Return the roles associated with the tenant",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TenantRolesResponse"
             }
           }
         }
@@ -2275,7 +2525,8 @@
           "id",
           "name",
           "description",
-          "roles"
+          "roles",
+          "subTenantRoles"
         ],
         "properties": {
           "id": {
@@ -2288,6 +2539,12 @@
             "type": "string"
           },
           "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "subTenantRoles": {
             "type": "array",
             "items": {
               "type": "string"
@@ -2313,6 +2570,43 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Tenant"
+            }
+          }
+        }
+      },
+      "TenantRolesRequest": {
+        "type": "object",
+        "required": [
+          "roles"
+        ],
+        "properties": {
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "subTenantRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TenantRolesResponse": {
+        "type": "object",
+        "properties": {
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "subTenantRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           }
         }

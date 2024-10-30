@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"slices"
 
+	"github.com/apresdev/landlord/internal/apperr"
+
 	"github.com/google/uuid"
 )
 
@@ -14,12 +16,36 @@ const (
 	RoleGuest             = "guest"
 	RootTenantName        = "root"
 	RootTenantDescription = "Root Tenant"
+	// MaxRoleNameLength is required as there is a limit to the name of a Cognito
+	// group. And we format our Cognito groups as "tenant-<tenantID>-<role>". We
+	// limit both role names and tenant names to 32 characters.
+	MaxRoleNameLength = 32
 )
 
-var BuiltInRoles = []string{RoleGuest, RoleAdmin}
+var BuiltInRoles = []string{RoleAdmin, RoleGuest}
 
 func IsBuiltinRole(role string) bool {
 	return slices.Contains(BuiltInRoles, role)
+}
+
+func ValidateRoleName(s string) error {
+	if s == "" {
+		return apperr.NewBadRequest("role name cannot be empty")
+	}
+	if len(s) > MaxRoleNameLength {
+		return apperr.NewBadRequest(
+			fmt.Sprintf("role name must be %d characters or less", MaxRoleNameLength))
+	}
+	// role names must be lowercase and contain only letters, numbers, and hyphens
+	matched, err := regexp.MatchString(`^[a-z0-9-]+$`, s)
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	if !matched {
+		return apperr.NewBadRequest(
+			"role name must be all lowercase and contain only letters, numbers, and hyphens")
+	}
+	return nil
 }
 
 type TenantState string
@@ -56,8 +82,9 @@ func MustNewTenantID() uuid.UUID {
 	return uuid.New()
 }
 
-func NewTenant() *Tenant {
+func NewTenant(name string) *Tenant {
 	return &Tenant{
+		Name:           name,
 		State:          TenantStateActive,
 		Roles:          BuiltInRoles,
 		ID:             MustNewTenantID(),
