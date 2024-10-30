@@ -9,8 +9,6 @@ import (
 	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
-	"github.com/apresdev/landlord/internal/db"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"go.uber.org/zap"
@@ -66,8 +64,6 @@ func ParseRoleFromGroup(group string) (Role, error) {
 }
 
 func IsAuthorizedForTenant(
-	ctx context.Context,
-	ddb db.AWSDynamoDB,
 	rootTenantID uuid.UUID,
 	ten *multi.Tenant,
 	roles Roles) bool {
@@ -77,13 +73,8 @@ func IsAuthorizedForTenant(
 			return true
 		}
 	}
-	rootTenant, err := db.GetRootTenant(ctx, ddb, rootTenantID)
-	if err != nil {
-		zap.L().Error("error fetching root tenant", zap.Error(err))
-		return false
-	}
 	for _, role := range roles.Roles {
-		if role.Tenant == rootTenant.ID {
+		if role.Tenant == rootTenantID {
 			return true
 		}
 	}

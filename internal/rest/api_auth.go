@@ -27,6 +27,16 @@ func ginCreateTenant(c *gin.Context) {
 	callImpl(c, handleCreateTenant)
 }
 
+// GetRolesForTenant - Get the list of roles for a tenant
+func ginGetRolesForTenant(c *gin.Context) {
+	callImpl(c, handleGetRolesForTenant)
+}
+
+// GetTenantByID - Get a tenant by ID
+func ginGetTenantByID(c *gin.Context) {
+	callImpl(c, handleGetTenantByID)
+}
+
 // GetTenants - Get a list of tenants.
 func ginGetTenants(c *gin.Context) {
 	callImpl(c, handleGetTenants)
@@ -80,6 +90,11 @@ func ginResetPassword(c *gin.Context) {
 // SetNewPassword - Set a new password after being issued a temporary password.
 func ginSetNewPassword(c *gin.Context) {
 	callImpl(c, handleSetNewPassword)
+}
+
+// SetRolesForTenant - Set the roles for a tenant.
+func ginSetRolesForTenant(c *gin.Context) {
+	callImpl(c, handleSetRolesForTenant)
 }
 
 // SetTenantState - Set a tenant's state

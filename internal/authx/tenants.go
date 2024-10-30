@@ -35,8 +35,7 @@ func MustRootTenant(
 		return rootTenant.ID
 	}
 
-	rootTenant = multi.NewTenant()
-	rootTenant.Name = multi.RootTenantName
+	rootTenant = multi.NewTenant(multi.RootTenantName)
 	rootTenant.Description = multi.RootTenantDescription
 	rootTenant.UserPoolName = os.Getenv("LANDLORD_DEFAULT_USER_POOL")
 	up, err := GetUserPoolByNameOrID(ctx, cogIdp, rootTenant.UserPoolName)
@@ -91,8 +90,7 @@ func CreateTenant(
 	if err != nil {
 		return nil, apperr.NewInternalE(err)
 	}
-	ten := multi.NewTenant()
-	ten.Name = strcase.ToKebab(name)
+	ten := multi.NewTenant(strcase.ToKebab(name))
 	ten.State = multi.TenantStateActive
 	ten.Description = description
 	ten.UserPoolName = rootTenant.UserPoolName

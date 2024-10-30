@@ -14,10 +14,11 @@ var _ MappedNullable = &Tenant{}
 
 // Tenant struct for Tenant
 type Tenant struct {
-	Id          string   `json:"id"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Roles       []string `json:"roles"`
+	Id             string   `json:"id"`
+	Name           string   `json:"name"`
+	Description    string   `json:"description"`
+	Roles          []string `json:"roles"`
+	SubTenantRoles []string `json:"subTenantRoles"`
 }
 
 type _Tenant Tenant
@@ -26,12 +27,13 @@ type _Tenant Tenant
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTenant(id string, name string, description string, roles []string) *Tenant {
+func NewTenant(id string, name string, description string, roles []string, subTenantRoles []string) *Tenant {
 	this := Tenant{}
 	this.Id = id
 	this.Name = name
 	this.Description = description
 	this.Roles = roles
+	this.SubTenantRoles = subTenantRoles
 	return &this
 }
 
@@ -139,6 +141,30 @@ func (o *Tenant) SetRoles(v []string) {
 	o.Roles = v
 }
 
+// GetSubTenantRoles returns the SubTenantRoles field value
+func (o *Tenant) GetSubTenantRoles() []string {
+	if o == nil {
+		var ret []string
+		return ret
+	}
+
+	return o.SubTenantRoles
+}
+
+// GetSubTenantRolesOk returns a tuple with the SubTenantRoles field value
+// and a boolean to check if the value has been set.
+func (o *Tenant) GetSubTenantRolesOk() ([]string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.SubTenantRoles, true
+}
+
+// SetSubTenantRoles sets field value
+func (o *Tenant) SetSubTenantRoles(v []string) {
+	o.SubTenantRoles = v
+}
+
 func (o Tenant) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -153,6 +179,7 @@ func (o Tenant) ToMap() (map[string]interface{}, error) {
 	toSerialize["name"] = o.Name
 	toSerialize["description"] = o.Description
 	toSerialize["roles"] = o.Roles
+	toSerialize["subTenantRoles"] = o.SubTenantRoles
 	return toSerialize, nil
 }
 
@@ -165,6 +192,7 @@ func (o *Tenant) UnmarshalJSON(data []byte) (err error) {
 		"name",
 		"description",
 		"roles",
+		"subTenantRoles",
 	}
 
 	allProperties := make(map[string]interface{})

@@ -125,9 +125,7 @@ func isRequestAuthorizedForRoot(app App, c *gin.Context, rc *requesterCtx) error
 		zap.L().Error("error fetching root tenant", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	if !authx.IsAuthorizedForTenant(
-		c.Request.Context(), app.DDB(), app.RootTenantID(), rootTenant, rc.roles) {
-
+	if !authx.IsAuthorizedForTenant(app.RootTenantID(), rootTenant, rc.roles) {
 		zap.L().Info("not authorized for root",
 			zap.String("clientID", string(rc.cid)),
 			zap.Any("groups", rc.groups))

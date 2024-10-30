@@ -11,4 +11,6 @@ type Tenant struct {
 	Description string `json:"description"`
 
 	Roles []string `json:"roles"`
+
+	SubTenantRoles []string `json:"subTenantRoles"`
 }

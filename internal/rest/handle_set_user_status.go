@@ -64,9 +64,7 @@ func HandleSetUserStatus(
 	// TODO: we only allow this operation for members of the root tenant, for now
 	// TODO: check if role is able to set user status. Currently all roles within
 	// the root tenant are permitted.
-	if !authx.IsAuthorizedForTenant(
-		c.Request.Context(), app.DDB(), app.RootTenantID(), targetTenant, rc.roles) {
-
+	if !authx.IsAuthorizedForTenant(app.RootTenantID(), targetTenant, rc.roles) {
 		zap.L().Info("user not authorized for tenant when setting user status",
 			zap.String("clientID", string(rc.cid)),
 			zap.String("tenantID", tenantID),
