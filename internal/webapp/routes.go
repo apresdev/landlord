@@ -235,6 +235,28 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 		}
 	})
 
+	authorizedRoutes.GET("/admin/tenants/:tenantID/add-role-form", func(c *gin.Context) {
+		render(c, tenantAddRoleForm(c.Param("tenantID")))
+	})
+
+	authorizedRoutes.GET("/admin/tenants/:tenantID/add-role-button", func(c *gin.Context) {
+		render(c, tenantAddRoleButton(c.Param("tenantID")))
+	})
+
+	authorizedRoutes.POST("/admin/tenants/:tenantID/roles", func(c *gin.Context) {
+		if err := handleAdminAddRole(a, c); err != nil {
+			c.String(http.StatusInternalServerError,
+				"Error handling add role: %v", err)
+		}
+	})
+
+	authorizedRoutes.DELETE("/admin/tenants/:tenantID/roles/:role", func(c *gin.Context) {
+		if err := handleAdminDeleteRole(a, c); err != nil {
+			c.String(http.StatusInternalServerError,
+				"Error handling delete role: %v", err)
+		}
+	})
+
 	if appenv.DevMode() {
 		unauthorizedRoutes.StaticFS(
 			"/static", http.Dir("internal/webapp/static"))
@@ -268,7 +290,7 @@ func unauthorizedResponse(app App, c *gin.Context) {
 	// This redirect ensures that the user is sent back to the login page
 	// if they are in an HTMX context where responses are being handling
 	// inline.
-	c.Header("HX-Redirect", "/login")
+	c.Header("HX-Redirect", appPath("/login"))
 	c.Status(http.StatusUnauthorized)
 	// The message here is purposefully vague to avoid leaking information.
 	// See the logs for diagnosing the issue.
@@ -305,18 +327,7 @@ func setupContext(app App) gin.HandlerFunc {
 			unauthorizedResponse(app, c)
 			return
 		}
-		up, err := authx.GetUserPoolByNameOrID(
-			c.Request.Context(), app.CogIdp(), ten.UserPoolID)
-		if err != nil {
-			zap.L().Info("unauthorized: could not resolve user pool",
-				zap.String("clientID", string(cid)),
-				zap.String("tenantID", ten.ID.String()),
-				zap.String("userPoolID", ten.UserPoolID),
-				zap.Error(err))
-			unauthorizedResponse(app, c)
-			return
-		}
-		validationURL := jwx.ValidationURL(app.Cfg().Region, aws.ToString(up.Id))
+		validationURL := jwx.ValidationURL(app.Cfg().Region, ten.UserPoolID)
 		tok, err := app.Validator().ValidateToken(
 			c.Request.Context(), cid, validationURL, rawAccessToken)
 		if err != nil {

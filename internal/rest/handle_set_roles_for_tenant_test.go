@@ -195,3 +195,31 @@ func (s *HandleSetRolesForTenantTestSuite) TestSuccessRemoveSubRole() {
 	err := handleSetRolesForTenant(app, gt.c)
 	s.NoError(err)
 }
+
+func (s *HandleSetRolesForTenantTestSuite) TestSuccessAddDuplicate() {
+	app := NewMockApp()
+	t1 := withSetupGetTenantByID(app)
+	u1 := newTestUser(t1)
+	u1.Role = "admin"
+	gt := testSetRolesForTenantRequest(s.T(), t1, u1, MustJSONMarshal(
+		TenantRolesRequest{
+			Roles:          []string{"admin", "role1", "role1", "role2", "role1"},
+			SubTenantRoles: []string{"admin", "guest", "srole1", "srole1", "srole2", "srole1"}}))
+	withSetupQueryUsers(app, t1, []*multi.User{u1})
+
+	expected1 := t1
+	expected1.Roles = []string{"admin", "guest", "role1", "role2"}
+	expected1.SubTenantRoles = []string{"admin", "guest", "srole1", "srole2"}
+	av, _ := attributevalue.MarshalMap(t1)
+	av["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
+	av["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t1.ID.String())}
+	av["altName"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(t1.Name)}
+	input := &dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(db.TableName()),
+	}
+	app.ddb.EXPECT().PutItem(mock.Anything, input).Return(nil, nil)
+	app.cogIdp.EXPECT().CreateGroup(mock.Anything, mock.Anything).Return(nil, nil)
+	err := handleSetRolesForTenant(app, gt.c)
+	s.NoError(err)
+}

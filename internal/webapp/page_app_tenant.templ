@@ -1,16 +1,90 @@
 package webapp
 
 import "github.com/apresdev/landlord/internal/multi"
+import "strconv"
 
 const tenantPageTitle = "Tenant"
 
-templ tenantPage(appName string, currentUser CurrentUser, tenant *multi.Tenant, users []*multi.User) {
+templ roleFragment(tenantID string, role RoleWithCount) {
+<tr>
+    <td>{ role.Role }</td>
+    <td>{ strconv.Itoa(role.Count) }</td>
+    <td>
+        if role.Removable {
+            <button
+                class="button"
+                hx-delete={ "/ll-auth/app/admin/tenants/" + tenantID + "/roles/" + role.Role }
+                hx-target="#add-role-table-and-form"
+            >
+                Remove
+            </button>
+        }
+    </td>
+</tr>
+}
+
+templ tenantAddRoleButton(tenantID string) {
+    <div id="add-role-form">
+        <button hx-get={ "/ll-auth/app/admin/tenants/" + tenantID + "/add-role-form" } hx-target="#add-role-form" class="button">Add Role</button>
+    </div>
+}
+
+templ tenantAddRoleForm(tenantID string) {
+<form
+    class="form-wrapper"
+    hx-post={ string(templ.SafeURL("/ll-auth/app/admin/tenants/" + tenantID + "/roles")) }
+    hx-target="#add-role-table-and-form"
+    hx-swap="innerHTML"
+>
+    <label>
+        <input type="text" name="role" placeholder="Enter role">
+    </label>
+    <button class="button" type="submit">Submit</button>
+    <button class="button" type="button"
+        hx-get={ "/ll-auth/app/admin/tenants/" + tenantID + "/add-role-button" }
+        hx-target="#add-role-form"
+        hx-swap="innerHTML">Cancel</button>
+</form>
+}
+
+templ tenantAddRoleTableAndForm(
+    tenant *multi.Tenant,
+    roles []RoleWithCount,
+    errMsg string) {
+<div id="add-role-table-and-form">
+    @tenantAddRoleButton(tenant.ID.String())
+    <div id="add-role-error-message" style="color: red; margin-top: 10px;">{ errMsg }</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Role Name</th>
+                <th>Members</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody hx-target="closest tr" hx-swap="outerHTML">
+        for _, role := range roles {
+            @roleFragment(tenant.ID.String(), role)
+        }
+        </tbody>
+    </table>
+</div>
+}
+
+templ tenantPage(
+    appName string,
+    currentUser CurrentUser,
+    tenant *multi.Tenant,
+    users []*multi.User,
+    roles []RoleWithCount) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, tenantPageTitle)
 <body>
     @navBarFragment(currentUser)
     <div class="container">
+        @tenantAddRoleTableAndForm(tenant, roles, "")
+        <div style="height: 20px;"></div>
         <a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + tenant.ID.String() + "/invite") }>
             <button class="button">Invite User</button>
         </a>

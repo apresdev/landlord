@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/apresdev/landlord/internal/tinytools"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	cogidptypes "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
@@ -32,6 +34,8 @@ func handleSetRolesForTenant(app App, c *gin.Context) error {
 }
 
 func HandleSetRolesForTenant(app App, c *gin.Context, req TenantRolesRequest, tenantID string) error {
+	req.Roles = tinytools.UniqueSlice(req.Roles)
+	req.SubTenantRoles = tinytools.UniqueSlice(req.SubTenantRoles)
 	if err := validateRoleNames(req.Roles); err != nil {
 		return err
 	}
@@ -70,6 +74,7 @@ func HandleSetRolesForTenant(app App, c *gin.Context, req TenantRolesRequest, te
 		newRoles = append(newRoles, r)
 	}
 	for _, r := range ten.Roles {
+		// Don't ever delete builtin roles
 		if slices.Contains(req.Roles, r) || multi.IsBuiltinRole(r) {
 			continue
 		}

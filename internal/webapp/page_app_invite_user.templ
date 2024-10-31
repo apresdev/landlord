@@ -16,7 +16,7 @@ templ inviteUserPage(
 <body>
     @navBarFragment(currentUser)
     <div class="container">
-        <h2>Invite User to { inviteToTenant.Name }</h2>
+        <h2>Invite user to tenant: { inviteToTenant.Name }</h2>
         <form class="form-wrapper" action={ templ.SafeURL("/ll-auth/app/admin/tenants/" + inviteToTenant.ID.String() + "/invite/submit") } method="POST">
             <label>Email:
                 <input type="text" name="username" value={ initialUsername } />
