@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/apresdev/landlord/internal/tinytools"
+
 	"github.com/skip2/go-qrcode"
 
 	"github.com/apresdev/landlord/internal/multi"
@@ -476,20 +478,6 @@ func restRefreshCmd() *cobra.Command {
 	return c
 }
 
-func removeFromSlice(target, toDelete []string) []string {
-	deleteMap := make(map[string]struct{})
-	for _, item := range toDelete {
-		deleteMap[item] = struct{}{}
-	}
-	result := target[:0]
-	for _, item := range target {
-		if _, found := deleteMap[item]; !found {
-			result = append(result, item)
-		}
-	}
-	return result
-}
-
 func restSetRolesCmd() *cobra.Command {
 	var token string
 	var server string
@@ -524,9 +512,9 @@ func restSetRolesCmd() *cobra.Command {
 
 			var req client.TenantRolesRequest
 			req.Roles = append(ten.Tenant.Roles, addRoles...)
-			req.Roles = removeFromSlice(req.Roles, removeRoles)
+			req.Roles = tinytools.RemoveAllFromSlice(req.Roles, removeRoles)
 			req.SubTenantRoles = append(ten.Tenant.SubTenantRoles, addSubRoles...)
-			req.SubTenantRoles = removeFromSlice(req.SubTenantRoles, removeSubRoles)
+			req.SubTenantRoles = tinytools.RemoveAllFromSlice(req.SubTenantRoles, removeSubRoles)
 
 			_, _, err = cl.AuthAPI.SetRolesForTenant(ctx, tenant).TenantRolesRequest(req).Execute()
 
