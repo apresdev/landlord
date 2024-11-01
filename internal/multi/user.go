@@ -2,6 +2,7 @@ package multi
 
 import (
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -84,4 +85,17 @@ type User struct {
 	Role      string     `dynamodbav:"role"`
 	Status    UserStatus `dynamodbav:"status"`
 	MFAPolicy MFAPolicy  `dynamodbav:"mfaPolicy"`
+	CreatedAt string     `dynamodbav:"createdAt"`
+}
+
+func NewUser(tenantID uuid.UUID, cognitoID uuid.UUID, username, role string, mfaPolicy MFAPolicy) *User {
+	return &User{
+		TenantID:  tenantID,
+		ID:        cognitoID,
+		Username:  username,
+		Role:      role,
+		Status:    UserStatusInvited,
+		MFAPolicy: mfaPolicy,
+		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+	}
 }

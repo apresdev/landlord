@@ -64,7 +64,7 @@ func (s *HandleClearImpersonateTestSuite) TestBadRequests() {
 	s.Error(err)
 
 	gt4 := withDefaultClearImpersonateRequest(newGinTest(s.T()))
-	gt4.c.Set(TokenKey, "not-the-right-type")
+	gt4.c.Set(authx.TokenKey, "not-the-right-type")
 	err = handleClearImpersonate(app, gt4.c)
 	s.Error(err)
 }
@@ -72,7 +72,7 @@ func (s *HandleClearImpersonateTestSuite) TestBadRequests() {
 func (s *HandleClearImpersonateTestSuite) TestBadTokens() {
 	app := NewMockApp()
 	gt1 := withDefaultClearImpersonateRequest(newGinTest(s.T()))
-	gt1.c.Set(TokenKey, &jwt.Token{})
+	gt1.c.Set(authx.TokenKey, &jwt.Token{})
 	err := handleClearImpersonate(app, gt1.c)
 	s.Error(err)
 
@@ -80,7 +80,7 @@ func (s *HandleClearImpersonateTestSuite) TestBadTokens() {
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{"group1", "group2"}
 	tok := &jwt.Token{Claims: claims}
-	gt2.c.Set(TokenKey, tok)
+	gt2.c.Set(authx.TokenKey, tok)
 	err = handleClearImpersonate(app, gt2.c)
 	s.Error(err)
 }
@@ -93,7 +93,7 @@ func (s *HandleClearImpersonateTestSuite) TestNoRootTenant() {
 	claims[authx.CognitoGroupsClaim] = []string{
 		fmt.Sprintf("tenant-%s-guest", tenantUUID)}
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(TokenKey, tok)
+	gt1.c.Set(authx.TokenKey, tok)
 	app.ddb.EXPECT().GetItem(mock.Anything, mock.Anything).Return(
 		nil, fmt.Errorf("error"))
 	err := handleClearImpersonate(app, gt1.c)
@@ -108,7 +108,7 @@ func (s *HandleClearImpersonateTestSuite) TestNotAuthorizedForRoot() {
 	claims[authx.CognitoGroupsClaim] = []string{
 		fmt.Sprintf("tenant-%s-guest", tenantUUID)}
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(TokenKey, tok)
+	gt1.c.Set(authx.TokenKey, tok)
 	_ = withSetupRootTenant(app)
 	err := handleClearImpersonate(app, gt1.c)
 	s.Error(err)
@@ -123,7 +123,7 @@ func (s *HandleClearImpersonateTestSuite) TestNoEmailClaim() {
 		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	claims[authx.CustomTenantClaim] = rt.ID.String()
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(TokenKey, tok)
+	gt1.c.Set(authx.TokenKey, tok)
 	err := handleClearImpersonate(app, gt1.c)
 	s.Error(err)
 }
@@ -138,7 +138,7 @@ func (s *HandleClearImpersonateTestSuite) TestFailedToUpdateUserAttributes() {
 	claims[authx.EmailClaim] = "foo@example.com"
 	claims[authx.CustomTenantClaim] = rt.ID.String()
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(TokenKey, tok)
+	gt1.c.Set(authx.TokenKey, tok)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, errors.New("could not update user attributes"))
 	err := handleClearImpersonate(app, gt1.c)
@@ -155,7 +155,7 @@ func (s *HandleClearImpersonateTestSuite) TestNoSubClaim() {
 	claims[authx.EmailClaim] = "foo@example.com"
 	claims[authx.CustomTenantClaim] = rt.ID.String()
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(TokenKey, tok)
+	gt1.c.Set(authx.TokenKey, tok)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, nil)
 	app.cogIdp.EXPECT().ListUserPoolClients(gt1.c.Request.Context(), mock.Anything).Return(
@@ -183,7 +183,7 @@ func (s *HandleClearImpersonateTestSuite) TestSuccess() {
 	claims[authx.SubClaim] = "sub-123"
 	claims[authx.CustomTenantClaim] = rt.ID.String()
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(TokenKey, tok)
+	gt1.c.Set(authx.TokenKey, tok)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(
 		gt1.c.Request.Context(), mock.Anything, mock.Anything).Return(
 		nil, nil)

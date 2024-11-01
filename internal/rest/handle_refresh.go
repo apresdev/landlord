@@ -29,7 +29,7 @@ func handleRefresh(app App, c *gin.Context) error {
 }
 
 func HandleRefresh(app App, c *gin.Context, req RefreshRequest) (*LoginResponse, error) {
-	cid := clientID(c)
+	cid := authx.ClientID(c)
 	if req.RefreshToken == "" {
 		zap.L().Info("No refresh token in request", zap.String("cid", string(cid)))
 		return nil, apperr.NewBadRequest("missing refreshToken in request")

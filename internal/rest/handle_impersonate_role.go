@@ -35,7 +35,7 @@ func handleImpersonateRole(app App, c *gin.Context) error {
 		return apperr.NewBadRequest("refresh token is required")
 	}
 
-	rc, err := requesterContext(c)
+	rc, err := authx.RequesterFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func handleImpersonateRole(app App, c *gin.Context) error {
 	}
 	if idx := slices.Index(targetTenant.Roles, req.Role); idx < 0 {
 		zap.L().Info("tenant does not have role",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.String("role", req.Role))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -65,14 +65,14 @@ func handleImpersonateRole(app App, c *gin.Context) error {
 		c.Request.Context(),
 		app.CogIdp(),
 		targetTenant.UserPoolID,
-		rc.username,
+		rc.Username,
 		targetTenant.ID,
 		targetGroupName)
 	if err != nil {
 		zap.L().Error("could not set impersonate on user",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.String("userPoolID", targetTenant.UserPoolID),
-			zap.String("username", rc.username),
+			zap.String("username", rc.Username),
 			zap.String("targetTenantID", targetTenant.ID.String()),
 			zap.String("targetGroupName", targetGroupName),
 			zap.Error(err))
@@ -86,10 +86,10 @@ func handleImpersonateRole(app App, c *gin.Context) error {
 			zap.Error(err))
 		return err
 	}
-	sub, err := jwx.GetClaimString(rc.accessToken, authx.SubClaim)
+	sub, err := jwx.GetClaimString(rc.AccessToken, authx.SubClaim)
 	if err != nil {
 		zap.L().Error("could not get sub from token",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -112,7 +112,7 @@ func handleImpersonateRole(app App, c *gin.Context) error {
 		})
 	if err != nil {
 		zap.L().Error("could not initiate auth",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}

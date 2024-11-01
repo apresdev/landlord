@@ -34,13 +34,8 @@ func (s *UserTestSuite) storeTestUser(a appcore.Clients) *multi.User {
 }
 
 func (s *UserTestSuite) storeTestUserWithName(a appcore.Clients, name string) *multi.User {
-	u := &multi.User{
-		TenantID: a.RootTenantID(),
-		ID:       uuid.New(),
-		Username: name,
-		Role:     "admin",
-		Status:   multi.UserStatusActive,
-	}
+	u := multi.NewUser(a.RootTenantID(), uuid.New(), name, "admin", multi.MFAPolicyNone)
+	u.Status = multi.UserStatusActive
 	err := db.StoreUser(a.Ctx(), a.DDB(), u)
 	s.NoError(err)
 	return u
@@ -102,13 +97,9 @@ func (s *UserTestSuite) TestGetUsersForTenant() {
 	}
 	err = db.StoreTenant(a.Ctx(), a.DDB(), t1)
 	s.NoError(err)
-	u := &multi.User{
-		TenantID: t1.ID,
-		ID:       uuid.New(),
-		Username: "testuser3@other.example.com",
-		Role:     "admin",
-		Status:   multi.UserStatusActive,
-	}
+	u := multi.NewUser(t1.ID, uuid.New(),
+		"testuser3@other.example.com", "admin", multi.MFAPolicyRequired)
+	u.Status = multi.UserStatusActive
 	err = db.StoreUser(a.Ctx(), a.DDB(), u)
 	s.NoError(err)
 
@@ -150,13 +141,8 @@ func (s *UserTestSuite) TestSetUserStatus() {
 	s.NoError(err)
 	s.Equal(u4, u5)
 
-	u6 := &multi.User{
-		TenantID: a.RootTenantID(),
-		ID:       uuid.New(),
-		Username: "testuser6@example.com",
-		Role:     "admin",
-		Status:   multi.UserStatusInvited,
-	}
+	u6 := multi.NewUser(a.RootTenantID(), uuid.New(),
+		"testuser6@example.com", "admin", multi.MFAPolicyNone)
 	err = db.StoreUser(a.Ctx(), a.DDB(), u6)
 	s.NoError(err)
 

@@ -344,3 +344,9 @@ func DeleteUser(
 		})
 	return err
 }
+
+func CognitoUserPoolURL(region string, userPoolID string) string {
+	return fmt.Sprintf(
+		"https://%s.console.aws.amazon.com/cognito/v2/idp/user-pools/%s",
+		region, userPoolID)
+}

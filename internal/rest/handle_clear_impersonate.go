@@ -26,7 +26,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 	if req.RefreshToken == "" {
 		return apperr.NewBadRequest("refresh token is required")
 	}
-	rc, err := requesterContext(c)
+	rc, err := authx.RequesterFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -36,17 +36,17 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		zap.L().Error("error fetching root tenant", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	if !authx.IsAuthorizedForTenant(app.RootTenantID(), rootTenant, rc.roles) {
+	if !authx.IsAuthorizedForTenant(app.RootTenantID(), rootTenant, rc.Roles) {
 		zap.L().Info("not authorized for root",
-			zap.String("clientID", string(rc.cid)),
-			zap.Any("groups", rc.groups))
+			zap.String("clientID", string(rc.Cid)),
+			zap.Any("groups", rc.Groups))
 		return apperr.NewUnauthorized("not authorized")
 	}
 
-	username, err := jwx.GetClaimString(rc.accessToken, authx.EmailClaim)
+	username, err := jwx.GetClaimString(rc.AccessToken, authx.EmailClaim)
 	if err != nil {
 		zap.L().Error("could not get username from token",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -54,7 +54,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		c.Request.Context(), app.CogIdp(), rootTenant.UserPoolID, username)
 	if err != nil {
 		zap.L().Error("could not clear impersonation",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -66,10 +66,10 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 			zap.Error(err))
 		return err
 	}
-	sub, err := jwx.GetClaimString(rc.accessToken, authx.SubClaim)
+	sub, err := jwx.GetClaimString(rc.AccessToken, authx.SubClaim)
 	if err != nil {
 		zap.L().Error("could not get sub from token",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -92,7 +92,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		})
 	if err != nil {
 		zap.L().Error("could not initiate auth",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}

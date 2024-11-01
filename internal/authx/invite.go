@@ -79,14 +79,8 @@ func SendInvite(
 			break
 		}
 	}
-	return db.StoreUser(ctx, ddb, &multi.User{
-		TenantID:  ten.ID,
-		ID:        cognitoUserID,
-		Username:  e.Address(),
-		Role:      role,
-		Status:    multi.UserStatusInvited,
-		MFAPolicy: mfaPolicy,
-	})
+	return db.StoreUser(
+		ctx, ddb, multi.NewUser(ten.ID, cognitoUserID, e.Address(), role, mfaPolicy))
 }
 
 func CancelInvitation(

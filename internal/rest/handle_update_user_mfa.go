@@ -2,6 +2,7 @@ package rest
 
 import (
 	"github.com/apresdev/landlord/internal/apperr"
+	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/db"
 	"github.com/apresdev/landlord/internal/multi"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -35,7 +36,7 @@ func HandleUpdateUserMFA(
 		return apperr.NewBadRequest("MFA policy is required")
 	}
 
-	rc, err := requesterContext(c)
+	rc, err := authx.RequesterFromContext(c)
 	if err != nil {
 		return err
 	}

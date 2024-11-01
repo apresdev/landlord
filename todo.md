@@ -26,11 +26,12 @@ spot in the UI that forces a logout and then redirects back to the login page.
   https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-adaptive-authentication.html#user-pool-settings-adaptive-authentication-device-fingerprint
 * UI
   * add update description to the tenant page
+  * friendly timestamp in frontend -- normalize to browser time
   * many htmx routes that are just HTML can be unauthorized routes #perf
   * tenant page should have an affordance when there are no users
   * sort tenant claims in the profile view, they are a map, so in display
     it's worth showing them in alphabetical order instead of random
-  * affordance for add/remove role
+  * add affordance to display a token in the UI given its base64 form
   * affordance for impersonate and clear impersonate
   * general styling improvements for the htmx version
     * add password fields that have the little eyeball to reveal the password

@@ -1,6 +1,8 @@
 package webapp
 
-templ navBarFragment(currentUser CurrentUser) {
+import "github.com/apresdev/landlord/internal/authx"
+
+templ navBarFragment(currentUser *CurrentUser) {
 <div class="nav-bar">
     <div class="nav-left">
         <ul>
@@ -24,16 +26,18 @@ templ navBarFragment(currentUser CurrentUser) {
         </ul>
     </div>
     <div class="nav-right">
-        <div class="profile">
-            <a href="/ll-auth/app/admin/profile">
-                { currentUser.User.Username }
-            </a>
-            <a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + currentUser.Tenant.ID.String()) }>
-                { currentUser.Tenant.Name }
-            </a>
-            <a href="/ll-auth/app/admin/profile">Profile</a>
-            <a href="/ll-auth/app/logout">Logout</a>
-        </div>
+        if currentUser != nil {
+            <div class="profile">
+                <a href="/ll-auth/app/admin/profile">
+                    { currentUser.User.Username }
+                </a>
+                <a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + currentUser.Tenant.ID.String()) }>
+                    { currentUser.Tenant.Name }
+                </a>
+                <a href="/ll-auth/app/admin/profile">Profile</a>
+                <a href="/ll-auth/app/logout">Logout</a>
+            </div>
+        }
     </div>
 </div>
 }

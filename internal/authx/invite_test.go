@@ -73,13 +73,10 @@ func (s *InviteTestSuite) TestInviteInactiveUser() {
 	s.Require().NoError(err)
 	s.Require().NotNil(ten)
 
-	err = db.StoreUser(a.Ctx(), a.DDB(), &multi.User{
-		ID:       uuid.New(),
-		TenantID: ten.ID,
-		Username: "foo@example.com",
-		Role:     multi.RoleGuest,
-		Status:   multi.UserStatusInactive,
-	})
+	u := multi.NewUser(ten.ID, uuid.New(), "foo@example.com", "guest", multi.MFAPolicyNone)
+	u.Status = multi.UserStatusInactive
+
+	err = db.StoreUser(a.Ctx(), a.DDB(), u)
 	s.Require().NoError(err)
 
 	err = authx.SendInvite(

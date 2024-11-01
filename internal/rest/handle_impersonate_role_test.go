@@ -83,7 +83,7 @@ func (s *HandleImpersonateRoleTestSuite) TestBadRequests() {
 	s.Error(err)
 
 	gt6 := withDefaultImpersonateRoleRequest(newGinTest(s.T()))
-	gt6.c.Set(TokenKey, "not-the-right-type")
+	gt6.c.Set(authx.TokenKey, "not-the-right-type")
 	err = handleImpersonateRole(app, gt6.c)
 	s.Error(err)
 }
@@ -91,7 +91,7 @@ func (s *HandleImpersonateRoleTestSuite) TestBadRequests() {
 func (s *HandleImpersonateRoleTestSuite) TestBadTokens() {
 	app := NewMockApp()
 	gt1 := withDefaultImpersonateRoleRequest(newGinTest(s.T()))
-	gt1.c.Set(TokenKey, &jwt.Token{})
+	gt1.c.Set(authx.TokenKey, &jwt.Token{})
 	err := handleImpersonateRole(app, gt1.c)
 	s.Error(err)
 
@@ -99,7 +99,7 @@ func (s *HandleImpersonateRoleTestSuite) TestBadTokens() {
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{"group1", "group2"}
 	tok := &jwt.Token{Claims: claims}
-	gt2.c.Set(TokenKey, tok)
+	gt2.c.Set(authx.TokenKey, tok)
 	err = handleImpersonateRole(app, gt2.c)
 	s.Error(err)
 }
@@ -112,7 +112,7 @@ func (s *HandleImpersonateRoleTestSuite) TestNoRootTenant() {
 	claims[authx.CognitoGroupsClaim] = []string{
 		fmt.Sprintf("tenant-%s-guest", tenantUUID)}
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(TokenKey, tok)
+	gt1.c.Set(authx.TokenKey, tok)
 	app.ddb.EXPECT().GetItem(mock.Anything, mock.Anything).Return(
 		nil, fmt.Errorf("error"))
 	err := handleImpersonateRole(app, gt1.c)
@@ -127,7 +127,7 @@ func (s *HandleImpersonateRoleTestSuite) TestNotAuthorizedForRoot() {
 	claims[authx.CognitoGroupsClaim] = []string{
 		fmt.Sprintf("tenant-%s-guest", tenantUUID)}
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(TokenKey, tok)
+	gt1.c.Set(authx.TokenKey, tok)
 	_ = withSetupRootTenant(app)
 	err := handleImpersonateRole(app, gt1.c)
 	s.Error(err)
@@ -142,7 +142,7 @@ func (s *HandleImpersonateRoleTestSuite) TestNoEmailClaim() {
 	claims[authx.CognitoGroupsClaim] = []string{
 		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(TokenKey, tok)
+	gt1.c.Set(authx.TokenKey, tok)
 	err := handleImpersonateRole(app, gt1.c)
 	s.Error(err)
 }
@@ -157,7 +157,7 @@ func (s *HandleImpersonateRoleTestSuite) TestFailedToUpdateUserAttributes() {
 		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	claims[authx.EmailClaim] = "foo@example.com"
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(TokenKey, tok)
+	gt1.c.Set(authx.TokenKey, tok)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, errors.New("could not update user attributes"))
 	err := handleImpersonateRole(app, gt1.c)
@@ -174,7 +174,7 @@ func (s *HandleImpersonateRoleTestSuite) TestNoSubClaim() {
 		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	claims[authx.EmailClaim] = "foo@example.com"
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(TokenKey, tok)
+	gt1.c.Set(authx.TokenKey, tok)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, nil)
 	app.cogIdp.EXPECT().ListUserPoolClients(gt1.c.Request.Context(), mock.Anything).Return(
@@ -205,7 +205,7 @@ func (s *HandleImpersonateRoleTestSuite) TestSuccess() {
 	claims[authx.SubClaim] = "sub-123"
 	claims[authx.CustomTenantClaim] = rt.ID.String()
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(TokenKey, tok)
+	gt1.c.Set(authx.TokenKey, tok)
 
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(
 		gt1.c.Request.Context(), mock.Anything, mock.Anything).Return(

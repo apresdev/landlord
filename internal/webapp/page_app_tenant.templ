@@ -1,7 +1,9 @@
 package webapp
 
 import "github.com/apresdev/landlord/internal/multi"
+import "net/url"
 import "strconv"
+import "strings"
 
 const tenantPageTitle = "Tenant"
 
@@ -71,40 +73,306 @@ templ tenantAddRoleTableAndForm(
 </div>
 }
 
-templ tenantPage(
-    appName string,
-    currentUser CurrentUser,
+templ userFragment(user *multi.User) {
+<tr>
+    <td>{ user.Username }</td>
+    <td>{ user.Role }</td>
+    <td>{ user.MFAPolicy.String() }</td>
+    <td>{ user.Status.String() }</td>
+    <td>
+        if user.Status == multi.UserStatusActive || user.Status == multi.UserStatusPendingMFA {
+            <button
+                class="button"
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/deactivate" }
+            >
+                Deactivate
+            </button>
+        } else if user.Status == multi.UserStatusInvited {
+            <button
+                class="button"
+                hx-get={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/invite?username=" + url.QueryEscape(user.Username) }
+            >
+                Resend Invite
+            </button>
+            <button
+                class="button"
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/cancel-invite" }
+            >
+                Cancel Invite
+            </button>
+        } else if user.Status == multi.UserStatusInactive {
+            <button
+                class="button"
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/activate" }
+            >
+                Activate
+            </button>
+        }
+        if user.MFAPolicy == multi.MFAPolicyNone {
+            <button
+                class="button"
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/mfa/enable" }
+            >
+                Attach MFA
+            </button>
+        } else {
+            <button
+                class="button"
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/mfa/disable" }
+            >
+                Detach MFA
+            </button>
+        }
+    </td>
+</tr>
+}
+
+templ tenantInviteUserButton(tenantID string) {
+    <div id="invite-user-form">
+        <button
+            hx-get={ "/ll-auth/app/admin/tenants/" + tenantID + "/invite-user-form" }
+            hx-target="#invite-user-form"
+            class="button">Invite User</button>
+    </div>
+}
+
+templ tenantInviteUserForm(tenantID string, inviteToTenant *multi.Tenant, mfaPolicies []string) {
+<form
+    class="form-wrapper"
+    hx-post={ string(templ.SafeURL("/ll-auth/app/admin/tenants/" + tenantID + "/users")) }
+    hx-target="#invite-user-table-and-form"
+    hx-swap="innerHTML"
+>
+    <label>Email:
+        <input type="text" name="username" placeholder="Enter email address">
+    </label>
+    <label>Role:
+        <select id="role" name="role">
+            for _, role := range inviteToTenant.Roles {
+                <option value={ role }>{ role }</option>
+            }
+        </select>
+    </label>
+    <label>MFA Policy:
+        <select id="mfaPolicy" name="mfaPolicy">
+            for _, mfaPolicy := range mfaPolicies {
+                <option value={ mfaPolicy }>{ mfaPolicy }</option>
+            }
+        </select>
+    </label>
+    <button class="button" type="submit">Submit</button>
+    <button class="button" type="button"
+        hx-get={ "/ll-auth/app/admin/tenants/" + tenantID + "/invite-user-button" }
+        hx-target="#invite-user-form"
+        hx-swap="innerHTML">Cancel</button>
+</form>
+}
+
+templ tenantInviteUserTableAndForm(
     tenant *multi.Tenant,
     users []*multi.User,
+    errMsg string) {
+<div id="invite-user-table-and-form">
+    @tenantInviteUserButton(tenant.ID.String())
+    <div id="invite-user-error-message" style="color: red; margin-top: 10px;">{ errMsg }</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>MFA</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody hx-target="closest tr" hx-swap="outerHTML">
+        for _, user := range users {
+            @userFragment(user)
+        }
+        </tbody>
+    </table>
+</div>
+}
+
+templ tenantSummary(
+    appName string,
+    currentUser *CurrentUser,
+    tenant *multi.Tenant,
+    userPoolURL string,
+    users []*multi.User,
     roles []RoleWithCount) {
+
+<div class="card">
+    <div class="card-header">
+        <h2>Tenant Summary</h2>
+    </div>
+    <div class="card-columns">
+        <!-- Column 1 -->
+        <div class="column">
+            <h3>Details</h3>
+            <div class="field">
+                <span class="label">Name</span>
+                <span class="value">{ tenant.Name }</span>
+            </div>
+            <div class="field">
+                <span class="label">Description</span>
+                <span class="value">
+                    { tenant.Description } <i class="fa-sharp fa-pen-to-square"></i>
+                </span>
+            </div>
+            <div class="field">
+                <span class="label">Cognito User Pool</span>
+                <span class="value">
+                    <i class="fa-brands fa-aws"></i>
+                    <a href={ templ.SafeURL(userPoolURL) } target="_blank">{ tenant.UserPoolID }</a>
+                </span>
+            </div>
+        </div>
+
+        <!-- Column 2 -->
+        <div class="column">
+            <h3>Roles</h3>
+            <div class="field">
+                <span class="label">Roles</span>
+                <span class="value">{ strings.Join(tenant.Roles, ", ") }</span>
+            </div>
+            <div class="field">
+                <span class="label">Sub-Roles</span>
+                <span class="value">{ strings.Join(tenant.SubTenantRoles, ", ") }</span>
+            </div>
+        </div>
+
+        <!-- Column 3 -->
+        <div class="column">
+            <h3>Additional Information</h3>
+            <div class="field">
+                <span class="label">Time Created</span>
+                <span class="value">{ tenant.CreatedAt }</span>
+            </div>
+            <div class="field">
+                <span class="label">State</span>
+                <span class="value">{ string(tenant.State) }</span>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
+templ tenantSummaryTab(
+    tab string,
+    appName string,
+    currentUser *CurrentUser,
+    tenant *multi.Tenant,
+    userPoolURL string,
+    users []*multi.User,
+    roles []RoleWithCount) {
+
+<div class="tab-header" role="tablist">
+	<button
+	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/summary") }
+	    class="tab-button active"
+	    role="tab"
+	    aria-selected="true"
+	    aria-controls="tab-content">Summary</button>
+	<button
+	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/users") }
+	    class="tab-button"
+	    role="tab"
+	    aria-selected="false"
+	    aria-controls="tab-content">Users</button>
+	<button
+	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/roles") }
+	    class="tab-button"
+	    role="tab"
+	    aria-selected="false"
+	    aria-controls="tab-content">Roles</button>
+</div>
+<div id="tab-content" role="tabpanel" class="tab-content">
+    @tenantSummary(appName, currentUser, tenant, userPoolURL, users, roles)
+</div>
+}
+
+templ tenantUsersTab(
+     tab string,
+     appName string,
+     currentUser *CurrentUser,
+     tenant *multi.Tenant,
+     users []*multi.User,
+     roles []RoleWithCount) {
+
+<div class="tab-header" role="tablist">
+	<button
+	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/summary") }
+	    class="tab-button"
+	    aria-selected="false"
+	    aria-controls="tab-content">Summary</button>
+	<button
+	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/users") }
+	    class="tab-button active"
+	    role="tab"
+	    aria-selected="true"
+	    aria-controls="tab-content">Users</button>
+	<button
+	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/roles") }
+	    class="tab-button"
+	    aria-selected="false"
+	    aria-controls="tab-content">Roles</button>
+</div>
+<div id="tab-content" role="tabpanel" class="tab-content">
+    @tenantInviteUserTableAndForm(tenant, users, "")
+</div>
+}
+
+templ tenantRolesTab(
+     tab string,
+     appName string,
+     currentUser *CurrentUser,
+     tenant *multi.Tenant,
+     users []*multi.User,
+     roles []RoleWithCount) {
+
+<div class="tab-header" role="tablist">
+	<button
+	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/summary") }
+	    class="tab-button"
+	    role="tab"
+	    aria-selected="false"
+	    aria-controls="tab-content">Summary</button>
+	<button
+	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/users") }
+	    class="tab-button"
+	    role="tab"
+	    aria-selected="false"
+	    aria-controls="tab-content">Users</button>
+	<button
+	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/roles") }
+	    class="tab-button active"
+	    role="tab"
+	    aria-selected="true"
+	    aria-controls="tab-content">Roles</button>
+</div>
+<div id="tab-content" role="tabpanel" class="tab-content">
+    @tenantAddRoleTableAndForm(tenant, roles, "")
+</div>
+}
+
+templ tenantPage(
+    appName string,
+    currentUser *CurrentUser,
+    tenant *multi.Tenant) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, tenantPageTitle)
 <body>
     @navBarFragment(currentUser)
     <div class="container">
-        @tenantAddRoleTableAndForm(tenant, roles, "")
-        <div style="height: 20px;"></div>
-        <a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + tenant.ID.String() + "/invite") }>
-            <button class="button">Invite User</button>
-        </a>
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Role</th>
-                    <th>MFA</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody hx-target="closest tr" hx-swap="outerHTML">
-            for _, user := range users {
-                @userFragment(user)
-            }
-            </tbody>
-        </table>
+        <div id="tabs"
+	        hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/summary") }
+            hx-trigger="load delay:100ms"
+            hx-target="#tabs"
+            hx-swap="innerHTML"></div>
     </div>
 </body>
 </html>
 }
+

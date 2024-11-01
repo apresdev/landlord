@@ -47,7 +47,7 @@ func handleObtainAccessToken(app App, c *gin.Context) error {
 }
 
 func HandleObtainAccessToken(app App, c *gin.Context, req obtainAccessTokenForm) (*ObtainTokenResponse, error) {
-	cid := clientID(c)
+	cid := authx.ClientID(c)
 	if req.GrantType == "" {
 		zap.L().Info("No grant type in request", zap.String("cid", string(cid)))
 		return nil, apperr.NewBadRequest("missing grant type in request")

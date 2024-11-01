@@ -13,7 +13,6 @@ import (
 
 	"github.com/apresdev/landlord/internal/db"
 
-	"github.com/apresdev/landlord/internal/rest"
 	"github.com/aws/aws-sdk-go-v2/aws"
 
 	"github.com/apresdev/landlord/internal/appenv"
@@ -149,6 +148,12 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 				"Error handling admin tenants: %v", err)
 		}
 	})
+	authorizedRoutes.GET("/admin/tenant-select", func(c *gin.Context) {
+		if err := handleAdminTenantSelect(a, c); err != nil {
+			c.String(http.StatusInternalServerError,
+				"Error handling admin tenant select: %v", err)
+		}
+	})
 	authorizedRoutes.GET("/admin/tenants/new", func(c *gin.Context) {
 		render(c, newTenantPage(a.Settings().AppName()))
 	})
@@ -178,14 +183,23 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 					"Error deactivating tenant: %v", err)
 			}
 		})
-	authorizedRoutes.GET("/admin/tenants/:tenantID/invite",
+	authorizedRoutes.GET("/admin/tenants/:tenantID/:tab",
 		func(c *gin.Context) {
-			if err := handleAdminInvite(a, c); err != nil {
+			if err := handleAdminTenantTab(a, c); err != nil {
 				c.String(http.StatusInternalServerError,
-					"Error sending invite: %v", err)
+					"Error deactivating tenant: %v", err)
 			}
 		})
-	authorizedRoutes.POST("/admin/tenants/:tenantID/invite/submit",
+	authorizedRoutes.GET("/admin/tenants/:tenantID/invite-user-form", func(c *gin.Context) {
+		if err := handleInviteUserForm(a, c); err != nil {
+			c.String(http.StatusInternalServerError,
+				"Error rendering form: %v", err)
+		}
+	})
+	authorizedRoutes.GET("/admin/tenants/:tenantID/invite-user-button", func(c *gin.Context) {
+		render(c, tenantInviteUserButton(c.Param("tenantID")))
+	})
+	authorizedRoutes.POST("/admin/tenants/:tenantID/users",
 		func(c *gin.Context) {
 			if err := handleInviteUser(a, c); err != nil {
 				c.String(http.StatusInternalServerError,
@@ -301,7 +315,7 @@ func unauthorizedResponse(app App, c *gin.Context) {
 
 func setupContext(app App) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		cid := clientID(c)
+		cid := authx.ClientID(c)
 		rawAccessToken, err := c.Cookie(LandlordAccessTokenCookie)
 		if rawAccessToken == "" || err != nil {
 			zap.L().Info("unauthorized: no access token cookie",
@@ -338,8 +352,8 @@ func setupContext(app App) gin.HandlerFunc {
 			unauthorizedResponse(app, c)
 			return
 		}
-		c.Set(rest.TokenKey, tok)
-		c.Set(rest.TenantIDKey, ten.ID.String())
+		c.Set(authx.TokenKey, tok)
+		c.Set(authx.TenantIDKey, ten.ID.String())
 		c.Next()
 	}
 }
@@ -347,6 +361,10 @@ func setupContext(app App) gin.HandlerFunc {
 func appPath(s string) string {
 	s = strings.TrimPrefix(s, "/")
 	return fmt.Sprintf("/ll-auth/app/%s", s)
+}
+
+func appURL(s string) templ.SafeURL {
+	return templ.URL(appPath(s))
 }
 
 func redirectTo(c *gin.Context, path string) {
