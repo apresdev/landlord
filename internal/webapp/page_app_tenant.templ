@@ -12,13 +12,18 @@ templ roleFragment(tenantID string, role RoleWithCount) {
     <td>{ role.Role }</td>
     <td>{ strconv.Itoa(role.Count) }</td>
     <td>
-        if role.Removable {
+        if role.RemovableTooltip == "" {
             <button
                 class="button"
                 hx-delete={ "/ll-auth/app/admin/tenants/" + tenantID + "/roles/" + role.Role }
                 hx-target="#add-role-table-and-form"
             >
                 Remove
+            </button>
+        } else {
+            <button class="button" disabled>
+                Remove
+                <span class="tooltip">{ role.RemovableTooltip }</span>
             </button>
         }
     </td>

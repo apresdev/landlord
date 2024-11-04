@@ -19,9 +19,9 @@ import (
 )
 
 type RoleWithCount struct {
-	Role      string
-	Count     int
-	Removable bool
+	Role             string
+	Count            int
+	RemovableTooltip string
 }
 
 func rolesWithCount(roles []string, users []*multi.User) []RoleWithCount {
@@ -32,10 +32,16 @@ func rolesWithCount(roles []string, users []*multi.User) []RoleWithCount {
 	}
 	var rwc []RoleWithCount
 	for _, r := range roles {
+		tooltip := ""
+		if multi.IsBuiltinRole(r) {
+			tooltip = "Cannot remove built-in role"
+		} else if roleCounts[r] > 0 {
+			tooltip = "Cannot remove role that is in use"
+		}
 		rwc = append(rwc, RoleWithCount{
-			Role:      r,
-			Count:     roleCounts[r],
-			Removable: roleCounts[r] == 0 && !multi.IsBuiltinRole(r),
+			Role:             r,
+			Count:            roleCounts[r],
+			RemovableTooltip: tooltip,
 		})
 	}
 	sort.Slice(rwc, func(i, j int) bool {
