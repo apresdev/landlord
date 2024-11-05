@@ -1,0 +1,81 @@
+package webapp
+
+import "github.com/apresdev/landlord/internal/multi"
+import "strings"
+
+const userPageTitle = "User"
+
+templ userSummary(
+    appName string,
+    currentUser *CurrentUser,
+    user *multi.User,
+    userCognitoURL string,
+    tenant *multi.Tenant) {
+<!DOCTYPE html>
+<html lang="en">
+@headerFragment(appName, userPageTitle)
+<body>
+    @navBarFragment(currentUser)
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>User Summary</h2>
+            </div>
+            <div class="card-columns">
+                <!-- Column 1 -->
+                <div class="column">
+                    <h3>Details</h3>
+                    <div class="field">
+                        <span class="label">Name</span>
+                        <span class="value">{ user.Username }</span>
+                    </div>
+                    <div class="field">
+                        <span class="label">MFA Policy</span>
+                        <span class="value">{ user.MFAPolicy.String() }</span>
+                    </div>
+                    <div class="field">
+                        <span class="label">Cognito User ID</span>
+                        <span class="value">
+                            <a href={ templ.SafeURL(userCognitoURL) } target="_blank">{ user.ID.String() }</a>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Column 2 -->
+                <div class="column">
+                    <h3>Roles</h3>
+                    <div class="field">
+                        <span class="label">Tenant</span>
+                        <span class="value">
+                            <a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + tenant.ID.String()) }>{ tenant.Name }</a>
+                        </span>
+                    </div>
+                    <div class="field">
+                        <span class="label">Roles</span>
+                        <span class="value">{ user.Role }</span>
+                    </div>
+                    <div class="field">
+                        <span class="label">Impersonation</span>
+                        <span class="value">None</span>
+                    </div>
+                </div>
+
+                <!-- Column 3 -->
+                <div class="column">
+                    <h3>Additional Information</h3>
+                    <div class="field">
+                        <span class="label">Time Created</span>
+                        <span class="value">{ displayTimestamp(user.CreatedAt) }</span>
+                    </div>
+                    <div class="field">
+                        <span class="label">State</span>
+                        <span class="value">{ string(user.Status) }</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+}
+

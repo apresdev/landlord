@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -271,6 +272,13 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 		}
 	})
 
+	authorizedRoutes.GET("/admin/tenants/:tenantID/users/:userID", func(c *gin.Context) {
+		if err := handleAdminUser(a, c); err != nil {
+			c.String(http.StatusInternalServerError,
+				"Error handling admin user: %v", err)
+		}
+	})
+
 	if appenv.DevMode() {
 		unauthorizedRoutes.StaticFS(
 			"/static", http.Dir("internal/webapp/static"))
@@ -356,6 +364,14 @@ func setupContext(app App) gin.HandlerFunc {
 		c.Set(authx.TenantIDKey, ten.ID.String())
 		c.Next()
 	}
+}
+
+func displayTimestamp(t string) string {
+	parsedTime, err := time.Parse(time.RFC3339, t)
+	if err != nil {
+		return t
+	}
+	return parsedTime.Format("2006-01-02 15:04:05") + " UTC"
 }
 
 func appPath(s string) string {

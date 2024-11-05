@@ -80,7 +80,9 @@ templ tenantAddRoleTableAndForm(
 
 templ userFragment(user *multi.User) {
 <tr>
-    <td>{ user.Username }</td>
+    <td><a href={ appURL("/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String()) }>
+        { user.Username }
+    </a></td>
     <td>{ user.Role }</td>
     <td>{ user.MFAPolicy.String() }</td>
     <td>{ user.Status.String() }</td>
@@ -252,7 +254,7 @@ templ tenantSummary(
             <h3>Additional Information</h3>
             <div class="field">
                 <span class="label">Time Created</span>
-                <span class="value">{ tenant.CreatedAt }</span>
+                <span class="value">{ displayTimestamp(tenant.CreatedAt) }</span>
             </div>
             <div class="field">
                 <span class="label">State</span>
