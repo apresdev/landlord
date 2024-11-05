@@ -2,9 +2,9 @@
 
 * React UI flow for adding MFA
 * figure out terraform for how to configure email and SMS
+* cognito flag for user enabled
 * why do some apps ask for two codes when signing up to MFA?
 * login dialog should say "login again" after entering in OTP
-* grab details from the user pool and user pool client to show in UI
 * in the URL we send for signing up a new account, make the URL navigate to a
 spot in the UI that forces a logout and then redirects back to the login page.
 * handle the "remember me" flag on login
@@ -25,6 +25,7 @@ spot in the UI that forces a logout and then redirects back to the login page.
 * add IP address and device-fingerprinting data to signups:
   https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-adaptive-authentication.html#user-pool-settings-adaptive-authentication-device-fingerprint
 * UI
+  * grab details from the user pool and user pool client to show in UI
   * add update description to the tenant page
   * friendly timestamp in frontend -- normalize to browser time
   * many htmx routes that are just HTML can be unauthorized routes #perf
@@ -35,6 +36,5 @@ spot in the UI that forces a logout and then redirects back to the login page.
   * affordance for impersonate and clear impersonate
   * general styling improvements for the htmx version
     * add password fields that have the little eyeball to reveal the password
-      * maybe save this for the React version only?
   * front end validation that the passwords match in new-password page
   * shake out only the icons we need from font-awesome

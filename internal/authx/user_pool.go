@@ -350,3 +350,9 @@ func CognitoUserPoolURL(region string, userPoolID string) string {
 		"https://%s.console.aws.amazon.com/cognito/v2/idp/user-pools/%s",
 		region, userPoolID)
 }
+
+func CognitoUserDetailsURL(region string, userPoolID string, userID string) string {
+	return fmt.Sprintf(
+		"https://%s.console.aws.amazon.com/cognito/v2/idp/user-pools/%s/users/details/%s",
+		region, userPoolID, userID)
+}
