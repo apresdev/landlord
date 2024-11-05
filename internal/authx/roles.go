@@ -63,18 +63,24 @@ func ParseRoleFromGroup(group string) (Role, error) {
 	return Role{Name: parts[6], Tenant: tenantID}, nil
 }
 
+// IsRoleAuthorizedForTenant checks if the given role is authorized for the given
+// tenant.
+func IsRoleAuthorizedForTenant(
+	rootTenantID uuid.UUID,
+	ten *multi.Tenant,
+	role Role) bool {
+	return role.Tenant == ten.ID || role.Tenant == rootTenantID
+}
+
+// IsAuthorizedForTenant checks if the given set of roles are authorized
+// for the given tenant.
 func IsAuthorizedForTenant(
 	rootTenantID uuid.UUID,
 	ten *multi.Tenant,
 	roles Roles) bool {
 
 	for _, role := range roles.Roles {
-		if role.Tenant == ten.ID {
-			return true
-		}
-	}
-	for _, role := range roles.Roles {
-		if role.Tenant == rootTenantID {
+		if IsRoleAuthorizedForTenant(rootTenantID, ten, role) {
 			return true
 		}
 	}

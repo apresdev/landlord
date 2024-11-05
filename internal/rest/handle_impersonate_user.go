@@ -34,7 +34,7 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 		return apperr.NewBadRequest("refresh token is required")
 	}
 
-	rc, err := requesterContext(c)
+	rc, err := authx.RequesterFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 	}
 	if targetUser.TenantID != targetTenant.ID {
 		zap.L().Info("user does not belong to tenant",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.String("username", req.Username),
 			zap.String("tenantID", targetTenant.ID.String()))
 		return apperr.NewUnauthorized("not authorized")
@@ -69,16 +69,16 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 		c.Request.Context(),
 		app.CogIdp(),
 		targetTenant.UserPoolID,
-		rc.username,
+		rc.Username,
 		targetTenant.ID,
 		targetGroupName,
 		targetUser.Username,
 		targetUser.ID)
 	if err != nil {
 		zap.L().Error("could not set impersonate on user",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.String("userPoolID", targetTenant.UserPoolID),
-			zap.String("username", rc.username),
+			zap.String("username", rc.Username),
 			zap.String("targetTenant", targetTenant.ID.String()),
 			zap.String("targetGroupName", targetGroupName),
 			zap.String("targetUsername", targetUser.Username),
@@ -94,10 +94,10 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 			zap.Error(err))
 		return err
 	}
-	sub, err := jwx.GetClaimString(rc.accessToken, authx.SubClaim)
+	sub, err := jwx.GetClaimString(rc.AccessToken, authx.SubClaim)
 	if err != nil {
 		zap.L().Error("could not get sub from token",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -120,7 +120,7 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 		})
 	if err != nil {
 		zap.L().Error("could not initiate auth",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}

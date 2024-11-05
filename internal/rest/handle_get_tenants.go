@@ -25,7 +25,7 @@ func convertTenant(ten *multi.Tenant) Tenant {
 }
 
 func handleGetTenants(app App, c *gin.Context) error {
-	rc, err := requesterContext(c)
+	rc, err := authx.RequesterFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func handleGetTenants(app App, c *gin.Context) error {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	for _, ten := range allTenants {
-		if authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.roles) {
+		if authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.Roles) {
 			resp.Tenants = append(resp.Tenants, convertTenant(ten))
 		}
 	}

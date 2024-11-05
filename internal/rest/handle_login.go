@@ -22,10 +22,6 @@ import (
 	"go.uber.org/zap"
 )
 
-func clientID(c *gin.Context) jwx.OpaqueClientID {
-	return jwx.OpaqueClientID(c.ClientIP())
-}
-
 func handleLogin(app App, c *gin.Context) error {
 	var req LoginRequest
 	if err := c.BindJSON(&req); err != nil {
@@ -154,7 +150,7 @@ func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, err
 		return nil, err
 	}
 
-	cid := clientID(c)
+	cid := authx.ClientID(c)
 	validationURL := jwx.ValidationURL(app.Cfg().Region, tenant.UserPoolID)
 	accessTok, err := app.Validator().ValidateToken(
 		ctx, cid, validationURL, aws.ToString(o.AuthenticationResult.AccessToken))

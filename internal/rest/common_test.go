@@ -199,14 +199,9 @@ func marshalUser(u *multi.User) map[string]ddbtypes.AttributeValue {
 }
 
 func newTestUser(t *multi.Tenant) *multi.User {
-	return &multi.User{
-		TenantID:  t.ID,
-		ID:        uuid.New(),
-		Username:  "user1@example.com",
-		Role:      "guest",
-		Status:    multi.UserStatusActive,
-		MFAPolicy: multi.MFAPolicyNone,
-	}
+	u := multi.NewUser(t.ID, uuid.New(), "user1@example.com", "guest", multi.MFAPolicyNone)
+	u.Status = multi.UserStatusActive
+	return u
 }
 
 func withSetupQueryUser(app *MockApp, t *multi.Tenant) {

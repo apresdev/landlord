@@ -1,0 +1,34 @@
+package webapp
+
+import "github.com/apresdev/landlord/internal/multi"
+
+script onTenantSelect(tenantID string) {
+    window.location.href = "/ll-auth/app/admin/tenants/" + tenantID
+}
+
+templ tenantSelectFragment(tenant *multi.Tenant) {
+<tr class="clickable" onclick={ onTenantSelect(tenant.ID.String()) }>
+    <td><a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + tenant.ID.String()) }>{ tenant.Name }</a></td>
+    <td>{ tenant.Description }</td>
+</tr>
+}
+
+templ tenantSelectPage(appName string, currentUser *CurrentUser, tenants []*multi.Tenant) {
+<!DOCTYPE html>
+<html lang="en">
+@headerFragment(appName, tenantsPageTitle)
+<body>
+    @navBarFragment(currentUser)
+    <div class="container">
+        <h2>Select Tenant</h2>
+        <table>
+            <tbody hx-target="closest tr" hx-swap="outerHTML">
+            for _, tenant := range tenants {
+                @tenantSelectFragment(tenant)
+            }
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+}

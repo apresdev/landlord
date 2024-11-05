@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"time"
 
 	"github.com/apresdev/landlord/internal/apperr"
 
@@ -76,6 +77,7 @@ type Tenant struct {
 	UserPoolName   string      `dynamodbav:"userPoolName"`
 	SubTenantRoles []string    `dynamodbav:"subTenantRoles"`
 	EmailDomains   []string    `dynamodbav:"emailDomains"`
+	CreatedAt      string      `dynamodbav:"createdAt"`
 }
 
 func MustNewTenantID() uuid.UUID {
@@ -89,6 +91,7 @@ func NewTenant(name string) *Tenant {
 		Roles:          BuiltInRoles,
 		ID:             MustNewTenantID(),
 		SubTenantRoles: BuiltInRoles,
+		CreatedAt:      time.Now().UTC().Format(time.RFC3339),
 	}
 }
 

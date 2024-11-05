@@ -14,7 +14,7 @@ import (
 )
 
 func handleGetTenantByID(app App, c *gin.Context) error {
-	rc, err := requesterContext(c)
+	rc, err := authx.RequesterFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func handleGetTenantByID(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewNotFound(err.Error())
 	}
-	if !authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.roles) {
+	if !authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.Roles) {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	var resp TenantResponse

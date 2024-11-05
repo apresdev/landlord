@@ -20,19 +20,19 @@ func handleCancelInvitation(app App, c *gin.Context) error {
 
 // TODO: change this API to use a User UUID
 func HandleCancelInvitation(app App, c *gin.Context, username string) error {
-	rc, err := requesterContext(c)
+	rc, err := authx.RequesterFromContext(c)
 	if err != nil {
 		return err
 	}
-	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), rc.th)
+	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), rc.Th)
 	if err != nil {
 		zap.L().Error("error resolving tenant",
 			zap.Error(err),
-			zap.String("cid", string(rc.cid)),
-			zap.String("tenantID", rc.th.String()))
+			zap.String("cid", string(rc.Cid)),
+			zap.String("tenantID", rc.Th.String()))
 		return apperr.NewBadRequest("invalid tenant")
 	}
-	if !authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.roles) {
+	if !authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.Roles) {
 		return apperr.NewUnauthorized("not authorized")
 	}
 

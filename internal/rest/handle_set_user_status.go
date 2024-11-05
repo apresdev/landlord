@@ -49,7 +49,7 @@ func HandleSetUserStatus(
 		return nil, apperr.NewBadRequestE(err)
 	}
 
-	rc, err := requesterContext(c)
+	rc, err := authx.RequesterFromContext(c)
 	if err != nil {
 		return nil, err
 	}
@@ -64,11 +64,11 @@ func HandleSetUserStatus(
 	// TODO: we only allow this operation for members of the root tenant, for now
 	// TODO: check if role is able to set user status. Currently all roles within
 	// the root tenant are permitted.
-	if !authx.IsAuthorizedForTenant(app.RootTenantID(), targetTenant, rc.roles) {
+	if !authx.IsAuthorizedForTenant(app.RootTenantID(), targetTenant, rc.Roles) {
 		zap.L().Info("user not authorized for tenant when setting user status",
-			zap.String("clientID", string(rc.cid)),
+			zap.String("clientID", string(rc.Cid)),
 			zap.String("tenantID", tenantID),
-			zap.String("roles", rc.roles.String()))
+			zap.String("roles", rc.Roles.String()))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
 

@@ -54,7 +54,7 @@ func testSetRolesForTenantRequest(t *testing.T, ten *multi.Tenant, user *multi.U
 			claims[authx.EmailClaim] = user.Username
 		}
 		tok := &jwt.Token{Claims: claims}
-		gt.c.Set(TokenKey, tok)
+		gt.c.Set(authx.TokenKey, tok)
 	}
 	return gt
 }

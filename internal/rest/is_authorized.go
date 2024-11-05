@@ -18,16 +18,9 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	// TokenKey is the key used to store the token in the gin context.
-	TokenKey = "token"
-	// TenantIDKey is the key used to store the tenant ID in the gin context.
-	TenantIDKey = "tenant-id"
-)
-
 func isAuthorized(app App) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		cid := clientID(c)
+		cid := authx.ClientID(c)
 		bearer := c.GetHeader("Authorization")
 		if bearer == "" {
 			zap.L().Info("unauthorized: no header found",
@@ -44,7 +37,7 @@ func isAuthorized(app App) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		tk := getStr(c, TenantIDKey)
+		tk := getStr(c, authx.TenantIDKey)
 		var ten *multi.Tenant
 		if tk != "" {
 			tenID, err := uuid.Parse(tk)
@@ -99,7 +92,7 @@ func isAuthorized(app App) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.Set(TokenKey, tok)
+		c.Set(authx.TokenKey, tok)
 		c.Next()
 	}
 }
@@ -118,17 +111,17 @@ func getStr(c *gin.Context, key string) string {
 	return ""
 }
 
-func isRequestAuthorizedForRoot(app App, c *gin.Context, rc *requesterCtx) error {
+func isRequestAuthorizedForRoot(app App, c *gin.Context, rc *authx.Requester) error {
 	rootTenant, err := db.GetRootTenant(
 		c.Request.Context(), app.DDB(), app.RootTenantID())
 	if err != nil {
 		zap.L().Error("error fetching root tenant", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	if !authx.IsAuthorizedForTenant(app.RootTenantID(), rootTenant, rc.roles) {
+	if !authx.IsAuthorizedForTenant(app.RootTenantID(), rootTenant, rc.Roles) {
 		zap.L().Info("not authorized for root",
-			zap.String("clientID", string(rc.cid)),
-			zap.Any("groups", rc.groups))
+			zap.String("clientID", string(rc.Cid)),
+			zap.Any("groups", rc.Groups))
 		return apperr.NewUnauthorized("not authorized")
 	}
 	return nil

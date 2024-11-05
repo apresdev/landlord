@@ -12,7 +12,7 @@ import (
 
 const dashboardPageTitle = "Dashboard"
 
-func dashboardPage(appName string, currentUser CurrentUser, stats DashboardStats) templ.Component {
+func dashboardPage(appName string, currentUser *CurrentUser, stats DashboardStats) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -56,52 +56,13 @@ func dashboardPage(appName string, currentUser CurrentUser, stats DashboardStats
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(stats.SecurityAlertMessage)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_app_dashboard.templ`, Line: 21, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_app_dashboard.templ`, Line: 22, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div></div><div class=\"card\"><div class=\"card-header\"><i class=\"fa-sharp fa-solid fa-calendar-users fa-2x\"></i><h3>Invites</h3></div><div class=\"card-body\"><p>There are ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(stats.OutstandingInvites)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_app_dashboard.templ`, Line: 30, Col: 59}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" outstanding invites</p><p><a href=\"/ll-auth/app/admin/invites\">Manage Invites <i class=\"fa-sharp fa-arrow-right\"></i></a></p></div></div><div class=\"card\"><div class=\"card-header\"><i class=\"fa-sharp fa-solid fa-buildings fa-2x\"></i><h3>Tenants</h3></div><div class=\"card-body\"><p>There are ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(stats.ConfiguredTenantCount)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_app_dashboard.templ`, Line: 40, Col: 62}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" tenants configured.</p><p><a href=\"/ll-auth/app/admin/tenants\">Manage Tenants <i class=\"fa-sharp fa-arrow-right\"></i></a></p><p><a href=\"/ll-auth/app/admin/tenants/new\">Create New Tenant <i class=\"fa-sharp fa-arrow-right\"></i></a></p></div></div><div class=\"card\"><div class=\"card-header\"><i class=\"fa-sharp fa-solid fa-users fa-2x\"></i><h3>Users</h3></div><div class=\"card-body\"><p>There are ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(stats.ConfiguredUserCount)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_app_dashboard.templ`, Line: 51, Col: 60}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" users configured.</p><p><a href=\"/ll-auth/app/admin/all-users\">Manage Users <i class=\"fa-sharp fa-arrow-right\"></i></a></p></div></div></div></div></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div></div><div class=\"card\"><div class=\"card-header\"><i class=\"fa-sharp fa-solid fa-calendar-users fa-2x\"></i><h3>Invites</h3></div><div class=\"card-body\"><p><a href=\"/ll-auth/app/admin/tenant-select?action=manage-invites\">Manage Invites <i class=\"fa-sharp fa-arrow-right\"></i></a></p><p><a href=\"/ll-auth/app/admin/tenant-select?action=invite-user\">Invite User <i class=\"fa-sharp fa-arrow-right\"></i></a></p></div></div><div class=\"card\"><div class=\"card-header\"><i class=\"fa-sharp fa-solid fa-buildings fa-2x\"></i><h3>Tenants</h3></div><div class=\"card-body\"><p><a href=\"/ll-auth/app/admin/tenants\">Manage Tenants <i class=\"fa-sharp fa-arrow-right\"></i></a></p><p><a href=\"/ll-auth/app/admin/tenants/new\">Create New Tenant <i class=\"fa-sharp fa-arrow-right\"></i></a></p></div></div><div class=\"card\"><div class=\"card-header\"><i class=\"fa-sharp fa-solid fa-users fa-2x\"></i><h3>Users</h3></div><div class=\"card-body\"><p><a href=\"/ll-auth/app/admin/tenant-select?action=manage-users\">Manage Users <i class=\"fa-sharp fa-arrow-right\"></i></a></p></div></div></div></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

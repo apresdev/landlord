@@ -1,12 +1,13 @@
 package webapp
 
+import "github.com/apresdev/landlord/internal/authx"
 import "github.com/apresdev/landlord/internal/multi"
 
 const inviteUserPageTitle = "Invite User"
 
 templ inviteUserPage(
     appName string,
-    currentUser CurrentUser,
+    currentUser *CurrentUser,
     inviteToTenant *multi.Tenant,
     initialUsername string,
     mfaPolicies []string) {
@@ -17,7 +18,7 @@ templ inviteUserPage(
     @navBarFragment(currentUser)
     <div class="container">
         <h2>Invite user to tenant: { inviteToTenant.Name }</h2>
-        <form class="form-wrapper" action={ templ.SafeURL("/ll-auth/app/admin/tenants/" + inviteToTenant.ID.String() + "/invite/submit") } method="POST">
+        <form class="form-wrapper" action={ templ.SafeURL("/ll-auth/app/admin/tenants/" + inviteToTenant.ID.String() + "/users") } method="POST">
             <label>Email:
                 <input type="text" name="username" value={ initialUsername } />
             </label>
