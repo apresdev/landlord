@@ -1,5 +1,5 @@
 module "landlord_dynamo" {
-  source           = "git@github.com:apresdev/apres-terraform.git//modules/aws/dynamodb?ref=rel/dynamodb/0.3.0"
+  source           = "git@github.com:apresdev/apres-terraform.git//modules/aws/dynamodb?ref=rel/dynamodb/1.0.0"
   environment      = var.environment
   application      = "Landlord"
   component        = "Auth"
@@ -35,7 +35,7 @@ module "landlord_dynamo" {
 }
 
 module "landlord_ecs" {
-  source               = "git@github.com:apresdev/apres-terraform.git//modules/aws/ecs?ref=rel/ecs/1.1.1"
+  source               = "git@github.com:apresdev/apres-terraform.git//modules/aws/ecs?ref=rel/ecs/2.0.0"
   application          = "Landlord"
   component            = "Auth"
   container_image_uri  = var.container_image_uri
@@ -122,7 +122,7 @@ EOF
 }
 
 module "landlord_api_gateway" {
-  source                 = "git@github.com:apresdev/apres-terraform.git//modules/aws/api_gateway_rest?ref=rel/api_gateway_rest/1.0.2"
+  source                 = "git@github.com:apresdev/apres-terraform.git//modules/aws/api_gateway_rest?ref=rel/api_gateway_rest/1.1.0"
   api_version            = "v1"
   openapi_spec_file_path = "../../api/landlord-openapi-ext.json"
   application            = "Landlord"
@@ -141,7 +141,7 @@ module "landlord_api_gateway" {
 }
 
 module "landlord_waf" {
-  source                 = "git@github.com:apresdev/apres-terraform.git//modules/aws/waf?ref=rel/waf/1.0.1"
+  source                 = "git@github.com:apresdev/apres-terraform.git//modules/aws/waf?ref=rel/waf/1.1.0"
   associate_resource_arn = module.landlord_api_gateway.apigw_stage_arn
   application            = "Landlord"
   component              = "Auth"
