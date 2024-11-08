@@ -79,54 +79,54 @@ templ tenantAddRoleTableAndForm(
 </div>
 }
 
-templ userFragment(user *multi.User) {
+templ userFragment(du *DisplayableUser) {
 <tr>
-    <td><a href={ appURL("/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String()) }>
-        { user.Username }
+    <td><a href={ appURL("/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String()) }>
+        { du.User.Username }
     </a></td>
-    <td>{ user.Role }</td>
-    <td>{ user.MFAPolicy.String() }</td>
-    <td>{ user.Status.String() }</td>
+    <td>{ du.User.Role }</td>
+    <td>{ du.MFAStatus() }</td>
+    <td>{ du.Status() }</td>
     <td>
-        if user.Status == multi.UserStatusActive || user.Status == multi.UserStatusPendingMFA {
+        if du.User.Status == multi.UserStatusActive {
             <button
                 class="button"
-                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/deactivate" }
+                hx-post={ "/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/deactivate" }
             >
                 Deactivate
             </button>
-        } else if user.Status == multi.UserStatusInvited {
+        } else if du.User.Status == multi.UserStatusInvited {
             <button
                 class="button"
-                hx-get={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/invite?username=" + url.QueryEscape(user.Username) }
+                hx-get={ "/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/invite?username=" + url.QueryEscape(du.User.Username) }
             >
                 Resend Invite
             </button>
             <button
                 class="button"
-                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/cancel-invite" }
+                hx-post={ "/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/cancel-invite" }
             >
                 Cancel Invite
             </button>
-        } else if user.Status == multi.UserStatusInactive {
+        } else if du.User.Status == multi.UserStatusInactive {
             <button
                 class="button"
-                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/activate" }
+                hx-post={ "/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/activate" }
             >
                 Activate
             </button>
         }
-        if user.MFAPolicy == multi.MFAPolicyNone {
+        if du.User.MFAPolicy == multi.MFAPolicyNone {
             <button
                 class="button"
-                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/mfa/enable" }
+                hx-post={ "/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/mfa/enable" }
             >
                 Attach MFA
             </button>
         } else {
             <button
                 class="button"
-                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/mfa/disable" }
+                hx-post={ "/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/mfa/disable" }
             >
                 Detach MFA
             </button>
@@ -178,7 +178,7 @@ templ tenantInviteUserForm(tenantID string, inviteToTenant *multi.Tenant, mfaPol
 
 templ tenantInviteUserTableAndForm(
     tenantID uuid.UUID,
-    users []*multi.User,
+    dus []*DisplayableUser,
     errMsg string) {
 <div id="invite-user-table-and-form">
     @tenantInviteUserButton(tenantID.String())
@@ -194,8 +194,8 @@ templ tenantInviteUserTableAndForm(
             </tr>
         </thead>
         <tbody hx-target="closest tr" hx-swap="outerHTML">
-        for _, user := range users {
-            @userFragment(user)
+        for _, du := range dus {
+            @userFragment(du)
         }
         </tbody>
     </table>
@@ -305,7 +305,7 @@ templ tenantUsersTab(
      appName string,
      currentUser *CurrentUser,
      tenant *multi.Tenant,
-     users []*multi.User,
+     dus []*DisplayableUser,
      roles []RoleWithCount) {
 
 <div class="tab-header" role="tablist">
@@ -327,7 +327,7 @@ templ tenantUsersTab(
 	    aria-controls="tab-content">Roles</button>
 </div>
 <div id="tab-content" role="tabpanel" class="tab-content">
-    @tenantInviteUserTableAndForm(tenant.ID, users, "")
+    @tenantInviteUserTableAndForm(tenant.ID, dus, "")
 </div>
 }
 

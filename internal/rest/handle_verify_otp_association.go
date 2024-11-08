@@ -39,7 +39,8 @@ func HandleVerifyOTPAssociation(
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	if user.Status == multi.UserStatusPendingMFA {
+	if user.MFAStatus == multi.MFAStatusPending {
+		user.MFAStatus = multi.MFAStatusActive
 		user.Status = multi.UserStatusActive
 		err = db.StoreUser(ctx, app.DDB(), user)
 		if err != nil {

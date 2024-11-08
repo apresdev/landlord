@@ -274,7 +274,7 @@ func tenantAddRoleTableAndForm(
 	})
 }
 
-func userFragment(user *multi.User) templ.Component {
+func userFragment(du *DisplayableUser) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -299,7 +299,7 @@ func userFragment(user *multi.User) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var14 templ.SafeURL = appURL("/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String())
+		var templ_7745c5c3_Var14 templ.SafeURL = appURL("/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String())
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var14)))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -309,9 +309,9 @@ func userFragment(user *multi.User) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(user.Username)
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(du.User.Username)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 85, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 85, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -322,9 +322,9 @@ func userFragment(user *multi.User) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(user.Role)
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(du.User.Role)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 87, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 87, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -335,9 +335,9 @@ func userFragment(user *multi.User) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(user.MFAPolicy.String())
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(du.MFAStatus())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 88, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 88, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -348,9 +348,9 @@ func userFragment(user *multi.User) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(user.Status.String())
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(du.Status())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 89, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 89, Col: 21}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -360,15 +360,15 @@ func userFragment(user *multi.User) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if user.Status == multi.UserStatusActive || user.Status == multi.UserStatusPendingMFA {
+		if du.User.Status == multi.UserStatusActive {
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<button class=\"button\" hx-post=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var19 string
-			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs("/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/deactivate")
+			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs("/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/deactivate")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 94, Col: 127}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 94, Col: 133}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -378,15 +378,15 @@ func userFragment(user *multi.User) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		} else if user.Status == multi.UserStatusInvited {
+		} else if du.User.Status == multi.UserStatusInvited {
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<button class=\"button\" hx-get=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var20 string
-			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs("/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/invite?username=" + url.QueryEscape(user.Username))
+			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs("/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/invite?username=" + url.QueryEscape(du.User.Username))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 101, Col: 134}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 101, Col: 140}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -397,9 +397,9 @@ func userFragment(user *multi.User) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var21 string
-			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs("/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/cancel-invite")
+			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs("/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/cancel-invite")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 107, Col: 130}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 107, Col: 136}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
@@ -409,15 +409,15 @@ func userFragment(user *multi.User) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		} else if user.Status == multi.UserStatusInactive {
+		} else if du.User.Status == multi.UserStatusInactive {
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<button class=\"button\" hx-post=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var22 string
-			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs("/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/activate")
+			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs("/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/activate")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 114, Col: 125}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 114, Col: 131}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -428,15 +428,15 @@ func userFragment(user *multi.User) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if user.MFAPolicy == multi.MFAPolicyNone {
+		if du.User.MFAPolicy == multi.MFAPolicyNone {
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<button class=\"button\" hx-post=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var23 string
-			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs("/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/mfa/enable")
+			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs("/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/mfa/enable")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 122, Col: 127}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 122, Col: 133}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {
@@ -452,9 +452,9 @@ func userFragment(user *multi.User) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var24 string
-			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs("/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/mfa/disable")
+			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs("/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/mfa/disable")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 129, Col: 128}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant.templ`, Line: 129, Col: 134}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -644,7 +644,7 @@ func tenantInviteUserForm(tenantID string, inviteToTenant *multi.Tenant, mfaPoli
 
 func tenantInviteUserTableAndForm(
 	tenantID uuid.UUID,
-	users []*multi.User,
+	dus []*DisplayableUser,
 	errMsg string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -691,8 +691,8 @@ func tenantInviteUserTableAndForm(
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		for _, user := range users {
-			templ_7745c5c3_Err = userFragment(user).Render(ctx, templ_7745c5c3_Buffer)
+		for _, du := range dus {
+			templ_7745c5c3_Err = userFragment(du).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -928,7 +928,7 @@ func tenantUsersTab(
 	appName string,
 	currentUser *CurrentUser,
 	tenant *multi.Tenant,
-	users []*multi.User,
+	dus []*DisplayableUser,
 	roles []RoleWithCount) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -993,7 +993,7 @@ func tenantUsersTab(
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = tenantInviteUserTableAndForm(tenant.ID, users, "").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = tenantInviteUserTableAndForm(tenant.ID, dus, "").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
