@@ -70,7 +70,7 @@ func HandleUpdateUserMFA(
 	// Transition from MFA policy None to Required initiates the flow to
 	// add an MFA token to the user.
 	if user.MFAPolicy.String() == string(MFAPolicyNone) && req.MfaPolicy == MFAPolicyRequired {
-		user.Status = multi.UserStatusPendingMFA
+		user.MFAStatus = multi.MFAStatusPending
 		user.MFAPolicy = multi.MFAPolicyRequired
 		err := db.StoreUser(c.Request.Context(), app.DDB(), user)
 		if err != nil {
@@ -81,6 +81,7 @@ func HandleUpdateUserMFA(
 			return apperr.NewUnauthorized("not authorized")
 		}
 	} else if req.MfaPolicy == MFAPolicyNone {
+		user.MFAStatus = multi.MFAStatusNone
 		user.MFAPolicy = multi.MFAPolicyNone
 		err := db.StoreUser(c.Request.Context(), app.DDB(), user)
 		if err != nil {

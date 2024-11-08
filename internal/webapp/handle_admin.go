@@ -269,7 +269,7 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 			tab, a.Settings().AppName(), cu, ten, cognitoURL, users, rolesWithCount(ten.Roles, users)))
 	} else if tab == "users" {
 		return render(c, tenantUsersTab(
-			tab, a.Settings().AppName(), cu, ten, users, rolesWithCount(ten.Roles, users)))
+			tab, a.Settings().AppName(), cu, ten, NewDisplayableUsers(users), rolesWithCount(ten.Roles, users)))
 	} else if tab == "roles" {
 		return render(c, tenantRolesTab(
 			tab, a.Settings().AppName(), cu, ten, users, rolesWithCount(ten.Roles, users)))
@@ -376,7 +376,7 @@ func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	return render(c, tenantInviteUserTableAndForm(tenantID, users, ""))
+	return render(c, tenantInviteUserTableAndForm(tenantID, NewDisplayableUsers(users), ""))
 }
 
 func handleAdminAddRoleForm(a App, c *gin.Context) error {
@@ -406,7 +406,7 @@ func handleAdminActivateUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	return render(c, userFragment(user))
+	return render(c, userFragment(NewDisplayableUser(user)))
 }
 
 func handleAdminDeactivateUserSubmit(a App, c *gin.Context) error {
@@ -428,7 +428,7 @@ func handleAdminDeactivateUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	return render(c, userFragment(user))
+	return render(c, userFragment(NewDisplayableUser(user)))
 }
 
 func handleAdminCancelInviteSubmit(a App, c *gin.Context) error {
@@ -465,7 +465,7 @@ func handleAdminUpdateMFAPolicy(a App, c *gin.Context, policy rest.MfaPolicy) er
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	return render(c, userFragment(user))
+	return render(c, userFragment(NewDisplayableUser(user)))
 }
 
 func handleAdminEnableMFASubmit(a App, c *gin.Context) error {

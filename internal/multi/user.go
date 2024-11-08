@@ -13,10 +13,9 @@ import (
 type UserStatus string
 
 const (
-	UserStatusInvited    UserStatus = "invited"
-	UserStatusInactive   UserStatus = "inactive"
-	UserStatusPendingMFA UserStatus = "pending-mfa"
-	UserStatusActive     UserStatus = "active"
+	UserStatusInvited  UserStatus = "invited"
+	UserStatusInactive UserStatus = "inactive"
+	UserStatusActive   UserStatus = "active"
 )
 
 func ParseUserStatus(s string) (UserStatus, error) {
@@ -25,8 +24,6 @@ func ParseUserStatus(s string) (UserStatus, error) {
 		return UserStatusInvited, nil
 	case "inactive":
 		return UserStatusInactive, nil
-	case "pending-mfa":
-		return UserStatusPendingMFA, nil
 	case "active":
 		return UserStatusActive, nil
 	default:
@@ -38,6 +35,33 @@ func ParseUserStatus(s string) (UserStatus, error) {
 
 func (u UserStatus) String() string {
 	return string(u)
+}
+
+type MFAStatus string
+
+const (
+	MFAStatusNone    MFAStatus = "mfa-none"
+	MFAStatusPending MFAStatus = "mfa-pending"
+	MFAStatusActive  MFAStatus = "mfa-active"
+)
+
+func ParseMFAStatus(s string) (MFAStatus, error) {
+	switch s {
+	case "mfa-none":
+		return MFAStatusNone, nil
+	case "mfa-pending":
+		return MFAStatusPending, nil
+	case "mfa-active":
+		return MFAStatusActive, nil
+	default:
+		zap.L().Info("invalid MFA status", zap.String("status", s))
+		return MFAStatusNone, apperr.NewBadRequestE(
+			fmt.Errorf("invalid MFA status: %s", s))
+	}
+}
+
+func (ms MFAStatus) String() string {
+	return string(ms)
 }
 
 // MFAPolicy is the policy for multi-factor authentication. Note that this
@@ -84,6 +108,7 @@ type User struct {
 	Username  string     `dynamodbav:"-"` // altName
 	Role      string     `dynamodbav:"role"`
 	Status    UserStatus `dynamodbav:"status"`
+	MFAStatus MFAStatus  `dynamodbav:"mfaStatus"`
 	MFAPolicy MFAPolicy  `dynamodbav:"mfaPolicy"`
 	CreatedAt string     `dynamodbav:"createdAt"`
 }
@@ -96,6 +121,7 @@ func NewUser(tenantID uuid.UUID, cognitoID uuid.UUID, username, role string, mfa
 		Role:      role,
 		Status:    UserStatusInvited,
 		MFAPolicy: mfaPolicy,
+		MFAStatus: MFAStatusNone,
 		CreatedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 }

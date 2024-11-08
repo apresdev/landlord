@@ -1,6 +1,6 @@
 # TODOs
 
-* BUG: detaching MFA from the built-in UI doesn't work
+* BUG: shouldn't use admin error page when OTP fails
 * React UI flow for adding MFA
 * figure out terraform for how to configure email and SMS
 * cognito flag for user enabled
