@@ -1,6 +1,9 @@
+# This lambda runs prior to token generation and is responsible for adding
+# our custom Landlord claims to the access token. This includes the tenant
+# claim, and any impersonation claims.
 module "landlord_pre_token_generation_lambda" {
-  source = "git::git@github.com:apresdev/apres-terraform.git//modules/aws/lambda?ref=rel/lambda/0.2.0"
-  name = "landlord_pre_token_generation"
+  source = "git::git@github.com:apresdev/apres-terraform.git//modules/aws/lambda?ref=rel/lambda/0.3.0"
+  name = "landlord_token"
   environment = var.environment
   binary_path = "landlord_pre_token_generation_lambda.mjs"
   runtime = "nodejs20.x"

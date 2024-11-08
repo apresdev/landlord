@@ -1,6 +1,8 @@
 # TODOs
 
 * BUG: shouldn't use admin error page when OTP fails
+* BUG: user added from command-line (not via REST), reports "MFA not required"
+even when it the MFA setup is just fine.
 * React UI flow for adding MFA
 * figure out terraform for how to configure email and SMS
 * cognito flag for user enabled
