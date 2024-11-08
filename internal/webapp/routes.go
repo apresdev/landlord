@@ -1,12 +1,18 @@
 package webapp
 
 import (
+	"embed"
 	"encoding/base64"
 	"fmt"
 	"io/fs"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/apresdev/landlord/internal/multi"
+	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/google/uuid"
 
@@ -26,6 +32,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//go:embed static/*
+var staticFS embed.FS
+
 type App interface {
 	Cfg() aws.Config
 	CogIdp() authx.AWSCognitoIdentityProvider
@@ -35,252 +44,116 @@ type App interface {
 	RootTenantID() uuid.UUID
 }
 
-func AddRoutes(a App, baseRoutes *gin.Engine) {
-	authorizedRoutes := baseRoutes.Group(appPath(""))
-	authorizedRoutes.Use(setupContext(a))
-	unauthorizedRoutes := baseRoutes.Group(appPath(""))
+func mailToAdminLink(adminEmail string) templ.SafeURL {
+	return templ.URL(fmt.Sprintf("mailto:%s", adminEmail))
+}
 
-	// The routes associated with login, logout, and account recovery are
-	// unauthorized because they are the routes that result in the user obtaining
-	// a token for the authorized routes.
+type handler func(App, *gin.Context) error
+
+func addRoute(group *gin.RouterGroup, app App, method, path string, h handler) {
+	group.Handle(method, path, func(c *gin.Context) {
+		if err := h(app, c); err != nil {
+			base64ErrMsg := base64.URLEncoding.EncodeToString([]byte(err.Error()))
+			c.Header("HX-Redirect", appPath("/admin/dashboard-error?error="+base64ErrMsg))
+			c.Status(apperr.ToHTTPStatus(err))
+			err2 := render(c, errorPage(
+				app.Settings().AppName(),
+				app.Settings().AdminEmail(),
+				mailToAdminLink(app.Settings().AdminEmail()),
+				err.Error(),
+				"Return to dashboard",
+				templ.URL(appPath("/admin/dashboard"))))
+			if err2 != nil {
+				// We are already in an error context and have hit another error.
+				zap.L().Error("Error rendering error page", zap.Error(err2))
+				c.Redirect(http.StatusFound, appPath("/admin/dashboard"))
+			}
+		}
+		c.Abort()
+	})
+}
+
+type routeAdder struct {
+	app   App
+	group *gin.RouterGroup
+}
+
+func (ra routeAdder) GET(path string, h handler) {
+	addRoute(ra.group, ra.app, http.MethodGet, path, h)
+}
+
+func (ra routeAdder) POST(path string, h handler) {
+	addRoute(ra.group, ra.app, http.MethodPost, path, h)
+}
+
+func (ra routeAdder) DELETE(path string, h handler) {
+	addRoute(ra.group, ra.app, http.MethodDelete, path, h)
+}
+
+func AddRoutes(a App, baseRoutes *gin.Engine) {
+	authGroup := baseRoutes.Group(appPath(""))
+	authGroup.Use(setupAuthContext(a))
+	noAuthGroup := baseRoutes.Group(appPath(""))
+
+	noAuth := routeAdder{app: a, group: noAuthGroup}
+	auth := routeAdder{app: a, group: authGroup}
 
 	baseRoutes.GET("/", func(c *gin.Context) {
 		redirectToAppRoot(c)
 	})
 
-	unauthorizedRoutes.GET("/", func(c *gin.Context) {
-		if err := handleRoot(a, c); err != nil {
-			c.String(http.StatusInternalServerError, "Error handling root: %v", err)
-		}
-	})
+	// The routes associated with login, logout, and account recovery are
+	// unauthorized because they are the routes that result in the user obtaining
+	// a token for the authorized routes.
+	noAuth.GET("/", handleRoot)
+	noAuth.GET("/help", handleHelp)
+	noAuth.GET("/login", handleLogin)
+	noAuth.POST("/login/submit", handleLoginSubmit)
+	noAuth.GET("/logout", handleLogoutSubmit)
+	noAuth.GET("/qrcode", handleQRCode)
+	noAuth.GET("/setup-otp", handleSetupOTP)
+	noAuth.POST("/setup-otp/submit", handleSetupOTPSubmit)
+	noAuth.GET("/otp", handleOTP)
+	noAuth.POST("/otp/submit", handleOTPSubmit)
+	noAuth.GET("/new-password", handleNewPassword)
+	noAuth.POST("/new-password/submit", handleNewPasswordSubmit)
+	noAuth.GET("/recovery", handleRecovery)
+	noAuth.POST("/recovery/submit", handleRecoverySubmit)
+	noAuth.GET("/reset-password", handleResetPassword)
+	noAuth.POST("/reset-password/submit", handleResetPasswordSubmit)
 
-	unauthorizedRoutes.GET("/help", func(c *gin.Context) {
-		render(c, helpPage(
-			a.Settings().AppName(),
-			a.Settings().AdminEmail(),
-			mailToAdminLink(a.Settings().AdminEmail())))
-	})
+	// The authorized routes are the routes that require a valid token to access.
+	// They utilize the setupAuthContext middleware to ensure that the token is valid.
+	auth.GET("/admin/dashboard", handleAdminDashboard)
+	auth.GET("/admin/dashboard-error", handleAdminDashboardError)
+	auth.GET("/admin/tenants", handleAdminTenants)
+	auth.GET("/admin/tenant-select", handleAdminTenantSelect)
+	auth.GET("/admin/tenants/new", handleAdminNewTenant)
+	auth.POST("/admin/tenants/new/submit", handleAdminNewTenantSubmit)
+	auth.POST("/admin/tenants/activate/:id", handleAdminActivateTenantSubmit)
+	auth.POST("/admin/tenants/deactivate/:id", handleAdminDeactivateTenantSubmit)
+	auth.GET("/admin/tenants/:tenantID", handleAdminTenant)
+	auth.GET("/admin/tenants/:tenantID/:tab", handleAdminTenantTab)
+	auth.GET("/admin/tenants/:tenantID/invite-user-form", handleAdminInviteUserForm)
+	auth.GET("/admin/tenants/:tenantID/invite-user-button", handleAdminInviteUserButton)
+	auth.GET("/admin/tenants/:tenantID/add-role-form", handleAdminAddRoleForm)
+	auth.GET("/admin/tenants/:tenantID/add-role-button", handleAdminAddRoleButton)
+	auth.POST("/admin/tenants/:tenantID/users", handleAdminInviteUserSubmit)
+	auth.POST("/admin/tenants/:tenantID/users/:userID/activate", handleAdminActivateUserSubmit)
+	auth.POST("/admin/tenants/:tenantID/users/:userID/deactivate", handleAdminDeactivateUserSubmit)
+	auth.POST("/admin/tenants/:tenantID/users/:userID/cancel-invite", handleAdminCancelInviteSubmit)
+	auth.POST("/admin/tenants/:tenantID/users/:userID/mfa/enable", handleAdminEnableMFASubmit)
+	auth.POST("/admin/tenants/:tenantID/users/:userID/mfa/disable", handleAdminDisableMFASubmit)
+	auth.POST("/admin/tenants/:tenantID/roles", handleAdminAddRoleSubmit)
+	auth.DELETE("/admin/tenants/:tenantID/roles/:role", handleAdminDeleteRoleSubmit)
+	auth.GET("/admin/tenants/:tenantID/users/:userID", handleAdminUser)
+	auth.GET("/admin/profile", handleAdminProfile)
 
-	unauthorizedRoutes.GET("/login", func(c *gin.Context) {
-		username, _ := c.Cookie(LandlordUsernameCookie)
-		render(c, loginPage(a.Settings().AppName(), username))
-	})
-	unauthorizedRoutes.POST("/login/submit", func(c *gin.Context) {
-		if err := handleLoginSubmit(a, c); err != nil {
-			c.String(http.StatusInternalServerError, "Error logging in: %v", err)
-		}
-	})
-
-	unauthorizedRoutes.GET("/qrcode", func(c *gin.Context) {
-		if err := handleQRCode(a, c); err != nil {
-			c.String(http.StatusInternalServerError, "Error handling QR code: %v", err)
-		}
-	})
-
-	unauthorizedRoutes.GET("/setup-otp", func(c *gin.Context) {
-		otpURI, _ := c.Cookie(LandlordOTPURI)
-		otpImageURI := appPath(fmt.Sprintf(
-			"/qrcode?uri=%s", base64.URLEncoding.EncodeToString([]byte(otpURI))))
-		username, _ := c.Cookie(LandlordUsernameCookie)
-		render(c, setupOTPPage(a.Settings().AppName(), otpImageURI, username))
-	})
-	unauthorizedRoutes.POST("/setup-otp/submit", func(c *gin.Context) {
-		if err := handleSetupOTPSubmit(a, c); err != nil {
-			c.String(http.StatusInternalServerError, "Error setting up OTP: %v", err)
-		}
-	})
-
-	unauthorizedRoutes.GET("/otp", func(c *gin.Context) {
-		username, _ := c.Cookie(LandlordUsernameCookie)
-		render(c, otpCodePage(a.Settings().AppName(), username))
-	})
-	unauthorizedRoutes.POST("/otp/submit", func(c *gin.Context) {
-		if err := handleOTPSubmit(a, c); err != nil {
-			c.String(http.StatusInternalServerError, "Error handling OTP: %v", err)
-		}
-	})
-
-	unauthorizedRoutes.GET("/new-password", func(c *gin.Context) {
-		username, _ := c.Cookie(LandlordUsernameCookie)
-		render(c, newPasswordPage(a.Settings().AppName(), username))
-	})
-	unauthorizedRoutes.POST("/new-password/submit", func(c *gin.Context) {
-		if err := handleNewPasswordSubmit(a, c); err != nil {
-			c.String(http.StatusInternalServerError, "Error setting new password: %v", err)
-		}
-	})
-
-	unauthorizedRoutes.GET("/recovery", func(c *gin.Context) {
-		username, _ := c.Cookie(LandlordUsernameCookie)
-		render(c, recoveryPage(a.Settings().AppName(), username))
-	})
-	unauthorizedRoutes.POST("/recovery/submit", func(c *gin.Context) {
-		if err := handleRecoverySubmit(a, c); err != nil {
-			c.String(http.StatusInternalServerError, "Error handling recovery: %v", err)
-		}
-	})
-
-	unauthorizedRoutes.GET("/reset-password", func(c *gin.Context) {
-		username, _ := c.Cookie(LandlordUsernameCookie)
-		render(c, resetPasswordPage(a.Settings().AppName(), username))
-	})
-	unauthorizedRoutes.POST("/reset-password/submit", func(c *gin.Context) {
-		if err := handleResetPassword(a, c); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Error resetting password: %v", err)
-		}
-	})
-
-	unauthorizedRoutes.GET("/logout", func(c *gin.Context) {
-		clearLandlordCookies(c, a.Settings().URL())
-		redirectToAppRoot(c)
-	})
-
-	authorizedRoutes.GET("/admin/dashboard", func(c *gin.Context) {
-		if err := handleAdminDashboard(a, c); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Error handling admin dashboard: %v", err)
-		}
-	})
-
-	authorizedRoutes.GET("/admin/tenants", func(c *gin.Context) {
-		if err := handleAdminTenants(a, c); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Error handling admin tenants: %v", err)
-		}
-	})
-	authorizedRoutes.GET("/admin/tenant-select", func(c *gin.Context) {
-		if err := handleAdminTenantSelect(a, c); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Error handling admin tenant select: %v", err)
-		}
-	})
-	authorizedRoutes.GET("/admin/tenants/new", func(c *gin.Context) {
-		render(c, newTenantPage(a.Settings().AppName()))
-	})
-	authorizedRoutes.POST("/admin/tenants/new/submit", func(c *gin.Context) {
-		if err := handleNewTenant(a, c); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Error creating a new tenant: %v", err)
-		}
-	})
-	authorizedRoutes.POST("/admin/tenants/activate/:id", func(c *gin.Context) {
-		if err := handleActivateTenant(a, c); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Error deactivating tenant: %v", err)
-		}
-	})
-	authorizedRoutes.POST("/admin/tenants/deactivate/:id", func(c *gin.Context) {
-		if err := handleDeactivateTenant(a, c); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Error deactivating tenant: %v", err)
-		}
-	})
-
-	authorizedRoutes.GET("/admin/tenants/:tenantID",
-		func(c *gin.Context) {
-			if err := handleAdminTenant(a, c); err != nil {
-				c.String(http.StatusInternalServerError,
-					"Error deactivating tenant: %v", err)
-			}
-		})
-	authorizedRoutes.GET("/admin/tenants/:tenantID/:tab",
-		func(c *gin.Context) {
-			if err := handleAdminTenantTab(a, c); err != nil {
-				c.String(http.StatusInternalServerError,
-					"Error deactivating tenant: %v", err)
-			}
-		})
-	authorizedRoutes.GET("/admin/tenants/:tenantID/invite-user-form", func(c *gin.Context) {
-		if err := handleInviteUserForm(a, c); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Error rendering form: %v", err)
-		}
-	})
-	authorizedRoutes.GET("/admin/tenants/:tenantID/invite-user-button", func(c *gin.Context) {
-		render(c, tenantInviteUserButton(c.Param("tenantID")))
-	})
-	authorizedRoutes.POST("/admin/tenants/:tenantID/users",
-		func(c *gin.Context) {
-			if err := handleInviteUser(a, c); err != nil {
-				c.String(http.StatusInternalServerError,
-					"Error creating a new tenant: %v", err)
-			}
-		})
-	authorizedRoutes.POST("/admin/tenants/:tenantID/users/:username/activate",
-		func(c *gin.Context) {
-			if err := handleActivateUser(a, c); err != nil {
-				c.String(http.StatusInternalServerError,
-					"Error deactivating user: %v", err)
-			}
-		})
-	authorizedRoutes.POST("/admin/tenants/:tenantID/users/:username/deactivate",
-		func(c *gin.Context) {
-			if err := handleDeactivateUser(a, c); err != nil {
-				c.String(http.StatusInternalServerError,
-					"Error deactivating user: %v", err)
-			}
-		})
-	authorizedRoutes.POST("/admin/tenants/:tenantID/users/:username/cancel-invite",
-		func(c *gin.Context) {
-			if err := handleCancelInvitation(a, c); err != nil {
-				c.String(http.StatusInternalServerError,
-					"Error cancelling invite: %v", err)
-			}
-		})
-	authorizedRoutes.POST("/admin/tenants/:tenantID/users/:username/mfa/enable",
-		func(c *gin.Context) {
-			if err := handleUpdateMFAEnable(a, c); err != nil {
-				c.String(http.StatusInternalServerError,
-					"Error handling MFA: %v", err)
-			}
-		})
-	authorizedRoutes.POST("/admin/tenants/:tenantID/users/:username/mfa/disable",
-		func(c *gin.Context) {
-			if err := handleUpdateMFADisable(a, c); err != nil {
-				c.String(http.StatusInternalServerError,
-					"Error handling MFA: %v", err)
-			}
-		})
-
-	authorizedRoutes.GET("/admin/profile", func(c *gin.Context) {
-		if err := handleAdminProfile(a, c); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Error handling admin profile: %v", err)
-		}
-	})
-
-	authorizedRoutes.GET("/admin/tenants/:tenantID/add-role-form", func(c *gin.Context) {
-		render(c, tenantAddRoleForm(c.Param("tenantID")))
-	})
-
-	authorizedRoutes.GET("/admin/tenants/:tenantID/add-role-button", func(c *gin.Context) {
-		render(c, tenantAddRoleButton(c.Param("tenantID")))
-	})
-
-	authorizedRoutes.POST("/admin/tenants/:tenantID/roles", func(c *gin.Context) {
-		if err := handleAdminAddRole(a, c); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Error handling add role: %v", err)
-		}
-	})
-
-	authorizedRoutes.DELETE("/admin/tenants/:tenantID/roles/:role", func(c *gin.Context) {
-		if err := handleAdminDeleteRole(a, c); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Error handling delete role: %v", err)
-		}
-	})
-
-	authorizedRoutes.GET("/admin/tenants/:tenantID/users/:userID", func(c *gin.Context) {
-		if err := handleAdminUser(a, c); err != nil {
-			c.String(http.StatusInternalServerError,
-				"Error handling admin user: %v", err)
-		}
-	})
-
+	// In dev mode, we serve the static files from the local filesystem to make
+	// hot reloading easier during dev. In the production build, we serve via the
+	// static filesystem that is bound into the binary.
 	if appenv.DevMode() {
-		unauthorizedRoutes.StaticFS(
+		noAuthGroup.StaticFS(
 			"/static", http.Dir("internal/webapp/static"))
 		baseRoutes.StaticFileFS(
 			"/favicon.ico", "favicon.ico", http.Dir("internal/webapp/static"))
@@ -289,19 +162,19 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 		if err != nil {
 			zap.L().Fatal("Coder fail: could not initialize static file system", zap.Error(err))
 		}
-		unauthorizedRoutes.StaticFS(
+		noAuthGroup.StaticFS(
 			"/static", http.FS(sfs))
 		baseRoutes.StaticFileFS(
 			"/favicon.ico", "static/favicon.ico", http.FS(sfs))
 	}
 }
 
-func render(c *gin.Context, t templ.Component) {
+func render(c *gin.Context, t templ.Component) error {
 	if err := t.Render(c.Request.Context(), c.Writer); err != nil {
-		c.String(http.StatusInternalServerError,
-			"Error rendering page: %v", err)
 		zap.L().Error("Error rendering page", zap.Error(err))
+		return err
 	}
+	return nil
 }
 
 func clientID(c *gin.Context) jwx.OpaqueClientID {
@@ -316,12 +189,15 @@ func unauthorizedResponse(app App, c *gin.Context) {
 	c.Status(http.StatusUnauthorized)
 	// The message here is purposefully vague to avoid leaking information.
 	// See the logs for diagnosing the issue.
-	render(c, unauthorizedPage(
+	err := render(c, unauthorizedPage(
 		app.Settings().AppName(), "Credentials are invalid or expired"))
+	if err != nil {
+		zap.L().Error("Error rendering unauthorized page", zap.Error(err))
+	}
 	c.Abort()
 }
 
-func setupContext(app App) gin.HandlerFunc {
+func setupAuthContext(app App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cid := authx.ClientID(c)
 		rawAccessToken, err := c.Cookie(LandlordAccessTokenCookie)
@@ -364,6 +240,48 @@ func setupContext(app App) gin.HandlerFunc {
 		c.Set(authx.TenantIDKey, ten.ID.String())
 		c.Next()
 	}
+}
+
+// CurrentUser represents the current logged-in user.
+type CurrentUser struct {
+	CID    jwx.OpaqueClientID
+	Tenant *multi.Tenant
+	User   *multi.User
+}
+
+func resolveCurrentUser(a App, c *gin.Context) (*CurrentUser, error) {
+	cid := clientID(c)
+	t, ok := c.Get(authx.TokenKey)
+	if !ok {
+		zap.L().Error("no token found",
+			zap.String("clientID", string(cid)))
+		return nil, apperr.NewUnauthorized("unauthorized")
+	}
+	tok, ok := t.(*jwt.Token)
+	if !ok {
+		zap.L().Error("could not convert token to *jwt.Token",
+			zap.String("clientID", string(cid)))
+		return nil, apperr.NewUnauthorized("unauthorized")
+	}
+	username, err := jwx.GetClaimString(tok, authx.EmailClaim)
+	if err != nil {
+		zap.L().Error("could not get username from token",
+			zap.String("clientID", string(cid)),
+			zap.Error(err))
+		return nil, apperr.NewUnauthorized("unauthorized")
+	}
+	user, ten, err := db.GetUserAndTenant(c.Request.Context(), a.DDB(), username)
+	if err != nil {
+		zap.L().Warn("error finding tenant for username",
+			zap.String("username", username),
+			zap.Error(err))
+		return nil, apperr.NewUnauthorized("unauthorized")
+	}
+	return &CurrentUser{
+		CID:    cid,
+		Tenant: ten,
+		User:   user,
+	}, nil
 }
 
 func displayTimestamp(t string) string {

@@ -14,7 +14,6 @@ var _ MappedNullable = &InviteRequest{}
 
 // InviteRequest struct for InviteRequest
 type InviteRequest struct {
-	Tenant    string    `json:"tenant"`
 	Username  string    `json:"username"`
 	Role      string    `json:"role"`
 	MfaPolicy MFAPolicy `json:"mfaPolicy"`
@@ -26,9 +25,8 @@ type _InviteRequest InviteRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInviteRequest(tenant string, username string, role string, mfaPolicy MFAPolicy) *InviteRequest {
+func NewInviteRequest(username string, role string, mfaPolicy MFAPolicy) *InviteRequest {
 	this := InviteRequest{}
-	this.Tenant = tenant
 	this.Username = username
 	this.Role = role
 	this.MfaPolicy = mfaPolicy
@@ -43,30 +41,6 @@ func NewInviteRequestWithDefaults() *InviteRequest {
 	var role string = "guest"
 	this.Role = role
 	return &this
-}
-
-// GetTenant returns the Tenant field value
-func (o *InviteRequest) GetTenant() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.Tenant
-}
-
-// GetTenantOk returns a tuple with the Tenant field value
-// and a boolean to check if the value has been set.
-func (o *InviteRequest) GetTenantOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Tenant, true
-}
-
-// SetTenant sets field value
-func (o *InviteRequest) SetTenant(v string) {
-	o.Tenant = v
 }
 
 // GetUsername returns the Username field value
@@ -151,7 +125,6 @@ func (o InviteRequest) MarshalJSON() ([]byte, error) {
 
 func (o InviteRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["tenant"] = o.Tenant
 	toSerialize["username"] = o.Username
 	toSerialize["role"] = o.Role
 	toSerialize["mfaPolicy"] = o.MfaPolicy
@@ -163,7 +136,6 @@ func (o *InviteRequest) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"tenant",
 		"username",
 		"role",
 		"mfaPolicy",

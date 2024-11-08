@@ -328,7 +328,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-  /ll-auth/api/tenants/{tenantID}/users/{username}:
+  /ll-auth/api/tenants/{tenantID}/users/{userID}:
     put:
       operationId: UpdateUser
       summary: Update a user's settings.
@@ -341,10 +341,10 @@ paths:
           description: The ID of the tenant to get users for.
           schema:
             type: string
-        - name: username
+        - name: userID
           in: path
           required: true
-          description: The username of the user to update.
+          description: The ID of the user to update.
           schema:
             type: string
       requestBody:
@@ -362,7 +362,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: [ ]
-  /ll-auth/api/tenants/{tenantID}/users/{username}/status:
+  /ll-auth/api/tenants/{tenantID}/users/{userID}/status:
     put:
       operationId: SetUserStatus
       summary: Set a user's status.
@@ -375,10 +375,10 @@ paths:
           description: The ID of the tenant to get users for.
           schema:
             type: string
-        - name: username
+        - name: userID
           in: path
           required: true
-          description: The username of the user to update.
+          description: The ID of the user to update.
           schema:
             type: string
       requestBody:
@@ -396,7 +396,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: [ ]
-  /ll-auth/api/tenants/{tenantID}/users/{username}/mfa:
+  /ll-auth/api/tenants/{tenantID}/users/{userID}/mfa:
     put:
       operationId: UpdateUserMFA
       summary: Update a user's MFA settings
@@ -409,10 +409,10 @@ paths:
           description: The ID of the tenant to get users for.
           schema:
             type: string
-        - name: username
+        - name: userID
           in: path
           required: true
-          description: The username of the user to update.
+          description: The ID of the user to update.
           schema:
             type: string
       requestBody:
@@ -430,13 +430,19 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: [ ]
-  /ll-auth/api/invite:
+  /ll-auth/api/tenants/{tenantID}/invite:
     post:
       operationId: InviteToTenant
       summary: Invite a user to join a tenant.
       tags:
         - Auth
-      parameters: [ ]
+      parameters:
+        - name: tenantID
+          in: path
+          required: true
+          description: The ID of the tenant to get users for.
+          schema:
+            type: string
       requestBody:
         $ref: "#/components/requestBodies/InviteRequest"
       responses:
@@ -452,17 +458,23 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-  /ll-auth/api/invite/{username}:
+  /ll-auth/api/tenants/{tenantID}/invite/{userID}:
     delete:
       operationId: CancelInvitation
       summary: Cancel an invitation to a tenant.
       tags:
         - Auth
       parameters:
-        - name: username
+        - name: tenantID
           in: path
           required: true
-          description: The username of the user to update.
+          description: The ID of the tenant to get users for.
+          schema:
+            type: string
+        - name: userID
+          in: path
+          required: true
+          description: The ID of the user to update.
           schema:
             type: string
       responses:
@@ -1246,13 +1258,10 @@ components:
     InviteRequest:
       type: object
       required:
-        - tenant
         - username
         - role
         - mfaPolicy
       properties:
-        tenant:
-          type: string
         username:
           type: string
         role:

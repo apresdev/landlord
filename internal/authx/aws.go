@@ -93,6 +93,16 @@ type AWSCognitoIdentityProvider interface {
 		params *cognitoidentityprovider.AdminDeleteUserInput,
 		optFns ...func(*cognitoidentityprovider.Options)) (
 		*cognitoidentityprovider.AdminDeleteUserOutput, error)
+	AdminDisableUser(
+		ctx context.Context,
+		params *cognitoidentityprovider.AdminDisableUserInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.AdminDisableUserOutput, error)
+	AdminEnableUser(
+		ctx context.Context,
+		params *cognitoidentityprovider.AdminEnableUserInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.AdminEnableUserOutput, error)
 	AdminGetUser(
 		ctx context.Context,
 		params *cognitoidentityprovider.AdminGetUserInput,

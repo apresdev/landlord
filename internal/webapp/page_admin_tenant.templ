@@ -1,6 +1,7 @@
 package webapp
 
 import "github.com/apresdev/landlord/internal/multi"
+import "github.com/google/uuid"
 import "net/url"
 import "strconv"
 import "strings"
@@ -90,7 +91,7 @@ templ userFragment(user *multi.User) {
         if user.Status == multi.UserStatusActive || user.Status == multi.UserStatusPendingMFA {
             <button
                 class="button"
-                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/deactivate" }
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/deactivate" }
             >
                 Deactivate
             </button>
@@ -103,14 +104,14 @@ templ userFragment(user *multi.User) {
             </button>
             <button
                 class="button"
-                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/cancel-invite" }
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/cancel-invite" }
             >
                 Cancel Invite
             </button>
         } else if user.Status == multi.UserStatusInactive {
             <button
                 class="button"
-                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/activate" }
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/activate" }
             >
                 Activate
             </button>
@@ -118,14 +119,14 @@ templ userFragment(user *multi.User) {
         if user.MFAPolicy == multi.MFAPolicyNone {
             <button
                 class="button"
-                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/mfa/enable" }
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/mfa/enable" }
             >
                 Attach MFA
             </button>
         } else {
             <button
                 class="button"
-                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.Username + "/mfa/disable" }
+                hx-post={ "/ll-auth/app/admin/tenants/" + user.TenantID.String() + "/users/" + user.ID.String() + "/mfa/disable" }
             >
                 Detach MFA
             </button>
@@ -176,11 +177,11 @@ templ tenantInviteUserForm(tenantID string, inviteToTenant *multi.Tenant, mfaPol
 }
 
 templ tenantInviteUserTableAndForm(
-    tenant *multi.Tenant,
+    tenantID uuid.UUID,
     users []*multi.User,
     errMsg string) {
 <div id="invite-user-table-and-form">
-    @tenantInviteUserButton(tenant.ID.String())
+    @tenantInviteUserButton(tenantID.String())
     <div id="invite-user-error-message" style="color: red; margin-top: 10px;">{ errMsg }</div>
     <table>
         <thead>
@@ -326,7 +327,7 @@ templ tenantUsersTab(
 	    aria-controls="tab-content">Roles</button>
 </div>
 <div id="tab-content" role="tabpanel" class="tab-content">
-    @tenantInviteUserTableAndForm(tenant, users, "")
+    @tenantInviteUserTableAndForm(tenant.ID, users, "")
 </div>
 }
 

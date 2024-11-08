@@ -87,27 +87,29 @@ func CancelInvitation(
 	ctx context.Context,
 	ddb db.AWSDynamoDB,
 	cogIdp AWSCognitoIdentityProvider,
-	username string) error {
+	tenantID uuid.UUID,
+	userID uuid.UUID) error {
 
-	e, err := ParseEmail(username)
+	ten, err := db.GetTenantByID(ctx, ddb, tenantID)
 	if err != nil {
-		return errors.New("invalid email")
+		return err
 	}
-	u, ten, err := db.GetUserAndTenant(ctx, ddb, e.Address())
+	u, err := db.GetUserInTenantByID(ctx, ddb, tenantID, userID)
 	if err != nil {
 		return err
 	}
 	if u.Status != multi.UserStatusInvited {
 		return apperr.NewBadRequest(
-			fmt.Sprintf("cannot cancel invite, user '%s' is not invited", e.Address()))
+			fmt.Sprintf("cannot cancel invite, user '%s' is not invited", userID.String()))
 	}
 	args := cognitoidentityprovider.AdminDeleteUserInput{
 		UserPoolId: aws.String(ten.UserPoolID),
-		Username:   aws.String(e.Address()),
+		Username:   aws.String(userID.String()),
 	}
 	if _, err := cogIdp.AdminDeleteUser(ctx, &args); err != nil {
 		zap.L().Error("could not delete user from Cognito",
-			zap.String("username", e.Address()),
+			zap.String("tenantID", tenantID.String()),
+			zap.String("userID", userID.String()),
 			zap.Error(err))
 	}
 	return db.DeleteUser(ctx, ddb, u)

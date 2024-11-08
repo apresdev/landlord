@@ -319,6 +319,154 @@ func (_c *AWSCognitoIdentityProvider_AdminDeleteUser_Call) RunAndReturn(run func
 	return _c
 }
 
+// AdminDisableUser provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) AdminDisableUser(ctx context.Context, params *cognitoidentityprovider.AdminDisableUserInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminDisableUserOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdminDisableUser")
+	}
+
+	var r0 *cognitoidentityprovider.AdminDisableUserOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminDisableUserInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminDisableUserOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminDisableUserInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.AdminDisableUserOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.AdminDisableUserOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.AdminDisableUserInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_AdminDisableUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdminDisableUser'
+type AWSCognitoIdentityProvider_AdminDisableUser_Call struct {
+	*mock.Call
+}
+
+// AdminDisableUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.AdminDisableUserInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) AdminDisableUser(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_AdminDisableUser_Call {
+	return &AWSCognitoIdentityProvider_AdminDisableUser_Call{Call: _e.mock.On("AdminDisableUser",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminDisableUser_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.AdminDisableUserInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_AdminDisableUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.AdminDisableUserInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminDisableUser_Call) Return(_a0 *cognitoidentityprovider.AdminDisableUserOutput, _a1 error) *AWSCognitoIdentityProvider_AdminDisableUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminDisableUser_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.AdminDisableUserInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminDisableUserOutput, error)) *AWSCognitoIdentityProvider_AdminDisableUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AdminEnableUser provides a mock function with given fields: ctx, params, optFns
+func (_m *AWSCognitoIdentityProvider) AdminEnableUser(ctx context.Context, params *cognitoidentityprovider.AdminEnableUserInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminEnableUserOutput, error) {
+	_va := make([]interface{}, len(optFns))
+	for _i := range optFns {
+		_va[_i] = optFns[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, params)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdminEnableUser")
+	}
+
+	var r0 *cognitoidentityprovider.AdminEnableUserOutput
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminEnableUserInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminEnableUserOutput, error)); ok {
+		return rf(ctx, params, optFns...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *cognitoidentityprovider.AdminEnableUserInput, ...func(*cognitoidentityprovider.Options)) *cognitoidentityprovider.AdminEnableUserOutput); ok {
+		r0 = rf(ctx, params, optFns...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*cognitoidentityprovider.AdminEnableUserOutput)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *cognitoidentityprovider.AdminEnableUserInput, ...func(*cognitoidentityprovider.Options)) error); ok {
+		r1 = rf(ctx, params, optFns...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AWSCognitoIdentityProvider_AdminEnableUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdminEnableUser'
+type AWSCognitoIdentityProvider_AdminEnableUser_Call struct {
+	*mock.Call
+}
+
+// AdminEnableUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *cognitoidentityprovider.AdminEnableUserInput
+//   - optFns ...func(*cognitoidentityprovider.Options)
+func (_e *AWSCognitoIdentityProvider_Expecter) AdminEnableUser(ctx interface{}, params interface{}, optFns ...interface{}) *AWSCognitoIdentityProvider_AdminEnableUser_Call {
+	return &AWSCognitoIdentityProvider_AdminEnableUser_Call{Call: _e.mock.On("AdminEnableUser",
+		append([]interface{}{ctx, params}, optFns...)...)}
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminEnableUser_Call) Run(run func(ctx context.Context, params *cognitoidentityprovider.AdminEnableUserInput, optFns ...func(*cognitoidentityprovider.Options))) *AWSCognitoIdentityProvider_AdminEnableUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]func(*cognitoidentityprovider.Options), len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(func(*cognitoidentityprovider.Options))
+			}
+		}
+		run(args[0].(context.Context), args[1].(*cognitoidentityprovider.AdminEnableUserInput), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminEnableUser_Call) Return(_a0 *cognitoidentityprovider.AdminEnableUserOutput, _a1 error) *AWSCognitoIdentityProvider_AdminEnableUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AWSCognitoIdentityProvider_AdminEnableUser_Call) RunAndReturn(run func(context.Context, *cognitoidentityprovider.AdminEnableUserInput, ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminEnableUserOutput, error)) *AWSCognitoIdentityProvider_AdminEnableUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AdminGetUser provides a mock function with given fields: ctx, params, optFns
 func (_m *AWSCognitoIdentityProvider) AdminGetUser(ctx context.Context, params *cognitoidentityprovider.AdminGetUserInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminGetUserOutput, error) {
 	_va := make([]interface{}, len(optFns))

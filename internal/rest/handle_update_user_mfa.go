@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
@@ -18,20 +19,20 @@ func handleUpdateUserMFA(app App, c *gin.Context) error {
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	tenant := c.Param("tenant")
-	username := c.Param("username")
-	return HandleUpdateUserMFA(app, c, tenant, username, req)
+	tenantID, err := UUIDParam(c, "tenantID")
+	if err != nil {
+		return apperr.NewBadRequest("invalid tenant ID")
+	}
+	userID, err := UUIDParam(c, "userID")
+	if err != nil {
+		return apperr.NewBadRequest("invalid user ID")
+	}
+	return HandleUpdateUserMFA(app, c, tenantID, userID, req)
 }
 
 func HandleUpdateUserMFA(
-	app App, c *gin.Context, tenantID, username string, req UpdateUserMfaRequest) error {
+	app App, c *gin.Context, tenantID, userID uuid.UUID, req UpdateUserMfaRequest) error {
 
-	if tenantID == "" {
-		return apperr.NewBadRequest("tenant is required")
-	}
-	if username == "" {
-		return apperr.NewBadRequest("username is required")
-	}
 	if req.MfaPolicy == "" {
 		return apperr.NewBadRequest("MFA policy is required")
 	}
@@ -45,25 +46,25 @@ func HandleUpdateUserMFA(
 		return apperr.NewUnauthorized("not authorized")
 	}
 
-	user, tenant, err := db.GetUserAndTenant(c.Request.Context(), app.DDB(), username)
+	tenant, err := db.GetTenantByID(c.Request.Context(), app.DDB(), tenantID)
 	if err != nil {
-		zap.L().Error("error fetching user and tenant",
+		zap.L().Error("error fetching tenant",
 			zap.Error(err),
-			zap.String("tenantID", tenantID),
-			zap.String("username", username))
+			zap.String("tenantID", tenantID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	if tenant.ID.String() != tenantID {
-		zap.L().Error("tenantID in path does not match tenant found in DB",
-			zap.String("username", username),
-			zap.String("tenantID", tenantID),
-			zap.String("tenantID_DB", tenant.ID.String()))
+	user, err := db.GetUserInTenantByID(c.Request.Context(), app.DDB(), tenantID, userID)
+	if err != nil {
+		zap.L().Error("error fetching user",
+			zap.Error(err),
+			zap.String("tenantID", tenantID.String()),
+			zap.String("userID", userID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
 	if user.Status == multi.UserStatusInactive {
 		zap.L().Info("user is inactive cannot change MFA",
-			zap.String("tenantID", tenantID),
-			zap.String("username", username))
+			zap.String("tenantID", tenantID.String()),
+			zap.String("userID", userID.String()))
 		return apperr.NewBadRequest("user is inactive, cannot modify MFA")
 	}
 	// Transition from MFA policy None to Required initiates the flow to
@@ -75,8 +76,8 @@ func HandleUpdateUserMFA(
 		if err != nil {
 			zap.L().Error("error storing user",
 				zap.Error(err),
-				zap.String("tenantID", tenantID),
-				zap.String("username", username))
+				zap.String("tenantID", tenantID.String()),
+				zap.String("userID", userID.String()))
 			return apperr.NewUnauthorized("not authorized")
 		}
 	} else if req.MfaPolicy == MFAPolicyNone {
@@ -85,8 +86,8 @@ func HandleUpdateUserMFA(
 		if err != nil {
 			zap.L().Error("error storing user",
 				zap.Error(err),
-				zap.String("tenantID", tenantID),
-				zap.String("username", username))
+				zap.String("tenantID", tenantID.String()),
+				zap.String("userID", userID.String()))
 			return apperr.NewUnauthorized("not authorized")
 		}
 		_, err = app.CogIdp().AdminSetUserMFAPreference(
@@ -102,13 +103,13 @@ func HandleUpdateUserMFA(
 		if err != nil {
 			zap.L().Error("error removing MFA preference",
 				zap.Error(err),
-				zap.String("tenantID", tenantID),
-				zap.String("username", username))
+				zap.String("tenantID", tenantID.String()),
+				zap.String("userID", userID.String()))
 			return apperr.NewInternal("could not remove MFA preference")
 		}
 		zap.L().Info("removed MFA preference",
-			zap.String("tenantID", tenantID),
-			zap.String("username", username))
+			zap.String("tenantID", tenantID.String()),
+			zap.String("userID", userID.String()))
 	}
 	return nil
 }

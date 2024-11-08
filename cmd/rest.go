@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/google/uuid"
+
 	"github.com/apresdev/landlord/internal/tinytools"
 
 	"github.com/skip2/go-qrcode"
@@ -272,10 +274,13 @@ func restInviteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			tenantID, err := uuid.Parse(tenant)
+			if err != nil {
+				return err
+			}
 			ctx := context.Background()
-			r, err := cl.AuthAPI.InviteToTenant(ctx).InviteRequest(
+			r, err := cl.AuthAPI.InviteToTenant(ctx, tenantID.String()).InviteRequest(
 				client.InviteRequest{
-					Tenant:    tenant,
 					Username:  username,
 					Role:      role,
 					MfaPolicy: client.MFAPolicy(mfa),

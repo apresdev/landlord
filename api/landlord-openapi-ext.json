@@ -932,7 +932,7 @@
         }
       }
     },
-    "/ll-auth/api/tenants/{tenantID}/users/{username}": {
+    "/ll-auth/api/tenants/{tenantID}/users/{userID}": {
       "put": {
         "operationId": "UpdateUser",
         "summary": "Update a user's settings.",
@@ -950,10 +950,10 @@
             }
           },
           {
-            "name": "username",
+            "name": "userID",
             "in": "path",
             "required": true,
-            "description": "The username of the user to update.",
+            "description": "The ID of the user to update.",
             "schema": {
               "type": "string"
             }
@@ -989,11 +989,11 @@
           "connectionType": "VPC_LINK",
           "httpMethod": "any",
           "type": "http_proxy",
-          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{username}",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{userID}",
           "payloadFormatVersion": "1.0",
           "requestParameters": {
             "integration.request.path.tenantID": "method.request.path.tenantID",
-            "integration.request.path.username": "method.request.path.username"
+            "integration.request.path.userID": "method.request.path.userID"
           }
         }
       },
@@ -1009,10 +1009,10 @@
             }
           },
           {
-            "name": "username",
+            "name": "userID",
             "in": "path",
             "required": true,
-            "description": "The username of the user to update.",
+            "description": "The ID of the user to update.",
             "schema": {
               "type": "string"
             }
@@ -1042,7 +1042,7 @@
         }
       }
     },
-    "/ll-auth/api/tenants/{tenantID}/users/{username}/status": {
+    "/ll-auth/api/tenants/{tenantID}/users/{userID}/status": {
       "put": {
         "operationId": "SetUserStatus",
         "summary": "Set a user's status.",
@@ -1060,10 +1060,10 @@
             }
           },
           {
-            "name": "username",
+            "name": "userID",
             "in": "path",
             "required": true,
-            "description": "The username of the user to update.",
+            "description": "The ID of the user to update.",
             "schema": {
               "type": "string"
             }
@@ -1099,11 +1099,11 @@
           "connectionType": "VPC_LINK",
           "httpMethod": "any",
           "type": "http_proxy",
-          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{username}/status",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{userID}/status",
           "payloadFormatVersion": "1.0",
           "requestParameters": {
             "integration.request.path.tenantID": "method.request.path.tenantID",
-            "integration.request.path.username": "method.request.path.username"
+            "integration.request.path.userID": "method.request.path.userID"
           }
         }
       },
@@ -1119,10 +1119,10 @@
             }
           },
           {
-            "name": "username",
+            "name": "userID",
             "in": "path",
             "required": true,
-            "description": "The username of the user to update.",
+            "description": "The ID of the user to update.",
             "schema": {
               "type": "string"
             }
@@ -1152,7 +1152,7 @@
         }
       }
     },
-    "/ll-auth/api/tenants/{tenantID}/users/{username}/mfa": {
+    "/ll-auth/api/tenants/{tenantID}/users/{userID}/mfa": {
       "put": {
         "operationId": "UpdateUserMFA",
         "summary": "Update a user's MFA settings",
@@ -1170,10 +1170,10 @@
             }
           },
           {
-            "name": "username",
+            "name": "userID",
             "in": "path",
             "required": true,
-            "description": "The username of the user to update.",
+            "description": "The ID of the user to update.",
             "schema": {
               "type": "string"
             }
@@ -1209,11 +1209,11 @@
           "connectionType": "VPC_LINK",
           "httpMethod": "any",
           "type": "http_proxy",
-          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{username}/mfa",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{userID}/mfa",
           "payloadFormatVersion": "1.0",
           "requestParameters": {
             "integration.request.path.tenantID": "method.request.path.tenantID",
-            "integration.request.path.username": "method.request.path.username"
+            "integration.request.path.userID": "method.request.path.userID"
           }
         }
       },
@@ -1229,10 +1229,10 @@
             }
           },
           {
-            "name": "username",
+            "name": "userID",
             "in": "path",
             "required": true,
-            "description": "The username of the user to update.",
+            "description": "The ID of the user to update.",
             "schema": {
               "type": "string"
             }
@@ -1262,14 +1262,24 @@
         }
       }
     },
-    "/ll-auth/api/invite": {
+    "/ll-auth/api/tenants/{tenantID}/invite": {
       "post": {
         "operationId": "InviteToTenant",
         "summary": "Invite a user to join a tenant.",
         "tags": [
           "Auth"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "$ref": "#/components/requestBodies/InviteRequest"
         },
@@ -1300,13 +1310,25 @@
           "connectionType": "VPC_LINK",
           "httpMethod": "any",
           "type": "http_proxy",
-          "uri": "${nlb_uri}/ll-auth/api/invite",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/invite",
           "payloadFormatVersion": "1.0",
-          "requestParameters": {}
+          "requestParameters": {
+            "integration.request.path.tenantID": "method.request.path.tenantID"
+          }
         }
       },
       "options": {
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/CorsResponse"
@@ -1331,7 +1353,7 @@
         }
       }
     },
-    "/ll-auth/api/invite/{username}": {
+    "/ll-auth/api/tenants/{tenantID}/invite/{userID}": {
       "delete": {
         "operationId": "CancelInvitation",
         "summary": "Cancel an invitation to a tenant.",
@@ -1340,10 +1362,19 @@
         ],
         "parameters": [
           {
-            "name": "username",
+            "name": "tenantID",
             "in": "path",
             "required": true,
-            "description": "The username of the user to update.",
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the user to update.",
             "schema": {
               "type": "string"
             }
@@ -1376,20 +1407,30 @@
           "connectionType": "VPC_LINK",
           "httpMethod": "any",
           "type": "http_proxy",
-          "uri": "${nlb_uri}/ll-auth/api/invite/{username}",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/invite/{userID}",
           "payloadFormatVersion": "1.0",
           "requestParameters": {
-            "integration.request.path.username": "method.request.path.username"
+            "integration.request.path.tenantID": "method.request.path.tenantID",
+            "integration.request.path.userID": "method.request.path.userID"
           }
         }
       },
       "options": {
         "parameters": [
           {
-            "name": "username",
+            "name": "tenantID",
             "in": "path",
             "required": true,
-            "description": "The username of the user to update.",
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the user to update.",
             "schema": {
               "type": "string"
             }
@@ -2810,15 +2851,11 @@
       "InviteRequest": {
         "type": "object",
         "required": [
-          "tenant",
           "username",
           "role",
           "mfaPolicy"
         ],
         "properties": {
-          "tenant": {
-            "type": "string"
-          },
           "username": {
             "type": "string"
           },
