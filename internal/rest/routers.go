@@ -32,7 +32,7 @@ func getRoutes() []Route {
 		{
 			"CancelInvitation",
 			http.MethodDelete,
-			"/ll-auth/api/invite/:username",
+			"/ll-auth/api/tenants/:tenantID/invite/:userID",
 			ginCancelInvitation,
 		},
 		{
@@ -86,7 +86,7 @@ func getRoutes() []Route {
 		{
 			"InviteToTenant",
 			http.MethodPost,
-			"/ll-auth/api/invite",
+			"/ll-auth/api/tenants/:tenantID/invite",
 			ginInviteToTenant,
 		},
 		{
@@ -140,19 +140,19 @@ func getRoutes() []Route {
 		{
 			"SetUserStatus",
 			http.MethodPut,
-			"/ll-auth/api/tenants/:tenantID/users/:username/status",
+			"/ll-auth/api/tenants/:tenantID/users/:userID/status",
 			ginSetUserStatus,
 		},
 		{
 			"UpdateUser",
 			http.MethodPut,
-			"/ll-auth/api/tenants/:tenantID/users/:username",
+			"/ll-auth/api/tenants/:tenantID/users/:userID",
 			ginUpdateUser,
 		},
 		{
 			"UpdateUserMFA",
 			http.MethodPut,
-			"/ll-auth/api/tenants/:tenantID/users/:username/mfa",
+			"/ll-auth/api/tenants/:tenantID/users/:userID/mfa",
 			ginUpdateUserMFA,
 		},
 		{

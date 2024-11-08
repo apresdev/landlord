@@ -361,27 +361,22 @@ func handleAdminInviteUserButton(a App, c *gin.Context) error {
 }
 
 func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
-	var req rest.InviteRequest
-	req.Username = c.PostForm("username")
-	req.Tenant = c.Param("tenantID")
-	req.Role = c.PostForm("role")
-	req.MfaPolicy = rest.MfaPolicy(c.PostForm("mfaPolicy"))
-	if err := rest.HandleInviteToTenant(a, c, req); err != nil {
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
 		return err
 	}
-	th, err := multi.ParseTenantHandle(req.Tenant)
-	if err != nil {
-		return apperr.NewBadRequestE(err)
+	var req rest.InviteRequest
+	req.Username = c.PostForm("username")
+	req.Role = c.PostForm("role")
+	req.MfaPolicy = rest.MfaPolicy(c.PostForm("mfaPolicy"))
+	if err := rest.HandleInviteToTenant(a, c, tenantID, req); err != nil {
+		return err
 	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
-	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), ten.ID)
+	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), tenantID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	return render(c, tenantInviteUserTableAndForm(ten, users, ""))
+	return render(c, tenantInviteUserTableAndForm(tenantID, users, ""))
 }
 
 func handleAdminAddRoleForm(a App, c *gin.Context) error {
@@ -397,12 +392,17 @@ func handleAdminActivateUserSubmit(a App, c *gin.Context) error {
 	if tenantID == "" {
 		return apperr.NewBadRequest("no tenant ID provided")
 	}
-	username := c.Param("username")
-	if username == "" {
+	uID := c.Param("userID")
+	if uID == "" {
 		return apperr.NewBadRequest("no user ID provided")
 	}
+	userID, err := uuid.Parse(uID)
+	if err != nil {
+		return apperr.NewBadRequestE(
+			fmt.Errorf("error parsing user ID: %w", err))
+	}
 	user, err := rest.HandleSetUserStatus(
-		a, c, tenantID, username, string(multi.TenantStateActive))
+		a, c, tenantID, userID, string(multi.TenantStateActive))
 	if err != nil {
 		return err
 	}
@@ -414,12 +414,17 @@ func handleAdminDeactivateUserSubmit(a App, c *gin.Context) error {
 	if tenantID == "" {
 		return apperr.NewBadRequest("no tenant ID provided")
 	}
-	username := c.Param("username")
-	if username == "" {
-		return apperr.NewBadRequest("no username provided")
+	uID := c.Param("userID")
+	if uID == "" {
+		return apperr.NewBadRequest("no user ID provided")
+	}
+	userID, err := uuid.Parse(uID)
+	if err != nil {
+		return apperr.NewBadRequestE(
+			fmt.Errorf("error parsing user ID: %w", err))
 	}
 	user, err := rest.HandleSetUserStatus(
-		a, c, tenantID, username, string(multi.TenantStateInactive))
+		a, c, tenantID, userID, string(multi.TenantStateInactive))
 	if err != nil {
 		return err
 	}
@@ -427,15 +432,15 @@ func handleAdminDeactivateUserSubmit(a App, c *gin.Context) error {
 }
 
 func handleAdminCancelInviteSubmit(a App, c *gin.Context) error {
-	tenantID := c.Param("tenantID")
-	if tenantID == "" {
-		return apperr.NewBadRequest("no tenant ID provided")
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return err
 	}
-	username := c.Param("username")
-	if username == "" {
-		return apperr.NewBadRequest("no user ID provided")
+	userID, err := rest.UUIDParam(c, "userID")
+	if err != nil {
+		return err
 	}
-	if err := rest.HandleCancelInvitation(a, c, username); err != nil {
+	if err := rest.HandleCancelInvitation(a, c, tenantID, userID); err != nil {
 		return err
 	}
 	c.String(http.StatusOK, "<div></div>")
@@ -443,20 +448,20 @@ func handleAdminCancelInviteSubmit(a App, c *gin.Context) error {
 }
 
 func handleAdminUpdateMFAPolicy(a App, c *gin.Context, policy rest.MfaPolicy) error {
-	tenantID := c.Param("tenantID")
-	if tenantID == "" {
-		return apperr.NewBadRequest("no tenant ID provided")
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return err
 	}
-	username := c.Param("username")
-	if username == "" {
-		return apperr.NewBadRequest("no user ID provided")
+	userID, err := rest.UUIDParam(c, "userID")
+	if err != nil {
+		return err
 	}
 	req := rest.UpdateUserMfaRequest{}
 	req.MfaPolicy = policy
-	if err := rest.HandleUpdateUserMFA(a, c, tenantID, username, req); err != nil {
+	if err := rest.HandleUpdateUserMFA(a, c, tenantID, userID, req); err != nil {
 		return err
 	}
-	user, err := db.GetUserByName(c.Request.Context(), a.DDB(), username)
+	user, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}

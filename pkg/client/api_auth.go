@@ -161,7 +161,8 @@ func (a *AuthAPIService) AssociateOTPExecute(r ApiAssociateOTPRequest) (*Associa
 type ApiCancelInvitationRequest struct {
 	ctx        context.Context
 	ApiService *AuthAPIService
-	username   string
+	tenantID   string
+	userID     string
 }
 
 func (r ApiCancelInvitationRequest) Execute() (*http.Response, error) {
@@ -172,14 +173,16 @@ func (r ApiCancelInvitationRequest) Execute() (*http.Response, error) {
 CancelInvitation Cancel an invitation to a tenant.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param username The username of the user to update.
+	@param tenantID The ID of the tenant to get users for.
+	@param userID The ID of the user to update.
 	@return ApiCancelInvitationRequest
 */
-func (a *AuthAPIService) CancelInvitation(ctx context.Context, username string) ApiCancelInvitationRequest {
+func (a *AuthAPIService) CancelInvitation(ctx context.Context, tenantID string, userID string) ApiCancelInvitationRequest {
 	return ApiCancelInvitationRequest{
 		ApiService: a,
 		ctx:        ctx,
-		username:   username,
+		tenantID:   tenantID,
+		userID:     userID,
 	}
 }
 
@@ -196,8 +199,9 @@ func (a *AuthAPIService) CancelInvitationExecute(r ApiCancelInvitationRequest) (
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ll-auth/api/invite/{username}"
-	localVarPath = strings.Replace(localVarPath, "{"+"username"+"}", url.PathEscape(parameterValueToString(r.username, "username")), -1)
+	localVarPath := localBasePath + "/ll-auth/api/tenants/{tenantID}/invite/{userID}"
+	localVarPath = strings.Replace(localVarPath, "{"+"tenantID"+"}", url.PathEscape(parameterValueToString(r.tenantID, "tenantID")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"userID"+"}", url.PathEscape(parameterValueToString(r.userID, "userID")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -1480,6 +1484,7 @@ func (a *AuthAPIService) ImpersonateUserExecute(r ApiImpersonateUserRequest) (*I
 type ApiInviteToTenantRequest struct {
 	ctx           context.Context
 	ApiService    *AuthAPIService
+	tenantID      string
 	inviteRequest *InviteRequest
 }
 
@@ -1496,12 +1501,14 @@ func (r ApiInviteToTenantRequest) Execute() (*http.Response, error) {
 InviteToTenant Invite a user to join a tenant.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tenantID The ID of the tenant to get users for.
 	@return ApiInviteToTenantRequest
 */
-func (a *AuthAPIService) InviteToTenant(ctx context.Context) ApiInviteToTenantRequest {
+func (a *AuthAPIService) InviteToTenant(ctx context.Context, tenantID string) ApiInviteToTenantRequest {
 	return ApiInviteToTenantRequest{
 		ApiService: a,
 		ctx:        ctx,
+		tenantID:   tenantID,
 	}
 }
 
@@ -1518,7 +1525,8 @@ func (a *AuthAPIService) InviteToTenantExecute(r ApiInviteToTenantRequest) (*htt
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ll-auth/api/invite"
+	localVarPath := localBasePath + "/ll-auth/api/tenants/{tenantID}/invite"
+	localVarPath = strings.Replace(localVarPath, "{"+"tenantID"+"}", url.PathEscape(parameterValueToString(r.tenantID, "tenantID")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -2853,7 +2861,7 @@ type ApiSetUserStatusRequest struct {
 	ctx                     context.Context
 	ApiService              *AuthAPIService
 	tenantID                string
-	username                string
+	userID                  string
 	updateUserStatusRequest *UpdateUserStatusRequest
 }
 
@@ -2871,15 +2879,15 @@ SetUserStatus Set a user's status.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param tenantID The ID of the tenant to get users for.
-	@param username The username of the user to update.
+	@param userID The ID of the user to update.
 	@return ApiSetUserStatusRequest
 */
-func (a *AuthAPIService) SetUserStatus(ctx context.Context, tenantID string, username string) ApiSetUserStatusRequest {
+func (a *AuthAPIService) SetUserStatus(ctx context.Context, tenantID string, userID string) ApiSetUserStatusRequest {
 	return ApiSetUserStatusRequest{
 		ApiService: a,
 		ctx:        ctx,
 		tenantID:   tenantID,
-		username:   username,
+		userID:     userID,
 	}
 }
 
@@ -2896,9 +2904,9 @@ func (a *AuthAPIService) SetUserStatusExecute(r ApiSetUserStatusRequest) (*http.
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ll-auth/api/tenants/{tenantID}/users/{username}/status"
+	localVarPath := localBasePath + "/ll-auth/api/tenants/{tenantID}/users/{userID}/status"
 	localVarPath = strings.Replace(localVarPath, "{"+"tenantID"+"}", url.PathEscape(parameterValueToString(r.tenantID, "tenantID")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"username"+"}", url.PathEscape(parameterValueToString(r.username, "username")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"userID"+"}", url.PathEscape(parameterValueToString(r.userID, "userID")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -3001,7 +3009,7 @@ type ApiUpdateUserRequest struct {
 	ctx               context.Context
 	ApiService        *AuthAPIService
 	tenantID          string
-	username          string
+	userID            string
 	updateUserRequest *UpdateUserRequest
 }
 
@@ -3019,15 +3027,15 @@ UpdateUser Update a user's settings.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param tenantID The ID of the tenant to get users for.
-	@param username The username of the user to update.
+	@param userID The ID of the user to update.
 	@return ApiUpdateUserRequest
 */
-func (a *AuthAPIService) UpdateUser(ctx context.Context, tenantID string, username string) ApiUpdateUserRequest {
+func (a *AuthAPIService) UpdateUser(ctx context.Context, tenantID string, userID string) ApiUpdateUserRequest {
 	return ApiUpdateUserRequest{
 		ApiService: a,
 		ctx:        ctx,
 		tenantID:   tenantID,
-		username:   username,
+		userID:     userID,
 	}
 }
 
@@ -3044,9 +3052,9 @@ func (a *AuthAPIService) UpdateUserExecute(r ApiUpdateUserRequest) (*http.Respon
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ll-auth/api/tenants/{tenantID}/users/{username}"
+	localVarPath := localBasePath + "/ll-auth/api/tenants/{tenantID}/users/{userID}"
 	localVarPath = strings.Replace(localVarPath, "{"+"tenantID"+"}", url.PathEscape(parameterValueToString(r.tenantID, "tenantID")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"username"+"}", url.PathEscape(parameterValueToString(r.username, "username")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"userID"+"}", url.PathEscape(parameterValueToString(r.userID, "userID")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -3149,7 +3157,7 @@ type ApiUpdateUserMFARequest struct {
 	ctx                  context.Context
 	ApiService           *AuthAPIService
 	tenantID             string
-	username             string
+	userID               string
 	updateUserMFARequest *UpdateUserMFARequest
 }
 
@@ -3167,15 +3175,15 @@ UpdateUserMFA Update a user's MFA settings
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param tenantID The ID of the tenant to get users for.
-	@param username The username of the user to update.
+	@param userID The ID of the user to update.
 	@return ApiUpdateUserMFARequest
 */
-func (a *AuthAPIService) UpdateUserMFA(ctx context.Context, tenantID string, username string) ApiUpdateUserMFARequest {
+func (a *AuthAPIService) UpdateUserMFA(ctx context.Context, tenantID string, userID string) ApiUpdateUserMFARequest {
 	return ApiUpdateUserMFARequest{
 		ApiService: a,
 		ctx:        ctx,
 		tenantID:   tenantID,
-		username:   username,
+		userID:     userID,
 	}
 }
 
@@ -3192,9 +3200,9 @@ func (a *AuthAPIService) UpdateUserMFAExecute(r ApiUpdateUserMFARequest) (*http.
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ll-auth/api/tenants/{tenantID}/users/{username}/mfa"
+	localVarPath := localBasePath + "/ll-auth/api/tenants/{tenantID}/users/{userID}/mfa"
 	localVarPath = strings.Replace(localVarPath, "{"+"tenantID"+"}", url.PathEscape(parameterValueToString(r.tenantID, "tenantID")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"username"+"}", url.PathEscape(parameterValueToString(r.username, "username")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"userID"+"}", url.PathEscape(parameterValueToString(r.userID, "userID")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}

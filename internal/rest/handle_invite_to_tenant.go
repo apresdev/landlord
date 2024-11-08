@@ -3,6 +3,8 @@ package rest
 import (
 	"net/http"
 
+	"github.com/google/uuid"
+
 	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/apresdev/landlord/internal/db"
@@ -18,19 +20,19 @@ func handleInviteToTenant(app App, c *gin.Context) error {
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	if err := HandleInviteToTenant(app, c, req); err != nil {
+	tenantID, err := uuid.Parse(c.Param("tenantID"))
+	if err != nil {
+		return apperr.NewBadRequest("invalid tenant ID")
+	}
+	if err := HandleInviteToTenant(app, c, tenantID, req); err != nil {
 		return err
 	}
 	c.JSON(http.StatusNoContent, nil)
 	return nil
 }
 
-func HandleInviteToTenant(app App, c *gin.Context, req InviteRequest) error {
-	th, err := multi.ParseTenantHandle(req.Tenant)
-	if err != nil {
-		return apperr.NewBadRequest(err.Error())
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
+func HandleInviteToTenant(app App, c *gin.Context, tenantID uuid.UUID, req InviteRequest) error {
+	ten, err := db.GetTenantByID(c.Request.Context(), app.DDB(), tenantID)
 	if err != nil {
 		return err
 	}

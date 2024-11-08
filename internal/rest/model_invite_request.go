@@ -4,8 +4,6 @@
 package rest
 
 type InviteRequest struct {
-	Tenant string `json:"tenant"`
-
 	Username string `json:"username"`
 
 	Role string `json:"role"`

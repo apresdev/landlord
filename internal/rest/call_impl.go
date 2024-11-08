@@ -109,3 +109,15 @@ func callImpl(c *gin.Context, impl func(App, *gin.Context) error) {
 		c.Abort()
 	}
 }
+
+func UUIDParam(c *gin.Context, key string) (uuid.UUID, error) {
+	v := c.Param(key)
+	if v == "" {
+		return uuid.UUID{}, apperr.NewBadRequest("no " + key + " provided")
+	}
+	id, err := uuid.Parse(v)
+	if err != nil {
+		return uuid.UUID{}, apperr.NewBadRequest("invalid UUID")
+	}
+	return id, nil
+}

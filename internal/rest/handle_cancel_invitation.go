@@ -2,6 +2,7 @@ package rest
 
 import (
 	"github.com/apresdev/landlord/internal/apperr"
+	"github.com/google/uuid"
 
 	"github.com/apresdev/landlord/internal/db"
 
@@ -11,15 +12,18 @@ import (
 )
 
 func handleCancelInvitation(app App, c *gin.Context) error {
-	username := c.Param("username")
-	if username == "" {
-		return apperr.NewBadRequest("no username provided")
+	tenantID, err := UUIDParam(c, "tenantID")
+	if err != nil {
+		return err
 	}
-	return HandleCancelInvitation(app, c, username)
+	userID, err := UUIDParam(c, "userID")
+	if err != nil {
+		return apperr.NewBadRequest("no userID provided")
+	}
+	return HandleCancelInvitation(app, c, tenantID, userID)
 }
 
-// TODO: change this API to use a User UUID
-func HandleCancelInvitation(app App, c *gin.Context, username string) error {
+func HandleCancelInvitation(app App, c *gin.Context, tenantID, userID uuid.UUID) error {
 	rc, err := authx.RequesterFromContext(c)
 	if err != nil {
 		return err
@@ -39,5 +43,5 @@ func HandleCancelInvitation(app App, c *gin.Context, username string) error {
 	// TODO: check if the caller's role is allowed to cancel invitations
 
 	return authx.CancelInvitation(
-		c.Request.Context(), app.DDB(), app.CogIdp(), username)
+		c.Request.Context(), app.DDB(), app.CogIdp(), tenantID, userID)
 }
