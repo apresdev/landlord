@@ -169,3 +169,13 @@ func ValidateTenantName(name string) error {
 	}
 	return nil
 }
+
+const maxTenantDescriptionLength = 256
+
+func ValidateTenantDescription(s string) error {
+	if len(s) > maxTenantDescriptionLength {
+		return fmt.Errorf(
+			"description must be %d characters or less", maxTenantDescriptionLength)
+	}
+	return nil
+}

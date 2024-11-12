@@ -279,6 +279,45 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 	return nil
 }
 
+func handleAdminDescriptionSubmit(a App, c *gin.Context) error {
+	tenantID := c.Param("tenantID")
+	description := c.PostForm("description")
+	req := rest.TenantSetDescriptionRequest{
+		Description: description,
+	}
+	ten, err := rest.HandleSetTenantDescription(a, c, tenantID, req)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	return render(c, tenantDescriptionForm(tenantID, ten.Description))
+}
+
+func handleAdminDescriptionEditForm(a App, c *gin.Context) error {
+	tenantID := c.Param("tenantID")
+	th, err := multi.ParseTenantHandle(tenantID)
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	return render(c, tenantDescriptionEditForm(tenantID, ten.Description))
+}
+
+func handleAdminDescriptionForm(a App, c *gin.Context) error {
+	tenantID := c.Param("tenantID")
+	th, err := multi.ParseTenantHandle(tenantID)
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	return render(c, tenantDescriptionForm(tenantID, ten.Description))
+}
+
 func handleAdminAddRoleSubmit(a App, c *gin.Context) error {
 	role := c.PostForm("role")
 	tenantID := c.Param("tenantID")
