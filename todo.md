@@ -10,6 +10,7 @@ even when it the MFA setup is just fine.
 * login dialog should say "login again" after entering in OTP
 * in the URL we send for signing up a new account, make the URL navigate to a
 spot in the UI that forces a logout and then redirects back to the login page.
+* invitation email could look better
 * handle the "remember me" flag on login
 * encode username as base64 in APIs when used in the URL
 * add ability to give a cross-tenant impersonation permission
@@ -23,13 +24,11 @@ spot in the UI that forces a logout and then redirects back to the login page.
 * email domain guard rails
 * Make it possible to show a token's contents when it has expired in the
   `info` command
-* invitation email could look better
 * adapt an existing userpool and reconcile users
 * add IP address and device-fingerprinting data to signups:
   https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-adaptive-authentication.html#user-pool-settings-adaptive-authentication-device-fingerprint
 * UI
   * grab details from the user pool and user pool client to show in UI
-  * add update description to the tenant page
   * friendly timestamp in frontend -- normalize to browser time
   * many htmx routes that are just HTML can be unauthorized routes #perf
   * tenant page should have an affordance when there are no users

@@ -224,9 +224,7 @@ templ tenantSummary(
             </div>
             <div class="field">
                 <span class="label">Description</span>
-                <span class="value">
-                    { tenant.Description } <i class="fa-sharp fa-pen-to-square"></i>
-                </span>
+                @tenantDescriptionForm(tenant.ID.String(), tenant.Description)
             </div>
             <div class="field">
                 <span class="label">Cognito User Pool</span>
@@ -264,6 +262,39 @@ templ tenantSummary(
         </div>
     </div>
 </div>
+}
+
+templ tenantDescriptionForm(
+    tenantID string, description string) {
+<span class="value" id="edit-description-form">
+    { description }
+    <button
+        class="icon-button"
+        hx-get={ appPath("/admin/tenants/" + tenantID + "/description/edit") }
+        hx-target="#edit-description-form">
+        <i class="fa-sharp fa-pen-to-square"></i>
+    </button>
+</span>
+}
+
+templ tenantDescriptionEditForm(
+    tenantID string,
+    description string) {
+<form
+    class="form-wrapper"
+    hx-post={ "/ll-auth/app/admin/tenants/" + tenantID + "/description/edit" }
+    hx-target="#edit-description-form"
+    hx-swap="innerHTML"
+>
+    <label>
+        <input type="text" name="description" value={ description } maxlength="256">
+    </label>
+    <button class="button" type="submit">Submit</button>
+    <button class="button" type="button"
+        hx-get={ "/ll-auth/app/admin/tenants/" + tenantID + "/description/form" }
+        hx-target="#edit-description-form"
+        hx-swap="innerHTML">Cancel</button>
+</form>
 }
 
 templ tenantSummaryTab(

@@ -249,6 +249,34 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: [ ]
+  /ll-auth/api/tenants/{tenantID}/description:
+    put:
+      operationId: SetTenantDescription
+      summary: Set a tenant's description
+      tags:
+        - Auth
+      parameters:
+        - name: tenantID
+          in: path
+          required: true
+          description: The ID of the tenant to get users for.
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/TenantSetDescriptionRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: [ ]
   /ll-auth/api/tenants/{tenantID}/roles:
     get:
       operationId: GetRolesForTenant
@@ -706,6 +734,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateTenantRequest'
+    TenantSetDescriptionRequest:
+      description: Set the description for a tenant
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TenantSetDescriptionRequest'
     TenantRolesRequest:
       description: Set the roles for a tenant
       content:
@@ -1096,6 +1130,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Tenant'
+    TenantSetDescriptionRequest:
+      type: object
+      required:
+        - description
+      properties:
+        description:
+          type: string
     TenantRolesRequest:
       type: object
       required:

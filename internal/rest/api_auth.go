@@ -97,6 +97,11 @@ func ginSetRolesForTenant(c *gin.Context) {
 	callImpl(c, handleSetRolesForTenant)
 }
 
+// SetTenantDescription - Set a tenant's description
+func ginSetTenantDescription(c *gin.Context) {
+	callImpl(c, handleSetTenantDescription)
+}
+
 // SetTenantState - Set a tenant's state
 func ginSetTenantState(c *gin.Context) {
 	callImpl(c, handleSetTenantState)

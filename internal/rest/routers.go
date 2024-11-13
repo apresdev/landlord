@@ -132,6 +132,12 @@ func getRoutes() []Route {
 			ginSetRolesForTenant,
 		},
 		{
+			"SetTenantDescription",
+			http.MethodPut,
+			"/ll-auth/api/tenants/:tenantID/description",
+			ginSetTenantDescription,
+		},
+		{
 			"SetTenantState",
 			http.MethodPut,
 			"/ll-auth/api/tenants/:tenantID/state/:tenantState",
