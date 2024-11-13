@@ -1,11 +1,8 @@
 # TODOs
 
 * BUG: shouldn't use admin error page when OTP fails
-* BUG: user added from command-line (not via REST), reports "MFA not required"
-even when it the MFA setup is just fine.
 * React UI flow for adding MFA
 * figure out terraform for how to configure email and SMS
-* cognito flag for user enabled
 * why do some apps ask for two codes when signing up to MFA?
 * login dialog should say "login again" after entering in OTP
 * in the URL we send for signing up a new account, make the URL navigate to a

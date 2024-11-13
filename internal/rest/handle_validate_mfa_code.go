@@ -92,7 +92,7 @@ func HandleValidateMFACode(app App, c *gin.Context, req ValidateMfaCodeRequest) 
 		zap.L().Warn("error updating email_verified user attribute", zap.Error(err))
 	}
 
-	if err := authx.OnSuccessfulLogin(ctx, app.DDB(), app.CogIdp(), tenant, user); err != nil {
+	if err := authx.OnSuccessfulLogin(ctx, app.DDB(), user); err != nil {
 		return nil, err
 	}
 

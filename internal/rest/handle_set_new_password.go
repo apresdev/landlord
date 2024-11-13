@@ -124,7 +124,7 @@ func HandleSetNewPassword(
 			return &resp, nil
 		}
 	} else {
-		if err := authx.OnSuccessfulLogin(ctx, ddb, cogIdp, tenant, user); err != nil {
+		if err := authx.OnSuccessfulLogin(ctx, ddb, user); err != nil {
 			return nil, err
 		}
 	}

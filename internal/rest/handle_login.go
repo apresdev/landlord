@@ -146,7 +146,7 @@ func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, err
 		}
 	}
 
-	if err := authx.OnSuccessfulLogin(ctx, app.DDB(), app.CogIdp(), tenant, user); err != nil {
+	if err := authx.OnSuccessfulLogin(ctx, app.DDB(), user); err != nil {
 		return nil, err
 	}
 

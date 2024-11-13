@@ -446,7 +446,7 @@ func userFragment(du *DisplayableUser) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		} else {
+		} else if du.User.MFAStatus == multi.MFAStatusActive && du.User.Status == multi.UserStatusActive {
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<button class=\"button\" hx-post=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

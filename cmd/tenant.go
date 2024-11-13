@@ -869,7 +869,7 @@ func tenantUserRoleCmd() *cobra.Command {
 				return err
 			}
 			user.Role = role
-			if err = authx.SetCognitoGroup(cs.Ctx(), cs.CogIdp(), ten, user); err != nil {
+			if err = authx.SetCognitoGroup(cs.Ctx(), cs.CogIdp(), ten, user.Username, user.Role); err != nil {
 				return err
 			}
 			if err = db.StoreUser(cs.Ctx(), cs.DDB(), user); err != nil {
