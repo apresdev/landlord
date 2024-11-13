@@ -114,6 +114,10 @@ type User struct {
 }
 
 func NewUser(tenantID uuid.UUID, cognitoID uuid.UUID, username, role string, mfaPolicy MFAPolicy) *User {
+	mfaStatus := MFAStatusNone
+	if mfaPolicy == MFAPolicyRequired {
+		mfaStatus = MFAStatusPending
+	}
 	return &User{
 		TenantID:  tenantID,
 		ID:        cognitoID,
@@ -121,7 +125,7 @@ func NewUser(tenantID uuid.UUID, cognitoID uuid.UUID, username, role string, mfa
 		Role:      role,
 		Status:    UserStatusInvited,
 		MFAPolicy: mfaPolicy,
-		MFAStatus: MFAStatusNone,
+		MFAStatus: mfaStatus,
 		CreatedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 }

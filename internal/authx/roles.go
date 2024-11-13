@@ -91,14 +91,15 @@ func SetCognitoGroup(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	ten *multi.Tenant,
-	user *multi.User) error {
+	username string,
+	role string) error {
 
-	userGroupName := ten.GroupName(user.Role)
+	userGroupName := ten.GroupName(role)
 	_, err := cogIdp.AdminAddUserToGroup(ctx,
 		&cognitoidentityprovider.AdminAddUserToGroupInput{
 			GroupName:  aws.String(userGroupName),
 			UserPoolId: aws.String(ten.UserPoolID),
-			Username:   aws.String(user.Username),
+			Username:   aws.String(username),
 		})
 	if err != nil {
 		zap.L().Warn("failed to add user to group",
@@ -106,13 +107,13 @@ func SetCognitoGroup(
 			zap.String("user-pool-id", ten.UserPoolID),
 			zap.String("tenant-id", ten.ID.String()),
 			zap.String("group", userGroupName),
-			zap.String("user", user.Username))
+			zap.String("user", username))
 	} else {
 		zap.L().Info("added user to group",
 			zap.String("user-pool-id", ten.UserPoolID),
 			zap.String("tenant-id", ten.ID.String()),
 			zap.String("group", userGroupName),
-			zap.String("user", user.Username))
+			zap.String("user", username))
 	}
 	return err
 }

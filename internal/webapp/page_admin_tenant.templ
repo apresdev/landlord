@@ -123,7 +123,7 @@ templ userFragment(du *DisplayableUser) {
             >
                 Attach MFA
             </button>
-        } else {
+        } else if du.User.MFAStatus == multi.MFAStatusActive && du.User.Status == multi.UserStatusActive {
             <button
                 class="button"
                 hx-post={ "/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/mfa/disable" }

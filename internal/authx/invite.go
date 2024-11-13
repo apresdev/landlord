@@ -69,6 +69,9 @@ func SendInvite(
 	if err != nil {
 		return err
 	}
+	if err := SetCognitoGroup(ctx, cogIdp, ten, e.Address(), role); err != nil {
+		return err
+	}
 	var cognitoUserID uuid.UUID
 	for _, attr := range o.User.Attributes {
 		if aws.ToString(attr.Name) == "sub" {
