@@ -11,17 +11,17 @@ import (
 	"github.com/apresdev/landlord/internal/multi"
 )
 
-func onTenantSelect(tenantID string) templ.ComponentScript {
+func onTenantSelect(tenantID string, tab string) templ.ComponentScript {
 	return templ.ComponentScript{
-		Name: `__templ_onTenantSelect_ba16`,
-		Function: `function __templ_onTenantSelect_ba16(tenantID){window.location.href = "/ll-auth/app/admin/tenants/" + tenantID
+		Name: `__templ_onTenantSelect_1297`,
+		Function: `function __templ_onTenantSelect_1297(tenantID, tab){window.location.href = "/ll-auth/app/admin/tenants/" + tenantID + "?tab=" + tab;
 }`,
-		Call:       templ.SafeScript(`__templ_onTenantSelect_ba16`, tenantID),
-		CallInline: templ.SafeScriptInline(`__templ_onTenantSelect_ba16`, tenantID),
+		Call:       templ.SafeScript(`__templ_onTenantSelect_1297`, tenantID, tab),
+		CallInline: templ.SafeScriptInline(`__templ_onTenantSelect_1297`, tenantID, tab),
 	}
 }
 
-func tenantSelectFragment(tenant *multi.Tenant) templ.Component {
+func tenantSelectFragment(tenant *multi.Tenant, tab string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -42,7 +42,7 @@ func tenantSelectFragment(tenant *multi.Tenant) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, onTenantSelect(tenant.ID.String()))
+		templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, onTenantSelect(tenant.ID.String(), tab))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -50,7 +50,7 @@ func tenantSelectFragment(tenant *multi.Tenant) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var2 templ.ComponentScript = onTenantSelect(tenant.ID.String())
+		var templ_7745c5c3_Var2 templ.ComponentScript = onTenantSelect(tenant.ID.String(), tab)
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2.Call)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -59,7 +59,7 @@ func tenantSelectFragment(tenant *multi.Tenant) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var3 templ.SafeURL = templ.SafeURL("/ll-auth/app/admin/tenants/" + tenant.ID.String())
+		var templ_7745c5c3_Var3 templ.SafeURL = templ.SafeURL("/ll-auth/app/admin/tenants/" + tenant.ID.String() + "?tab=" + tab)
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var3)))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -71,7 +71,7 @@ func tenantSelectFragment(tenant *multi.Tenant) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(tenant.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant_select.templ`, Line: 11, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant_select.templ`, Line: 11, Col: 115}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -98,7 +98,7 @@ func tenantSelectFragment(tenant *multi.Tenant) templ.Component {
 	})
 }
 
-func tenantSelectPage(appName string, currentUser *CurrentUser, tenants []*multi.Tenant) templ.Component {
+func tenantSelectPage(appName string, currentUser *CurrentUser, tenants []*multi.Tenant, tab string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -140,7 +140,7 @@ func tenantSelectPage(appName string, currentUser *CurrentUser, tenants []*multi
 			return templ_7745c5c3_Err
 		}
 		for _, tenant := range tenants {
-			templ_7745c5c3_Err = tenantSelectFragment(tenant).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = tenantSelectFragment(tenant, tab).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

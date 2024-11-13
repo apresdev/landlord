@@ -98,6 +98,36 @@ func handleAdminTenants(a App, c *gin.Context) error {
 	return render(c, tenantsPage("Landlord", cu, tens))
 }
 
+type tenantTab string
+
+const (
+	tenantTabSummary tenantTab = "summary"
+	tenantTabUsers   tenantTab = "users"
+	tenantTabInvites tenantTab = "invites"
+	tenantTabRoles   tenantTab = "roles"
+)
+
+var tenantTabs = []tenantTab{tenantTabSummary, tenantTabUsers, tenantTabInvites, tenantTabRoles}
+
+func newTenantTab(s string) tenantTab {
+	if s == "" {
+		return tenantTabSummary
+	}
+	switch s {
+	case "summary":
+		return tenantTabSummary
+	case "users":
+		return tenantTabUsers
+	case "invites":
+		return tenantTabInvites
+	case "roles":
+		return tenantTabRoles
+	default:
+		zap.L().Info("bad value for tenant tab", zap.String("tab", s))
+		return tenantTabSummary
+	}
+}
+
 func handleAdminTenantSelect(a App, c *gin.Context) error {
 	cu, err := resolveCurrentUser(a, c)
 	if err != nil {
@@ -125,8 +155,15 @@ func handleAdminTenantSelect(a App, c *gin.Context) error {
 			authorizedTenants = append(authorizedTenants, ten)
 		}
 	}
-
-	return render(c, tenantSelectPage("Landlord", cu, tens))
+	tab := tenantTabSummary
+	if action == "manage-users" {
+		tab = tenantTabUsers
+	} else if action == "manage-roles" {
+		tab = tenantTabRoles
+	} else if action == "manage-invites" {
+		tab = tenantTabInvites
+	}
+	return render(c, tenantSelectPage(a.Settings().AppName(), cu, tens, string(tab)))
 }
 
 func handleAdminNewTenant(a App, c *gin.Context) error {
@@ -224,8 +261,8 @@ func handleAdminTenant(a App, c *gin.Context) error {
 		return apperr.NewInternalE(
 			fmt.Errorf("error getting tenants: %w", err))
 	}
-
-	return render(c, tenantPage(a.Settings().AppName(), cu, ten))
+	startingTab := newTenantTab(c.Query("tab"))
+	return render(c, tenantPage(a.Settings().AppName(), cu, ten, string(startingTab)))
 }
 
 func handleAdminTenantTab(a App, c *gin.Context) error {
@@ -251,9 +288,6 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 		return apperr.NewInternalE(
 			fmt.Errorf("error getting tenants: %w", err))
 	}
-
-	// TODO: handle no users for tenant more gracefully
-
 	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), ten.ID)
 	if err != nil {
 		return apperr.NewInternalE(
@@ -262,19 +296,27 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 	sort.Slice(users, func(i, j int) bool {
 		return users[i].Username < users[j].Username
 	})
-	tab := c.Param("tab")
-	if tab == "summary" {
+	tab := newTenantTab(c.Param("tab"))
+	switch tab {
+	case tenantTabSummary:
 		cognitoURL := authx.CognitoUserPoolURL(a.Cfg().Region, ten.UserPoolID)
-		return render(c, tenantSummaryTab(
-			tab, a.Settings().AppName(), cu, ten, cognitoURL, users, rolesWithCount(ten.Roles, users)))
-	} else if tab == "users" {
+		return render(c, tenantSummaryTab(a.Settings().AppName(), cu, ten, cognitoURL, users))
+	case tenantTabUsers:
 		return render(c, tenantUsersTab(
-			tab, a.Settings().AppName(), cu, ten, NewDisplayableUsers(users), rolesWithCount(ten.Roles, users)))
-	} else if tab == "roles" {
+			a.Settings().AppName(), cu, ten, NewDisplayableUsers(users)))
+	case tenantTabInvites:
+		invites := make([]*multi.User, 0, len(users))
+		for _, user := range users {
+			if user.Status == multi.UserStatusInvited {
+				invites = append(invites, user)
+			}
+		}
+		return render(c, tenantInvitesTab(a.Settings().AppName(), cu, ten, NewDisplayableUsers(invites)))
+	case tenantTabRoles:
 		return render(c, tenantRolesTab(
-			tab, a.Settings().AppName(), cu, ten, users, rolesWithCount(ten.Roles, users)))
-	} else {
-		zap.L().Info("unknown tenant tab", zap.String("tab", tab))
+			a.Settings().AppName(), cu, ten, users, rolesWithCount(ten.Roles, users)))
+	default:
+		zap.L().Info("unknown tenant tab", zap.String("tab", string(tab)))
 	}
 	return nil
 }
