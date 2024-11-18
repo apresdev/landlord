@@ -1,10 +1,13 @@
 package webapp
 
 import "github.com/apresdev/landlord/internal/multi"
+import "github.com/apresdev/landlord/internal/tinytools"
 import "github.com/google/uuid"
 import "net/url"
 import "strconv"
 import "strings"
+import "golang.org/x/text/cases"
+import "golang.org/x/text/language"
 
 const tenantPageTitle = "Tenant"
 
@@ -194,8 +197,14 @@ templ tenantInviteUserTableAndForm(
             </tr>
         </thead>
         <tbody hx-target="closest tr" hx-swap="outerHTML">
-        for _, du := range dus {
-            @userFragment(du)
+        if len(dus) == 0 {
+            <tr>
+                <td colspan="5">No users</td>
+            </tr>
+        } else {
+            for _, du := range dus {
+                @userFragment(du)
+            }
         }
         </tbody>
     </table>
@@ -207,8 +216,7 @@ templ tenantSummary(
     currentUser *CurrentUser,
     tenant *multi.Tenant,
     userPoolURL string,
-    users []*multi.User,
-    roles []RoleWithCount) {
+    users []*multi.User) {
 
 <div class="card">
     <div class="card-header">
@@ -297,73 +305,61 @@ templ tenantDescriptionEditForm(
 </form>
 }
 
+templ tenantTabButtonsFragment(tenantID string, selectedTab tenantTab) {
+    for _, tab := range tenantTabs {
+        <button
+            hx-get={ appPath("/admin/tenants/" + tenantID + "/" + string(tab)) }
+            class={ "tab-button" + tinytools.StringIf(tab == selectedTab, " active") }
+            role="tab"
+            aria-selected={ strconv.FormatBool(tab == selectedTab) }
+            aria-controls="tab-content">{ cases.Title(language.English).String(string(tab)) }</button>
+    }
+}
+
 templ tenantSummaryTab(
-    tab string,
     appName string,
     currentUser *CurrentUser,
     tenant *multi.Tenant,
     userPoolURL string,
-    users []*multi.User,
-    roles []RoleWithCount) {
+    users []*multi.User) {
 
 <div class="tab-header" role="tablist">
-	<button
-	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/summary") }
-	    class="tab-button active"
-	    role="tab"
-	    aria-selected="true"
-	    aria-controls="tab-content">Summary</button>
-	<button
-	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/users") }
-	    class="tab-button"
-	    role="tab"
-	    aria-selected="false"
-	    aria-controls="tab-content">Users</button>
-	<button
-	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/roles") }
-	    class="tab-button"
-	    role="tab"
-	    aria-selected="false"
-	    aria-controls="tab-content">Roles</button>
+    @tenantTabButtonsFragment(tenant.ID.String(), "summary")
 </div>
 <div id="tab-content" role="tabpanel" class="tab-content">
-    @tenantSummary(appName, currentUser, tenant, userPoolURL, users, roles)
+    @tenantSummary(appName, currentUser, tenant, userPoolURL, users)
 </div>
 }
 
 templ tenantUsersTab(
-     tab string,
      appName string,
      currentUser *CurrentUser,
      tenant *multi.Tenant,
-     dus []*DisplayableUser,
-     roles []RoleWithCount) {
+     dus []*DisplayableUser) {
 
 <div class="tab-header" role="tablist">
-	<button
-	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/summary") }
-	    class="tab-button"
-	    aria-selected="false"
-	    aria-controls="tab-content">Summary</button>
-	<button
-	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/users") }
-	    class="tab-button active"
-	    role="tab"
-	    aria-selected="true"
-	    aria-controls="tab-content">Users</button>
-	<button
-	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/roles") }
-	    class="tab-button"
-	    aria-selected="false"
-	    aria-controls="tab-content">Roles</button>
+    @tenantTabButtonsFragment(tenant.ID.String(), tenantTabUsers)
 </div>
 <div id="tab-content" role="tabpanel" class="tab-content">
     @tenantInviteUserTableAndForm(tenant.ID, dus, "")
 </div>
 }
 
+templ tenantInvitesTab(
+     appName string,
+     currentUser *CurrentUser,
+     tenant *multi.Tenant,
+     invitedDUs []*DisplayableUser) {
+
+<div class="tab-header" role="tablist">
+    @tenantTabButtonsFragment(tenant.ID.String(), tenantTabInvites)
+</div>
+<div id="tab-content" role="tabpanel" class="tab-content">
+    @tenantInviteUserTableAndForm(tenant.ID, invitedDUs, "")
+</div>
+}
+
 templ tenantRolesTab(
-     tab string,
      appName string,
      currentUser *CurrentUser,
      tenant *multi.Tenant,
@@ -371,24 +367,7 @@ templ tenantRolesTab(
      roles []RoleWithCount) {
 
 <div class="tab-header" role="tablist">
-	<button
-	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/summary") }
-	    class="tab-button"
-	    role="tab"
-	    aria-selected="false"
-	    aria-controls="tab-content">Summary</button>
-	<button
-	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/users") }
-	    class="tab-button"
-	    role="tab"
-	    aria-selected="false"
-	    aria-controls="tab-content">Users</button>
-	<button
-	    hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/roles") }
-	    class="tab-button active"
-	    role="tab"
-	    aria-selected="true"
-	    aria-controls="tab-content">Roles</button>
+    @tenantTabButtonsFragment(tenant.ID.String(), tenantTabRoles)
 </div>
 <div id="tab-content" role="tabpanel" class="tab-content">
     @tenantAddRoleTableAndForm(tenant, roles, "")
@@ -398,7 +377,8 @@ templ tenantRolesTab(
 templ tenantPage(
     appName string,
     currentUser *CurrentUser,
-    tenant *multi.Tenant) {
+    tenant *multi.Tenant,
+    startingTab string) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, tenantPageTitle)
@@ -406,7 +386,7 @@ templ tenantPage(
     @navBarFragment(currentUser)
     <div class="container">
         <div id="tabs"
-	        hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/summary") }
+	        hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/" + startingTab) }
             hx-trigger="load delay:100ms"
             hx-target="#tabs"
             hx-swap="innerHTML"></div>

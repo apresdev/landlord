@@ -17,19 +17,17 @@ spot in the UI that forces a logout and then redirects back to the login page.
     * handle resolving cognito users that are not in dynamo
     * remove a user from their old group in apply if applicable
     * remove a group from a tenant if it no longer exists
-* list pending invitations
+    * adapt an existing userpool and reconcile users
 * email domain guard rails
 * Make it possible to show a token's contents when it has expired in the
   `info` command
-* adapt an existing userpool and reconcile users
 * add IP address and device-fingerprinting data to signups:
   https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-adaptive-authentication.html#user-pool-settings-adaptive-authentication-device-fingerprint
 * UI
   * grab details from the user pool and user pool client to show in UI
   * friendly timestamp in frontend -- normalize to browser time
   * many htmx routes that are just HTML can be unauthorized routes #perf
-  * tenant page should have an affordance when there are no users
-  * sort tenant claims in the profile view, they are a map, so in display
+  * sort jwt claims in the profile view, they are a map, so in display
     it's worth showing them in alphabetical order instead of random
   * add affordance to display a token in the UI given its base64 form
   * affordance for impersonate and clear impersonate
