@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/multi"
 
 	"github.com/apresdev/landlord/internal/jwx"
@@ -150,7 +152,7 @@ func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, err
 		return nil, err
 	}
 
-	cid := authx.ClientID(c)
+	cid := perms.ClientID(c)
 	validationURL := jwx.ValidationURL(app.Cfg().Region, tenant.UserPoolID)
 	accessTok, err := app.Validator().ValidateToken(
 		ctx, cid, validationURL, aws.ToString(o.AuthenticationResult.AccessToken))

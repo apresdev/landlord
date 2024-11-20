@@ -3,6 +3,8 @@ package rest
 import (
 	"fmt"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 
@@ -13,7 +15,6 @@ import (
 
 	"github.com/apresdev/landlord/internal/db"
 
-	"github.com/apresdev/landlord/internal/authx"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -58,7 +59,7 @@ func HandleSetUserStatus(
 		return nil, apperr.NewBadRequestE(err)
 	}
 
-	rc, err := authx.RequesterFromContext(c)
+	p, err := perms.PrincipalFromContext(c)
 	if err != nil {
 		return nil, err
 	}
@@ -70,17 +71,6 @@ func HandleSetUserStatus(
 			zap.String("tenantID", tenantID))
 		return nil, apperr.NewBadRequest("invalid tenant")
 	}
-	// TODO: we only allow this operation for members of the root tenant, for now
-	// TODO: check if role is able to set user status. Currently all roles within
-	// the root tenant are permitted.
-	if !authx.IsAuthorizedForTenant(app.RootTenantID(), targetTenant, rc.Roles) {
-		zap.L().Info("user not authorized for tenant when setting user status",
-			zap.String("clientID", string(rc.Cid)),
-			zap.String("tenantID", tenantID),
-			zap.String("roles", rc.Roles.String()))
-		return nil, apperr.NewUnauthorized("not authorized")
-	}
-
 	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), app.DDB(), targetTenant.ID, userID)
 	if err != nil {
 		zap.L().Info("user not found when setting user status",
@@ -88,6 +78,21 @@ func HandleSetUserStatus(
 			zap.Error(err))
 		return nil, apperr.NewNotFound(fmt.Sprintf("user not found: %s", userID.String()))
 	}
+
+	resource := perms.NewResource(
+		perms.ResourceKindUserStatus, targetUser.Username, targetTenant, targetUser)
+	effect, err := perms.Eval(c, app, p, perms.OperationWrite, resource)
+	if err != nil {
+		zap.L().Error("could not evaluate permissions", zap.Error(err))
+		return nil, apperr.NewUnauthorized("not authorized")
+	}
+	if effect.IsDenied() {
+		zap.L().Info("denied setting user status",
+			zap.String("principal", p.String()),
+			zap.String("resource", resource.String()))
+		return nil, apperr.NewUnauthorized("not authorized")
+	}
+
 	if targetUser.Status == targetStatus {
 		zap.L().Info("user status already set",
 			zap.String("userID", userID.String()),

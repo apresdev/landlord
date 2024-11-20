@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/db"
 	"github.com/apresdev/landlord/internal/multi"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -54,7 +56,7 @@ func testSetRolesForTenantRequest(t *testing.T, ten *multi.Tenant, user *multi.U
 			claims[authx.EmailClaim] = user.Username
 		}
 		tok := &jwt.Token{Claims: claims}
-		gt.c.Set(authx.TokenKey, tok)
+		gt.c.Set(perms.TokenKey, tok)
 	}
 	return gt
 }
@@ -92,6 +94,10 @@ func (s *HandleSetRolesForTenantTestSuite) TestBadRoleNames() {
 	err := handleSetRolesForTenant(app, gt.c)
 	s.Error(err)
 	s.Equal("role name must be all lowercase and contain only letters, numbers, and hyphens", err.Error())
+}
+
+func foo(v bool, a, b int) bool {
+	return v && a == b
 }
 
 func (s *HandleSetRolesForTenantTestSuite) TestSuccessAdd() {

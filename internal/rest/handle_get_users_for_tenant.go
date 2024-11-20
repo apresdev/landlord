@@ -3,7 +3,8 @@ package rest
 import (
 	"net/http"
 
-	"github.com/apresdev/landlord/internal/authx"
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"go.uber.org/zap"
@@ -18,7 +19,7 @@ import (
 )
 
 func handleGetUsersForTenant(app App, c *gin.Context) error {
-	rc, err := authx.RequesterFromContext(c)
+	p, err := perms.PrincipalFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -34,10 +35,10 @@ func handleGetUsersForTenant(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewNotFound(err.Error())
 	}
-	if !authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.Roles) {
+	if !perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, p.Roles) {
 		zap.L().Info("user not unauthorized for tenant",
-			zap.String("clientID", string(rc.Cid)),
-			zap.String("username", rc.Username),
+			zap.String("clientID", string(p.Cid)),
+			zap.String("username", p.Username),
 			zap.String("tenantID", ten.ID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}

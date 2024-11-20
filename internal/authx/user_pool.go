@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sethvargo/go-password/password"
-
 	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -302,47 +300,6 @@ func DeleteUserFromUserPool(
 		return err
 	}
 	return nil
-}
-
-func CreateUser(
-	ctx context.Context,
-	cogIdp AWSCognitoIdentityProvider,
-	userPool string,
-	username string) error {
-
-	pwd, err := password.Generate(16, 4, 4, false, false)
-	if err != nil {
-		return err
-	}
-
-	up, err := GetUserPoolByNameOrID(ctx, cogIdp, userPool)
-	if err != nil {
-		return err
-	}
-	_, err = cogIdp.AdminCreateUser(ctx,
-		&cognitoidentityprovider.AdminCreateUserInput{
-			UserPoolId:        up.Id,
-			Username:          &username,
-			TemporaryPassword: &pwd,
-		})
-	return err
-}
-
-func DeleteUser(
-	ctx context.Context,
-	cogIdp AWSCognitoIdentityProvider,
-	userPool, email string) error {
-
-	up, err := GetUserPoolByNameOrID(ctx, cogIdp, userPool)
-	if err != nil {
-		return err
-	}
-	_, err = cogIdp.AdminDeleteUser(ctx,
-		&cognitoidentityprovider.AdminDeleteUserInput{
-			UserPoolId: up.Id,
-			Username:   &email,
-		})
-	return err
 }
 
 func CognitoUserPoolURL(region string, userPoolID string) string {

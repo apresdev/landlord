@@ -9,38 +9,38 @@ import (
 	"fmt"
 )
 
-// checks if the UpdateUserRequest type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &UpdateUserRequest{}
+// checks if the UpdateUserRoleRequest type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &UpdateUserRoleRequest{}
 
-// UpdateUserRequest struct for UpdateUserRequest
-type UpdateUserRequest struct {
+// UpdateUserRoleRequest struct for UpdateUserRoleRequest
+type UpdateUserRoleRequest struct {
 	Role string `json:"role"`
 }
 
-type _UpdateUserRequest UpdateUserRequest
+type _UpdateUserRoleRequest UpdateUserRoleRequest
 
-// NewUpdateUserRequest instantiates a new UpdateUserRequest object
+// NewUpdateUserRoleRequest instantiates a new UpdateUserRoleRequest object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUpdateUserRequest(role string) *UpdateUserRequest {
-	this := UpdateUserRequest{}
+func NewUpdateUserRoleRequest(role string) *UpdateUserRoleRequest {
+	this := UpdateUserRoleRequest{}
 	this.Role = role
 	return &this
 }
 
-// NewUpdateUserRequestWithDefaults instantiates a new UpdateUserRequest object
+// NewUpdateUserRoleRequestWithDefaults instantiates a new UpdateUserRoleRequest object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewUpdateUserRequestWithDefaults() *UpdateUserRequest {
-	this := UpdateUserRequest{}
+func NewUpdateUserRoleRequestWithDefaults() *UpdateUserRoleRequest {
+	this := UpdateUserRoleRequest{}
 	var role string = "guest"
 	this.Role = role
 	return &this
 }
 
 // GetRole returns the Role field value
-func (o *UpdateUserRequest) GetRole() string {
+func (o *UpdateUserRoleRequest) GetRole() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -51,7 +51,7 @@ func (o *UpdateUserRequest) GetRole() string {
 
 // GetRoleOk returns a tuple with the Role field value
 // and a boolean to check if the value has been set.
-func (o *UpdateUserRequest) GetRoleOk() (*string, bool) {
+func (o *UpdateUserRoleRequest) GetRoleOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -59,11 +59,11 @@ func (o *UpdateUserRequest) GetRoleOk() (*string, bool) {
 }
 
 // SetRole sets field value
-func (o *UpdateUserRequest) SetRole(v string) {
+func (o *UpdateUserRoleRequest) SetRole(v string) {
 	o.Role = v
 }
 
-func (o UpdateUserRequest) MarshalJSON() ([]byte, error) {
+func (o UpdateUserRoleRequest) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -71,13 +71,13 @@ func (o UpdateUserRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o UpdateUserRequest) ToMap() (map[string]interface{}, error) {
+func (o UpdateUserRoleRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["role"] = o.Role
 	return toSerialize, nil
 }
 
-func (o *UpdateUserRequest) UnmarshalJSON(data []byte) (err error) {
+func (o *UpdateUserRoleRequest) UnmarshalJSON(data []byte) (err error) {
 	// This validates that all required properties are included in the JSON object
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
@@ -99,53 +99,53 @@ func (o *UpdateUserRequest) UnmarshalJSON(data []byte) (err error) {
 		}
 	}
 
-	varUpdateUserRequest := _UpdateUserRequest{}
+	varUpdateUserRoleRequest := _UpdateUserRoleRequest{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varUpdateUserRequest)
+	err = decoder.Decode(&varUpdateUserRoleRequest)
 
 	if err != nil {
 		return err
 	}
 
-	*o = UpdateUserRequest(varUpdateUserRequest)
+	*o = UpdateUserRoleRequest(varUpdateUserRoleRequest)
 
 	return err
 }
 
-type NullableUpdateUserRequest struct {
-	value *UpdateUserRequest
+type NullableUpdateUserRoleRequest struct {
+	value *UpdateUserRoleRequest
 	isSet bool
 }
 
-func (v NullableUpdateUserRequest) Get() *UpdateUserRequest {
+func (v NullableUpdateUserRoleRequest) Get() *UpdateUserRoleRequest {
 	return v.value
 }
 
-func (v *NullableUpdateUserRequest) Set(val *UpdateUserRequest) {
+func (v *NullableUpdateUserRoleRequest) Set(val *UpdateUserRoleRequest) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableUpdateUserRequest) IsSet() bool {
+func (v NullableUpdateUserRoleRequest) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableUpdateUserRequest) Unset() {
+func (v *NullableUpdateUserRoleRequest) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableUpdateUserRequest(val *UpdateUserRequest) *NullableUpdateUserRequest {
-	return &NullableUpdateUserRequest{value: val, isSet: true}
+func NewNullableUpdateUserRoleRequest(val *UpdateUserRoleRequest) *NullableUpdateUserRoleRequest {
+	return &NullableUpdateUserRoleRequest{value: val, isSet: true}
 }
 
-func (v NullableUpdateUserRequest) MarshalJSON() ([]byte, error) {
+func (v NullableUpdateUserRoleRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableUpdateUserRequest) UnmarshalJSON(src []byte) error {
+func (v *NullableUpdateUserRoleRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

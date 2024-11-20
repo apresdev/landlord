@@ -233,18 +233,14 @@ func RemoveRoleFromTenant(ctx context.Context, ddb db.AWSDynamoDB, tenantID uuid
 func SetTenantState(
 	ctx context.Context,
 	ddb db.AWSDynamoDB,
-	th multi.TenantHandle,
+	ten *multi.Tenant,
 	state multi.TenantState) (*multi.Tenant, error) {
 
-	ten, err := db.ResolveTenant(ctx, ddb, th)
-	if err != nil {
-		return nil, err
-	}
 	if ten.IsRoot() {
 		return nil, apperr.NewBadRequest("cannot change the root tenant's state")
 	}
 	ten.State = state
-	err = db.StoreTenant(ctx, ddb, ten)
+	err := db.StoreTenant(ctx, ddb, ten)
 	if err != nil {
 		return nil, err
 	}

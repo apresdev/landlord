@@ -7,6 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/apresdev/landlord/internal/perms"
+	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 
 	"github.com/apresdev/landlord/internal/apptest"
@@ -249,4 +252,14 @@ func withGetUserPoolClient(app *MockApp, ctx context.Context) {
 			UserPoolClient: &types.UserPoolClientType{
 				ClientId:     aws.String("test-client-id1"),
 				ClientSecret: aws.String("test-client-secret")}}, nil).Once()
+}
+
+func withSetupJWT(c *gin.Context, tenant *multi.Tenant, user *multi.User) {
+	claims := make(jwt.MapClaims)
+	claims[authx.CustomTenantClaim] = tenant.ID.String()
+	claims[authx.CognitoGroupsClaim] = []string{tenant.GroupName(user.Role)}
+	claims[authx.EmailClaim] = user.Username
+	claims[authx.SubClaim] = user.ID.String()
+	tok := &jwt.Token{Claims: claims}
+	c.Set(perms.TokenKey, tok)
 }

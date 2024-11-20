@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/tinytools"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -16,7 +18,6 @@ import (
 
 	"github.com/apresdev/landlord/internal/db"
 
-	"github.com/apresdev/landlord/internal/authx"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -42,7 +43,7 @@ func HandleSetRolesForTenant(app App, c *gin.Context, req TenantRolesRequest, te
 	if err := validateRoleNames(req.SubTenantRoles); err != nil {
 		return err
 	}
-	rc, err := authx.RequesterFromContext(c)
+	p, err := perms.PrincipalFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -50,30 +51,38 @@ func HandleSetRolesForTenant(app App, c *gin.Context, req TenantRolesRequest, te
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
+	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
 	if err != nil {
 		return apperr.NewNotFound(err.Error())
 	}
-	if !authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.Roles) {
-		zap.L().Info("user not unauthorized for tenant",
-			zap.String("clientID", string(rc.Cid)),
-			zap.String("username", rc.Username),
-			zap.String("tenantID", ten.ID.String()))
+
+	resource := perms.NewResource(
+		perms.ResourceKindTenantRoles, perms.ResourceNameAny, targetTenant, nil)
+	effect, err := perms.Eval(c, app, p, perms.OperationWrite, resource)
+	if err != nil {
+		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	users, err := db.GetUsersForTenant(c.Request.Context(), app.DDB(), ten.ID)
+	if effect.IsDenied() {
+		zap.L().Info("denied setting roles for tenant",
+			zap.String("principal", p.String()),
+			zap.String("resource", resource.String()))
+		return apperr.NewUnauthorized("not authorized")
+	}
+
+	users, err := db.GetUsersForTenant(c.Request.Context(), app.DDB(), targetTenant.ID)
 	if err != nil {
 		return err
 	}
 	newRoles := make([]string, 0, len(req.Roles))
-	deletedRoles := make([]string, 0, len(ten.Roles))
+	deletedRoles := make([]string, 0, len(targetTenant.Roles))
 	for _, r := range req.Roles {
-		if slices.Contains(ten.Roles, r) {
+		if slices.Contains(targetTenant.Roles, r) {
 			continue
 		}
 		newRoles = append(newRoles, r)
 	}
-	for _, r := range ten.Roles {
+	for _, r := range targetTenant.Roles {
 		// Don't ever delete builtin roles
 		if slices.Contains(req.Roles, r) || multi.IsBuiltinRole(r) {
 			continue
@@ -91,36 +100,36 @@ func HandleSetRolesForTenant(app App, c *gin.Context, req TenantRolesRequest, te
 	for _, r := range newRoles {
 		_, err = app.CogIdp().CreateGroup(c.Request.Context(),
 			&cognitoidentityprovider.CreateGroupInput{
-				GroupName:  aws.String(ten.GroupName(r)),
-				UserPoolId: aws.String(ten.UserPoolID),
+				GroupName:  aws.String(targetTenant.GroupName(r)),
+				UserPoolId: aws.String(targetTenant.UserPoolID),
 			})
 		var groupExists *cogidptypes.GroupExistsException
 		if err != nil && !errors.As(err, &groupExists) {
 			zap.L().Error("error creating group for tenant",
 				zap.Error(err),
-				zap.String("tenant", ten.ID.String()),
+				zap.String("tenant", targetTenant.ID.String()),
 				zap.String("role", r))
 		}
 	}
 	for _, r := range deletedRoles {
 		_, err = app.CogIdp().DeleteGroup(c.Request.Context(),
 			&cognitoidentityprovider.DeleteGroupInput{
-				GroupName:  aws.String(ten.GroupName(r)),
-				UserPoolId: aws.String(ten.UserPoolID),
+				GroupName:  aws.String(targetTenant.GroupName(r)),
+				UserPoolId: aws.String(targetTenant.UserPoolID),
 			})
 		var groupNotFound *cogidptypes.ResourceNotFoundException
 		if err != nil && !errors.As(err, &groupNotFound) {
 			zap.L().Error("error deleting group for tenant",
 				zap.Error(err),
-				zap.String("tenant", ten.ID.String()),
+				zap.String("tenant", targetTenant.ID.String()),
 				zap.String("role", r))
 		}
 	}
 
-	ten.Roles = ensureBuiltinNames(req.Roles)
-	ten.SubTenantRoles = ensureBuiltinNames(req.SubTenantRoles)
+	targetTenant.Roles = ensureBuiltinNames(req.Roles)
+	targetTenant.SubTenantRoles = ensureBuiltinNames(req.SubTenantRoles)
 
-	return db.StoreTenant(c.Request.Context(), app.DDB(), ten)
+	return db.StoreTenant(c.Request.Context(), app.DDB(), targetTenant)
 }
 
 func ensureBuiltinNames(roles []string) []string {

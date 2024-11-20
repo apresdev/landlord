@@ -3,7 +3,8 @@ package rest
 import (
 	"net/http"
 
-	"github.com/apresdev/landlord/internal/authx"
+	"github.com/apresdev/landlord/internal/perms"
+
 	"go.uber.org/zap"
 
 	"github.com/apresdev/landlord/internal/multi"
@@ -16,7 +17,7 @@ import (
 )
 
 func handleGetRolesForTenant(app App, c *gin.Context) error {
-	rc, err := authx.RequesterFromContext(c)
+	p, err := perms.PrincipalFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -26,17 +27,16 @@ func handleGetRolesForTenant(app App, c *gin.Context) error {
 	}
 	th, err := multi.ParseTenantHandle(t)
 	if err != nil {
-		return apperr.NewBadRequest(err.Error())
+		return apperr.NewBadRequestE(err)
 	}
 	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
 	if err != nil {
-		return apperr.NewNotFound(err.Error())
+		return apperr.NewNotFoundE(err)
 	}
-	if !authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.Roles) {
-
+	if !perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, p.Roles) {
 		zap.L().Info("user not unauthorized for tenant",
-			zap.String("clientID", string(rc.Cid)),
-			zap.String("username", rc.Username),
+			zap.String("clientID", string(p.Cid)),
+			zap.String("username", p.Username),
 			zap.String("tenantID", ten.ID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}

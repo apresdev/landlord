@@ -3,11 +3,11 @@ package rest
 import (
 	"net/http"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/jwx"
 
 	"github.com/apresdev/landlord/internal/apperr"
-
-	"github.com/apresdev/landlord/internal/db"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -26,50 +26,57 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 	if req.RefreshToken == "" {
 		return apperr.NewBadRequest("refresh token is required")
 	}
-	rc, err := authx.RequesterFromContext(c)
+	p, err := perms.PrincipalFromContext(c)
 	if err != nil {
 		return err
 	}
-	rootTenant, err := db.GetRootTenant(
-		c.Request.Context(), app.DDB(), app.RootTenantID())
+
+	// The target user and tenant of this API are from the principal
+	targetUser, err := p.ResolveUser(c.Request.Context(), app)
 	if err != nil {
-		zap.L().Error("error fetching root tenant", zap.Error(err))
+		zap.L().Error("could not resolve principal user", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	if !authx.IsAuthorizedForTenant(app.RootTenantID(), rootTenant, rc.Roles) {
-		zap.L().Info("not authorized for root",
-			zap.String("clientID", string(rc.Cid)),
-			zap.Any("groups", rc.Groups))
+	targetTenant, err := p.ResolveTenant(c.Request.Context(), app)
+	if err != nil {
+		zap.L().Error("could not resolve principal tenant", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
 
-	username, err := jwx.GetClaimString(rc.AccessToken, authx.EmailClaim)
+	resource := perms.NewResource(
+		perms.ResourceKindImpersonation, targetUser.Username, targetTenant, targetUser)
+	effect, err := perms.Eval(c, app, p, perms.OperationDelete, resource)
 	if err != nil {
-		zap.L().Error("could not get username from token",
-			zap.String("clientID", string(rc.Cid)),
-			zap.Error(err))
+		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
+	if effect.IsDenied() {
+		zap.L().Info("denied clearing impersonation",
+			zap.String("principal", p.String()),
+			zap.String("resource", resource.String()))
+		return apperr.NewUnauthorized("not authorized")
+	}
+
 	err = authx.ClearImpersonate(
-		c.Request.Context(), app.CogIdp(), rootTenant.UserPoolID, username)
+		c.Request.Context(), app.CogIdp(), targetTenant.UserPoolID, targetUser.Username)
 	if err != nil {
 		zap.L().Error("could not clear impersonation",
-			zap.String("clientID", string(rc.Cid)),
+			zap.String("clientID", string(p.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
 	upc, err := authx.GetUserPoolClient(
-		c.Request.Context(), app.CogIdp(), rootTenant.UserPoolID)
+		c.Request.Context(), app.CogIdp(), targetTenant.UserPoolID)
 	if err != nil {
 		zap.L().Warn("Could not resolve user pool client",
-			zap.String("userPoolID", rootTenant.UserPoolID),
+			zap.String("userPoolID", targetTenant.UserPoolID),
 			zap.Error(err))
 		return err
 	}
-	sub, err := jwx.GetClaimString(rc.AccessToken, authx.SubClaim)
+	sub, err := jwx.GetClaimString(p.AccessToken, authx.SubClaim)
 	if err != nil {
 		zap.L().Error("could not get sub from token",
-			zap.String("clientID", string(rc.Cid)),
+			zap.String("clientID", string(p.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -92,7 +99,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		})
 	if err != nil {
 		zap.L().Error("could not initiate auth",
-			zap.String("clientID", string(rc.Cid)),
+			zap.String("clientID", string(p.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}

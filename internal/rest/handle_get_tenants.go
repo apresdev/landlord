@@ -3,13 +3,14 @@ package rest
 import (
 	"net/http"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/multi"
 
 	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/apresdev/landlord/internal/db"
 
-	"github.com/apresdev/landlord/internal/authx"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -25,22 +26,34 @@ func convertTenant(ten *multi.Tenant) Tenant {
 }
 
 func handleGetTenants(app App, c *gin.Context) error {
-	rc, err := authx.RequesterFromContext(c)
+	tens, err := HandleGetTenants(app, c)
 	if err != nil {
 		return err
 	}
 	var resp TenantsResponse
-	resp.Tenants = make([]Tenant, 0)
-	allTenants, err := db.GetAllTenants(c.Request.Context(), app.DDB())
-	if err != nil {
-		zap.L().Error("error fetching tenants", zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
-	}
-	for _, ten := range allTenants {
-		if authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.Roles) {
-			resp.Tenants = append(resp.Tenants, convertTenant(ten))
-		}
+	resp.Tenants = make([]Tenant, len(tens))
+	for i, ten := range tens {
+		resp.Tenants[i] = convertTenant(ten)
 	}
 	c.JSON(http.StatusOK, resp)
 	return nil
+}
+
+func HandleGetTenants(app App, c *gin.Context) ([]*multi.Tenant, error) {
+	p, err := perms.PrincipalFromContext(c)
+	if err != nil {
+		return nil, err
+	}
+	allTenants, err := db.GetAllTenants(c.Request.Context(), app.DDB())
+	if err != nil {
+		zap.L().Error("error fetching tenants", zap.Error(err))
+		return nil, apperr.NewUnauthorized("not authorized")
+	}
+	result := make([]*multi.Tenant, 0, len(allTenants))
+	for _, ten := range allTenants {
+		if perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, p.Roles) {
+			result = append(result, ten)
+		}
+	}
+	return result, nil
 }

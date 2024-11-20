@@ -7,6 +7,8 @@ import (
 	"slices"
 	"sort"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/db"
@@ -88,10 +90,7 @@ func handleAdminTenants(a App, c *gin.Context) error {
 		redirectToLogin(c)
 		return nil
 	}
-
-	// TODO: all calls to GetAllTenants and similar APIs need to check permissions.
-
-	tens, err := db.GetAllTenants(c.Request.Context(), a.DDB())
+	tens, err := rest.HandleGetTenants(a, c)
 	if err != nil {
 		return err
 	}
@@ -143,7 +142,7 @@ func handleAdminTenantSelect(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	rc, err := authx.RequesterFromContext(c)
+	p, err := perms.PrincipalFromContext(c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
@@ -151,7 +150,7 @@ func handleAdminTenantSelect(a App, c *gin.Context) error {
 	}
 	authorizedTenants := make([]*multi.Tenant, 0)
 	for _, ten := range tens {
-		if authx.IsAuthorizedForTenant(a.RootTenantID(), ten, rc.Roles) {
+		if perms.IsAuthorizedToReadTenant(a.RootTenantID(), ten, p.Roles) {
 			authorizedTenants = append(authorizedTenants, ten)
 		}
 	}

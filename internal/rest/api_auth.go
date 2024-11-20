@@ -112,14 +112,14 @@ func ginSetUserStatus(c *gin.Context) {
 	callImpl(c, handleSetUserStatus)
 }
 
-// UpdateUser - Update a user's settings.
-func ginUpdateUser(c *gin.Context) {
-	callImpl(c, handleUpdateUser)
-}
-
 // UpdateUserMFA - Update a user's MFA settings
 func ginUpdateUserMFA(c *gin.Context) {
 	callImpl(c, handleUpdateUserMFA)
+}
+
+// UpdateUserRole - Update a user's role.
+func ginUpdateUserRole(c *gin.Context) {
+	callImpl(c, handleUpdateUserRole)
 }
 
 // ValidateMFACode - Validate an MFA code.

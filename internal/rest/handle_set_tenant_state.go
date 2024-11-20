@@ -3,6 +3,10 @@ package rest
 import (
 	"net/http"
 
+	"github.com/apresdev/landlord/internal/db"
+	"github.com/apresdev/landlord/internal/perms"
+	"go.uber.org/zap"
+
 	"github.com/apresdev/landlord/internal/multi"
 
 	"github.com/apresdev/landlord/internal/apperr"
@@ -27,15 +31,39 @@ func handleSetTenantState(app App, c *gin.Context) error {
 }
 
 func HandleSetTenantState(app App, c *gin.Context, tenantID, state string) (*multi.Tenant, error) {
+	p, err := perms.PrincipalFromContext(c)
+	if err != nil {
+		return nil, err
+	}
+
 	th, err := multi.ParseTenantHandle(tenantID)
 	if err != nil {
 		return nil, apperr.NewBadRequest("invalid tenantID")
 	}
+	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
+	if err != nil {
+		return nil, err
+	}
+
+	resource := perms.NewResource(
+		perms.ResourceKindTenantDescription, perms.ResourceNameAny, targetTenant, nil)
+	effect, err := perms.Eval(c, app, p, perms.OperationWrite, resource)
+	if err != nil {
+		zap.L().Error("could not evaluate permissions", zap.Error(err))
+		return nil, apperr.NewUnauthorized("not authorized")
+	}
+	if effect.IsDenied() {
+		zap.L().Info("denied setting roles for tenant",
+			zap.String("principal", p.String()),
+			zap.String("resource", resource.String()))
+		return nil, apperr.NewUnauthorized("not authorized")
+	}
+
 	st, err := multi.ParseTenantState(state)
 	if err != nil {
 		return nil, apperr.NewBadRequest("invalid tenantState")
 	}
 	ddb := app.DDB()
 	ctx := c.Request.Context()
-	return authx.SetTenantState(ctx, ddb, th, st)
+	return authx.SetTenantState(ctx, ddb, targetTenant, st)
 }

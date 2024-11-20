@@ -3,18 +3,19 @@ package rest
 import (
 	"net/http"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/multi"
 
 	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/apresdev/landlord/internal/db"
 
-	"github.com/apresdev/landlord/internal/authx"
 	"github.com/gin-gonic/gin"
 )
 
 func handleGetTenantByID(app App, c *gin.Context) error {
-	rc, err := authx.RequesterFromContext(c)
+	p, err := perms.PrincipalFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -30,7 +31,7 @@ func handleGetTenantByID(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewNotFound(err.Error())
 	}
-	if !authx.IsAuthorizedForTenant(app.RootTenantID(), ten, rc.Roles) {
+	if !perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, p.Roles) {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	var resp TenantResponse

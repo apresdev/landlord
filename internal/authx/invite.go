@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
-
 	"go.uber.org/zap"
+
+	"github.com/google/uuid"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -86,34 +86,20 @@ func SendInvite(
 		ctx, ddb, multi.NewUser(ten.ID, cognitoUserID, e.Address(), role, mfaPolicy))
 }
 
-func CancelInvitation(
+func DeleteCognitoUser(
 	ctx context.Context,
-	ddb db.AWSDynamoDB,
 	cogIdp AWSCognitoIdentityProvider,
-	tenantID uuid.UUID,
-	userID uuid.UUID) error {
+	ten *multi.Tenant,
+	user *multi.User) {
 
-	ten, err := db.GetTenantByID(ctx, ddb, tenantID)
-	if err != nil {
-		return err
-	}
-	u, err := db.GetUserInTenantByID(ctx, ddb, tenantID, userID)
-	if err != nil {
-		return err
-	}
-	if u.Status != multi.UserStatusInvited {
-		return apperr.NewBadRequest(
-			fmt.Sprintf("cannot cancel invite, user '%s' is not invited", userID.String()))
-	}
 	args := cognitoidentityprovider.AdminDeleteUserInput{
 		UserPoolId: aws.String(ten.UserPoolID),
-		Username:   aws.String(userID.String()),
+		Username:   aws.String(user.ID.String()),
 	}
 	if _, err := cogIdp.AdminDeleteUser(ctx, &args); err != nil {
 		zap.L().Error("could not delete user from Cognito",
-			zap.String("tenantID", tenantID.String()),
-			zap.String("userID", userID.String()),
+			zap.String("tenantID", ten.ID.String()),
+			zap.String("userID", user.ID.String()),
 			zap.Error(err))
 	}
-	return db.DeleteUser(ctx, ddb, u)
 }

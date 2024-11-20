@@ -1,18 +1,17 @@
 package rest
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
-	"github.com/apresdev/landlord/internal/apperr"
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/jwx"
 
 	"github.com/apresdev/landlord/internal/db"
 	"github.com/apresdev/landlord/internal/multi"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-
-	"github.com/apresdev/landlord/internal/authx"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -20,7 +19,7 @@ import (
 
 func isAuthorized(app App) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		cid := authx.ClientID(c)
+		cid := perms.ClientID(c)
 		bearer := c.GetHeader("Authorization")
 		if bearer == "" {
 			zap.L().Info("unauthorized: no header found",
@@ -37,7 +36,7 @@ func isAuthorized(app App) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		tk := getStr(c, authx.TenantIDKey)
+		tk := getStr(c, perms.TenantIDKey)
 		var ten *multi.Tenant
 		if tk != "" {
 			tenID, err := uuid.Parse(tk)
@@ -69,18 +68,7 @@ func isAuthorized(app App) gin.HandlerFunc {
 			}
 			ten = rootTenant
 		}
-		up, err := authx.GetUserPoolByNameOrID(
-			c.Request.Context(), app.CogIdp(), ten.UserPoolID)
-		if err != nil {
-			zap.L().Info("unauthorized: could not resolve user pool",
-				zap.String("clientID", string(cid)),
-				zap.String("tenantID", ten.ID.String()),
-				zap.Error(err))
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			c.Abort()
-			return
-		}
-		validationURL := jwx.ValidationURL(app.Cfg().Region, aws.ToString(up.Id))
+		validationURL := jwx.ValidationURL(app.Cfg().Region, ten.UserPoolID)
 		tok, err := app.Validator().ValidateToken(
 			c.Request.Context(), cid, validationURL, token)
 		if err != nil {
@@ -92,7 +80,11 @@ func isAuthorized(app App) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.Set(authx.TokenKey, tok)
+		newCtx := context.WithValue(c.Request.Context(), perms.TokenKey, tok)
+		newCtx = context.WithValue(newCtx, perms.ClientIDKey, cid)
+		c.Request = c.Request.WithContext(newCtx)
+		c.Set(perms.TokenKey, tok)
+		c.Set(perms.ClientIDKey, cid)
 		c.Next()
 	}
 }
@@ -109,20 +101,4 @@ func getStr(c *gin.Context, key string) string {
 		zap.String("key", key),
 		zap.Any("value", v))
 	return ""
-}
-
-func isRequestAuthorizedForRoot(app App, c *gin.Context, rc *authx.Requester) error {
-	rootTenant, err := db.GetRootTenant(
-		c.Request.Context(), app.DDB(), app.RootTenantID())
-	if err != nil {
-		zap.L().Error("error fetching root tenant", zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
-	}
-	if !authx.IsAuthorizedForTenant(app.RootTenantID(), rootTenant, rc.Roles) {
-		zap.L().Info("not authorized for root",
-			zap.String("clientID", string(rc.Cid)),
-			zap.Any("groups", rc.Groups))
-		return apperr.NewUnauthorized("not authorized")
-	}
-	return nil
 }
