@@ -200,14 +200,10 @@ func (s *HandleImpersonateRoleTestSuite) TestSuccess() {
 	withSetupQueryTenant(app)
 
 	gt1 := withDefaultImpersonateRoleRequest(newGinTest(s.T()))
-	claims := make(jwt.MapClaims)
-	claims[authx.CognitoGroupsClaim] = []string{
-		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
-	claims[authx.EmailClaim] = "foo@example.com"
-	claims[authx.SubClaim] = "sub-123"
-	claims[authx.CustomTenantClaim] = rt.ID.String()
-	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(perms.TokenKey, tok)
+	u1 := newTestUser(rt)
+	u1.Role = "admin"
+	withSetupQueryUser2(app, u1)
+	withSetupJWT(gt1.c, rt, u1)
 
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(
 		gt1.c.Request.Context(), mock.Anything, mock.Anything).Return(
