@@ -18,73 +18,28 @@ import (
 	"github.com/google/uuid"
 )
 
-type Role struct {
-	Name   string
-	Tenant uuid.UUID
-}
-
-func (r Role) String() string {
-	return fmt.Sprintf("tenant-%s-%s", r.Tenant, r.Name)
-}
-
-type Roles struct {
-	Roles []Role
-}
-
-func (r Roles) String() string {
-	result := make([]string, len(r.Roles))
-	for i, role := range r.Roles {
-		result[i] = role.String()
-	}
-	return strings.Join(result, ", ")
-}
-
-func ParseRolesFromGroups(groups []string) (Roles, error) {
-	result := Roles{Roles: make([]Role, 0)}
+func ParseRolesFromGroups(groups []string) (*multi.Roles, error) {
+	result := multi.NewRoles()
 	for _, group := range groups {
 		role, err := ParseRoleFromGroup(group)
 		if err != nil {
-			return Roles{}, err
+			return nil, err
 		}
 		result.Roles = append(result.Roles, role)
 	}
 	return result, nil
 }
 
-func ParseRoleFromGroup(group string) (Role, error) {
+func ParseRoleFromGroup(group string) (*multi.Role, error) {
 	parts := strings.Split(group, "-")
 	if len(parts) != 7 {
-		return Role{}, fmt.Errorf("invalid group: %s", group)
+		return nil, fmt.Errorf("invalid group: %s", group)
 	}
 	tenantID, err := uuid.Parse(strings.Join(parts[1:6], "-"))
 	if err != nil {
-		return Role{}, fmt.Errorf("invalid tenant ID: %s", group)
+		return nil, fmt.Errorf("invalid tenant ID: %s", group)
 	}
-	return Role{Name: parts[6], Tenant: tenantID}, nil
-}
-
-// IsRoleAuthorizedForTenant checks if the given role is authorized for the given
-// tenant.
-func IsRoleAuthorizedForTenant(
-	rootTenantID uuid.UUID,
-	ten *multi.Tenant,
-	role Role) bool {
-	return role.Tenant == ten.ID || role.Tenant == rootTenantID
-}
-
-// IsAuthorizedForTenant checks if the given set of roles are authorized
-// for the given tenant.
-func IsAuthorizedForTenant(
-	rootTenantID uuid.UUID,
-	ten *multi.Tenant,
-	roles Roles) bool {
-
-	for _, role := range roles.Roles {
-		if IsRoleAuthorizedForTenant(rootTenantID, ten, role) {
-			return true
-		}
-	}
-	return false
+	return multi.NewRole(parts[6], tenantID), nil
 }
 
 func SetCognitoGroup(

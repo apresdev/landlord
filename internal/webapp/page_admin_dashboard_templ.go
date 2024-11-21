@@ -56,7 +56,7 @@ func dashboardPage(appName string, currentUser *CurrentUser, stats DashboardStat
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(stats.SecurityAlertMessage)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_dashboard.templ`, Line: 22, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_dashboard.templ`, Line: 19, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {

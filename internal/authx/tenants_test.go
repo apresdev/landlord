@@ -3,6 +3,8 @@ package authx_test
 import (
 	"testing"
 
+	"github.com/apresdev/landlord/internal/db"
+
 	"github.com/apresdev/landlord/internal/appcore"
 	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/apresdev/landlord/internal/apptest"
@@ -31,16 +33,16 @@ func (s *TenantsTestSuite) SetupTest() {
 func (s *TenantsTestSuite) TestSetTenantStateOnRoot() {
 	a := appcore.Must()
 
-	th, err := multi.ParseTenantHandle("root")
+	ten, err := db.GetRootTenant(a.Ctx(), a.DDB(), a.RootTenantID())
 	s.Assert().NoError(err)
 
-	v1, err := authx.SetTenantState(a.Ctx(), a.DDB(), th, multi.TenantStateActive)
+	v1, err := authx.SetTenantState(a.Ctx(), a.DDB(), ten, multi.TenantStateActive)
 	s.Assert().Error(err)
 	s.Assert().Nil(v1)
 
-	v2, err := authx.SetTenantState(a.Ctx(), a.DDB(), th, multi.TenantStateInactive)
+	v2, err := authx.SetTenantState(a.Ctx(), a.DDB(), ten, multi.TenantStateInactive)
 	s.Assert().Error(err)
-	s.Assert().Empty(v2)
+	s.Assert().Nil(v2)
 }
 
 func (s *TenantsTestSuite) TestSetTenantStateOnRegularTenant() {
@@ -53,13 +55,16 @@ func (s *TenantsTestSuite) TestSetTenantStateOnRegularTenant() {
 
 	th, err := multi.ParseTenantHandle("regular")
 	s.Assert().NoError(err)
+	ten, err = db.ResolveTenant(a.Ctx(), a.DDB(), th)
+	s.Assert().NoError(err)
+	s.Assert().NotNil(ten)
 
-	v1, err := authx.SetTenantState(a.Ctx(), a.DDB(), th, multi.TenantStateActive)
+	v1, err := authx.SetTenantState(a.Ctx(), a.DDB(), ten, multi.TenantStateActive)
 	s.Assert().NoError(err)
 	s.Assert().NotNil(v1)
 	s.Assert().Equal(multi.TenantStateActive, v1.State)
 
-	v2, err := authx.SetTenantState(a.Ctx(), a.DDB(), th, multi.TenantStateInactive)
+	v2, err := authx.SetTenantState(a.Ctx(), a.DDB(), ten, multi.TenantStateInactive)
 	s.Assert().NoError(err)
 	s.Assert().NotNil(v2)
 	s.Assert().Equal(multi.TenantStateInactive, v2.State)

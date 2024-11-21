@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/apresdev/landlord/internal/multi"
@@ -46,7 +48,7 @@ func newGetTenantByIDTestSetup(t *testing.T, ten *multi.Tenant, user *multi.User
 			claims[authx.EmailClaim] = user.Username
 		}
 		tok := &jwt.Token{Claims: claims}
-		gt.c.Set(authx.TokenKey, tok)
+		gt.c.Set(perms.TokenKey, tok)
 	}
 	return gt
 }

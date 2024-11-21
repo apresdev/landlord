@@ -3,6 +3,6 @@
 
 package rest
 
-type UpdateUserRequest struct {
+type UpdateUserRoleRequest struct {
 	Role string `json:"role"`
 }

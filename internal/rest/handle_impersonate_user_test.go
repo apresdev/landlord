@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -83,7 +85,7 @@ func (s *HandleImpersonateUserTestSuite) TestBadRequests() {
 	s.Error(err)
 
 	gt6 := withDefaultImpersonateUserRequest(newGinTest(s.T()))
-	gt6.c.Set(authx.TokenKey, "not-the-right-type")
+	gt6.c.Set(perms.TokenKey, "not-the-right-type")
 	err = handleImpersonateUser(app, gt6.c)
 	s.Error(err)
 }
@@ -91,7 +93,7 @@ func (s *HandleImpersonateUserTestSuite) TestBadRequests() {
 func (s *HandleImpersonateUserTestSuite) TestBadTokens() {
 	app := NewMockApp()
 	gt1 := withDefaultImpersonateUserRequest(newGinTest(s.T()))
-	gt1.c.Set(authx.TokenKey, &jwt.Token{})
+	gt1.c.Set(perms.TokenKey, &jwt.Token{})
 	err := handleImpersonateUser(app, gt1.c)
 	s.Error(err)
 
@@ -99,7 +101,7 @@ func (s *HandleImpersonateUserTestSuite) TestBadTokens() {
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{"group1", "group2"}
 	tok := &jwt.Token{Claims: claims}
-	gt2.c.Set(authx.TokenKey, tok)
+	gt2.c.Set(perms.TokenKey, tok)
 	err = handleImpersonateUser(app, gt2.c)
 	s.Error(err)
 }
@@ -112,7 +114,7 @@ func (s *HandleImpersonateUserTestSuite) TestNoRootTenant() {
 	claims[authx.CognitoGroupsClaim] = []string{
 		fmt.Sprintf("tenant-%s-guest", tenantUUID)}
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(authx.TokenKey, tok)
+	gt1.c.Set(perms.TokenKey, tok)
 	app.ddb.EXPECT().GetItem(mock.Anything, mock.Anything).Return(
 		nil, fmt.Errorf("error"))
 	err := handleImpersonateUser(app, gt1.c)
@@ -127,7 +129,7 @@ func (s *HandleImpersonateUserTestSuite) TestNotAuthorizedForRoot() {
 	claims[authx.CognitoGroupsClaim] = []string{
 		fmt.Sprintf("tenant-%s-guest", tenantUUID)}
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(authx.TokenKey, tok)
+	gt1.c.Set(perms.TokenKey, tok)
 	_ = withSetupRootTenant(app)
 	err := handleImpersonateUser(app, gt1.c)
 	s.Error(err)
@@ -142,7 +144,7 @@ func (s *HandleImpersonateUserTestSuite) TestNoEmailClaim() {
 	claims[authx.CognitoGroupsClaim] = []string{
 		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(authx.TokenKey, tok)
+	gt1.c.Set(perms.TokenKey, tok)
 	err := handleImpersonateUser(app, gt1.c)
 	s.Error(err)
 }
@@ -157,7 +159,7 @@ func (s *HandleImpersonateUserTestSuite) TestFailedToUpdateUserAttributes() {
 		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	claims[authx.EmailClaim] = "foo@example.com"
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(authx.TokenKey, tok)
+	gt1.c.Set(perms.TokenKey, tok)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, errors.New("could not update user attributes"))
 	err := handleImpersonateUser(app, gt1.c)
@@ -174,7 +176,7 @@ func (s *HandleImpersonateUserTestSuite) TestNoSubClaim() {
 		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
 	claims[authx.EmailClaim] = "foo@example.com"
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(authx.TokenKey, tok)
+	gt1.c.Set(perms.TokenKey, tok)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, nil)
 	app.cogIdp.EXPECT().ListUserPoolClients(gt1.c.Request.Context(), mock.Anything).Return(
@@ -206,7 +208,7 @@ func (s *HandleImpersonateUserTestSuite) TestSuccess() {
 	claims[authx.SubClaim] = "sub-123"
 	claims[authx.CustomTenantClaim] = rt.ID.String()
 	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(authx.TokenKey, tok)
+	gt1.c.Set(perms.TokenKey, tok)
 
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(
 		gt1.c.Request.Context(), mock.Anything, mock.Anything).Return(

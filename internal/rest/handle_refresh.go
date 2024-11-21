@@ -3,6 +3,8 @@ package rest
 import (
 	"net/http"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/apresdev/landlord/internal/db"
@@ -29,7 +31,7 @@ func handleRefresh(app App, c *gin.Context) error {
 }
 
 func HandleRefresh(app App, c *gin.Context, req RefreshRequest) (*LoginResponse, error) {
-	cid := authx.ClientID(c)
+	cid := perms.ClientID(c)
 	if req.RefreshToken == "" {
 		zap.L().Info("No refresh token in request", zap.String("cid", string(cid)))
 		return nil, apperr.NewBadRequest("missing refreshToken in request")

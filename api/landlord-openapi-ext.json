@@ -1023,10 +1023,10 @@
         }
       }
     },
-    "/ll-auth/api/tenants/{tenantID}/users/{userID}": {
+    "/ll-auth/api/tenants/{tenantID}/users/{userID}/role": {
       "put": {
-        "operationId": "UpdateUser",
-        "summary": "Update a user's settings.",
+        "operationId": "UpdateUserRole",
+        "summary": "Update a user's role.",
         "tags": [
           "Auth"
         ],
@@ -1051,7 +1051,7 @@
           }
         ],
         "requestBody": {
-          "$ref": "#/components/requestBodies/UpdateUserRequest"
+          "$ref": "#/components/requestBodies/UpdateUserRoleRequest"
         },
         "responses": {
           "204": {
@@ -1080,7 +1080,7 @@
           "connectionType": "VPC_LINK",
           "httpMethod": "any",
           "type": "http_proxy",
-          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{userID}",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{userID}/role",
           "payloadFormatVersion": "1.0",
           "requestParameters": {
             "integration.request.path.tenantID": "method.request.path.tenantID",
@@ -2107,12 +2107,12 @@
           }
         }
       },
-      "UpdateUserRequest": {
+      "UpdateUserRoleRequest": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/UpdateUserRequest"
+              "$ref": "#/components/schemas/UpdateUserRoleRequest"
             }
           }
         }
@@ -2994,7 +2994,7 @@
           }
         }
       },
-      "UpdateUserRequest": {
+      "UpdateUserRoleRequest": {
         "type": "object",
         "required": [
           "role"

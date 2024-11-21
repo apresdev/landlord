@@ -158,6 +158,7 @@ resource "aws_cognito_user_pool_client" "default" {
   allowed_oauth_scopes         = ["email", "openid", "aws.cognito.signin.user.admin"]
   # This enables the Cognito Hosted UI
   supported_identity_providers = ["COGNITO"]
+  allowed_oauth_flows_user_pool_client = true
 }
 
 resource "aws_cognito_user_pool_domain" "default" {

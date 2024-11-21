@@ -3,6 +3,8 @@ package rest
 import (
 	"net/http"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/gin-gonic/gin"
 )
@@ -18,12 +20,12 @@ func handleAssociateOTP(app App, c *gin.Context) error {
 
 func HandleAssociateOTP(app App, c *gin.Context) (*AssociateOtpResponse, error) {
 	ctx := c.Request.Context()
-	rc, err := authx.RequesterFromContext(c)
+	p, err := perms.PrincipalFromContext(c)
 	if err != nil {
 		return nil, err
 	}
 	result, err := authx.AssociateSoftwareToken(
-		ctx, app.CogIdp(), app.Settings().AppName(), rc.AccessToken.Raw, rc.Username)
+		ctx, app.CogIdp(), app.Settings().AppName(), p.AccessToken.Raw, p.Username)
 	if err != nil {
 		return nil, err
 	}

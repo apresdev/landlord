@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/multi"
 	"github.com/golang-jwt/jwt/v5"
 
@@ -201,7 +203,7 @@ func unauthorizedResponse(app App, c *gin.Context) {
 
 func setupAuthContext(app App) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		cid := authx.ClientID(c)
+		cid := perms.ClientID(c)
 		rawAccessToken, err := c.Cookie(LandlordAccessTokenCookie)
 		if rawAccessToken == "" || err != nil {
 			zap.L().Info("unauthorized: no access token cookie",
@@ -238,8 +240,8 @@ func setupAuthContext(app App) gin.HandlerFunc {
 			unauthorizedResponse(app, c)
 			return
 		}
-		c.Set(authx.TokenKey, tok)
-		c.Set(authx.TenantIDKey, ten.ID.String())
+		c.Set(perms.TokenKey, tok)
+		c.Set(perms.TenantIDKey, ten.ID.String())
 		c.Next()
 	}
 }
@@ -253,7 +255,7 @@ type CurrentUser struct {
 
 func resolveCurrentUser(a App, c *gin.Context) (*CurrentUser, error) {
 	cid := clientID(c)
-	t, ok := c.Get(authx.TokenKey)
+	t, ok := c.Get(perms.TokenKey)
 	if !ok {
 		zap.L().Error("no token found",
 			zap.String("clientID", string(cid)))

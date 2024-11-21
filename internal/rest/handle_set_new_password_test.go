@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/apresdev/landlord/internal/authx"
+	"github.com/apresdev/landlord/internal/perms"
 
 	"github.com/apresdev/landlord/internal/db"
 	"github.com/apresdev/landlord/internal/multi"
@@ -49,7 +49,7 @@ func withDefaultSetNewPasswordRequest(gt *ginTest) *ginTest {
 }
 
 func withDefaultSetNewPasswordRequest2(gt *ginTest, req *SetNewPasswordRequest) *ginTest {
-	gt.c.Set(authx.TokenKey, &jwt.Token{})
+	gt.c.Set(perms.TokenKey, &jwt.Token{})
 	return gt.withRequest(
 		httptest.NewRequest(
 			"POST",

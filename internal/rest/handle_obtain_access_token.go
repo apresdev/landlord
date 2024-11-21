@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/apresdev/landlord/internal/perms"
+
 	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/apresdev/landlord/internal/db"
@@ -47,7 +49,7 @@ func handleObtainAccessToken(app App, c *gin.Context) error {
 }
 
 func HandleObtainAccessToken(app App, c *gin.Context, req obtainAccessTokenForm) (*ObtainTokenResponse, error) {
-	cid := authx.ClientID(c)
+	cid := perms.ClientID(c)
 	if req.GrantType == "" {
 		zap.L().Info("No grant type in request", zap.String("cid", string(cid)))
 		return nil, apperr.NewBadRequest("missing grant type in request")

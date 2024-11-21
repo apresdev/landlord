@@ -356,10 +356,10 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-  /ll-auth/api/tenants/{tenantID}/users/{userID}:
+  /ll-auth/api/tenants/{tenantID}/users/{userID}/role:
     put:
-      operationId: UpdateUser
-      summary: Update a user's settings.
+      operationId: UpdateUserRole
+      summary: Update a user's role.
       tags:
         - Auth
       parameters:
@@ -376,7 +376,7 @@ paths:
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/UpdateUserRequest"
+        $ref: "#/components/requestBodies/UpdateUserRoleRequest"
       responses:
         "204":
           description: No content
@@ -746,12 +746,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TenantRolesRequest'
-    UpdateUserRequest:
+    UpdateUserRoleRequest:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/UpdateUserRequest'
+            $ref: '#/components/schemas/UpdateUserRoleRequest'
     UpdateUserStatusRequest:
       required: true
       content:
@@ -1319,7 +1319,7 @@ components:
           type: string
         description:
           type: string
-    UpdateUserRequest:
+    UpdateUserRoleRequest:
       type: object
       required:
         - role
