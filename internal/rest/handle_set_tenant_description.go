@@ -33,7 +33,7 @@ func handleSetTenantDescription(app App, c *gin.Context) error {
 func HandleSetTenantDescription(
 	app App, c *gin.Context, tenantID string, req TenantSetDescriptionRequest) (*multi.Tenant, error) {
 
-	p, err := perms.PrincipalFromContext(c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return nil, err
 	}
@@ -53,14 +53,14 @@ func HandleSetTenantDescription(
 
 	resource := perms.NewResource(
 		perms.ResourceKindTenantDescription, perms.ResourceNameAny, targetTenant, nil)
-	effect, err := perms.Eval(c, app, p, perms.OperationWrite, resource)
+	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
-		zap.L().Info("denied setting roles for tenant",
-			zap.String("principal", p.String()),
+		zap.L().Info("denied setting description for tenant",
+			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}

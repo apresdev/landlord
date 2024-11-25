@@ -34,7 +34,7 @@ func handleInviteToTenant(app App, c *gin.Context) error {
 }
 
 func HandleInviteToTenant(app App, c *gin.Context, tenantID uuid.UUID, req InviteRequest) error {
-	p, err := perms.PrincipalFromContext(c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -45,14 +45,14 @@ func HandleInviteToTenant(app App, c *gin.Context, tenantID uuid.UUID, req Invit
 
 	resource := perms.NewResource(
 		perms.ResourceKindInvitation, req.Role, targetTenant, nil)
-	effect, err := perms.Eval(c, app, p, perms.OperationWrite, resource)
+	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied sending invitation",
-			zap.String("principal", p.String()),
+			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}

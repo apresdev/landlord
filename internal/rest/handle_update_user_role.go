@@ -14,7 +14,7 @@ import (
 )
 
 func handleUpdateUserRole(app App, c *gin.Context) error {
-	p, err := perms.PrincipalFromContext(c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return apperr.NewUnauthorized("no token")
 	}
@@ -48,14 +48,14 @@ func handleUpdateUserRole(app App, c *gin.Context) error {
 
 	resource := perms.NewResource(
 		perms.ResourceKindUserRole, req.Role, targetTenant, targetUser)
-	effect, err := perms.Eval(c, app, p, perms.OperationWrite, resource)
+	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied setting role for user",
-			zap.String("principal", p.String()),
+			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}

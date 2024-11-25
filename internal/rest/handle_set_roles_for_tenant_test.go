@@ -96,15 +96,12 @@ func (s *HandleSetRolesForTenantTestSuite) TestBadRoleNames() {
 	s.Equal("role name must be all lowercase and contain only letters, numbers, and hyphens", err.Error())
 }
 
-func foo(v bool, a, b int) bool {
-	return v && a == b
-}
-
 func (s *HandleSetRolesForTenantTestSuite) TestSuccessAdd() {
 	app := NewMockApp()
 	t1 := withSetupGetTenantByID(app)
 	u1 := newTestUser(t1)
 	u1.Role = "admin"
+	withSetupQueryUser2(app, u1)
 	gt := testSetRolesForTenantRequest(s.T(), t1, u1, MustJSONMarshal(
 		TenantRolesRequest{Roles: []string{"admin", "role1"}}))
 	withSetupQueryUsers(app, t1, []*multi.User{u1})
@@ -131,6 +128,7 @@ func (s *HandleSetRolesForTenantTestSuite) TestSuccessRemove() {
 	withSetupGetTenantByID2(app, t1)
 	u1 := newTestUser(t1)
 	u1.Role = "admin"
+	withSetupQueryUser2(app, u1)
 	gt := testSetRolesForTenantRequest(s.T(), t1, u1, MustJSONMarshal(
 		TenantRolesRequest{Roles: []string{"admin", "guest"}}))
 	withSetupQueryUsers(app, t1, []*multi.User{u1})
@@ -156,6 +154,7 @@ func (s *HandleSetRolesForTenantTestSuite) TestSuccessAddSubRoles() {
 	t1 := withSetupGetTenantByID(app)
 	u1 := newTestUser(t1)
 	u1.Role = "admin"
+	withSetupQueryUser2(app, u1)
 	gt := testSetRolesForTenantRequest(s.T(), t1, u1, MustJSONMarshal(
 		TenantRolesRequest{Roles: []string{"admin", "guest"},
 			SubTenantRoles: []string{"admin", "guest", "role2", "role1"}}))
@@ -182,6 +181,7 @@ func (s *HandleSetRolesForTenantTestSuite) TestSuccessRemoveSubRole() {
 	t1.SubTenantRoles = []string{"admin", "guest", "role1", "role2"}
 	u1 := newTestUser(t1)
 	u1.Role = "admin"
+	withSetupQueryUser2(app, u1)
 	gt := testSetRolesForTenantRequest(s.T(), t1, u1, MustJSONMarshal(
 		TenantRolesRequest{Roles: []string{"admin", "guest"},
 			SubTenantRoles: []string{"admin", "guest", "role1"}}))
@@ -207,6 +207,7 @@ func (s *HandleSetRolesForTenantTestSuite) TestSuccessAddDuplicate() {
 	t1 := withSetupGetTenantByID(app)
 	u1 := newTestUser(t1)
 	u1.Role = "admin"
+	withSetupQueryUser2(app, u1)
 	gt := testSetRolesForTenantRequest(s.T(), t1, u1, MustJSONMarshal(
 		TenantRolesRequest{
 			Roles:          []string{"admin", "role1", "role1", "role2", "role1"},

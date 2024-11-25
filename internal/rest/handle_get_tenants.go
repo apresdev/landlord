@@ -40,7 +40,7 @@ func handleGetTenants(app App, c *gin.Context) error {
 }
 
 func HandleGetTenants(app App, c *gin.Context) ([]*multi.Tenant, error) {
-	p, err := perms.PrincipalFromContext(c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func HandleGetTenants(app App, c *gin.Context) ([]*multi.Tenant, error) {
 	}
 	result := make([]*multi.Tenant, 0, len(allTenants))
 	for _, ten := range allTenants {
-		if perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, p.Roles) {
+		if perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, sub.Roles) {
 			result = append(result, ten)
 		}
 	}

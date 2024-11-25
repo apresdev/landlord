@@ -26,33 +26,33 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 	if req.RefreshToken == "" {
 		return apperr.NewBadRequest("refresh token is required")
 	}
-	p, err := perms.PrincipalFromContext(c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
 	}
 
-	// The target user and tenant of this API are from the principal
-	targetUser, err := p.ResolveUser(c.Request.Context(), app)
+	// The target user and tenant of this API are from the subject
+	targetUser, err := sub.ResolveUser(c.Request.Context(), app)
 	if err != nil {
-		zap.L().Error("could not resolve principal user", zap.Error(err))
+		zap.L().Error("could not resolve subject user", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	targetTenant, err := p.ResolveTenant(c.Request.Context(), app)
+	targetTenant, err := sub.ResolveTenant(c.Request.Context(), app)
 	if err != nil {
-		zap.L().Error("could not resolve principal tenant", zap.Error(err))
+		zap.L().Error("could not resolve subject tenant", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
 
 	resource := perms.NewResource(
 		perms.ResourceKindImpersonation, targetUser.Username, targetTenant, targetUser)
-	effect, err := perms.Eval(c, app, p, perms.OperationDelete, resource)
+	effect, err := perms.Eval(c, app, sub, perms.ActionDelete, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied clearing impersonation",
-			zap.String("principal", p.String()),
+			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -61,7 +61,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		c.Request.Context(), app.CogIdp(), targetTenant.UserPoolID, targetUser.Username)
 	if err != nil {
 		zap.L().Error("could not clear impersonation",
-			zap.String("clientID", string(p.Cid)),
+			zap.String("clientID", string(sub.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -73,10 +73,10 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 			zap.Error(err))
 		return err
 	}
-	sub, err := jwx.GetClaimString(p.AccessToken, authx.SubClaim)
+	subClaim, err := jwx.GetClaimString(sub.AccessToken, authx.SubClaim)
 	if err != nil {
-		zap.L().Error("could not get sub from token",
-			zap.String("clientID", string(p.Cid)),
+		zap.L().Error("could not get sub claim from token",
+			zap.String("clientID", string(sub.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
@@ -84,7 +84,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 	params["REFRESH_TOKEN"] = req.RefreshToken
 	if upc.ClientSecret != nil {
 		secretHash, err := authx.CreateSecretHash(
-			sub, aws.ToString(upc.ClientId), aws.ToString(upc.ClientSecret))
+			subClaim, aws.ToString(upc.ClientId), aws.ToString(upc.ClientSecret))
 		if err != nil {
 			return err
 		}
@@ -99,7 +99,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		})
 	if err != nil {
 		zap.L().Error("could not initiate auth",
-			zap.String("clientID", string(p.Cid)),
+			zap.String("clientID", string(sub.Cid)),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}

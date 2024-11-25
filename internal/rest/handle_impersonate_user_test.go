@@ -197,18 +197,15 @@ func (s *HandleImpersonateUserTestSuite) TestSuccess() {
 	app := NewMockApp()
 	gt1 := withDefaultImpersonateUserRequest(newGinTest(s.T()))
 
-	rt := withSetupRootTenant(app)
-	t := withSetupQueryTenant(app)
-	withSetupQueryUser(app, t)
+	t1 := withSetupQueryTenant(app)
+	withSetupQueryUser(app, t1)
 
-	claims := make(jwt.MapClaims)
-	claims[authx.CognitoGroupsClaim] = []string{
-		fmt.Sprintf("tenant-%s-guest", rt.ID.String())}
-	claims[authx.EmailClaim] = "foo@example.com"
-	claims[authx.SubClaim] = "sub-123"
-	claims[authx.CustomTenantClaim] = rt.ID.String()
-	tok := &jwt.Token{Claims: claims}
-	gt1.c.Set(perms.TokenKey, tok)
+	rt := withSetupRootTenant(app)
+	p1 := newTestUser(rt)
+	p1.Username = "admin-root@example.com"
+	p1.Role = "admin"
+	withSetupQueryUser2(app, p1)
+	withSetupJWT(gt1.c, rt, p1)
 
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(
 		gt1.c.Request.Context(), mock.Anything, mock.Anything).Return(
