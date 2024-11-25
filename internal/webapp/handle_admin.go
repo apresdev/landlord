@@ -142,7 +142,7 @@ func handleAdminTenantSelect(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	p, err := perms.PrincipalFromContext(c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
@@ -150,7 +150,7 @@ func handleAdminTenantSelect(a App, c *gin.Context) error {
 	}
 	authorizedTenants := make([]*multi.Tenant, 0)
 	for _, ten := range tens {
-		if perms.IsAuthorizedToReadTenant(a.RootTenantID(), ten, p.Roles) {
+		if perms.IsAuthorizedToReadTenant(a.RootTenantID(), ten, sub.Roles) {
 			authorizedTenants = append(authorizedTenants, ten)
 		}
 	}

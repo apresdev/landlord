@@ -59,7 +59,7 @@ func HandleSetUserStatus(
 		return nil, apperr.NewBadRequestE(err)
 	}
 
-	p, err := perms.PrincipalFromContext(c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return nil, err
 	}
@@ -81,14 +81,14 @@ func HandleSetUserStatus(
 
 	resource := perms.NewResource(
 		perms.ResourceKindUserStatus, targetUser.Username, targetTenant, targetUser)
-	effect, err := perms.Eval(c, app, p, perms.OperationWrite, resource)
+	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied setting user status",
-			zap.String("principal", p.String()),
+			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}

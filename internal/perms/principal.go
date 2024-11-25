@@ -24,7 +24,7 @@ const (
 	ClientIDKey = "cid"
 )
 
-type Principal struct {
+type Subject struct {
 	Cid         jwx.OpaqueClientID
 	AccessToken *jwt.Token
 	Username    string
@@ -35,11 +35,11 @@ type Principal struct {
 	tenant      *multi.Tenant
 }
 
-func (p *Principal) String() string {
+func (p *Subject) String() string {
 	return fmt.Sprintf("%s@%s", p.Username, p.Th)
 }
 
-func (p *Principal) ResolveTenant(ctx context.Context, app App) (*multi.Tenant, error) {
+func (p *Subject) ResolveTenant(ctx context.Context, app App) (*multi.Tenant, error) {
 	if p.tenant != nil {
 		return p.tenant, nil
 	}
@@ -51,7 +51,7 @@ func (p *Principal) ResolveTenant(ctx context.Context, app App) (*multi.Tenant, 
 	return tenant, nil
 }
 
-func (p *Principal) ResolveUser(ctx context.Context, app App) (*multi.User, error) {
+func (p *Subject) ResolveUser(ctx context.Context, app App) (*multi.User, error) {
 	if p.user != nil {
 		return p.user, nil
 	}
@@ -67,7 +67,7 @@ func ClientID(c *gin.Context) jwx.OpaqueClientID {
 	return jwx.OpaqueClientID(c.ClientIP())
 }
 
-func PrincipalFromContext(ctx context.Context) (*Principal, error) {
+func SubjectFromContext(ctx context.Context) (*Subject, error) {
 	t := ctx.Value(TokenKey)
 	if t == nil {
 		return nil, apperr.NewUnauthorized("no token")
@@ -126,7 +126,7 @@ func PrincipalFromContext(ctx context.Context) (*Principal, error) {
 			zap.String("tenantID", tenant))
 		return nil, apperr.NewUnauthorized("invalid tenant")
 	}
-	return &Principal{
+	return &Subject{
 		Cid:         cid,
 		AccessToken: tok,
 		Username:    username,

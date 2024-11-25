@@ -15,7 +15,7 @@ import (
 )
 
 func handleGetTenantByID(app App, c *gin.Context) error {
-	p, err := perms.PrincipalFromContext(c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func handleGetTenantByID(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewNotFound(err.Error())
 	}
-	if !perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, p.Roles) {
+	if !perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, sub.Roles) {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	var resp TenantResponse

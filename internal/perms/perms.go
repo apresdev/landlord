@@ -13,22 +13,22 @@ import (
 	"go.uber.org/zap"
 )
 
-type Operation int
+type Action int
 
 const (
-	OperationUnknown Operation = iota
-	OperationRead
-	OperationWrite
-	OperationDelete
+	ActionUnknown Action = iota
+	ActionRead
+	ActionWrite
+	ActionDelete
 )
 
-func (o Operation) String() string {
-	switch o {
-	case OperationRead:
+func (a Action) String() string {
+	switch a {
+	case ActionRead:
 		return "read"
-	case OperationWrite:
+	case ActionWrite:
 		return "write"
-	case OperationDelete:
+	case ActionDelete:
 		return "delete"
 	default:
 		return "unknown"
@@ -137,12 +137,12 @@ func init() {
 
 // Eval evaluates our permission policy. It returns an Effect that indicates
 // whether the operation is allowed or denied.
-func Eval(ctx context.Context, app App, p *Principal, op Operation, r *Resource) (*Effect, error) {
-	principalTenant, err := p.ResolveTenant(ctx, app)
+func Eval(ctx context.Context, app App, sub *Subject, a Action, r *Resource) (*Effect, error) {
+	subjectTenant, err := sub.ResolveTenant(ctx, app)
 	if err != nil {
 		return nil, err
 	}
-	principalUser, err := p.ResolveUser(ctx, app)
+	subjectUser, err := sub.ResolveUser(ctx, app)
 	if err != nil {
 		return nil, err
 	}
@@ -166,22 +166,22 @@ func Eval(ctx context.Context, app App, p *Principal, op Operation, r *Resource)
 		}
 	}
 	input := map[string]any{
-		"principal": map[string]map[string]string{
+		"subject": map[string]map[string]string{
 			"user": {
-				"id":        principalUser.ID.String(),
-				"username":  principalUser.Username,
-				"role":      principalUser.Role,
-				"status":    string(principalUser.Status),
-				"mfaStatus": string(principalUser.MFAStatus),
-				"mfaPolicy": principalUser.MFAPolicy.String(),
+				"id":        subjectUser.ID.String(),
+				"username":  subjectUser.Username,
+				"role":      subjectUser.Role,
+				"status":    string(subjectUser.Status),
+				"mfaStatus": string(subjectUser.MFAStatus),
+				"mfaPolicy": subjectUser.MFAPolicy.String(),
 			},
 			"tenant": {
-				"id":   principalTenant.ID.String(),
-				"name": principalTenant.Name,
+				"id":   subjectTenant.ID.String(),
+				"name": subjectTenant.Name,
 			},
 		},
-		"operation": op.String(),
-		"resource":  resource,
+		"action":   a.String(),
+		"resource": resource,
 	}
 
 	results, err := builtinPolicy.Eval(ctx, rego.EvalInput(input))

@@ -28,7 +28,7 @@ func handleCancelInvitation(app App, c *gin.Context) error {
 
 func HandleCancelInvitation(app App, c *gin.Context, tenantID, userID uuid.UUID) error {
 	ctx := c.Request.Context()
-	p, err := perms.PrincipalFromContext(ctx)
+	sub, err := perms.SubjectFromContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -41,14 +41,14 @@ func HandleCancelInvitation(app App, c *gin.Context, tenantID, userID uuid.UUID)
 		return err
 	}
 	resource := perms.NewResource(perms.ResourceKindInvitation, perms.ResourceNameAny, ten, user)
-	effect, err := perms.Eval(ctx, app, p, perms.OperationDelete, resource)
+	effect, err := perms.Eval(ctx, app, sub, perms.ActionDelete, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied cancel invitation",
-			zap.String("principal", p.String()),
+			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}

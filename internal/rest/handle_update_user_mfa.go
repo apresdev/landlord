@@ -37,7 +37,7 @@ func HandleUpdateUserMFA(
 		return apperr.NewBadRequest("MFA policy is empty")
 	}
 
-	p, err := perms.PrincipalFromContext(c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -59,17 +59,17 @@ func HandleUpdateUserMFA(
 
 	resource := perms.NewResource(
 		perms.ResourceKindUserMFAPolicy, perms.ResourceNameAny, targetTenant, targetUser)
-	effect, err := perms.Eval(c.Request.Context(), app, p, perms.OperationWrite, resource)
+	effect, err := perms.Eval(c.Request.Context(), app, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions",
 			zap.Error(err),
-			zap.String("principal", p.String()),
+			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied update user MFA",
-			zap.String("principal", p.String()),
+			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
