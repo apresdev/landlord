@@ -1,6 +1,8 @@
 # TODOs
 
 * affordance for impersonate and clear impersonate
+* move terraform to apres-terraform in `apps/aws` -- a new directory that
+contains terraform for apps like landlord
 * BUG: styling for builtin UI for CSH
 * BUG: shouldn't use admin error page when OTP fails
 * React UI flow for adding MFA
