@@ -20,6 +20,8 @@ setup:
 	go install golang.org/x/tools/cmd/goimports@latest
 	go install github.com/vektra/mockery/v2@v2.43.0
 	go install github.com/a-h/templ/cmd/templ@v0.2.778
+	go install golang.org/x/lint/golint@latest
+	go install honnef.co/go/tools/cmd/staticcheck@latest
 
 .PHONY: install
 install: build

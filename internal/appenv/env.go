@@ -29,14 +29,14 @@ func init() {
 	// https://github.com/joho/godotenv?tab=readme-ov-file#precedence--conventions
 	// for a discussion of .env precedence.
 	env := os.Getenv("LANDLORD_ENV")
-	if "" == env {
+	if env == "" {
 		env = "development"
 	}
 	err := loadIfExists(".env." + env + ".local")
 	if err != nil {
 		panicDuringInit("error loading .env."+env+".local", zap.Error(err))
 	}
-	if "test" != env {
+	if env != "test" {
 		err = loadIfExists(".env.local")
 		if err != nil {
 			panicDuringInit("error loading .env.local", zap.Error(err))

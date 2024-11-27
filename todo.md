@@ -1,10 +1,12 @@
 # TODOs
 
+* affordance for impersonate and clear impersonate
+* BUG: styling for builtin UI for CSH
 * BUG: shouldn't use admin error page when OTP fails
 * React UI flow for adding MFA
 * figure out terraform for how to configure email and SMS
 * why do some apps ask for two codes when signing up to MFA?
-* login dialog should say "login again" after entering in OTP
+* builtin login dialog should say "login again" after entering in OTP
 * in the URL we send for signing up a new account, make the URL navigate to a
 spot in the UI that forces a logout and then redirects back to the login page.
 * invitation email could look better
@@ -30,7 +32,6 @@ spot in the UI that forces a logout and then redirects back to the login page.
   * sort jwt claims in the profile view, they are a map, so in display
     it's worth showing them in alphabetical order instead of random
   * add affordance to display a token in the UI given its base64 form
-  * affordance for impersonate and clear impersonate
   * general styling improvements for the htmx version
     * add password fields that have the little eyeball to reveal the password
   * front end validation that the passwords match in new-password page

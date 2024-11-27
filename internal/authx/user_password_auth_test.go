@@ -72,6 +72,7 @@ func (s *UserPasswordAuthTestSuite) TestUserPasswordAuthError() {
 		nil, errors.New("test error"))
 	val := mocks.NewTokenValidator(s.T())
 	valURL, err := url.Parse("https://example.com/validation-url")
+	s.Assert().NoError(err)
 	up := types.UserPoolType{Id: aws.String("test-user-pool1")}
 	tokens, err := authx.UserPasswordAuth(
 		ctx, cogIdp, val, valURL, &up, "example@example.com", "sekrit")
@@ -97,6 +98,7 @@ func (s *UserPasswordAuthTestSuite) TestUserPasswordAuthError2() {
 		nil, errors.New("test error")).Once()
 	val := mocks.NewTokenValidator(s.T())
 	valURL, err := url.Parse("https://example.com/validation-url")
+	s.Assert().NoError(err)
 	up := types.UserPoolType{Id: aws.String("test-user-pool1")}
 	tokens, err := authx.UserPasswordAuth(
 		ctx, cogIdp, val, valURL, &up, "example@example.com", "sekrit")

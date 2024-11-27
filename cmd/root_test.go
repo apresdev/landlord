@@ -119,12 +119,12 @@ func (s *RootTestSuite) TestSignUpScenario() {
 	s.NoError(err)
 	code := findConfirmationCodeInLogs(logs, testEmail)
 	s.NotEmpty(code)
-	c, err = s.CLI(fmt.Sprintf(
+	_, err = s.CLI(fmt.Sprintf(
 		"signup confirm --userpool %s --email %s --code %s",
 		userPoolName, testEmail, code))
 	s.NoError(err)
 
-	c, err = s.CLI(fmt.Sprintf(
+	_, err = s.CLI(fmt.Sprintf(
 		"login --userpool %s --email %s --password Test-password1",
 		userPoolName, testEmail))
 	s.NoError(err)

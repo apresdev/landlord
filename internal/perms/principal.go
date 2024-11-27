@@ -17,11 +17,11 @@ import (
 
 const (
 	// TokenKey is the key used to store the token in the context.
-	TokenKey = "token"
+	TokenKey = "landlord-token"
 	// TenantIDKey is the key used to store the tenant ID in the context.
-	TenantIDKey = "tenant-id"
+	TenantIDKey = "landlord-tenant-id"
 	// ClientIDKey is the key used to store the client ID in the context.
-	ClientIDKey = "cid"
+	ClientIDKey = "landlord-cid"
 )
 
 type Subject struct {
@@ -89,7 +89,7 @@ func SubjectFromContext(ctx context.Context) (*Subject, error) {
 	}
 
 	groups, err := jwx.GetClaimStrings(tok, authx.CognitoGroupsClaim)
-	if !ok {
+	if err != nil {
 		zap.L().Error("could get groups",
 			zap.String("clientID", string(cid)),
 			zap.Error(err),

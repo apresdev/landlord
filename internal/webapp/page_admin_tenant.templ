@@ -3,7 +3,6 @@ package webapp
 import "github.com/apresdev/landlord/internal/multi"
 import "github.com/apresdev/landlord/internal/tinytools"
 import "github.com/google/uuid"
-import "net/url"
 import "strconv"
 import "strings"
 import "golang.org/x/text/cases"
@@ -101,7 +100,7 @@ templ userFragment(du *DisplayableUser) {
         } else if du.User.Status == multi.UserStatusInvited {
             <button
                 class="button"
-                hx-get={ "/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/invite?username=" + url.QueryEscape(du.User.Username) }
+                hx-post={ "/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/reinvite" }
             >
                 Resend Invite
             </button>

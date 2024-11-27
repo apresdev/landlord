@@ -132,31 +132,6 @@ func withSetupRootTenant(app *MockApp) *multi.Tenant {
 	return rt
 }
 
-func withSetupQueryAllTenants(app *MockApp, additionalTenants ...*multi.Tenant) {
-	rt := multi.NewTenant(multi.RootTenantName)
-	rt.ID = app.RootTenantID()
-
-	et := multi.NewTenant("example-tenant")
-	et.ID = uuid.New()
-
-	o := dynamodb.QueryOutput{}
-	o.Items = append(o.Items, marshalTenant(rt))
-	o.Items = append(o.Items, marshalTenant(et))
-	for _, additionalTenant := range additionalTenants {
-		o.Items = append(o.Items, marshalTenant(additionalTenant))
-	}
-
-	kv := make(map[string]ddbtypes.AttributeValue)
-	kv[":pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
-	kv[":skPrefix"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID("")}
-	input := &dynamodb.QueryInput{
-		TableName:                 aws.String(app.Settings().DBTableName()),
-		KeyConditionExpression:    aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
-		ExpressionAttributeValues: kv,
-	}
-	app.ddb.EXPECT().Query(mock.Anything, input).Return(&o, nil)
-}
-
 func withSetupQueryTenant(app *MockApp) *multi.Tenant {
 	ten := multi.NewTenant("ten1")
 	ten.Roles = append(ten.Roles, "guest")

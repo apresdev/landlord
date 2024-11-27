@@ -162,7 +162,8 @@ func handleAdminTenantSelect(a App, c *gin.Context) error {
 	} else if action == "manage-invites" {
 		tab = tenantTabInvites
 	}
-	return render(c, tenantSelectPage(a.Settings().AppName(), cu, tens, string(tab)))
+	return render(c, tenantSelectPage(
+		a.Settings().AppName(), cu, authorizedTenants, string(tab)))
 }
 
 func handleAdminNewTenant(a App, c *gin.Context) error {
@@ -554,6 +555,29 @@ func handleAdminEnableMFASubmit(a App, c *gin.Context) error {
 
 func handleAdminDisableMFASubmit(a App, c *gin.Context) error {
 	return handleAdminUpdateMFAPolicy(a, c, rest.MFAPolicyNone)
+}
+
+func handleAdminReInviteUserSubmit(a App, c *gin.Context) error {
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return err
+	}
+	userID, err := rest.UUIDParam(c, "userID")
+	if err != nil {
+		return err
+	}
+	user, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
+	if err != nil {
+		return err
+	}
+	var req rest.InviteRequest
+	req.Username = user.Username
+	req.Role = user.Role
+	req.MfaPolicy = rest.MfaPolicy(user.MFAPolicy.String())
+	if err := rest.HandleInviteToTenant(a, c, tenantID, req); err != nil {
+		return err
+	}
+	return render(c, userFragment(NewDisplayableUser(user)))
 }
 
 func handleAdminUser(a App, c *gin.Context) error {
