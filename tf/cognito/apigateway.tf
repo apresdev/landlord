@@ -40,7 +40,7 @@ module "landlord_dynamo" {
 module "landlord_cdc_publisher" {
   count = var.landlord_cdc_topic_arn != "none" ? 1 : 0
   #checkov:skip=CKV_TF_1:False positive, we are not using a hash because we use the tagged version.
-  source = "git@github.com:apresdev/apres-terraform.git//modules/aws/dynamodb_sns_publisher?ref=rel/dynamodb_sns_publisher/0.1.1"
+  source = "git@github.com:apresdev/apres-terraform.git//modules/aws/dynamodb_sns_publisher?ref=rel/dynamodb_sns_publisher/0.2.0"
 
   name       = "landlord-cdc"
   topic_arn  = var.landlord_cdc_topic_arn
