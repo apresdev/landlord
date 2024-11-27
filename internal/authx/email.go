@@ -43,19 +43,6 @@ func (e Email) Full() string {
 	return e.addr.String()
 }
 
-func validEmailDomain(s string) (string, error) {
-	if strings.HasPrefix(s, "@") {
-		s = s[1:]
-	}
-	if strings.Contains(s, "@") {
-		return "", errors.New("invalid domain")
-	}
-	if len(s) < 3 {
-		return "", errors.New("domain too short")
-	}
-	return s, nil
-}
-
 func newMsg(subject, body string) (*sestypes.Message, error) {
 	bodyContent := sestypes.Content{Data: aws.String(body)}
 	subjectContent := sestypes.Content{Data: aws.String(subject)}

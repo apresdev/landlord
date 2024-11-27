@@ -80,7 +80,9 @@ func isAuthorized(app App) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		//lint:ignore SA1029 passed via gin, the key is always a string
 		newCtx := context.WithValue(c.Request.Context(), perms.TokenKey, tok)
+		//lint:ignore SA1029 passed via gin, the key is always a string
 		newCtx = context.WithValue(newCtx, perms.ClientIDKey, cid)
 		c.Request = c.Request.WithContext(newCtx)
 		c.Set(perms.TokenKey, tok)

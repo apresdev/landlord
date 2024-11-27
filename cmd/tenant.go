@@ -861,7 +861,7 @@ func tenantUserRoleCmd() *cobra.Command {
 				return err
 			}
 			if !ten.HasRole(role) {
-				return fmt.Errorf("role '%s' does not exist, pick one of: %s\n",
+				return fmt.Errorf("role '%s' does not exist, pick one of: %s",
 					role, strings.Join(ten.Roles, ", "))
 			}
 			user, err := db.GetUserByName(cs.Ctx(), cs.DDB(), username)

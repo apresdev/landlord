@@ -148,6 +148,7 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	auth.POST("/admin/tenants/:tenantID/users/:userID/cancel-invite", handleAdminCancelInviteSubmit)
 	auth.POST("/admin/tenants/:tenantID/users/:userID/mfa/enable", handleAdminEnableMFASubmit)
 	auth.POST("/admin/tenants/:tenantID/users/:userID/mfa/disable", handleAdminDisableMFASubmit)
+	auth.POST("/admin/tenants/:tenantID/users/:userID/reinvite", handleAdminReInviteUserSubmit)
 	auth.POST("/admin/tenants/:tenantID/roles", handleAdminAddRoleSubmit)
 	auth.DELETE("/admin/tenants/:tenantID/roles/:role", handleAdminDeleteRoleSubmit)
 	auth.GET("/admin/tenants/:tenantID/users/:userID", handleAdminUser)

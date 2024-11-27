@@ -17,12 +17,12 @@ func Describe(tokName string, tok *jwt.Token) (string, error) {
 		sb.WriteString(fmt.Sprintf("    Method: %s\n", tok.Method.Alg()))
 	}
 	if len(tok.Header) > 0 {
-		sb.WriteString(fmt.Sprintf("    Header:\n"))
+		sb.WriteString("    Header:\n")
 		for k, v := range tok.Header {
 			sb.WriteString(fmt.Sprintf("      %s: %v\n", k, v))
 		}
 	} else {
-		sb.WriteString(fmt.Sprintf("    Header: empty\n"))
+		sb.WriteString("    Header: empty\n")
 	}
 	if tok.Claims != nil {
 		issuer, err := tok.Claims.GetIssuer()
@@ -36,7 +36,7 @@ func Describe(tokName string, tok *jwt.Token) (string, error) {
 		sb.WriteString(fmt.Sprintf("    Issuer: %s\n", issuer))
 		sb.WriteString(fmt.Sprintf("    Subject: %s\n", subject))
 		if claims, ok := tok.Claims.(jwt.MapClaims); ok {
-			sb.WriteString(fmt.Sprintf("    Claims:\n"))
+			sb.WriteString("    Claims:\n")
 			for k, v := range claims {
 				sb.WriteString(fmt.Sprintf("      %s: %v\n", k, v))
 			}

@@ -41,14 +41,7 @@ func (s *HandleSetNewPasswordTestSuite) TearDownTest() {
 	gin.SetMode(s.ginMode)
 }
 
-func withDefaultSetNewPasswordRequest(gt *ginTest) *ginTest {
-	return withDefaultSetNewPasswordRequest2(gt, &SetNewPasswordRequest{
-		Username: "user1@example.com",
-		Password: "password",
-		Session:  "session-token"})
-}
-
-func withDefaultSetNewPasswordRequest2(gt *ginTest, req *SetNewPasswordRequest) *ginTest {
+func withDefaultSetNewPasswordRequest(gt *ginTest, req *SetNewPasswordRequest) *ginTest {
 	gt.c.Set(perms.TokenKey, &jwt.Token{})
 	return gt.withRequest(
 		httptest.NewRequest(
@@ -94,7 +87,7 @@ func (s *HandleSetNewPasswordTestSuite) TestSuccess() {
 		Username: "user1@example.com",
 		Password: "password",
 		Session:  "session-token"}
-	gt1 := withDefaultSetNewPasswordRequest2(newGinTest(s.T()), &req)
+	gt1 := withDefaultSetNewPasswordRequest(newGinTest(s.T()), &req)
 	t := withSetupGetTenantByID(app)
 	u := newTestUser(t)
 	u.Status = multi.UserStatusInvited
@@ -149,7 +142,7 @@ func (s *HandleSetNewPasswordTestSuite) TestSuccessWithMFA() {
 		Username: "user1@example.com",
 		Password: "password",
 		Session:  "session-token"}
-	gt1 := withDefaultSetNewPasswordRequest2(newGinTest(s.T()), &req)
+	gt1 := withDefaultSetNewPasswordRequest(newGinTest(s.T()), &req)
 	t := withSetupGetTenantByID(app)
 	u := newTestUser(t)
 	u.Status = multi.UserStatusInvited
