@@ -1,3 +1,47 @@
+# BEGIN_COMMON_VARS
+variable "environment" {
+  description = "Environment name, used for tagging AWS resources, and in the bucket name."
+  type        = string
+  validation {
+    condition     = can(regex("^[A-Z][a-zA-Z0-9]*$", var.environment))
+    error_message = "Environment name must be alphanumeric and capitalized."
+  }
+}
+
+variable "application" {
+  description = "Application name, used for tagging AWS resources."
+  type        = string
+  validation {
+    condition     = can(regex("^[A-Z][a-zA-Z0-9]*$", var.application))
+    error_message = "Application name must be alphanumeric and capitalized."
+  }
+}
+
+variable "component" {
+  description = "Component name, used for tagging AWS resources."
+  type        = string
+  validation {
+    condition     = can(regex("^[A-Z][a-zA-Z0-9]*$", var.component))
+    error_message = "Component name must be alphanumeric and capitalized."
+  }
+}
+
+variable "owner" {
+  description = "Owner of the resources, used for tagging AWS resources."
+  type        = string
+  validation {
+    condition     = can(regex("^[A-Z][a-zA-Z0-9]*$", var.owner))
+    error_message = "Owner must be alphanumeric and capitalized."
+  }
+}
+
+variable "default_tags" {
+  description = "Default set of tags to be applied to all resources"
+  type        = map(string)
+  default     = {}
+}
+# END_COMMON_VARS
+
 variable "app_url" {
   description = "The base URL of the app with its protocol scheme"
   type        = string
@@ -21,16 +65,6 @@ variable "app_admin_email" {
   }
 }
 
-variable "tags" {
-  description = "Default set of tags to be applied to all resources"
-  type        = map(string)
-  default = {
-    "application" = "default-auth"
-    "owner"       = "Engineering"
-    "managed-by"  = "terraform"
-  }
-}
-
 variable "user_pool_external_id" {
   description = "The external ID of the user pool."
   type        = string
@@ -41,25 +75,6 @@ variable "aws_region" {
   description = "The AWS region."
   type        = string
   default     = "us-east-2"
-}
-
-variable "environment" {
-  description = "Environment Name, used for naming and tagging AWS resources."
-  type        = string
-  validation {
-    condition     = can(regex("^[A-Z][a-zA-Z0-9]*$", var.environment))
-    error_message = "Environment name must be alphanumeric and capitalized."
-  }
-}
-
-variable "owner" {
-  description = "Owner of the resources, used for tagging AWS resources."
-  type        = string
-  default     = "Engineering"
-  validation {
-    condition     = can(regex("^[A-Z][a-zA-Z0-9]*$", var.owner))
-    error_message = "Owner must be alphanumeric and capitalized."
-  }
 }
 
 # See https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-ui-customization.html
@@ -93,4 +108,9 @@ variable "custom_domain_prefix" {
     condition     = can(regex("^[a-z[a-z0-9-]+$", var.custom_domain_prefix))
     error_message = "The custom domain prefix must be lower case alphanumeric, can contain hyphens, and has leading letter."
   }
+}
+
+variable "landlord_cdc_topic_arn" {
+  description = "The ARN of the SNS topic to publish CDC events to"
+  type        = string
 }

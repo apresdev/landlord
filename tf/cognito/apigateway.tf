@@ -5,7 +5,8 @@ module "landlord_dynamo" {
   component        = "Auth"
   name             = "LandlordDynamoDB"
   owner            = var.owner
-  stream_view_type = "KEYS_ONLY"
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
   billing_mode     = "PAY_PER_REQUEST"
 
   hash_key   = "pk"
@@ -32,6 +33,24 @@ module "landlord_dynamo" {
       hash_key = "altName"
     }
   ]
+}
+
+# Create a publisher that will take DynamoDB CDC events from the DynamoDB stream and
+# publish them to the SNS topic
+module "landlord_cdc_publisher" {
+  count = var.landlord_cdc_topic_arn != "none" ? 1 : 0
+  #checkov:skip=CKV_TF_1:False positive, we are not using a hash because we use the tagged version.
+  source = "git@github.com:apresdev/apres-terraform.git//modules/aws/dynamodb_sns_publisher?ref=rel/dynamodb_sns_publisher/0.2.0"
+
+  name       = "landlord-cdc"
+  topic_arn  = var.landlord_cdc_topic_arn
+  stream_arn = module.landlord_dynamo.stream_arn
+
+  environment  = var.environment
+  owner        = var.owner
+  application  = "Landlord"
+  component    = "Auth"
+  default_tags = var.default_tags
 }
 
 module "landlord_ecs" {

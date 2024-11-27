@@ -143,7 +143,7 @@ resource "aws_cognito_user_pool" "default" {
     }
   }
 
-  tags = var.tags
+  tags = var.default_tags
 }
 
 resource "aws_cognito_user_pool_client" "default" {
@@ -206,7 +206,7 @@ resource "aws_iam_role" "landlord_sms_cognito_role" {
     ]
   })
 
-  tags = var.tags
+  tags = var.default_tags
 }
 
 resource "aws_iam_role_policy" "landlord_sms_cognito_role_policy" {
