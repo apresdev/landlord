@@ -81,7 +81,7 @@ templ tenantAddRoleTableAndForm(
 </div>
 }
 
-templ userFragment(du *DisplayableUser) {
+templ userFragment(sub *DisplayableSubject, du *DisplayableUser) {
 <tr>
     <td><a href={ appURL("/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String()) }>
         { du.User.Username }
@@ -90,6 +90,23 @@ templ userFragment(du *DisplayableUser) {
     <td>{ du.MFAStatus() }</td>
     <td>{ du.Status() }</td>
     <td>
+        if du.SubjectCanImpersonate() {
+            if sub.IsImpersonatingUser(du) {
+                <button
+                    class="button"
+                    hx-post="/ll-auth/app/admin/clear-impersonation"
+                >
+                    Clear Impersonation
+                </button>
+            } else if !sub.IsUser(du) {
+                <button
+                    class="button"
+                    hx-post={ "/ll-auth/app/admin/tenants/" + du.User.TenantID.String() + "/users/" + du.User.ID.String() + "/impersonate" }
+                >
+                    Impersonate
+                </button>
+            }
+        }
         if du.User.Status == multi.UserStatusActive {
             <button
                 class="button"
@@ -180,6 +197,7 @@ templ tenantInviteUserForm(tenantID string, inviteToTenant *multi.Tenant, mfaPol
 
 templ tenantInviteUserTableAndForm(
     tenantID uuid.UUID,
+    sub *DisplayableSubject,
     dus []*DisplayableUser,
     errMsg string) {
 <div id="invite-user-table-and-form">
@@ -202,7 +220,7 @@ templ tenantInviteUserTableAndForm(
             </tr>
         } else {
             for _, du := range dus {
-                @userFragment(du)
+                @userFragment(sub, du)
             }
         }
         </tbody>
@@ -212,7 +230,7 @@ templ tenantInviteUserTableAndForm(
 
 templ tenantSummary(
     appName string,
-    currentUser *CurrentUser,
+    sub *DisplayableSubject,
     tenant *multi.Tenant,
     userPoolURL string,
     users []*multi.User) {
@@ -317,7 +335,7 @@ templ tenantTabButtonsFragment(tenantID string, selectedTab tenantTab) {
 
 templ tenantSummaryTab(
     appName string,
-    currentUser *CurrentUser,
+    sub *DisplayableSubject,
     tenant *multi.Tenant,
     userPoolURL string,
     users []*multi.User) {
@@ -326,13 +344,13 @@ templ tenantSummaryTab(
     @tenantTabButtonsFragment(tenant.ID.String(), "summary")
 </div>
 <div id="tab-content" role="tabpanel" class="tab-content">
-    @tenantSummary(appName, currentUser, tenant, userPoolURL, users)
+    @tenantSummary(appName, sub, tenant, userPoolURL, users)
 </div>
 }
 
 templ tenantUsersTab(
      appName string,
-     currentUser *CurrentUser,
+     sub *DisplayableSubject,
      tenant *multi.Tenant,
      dus []*DisplayableUser) {
 
@@ -340,13 +358,13 @@ templ tenantUsersTab(
     @tenantTabButtonsFragment(tenant.ID.String(), tenantTabUsers)
 </div>
 <div id="tab-content" role="tabpanel" class="tab-content">
-    @tenantInviteUserTableAndForm(tenant.ID, dus, "")
+    @tenantInviteUserTableAndForm(tenant.ID, sub, dus, "")
 </div>
 }
 
 templ tenantInvitesTab(
      appName string,
-     currentUser *CurrentUser,
+     sub *DisplayableSubject,
      tenant *multi.Tenant,
      invitedDUs []*DisplayableUser) {
 
@@ -354,13 +372,13 @@ templ tenantInvitesTab(
     @tenantTabButtonsFragment(tenant.ID.String(), tenantTabInvites)
 </div>
 <div id="tab-content" role="tabpanel" class="tab-content">
-    @tenantInviteUserTableAndForm(tenant.ID, invitedDUs, "")
+    @tenantInviteUserTableAndForm(tenant.ID, sub, invitedDUs, "")
 </div>
 }
 
 templ tenantRolesTab(
      appName string,
-     currentUser *CurrentUser,
+     sub *DisplayableSubject,
      tenant *multi.Tenant,
      users []*multi.User,
      roles []RoleWithCount) {
@@ -375,14 +393,14 @@ templ tenantRolesTab(
 
 templ tenantPage(
     appName string,
-    currentUser *CurrentUser,
+    sub *DisplayableSubject,
     tenant *multi.Tenant,
     startingTab string) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, tenantPageTitle)
 <body>
-    @navBarFragment(currentUser)
+    @navBarFragment(sub)
     <div class="container">
         <div id="tabs"
 	        hx-get={ appPath("/admin/tenants/" + tenant.ID.String() + "/" + startingTab) }

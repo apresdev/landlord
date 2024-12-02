@@ -46,6 +46,7 @@ func newGetTenantByIDTestSetup(t *testing.T, ten *multi.Tenant, user *multi.User
 		if user != nil {
 			claims[authx.CognitoGroupsClaim] = []string{ten.GroupName(user.Role)}
 			claims[authx.EmailClaim] = user.Username
+			claims[authx.SubClaim] = user.ID.String()
 		}
 		tok := &jwt.Token{Claims: claims}
 		gt.c.Set(perms.TokenKey, tok)

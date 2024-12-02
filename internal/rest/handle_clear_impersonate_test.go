@@ -21,75 +21,75 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type HandleClearImpersonateTestSuite struct {
+type HandleClearImpersonationTestSuite struct {
 	suite.Suite
 	ginMode string
 }
 
-func TestHandleClearImpersonateTestSuite(t *testing.T) {
-	suite.Run(t, &HandleClearImpersonateTestSuite{})
+func TestHandleClearImpersonationTestSuite(t *testing.T) {
+	suite.Run(t, &HandleClearImpersonationTestSuite{})
 }
 
-func (s *HandleClearImpersonateTestSuite) SetupTest() {
+func (s *HandleClearImpersonationTestSuite) SetupTest() {
 	s.ginMode = gin.Mode()
 	gin.SetMode(gin.TestMode)
 }
 
-func (s *HandleClearImpersonateTestSuite) TearDownTest() {
+func (s *HandleClearImpersonationTestSuite) TearDownTest() {
 	gin.SetMode(s.ginMode)
 }
 
-func withDefaultClearImpersonateRequest(gt *ginTest) *ginTest {
+func withDefaultClearImpersonationRequest(gt *ginTest) *ginTest {
 	return gt.withRequest(
 		httptest.NewRequest(
 			"POST",
 			"/clear-impersonate",
 			bytes.NewBuffer(MustJSONMarshal(
-				ClearImpersonateRequest{RefreshToken: "refresh_token"}))))
+				ClearImpersonationRequest{RefreshToken: "refresh_token"}))))
 }
 
-func (s *HandleClearImpersonateTestSuite) TestBadRequests() {
+func (s *HandleClearImpersonationTestSuite) TestBadRequests() {
 	app := NewMockApp()
 	gt1 := newGinTest(s.T()).withRequest(
 		httptest.NewRequest("POST", "/clear-impersonate", nil))
-	err := handleClearImpersonate(app, gt1.c)
+	err := handleClearImpersonation(app, gt1.c)
 	s.Error(err)
 
 	gt2 := newGinTest(s.T()).withRequest(
 		httptest.NewRequest(
 			"POST", "/clear-impersonate", bytes.NewBuffer([]byte("{}"))))
-	err = handleClearImpersonate(app, gt2.c)
+	err = handleClearImpersonation(app, gt2.c)
 	s.Error(err)
 
-	gt3 := withDefaultClearImpersonateRequest(newGinTest(s.T()))
-	err = handleClearImpersonate(app, gt3.c)
+	gt3 := withDefaultClearImpersonationRequest(newGinTest(s.T()))
+	err = handleClearImpersonation(app, gt3.c)
 	s.Error(err)
 
-	gt4 := withDefaultClearImpersonateRequest(newGinTest(s.T()))
+	gt4 := withDefaultClearImpersonationRequest(newGinTest(s.T()))
 	gt4.c.Set(perms.TokenKey, "not-the-right-type")
-	err = handleClearImpersonate(app, gt4.c)
+	err = handleClearImpersonation(app, gt4.c)
 	s.Error(err)
 }
 
-func (s *HandleClearImpersonateTestSuite) TestBadTokens() {
+func (s *HandleClearImpersonationTestSuite) TestBadTokens() {
 	app := NewMockApp()
-	gt1 := withDefaultClearImpersonateRequest(newGinTest(s.T()))
+	gt1 := withDefaultClearImpersonationRequest(newGinTest(s.T()))
 	gt1.c.Set(perms.TokenKey, &jwt.Token{})
-	err := handleClearImpersonate(app, gt1.c)
+	err := handleClearImpersonation(app, gt1.c)
 	s.Error(err)
 
-	gt2 := withDefaultClearImpersonateRequest(newGinTest(s.T()))
+	gt2 := withDefaultClearImpersonationRequest(newGinTest(s.T()))
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{"group1", "group2"}
 	tok := &jwt.Token{Claims: claims}
 	gt2.c.Set(perms.TokenKey, tok)
-	err = handleClearImpersonate(app, gt2.c)
+	err = handleClearImpersonation(app, gt2.c)
 	s.Error(err)
 }
 
-func (s *HandleClearImpersonateTestSuite) TestNoRootTenant() {
+func (s *HandleClearImpersonationTestSuite) TestNoRootTenant() {
 	app := NewMockApp()
-	gt1 := withDefaultClearImpersonateRequest(newGinTest(s.T()))
+	gt1 := withDefaultClearImpersonationRequest(newGinTest(s.T()))
 	claims := make(jwt.MapClaims)
 	tenantUUID := uuid.New().String()
 	claims[authx.CognitoGroupsClaim] = []string{
@@ -98,13 +98,13 @@ func (s *HandleClearImpersonateTestSuite) TestNoRootTenant() {
 	gt1.c.Set(perms.TokenKey, tok)
 	app.ddb.EXPECT().GetItem(mock.Anything, mock.Anything).Return(
 		nil, fmt.Errorf("error"))
-	err := handleClearImpersonate(app, gt1.c)
+	err := handleClearImpersonation(app, gt1.c)
 	s.Error(err)
 }
 
-func (s *HandleClearImpersonateTestSuite) TestNotAuthorizedForRoot() {
+func (s *HandleClearImpersonationTestSuite) TestNotAuthorizedForRoot() {
 	app := NewMockApp()
-	gt1 := withDefaultClearImpersonateRequest(newGinTest(s.T()))
+	gt1 := withDefaultClearImpersonationRequest(newGinTest(s.T()))
 	claims := make(jwt.MapClaims)
 	tenantUUID := uuid.New().String()
 	claims[authx.CognitoGroupsClaim] = []string{
@@ -112,13 +112,13 @@ func (s *HandleClearImpersonateTestSuite) TestNotAuthorizedForRoot() {
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(perms.TokenKey, tok)
 	_ = withSetupRootTenant(app)
-	err := handleClearImpersonate(app, gt1.c)
+	err := handleClearImpersonation(app, gt1.c)
 	s.Error(err)
 }
 
-func (s *HandleClearImpersonateTestSuite) TestNoEmailClaim() {
+func (s *HandleClearImpersonationTestSuite) TestNoEmailClaim() {
 	app := NewMockApp()
-	gt1 := withDefaultClearImpersonateRequest(newGinTest(s.T()))
+	gt1 := withDefaultClearImpersonationRequest(newGinTest(s.T()))
 	rt := withSetupRootTenant(app)
 	claims := make(jwt.MapClaims)
 	claims[authx.CognitoGroupsClaim] = []string{
@@ -126,26 +126,26 @@ func (s *HandleClearImpersonateTestSuite) TestNoEmailClaim() {
 	claims[authx.CustomTenantClaim] = rt.ID.String()
 	tok := &jwt.Token{Claims: claims}
 	gt1.c.Set(perms.TokenKey, tok)
-	err := handleClearImpersonate(app, gt1.c)
+	err := handleClearImpersonation(app, gt1.c)
 	s.Error(err)
 }
 
-func (s *HandleClearImpersonateTestSuite) TestFailedToUpdateUserAttributes() {
+func (s *HandleClearImpersonationTestSuite) TestFailedToUpdateUserAttributes() {
 	app := NewMockApp()
-	gt1 := withDefaultClearImpersonateRequest(newGinTest(s.T()))
+	gt1 := withDefaultClearImpersonationRequest(newGinTest(s.T()))
 	rt := withSetupRootTenant(app)
 	u := newTestUser(rt)
 	withSetupQueryUser2(app, u)
 	withSetupJWT(gt1.c, rt, u)
 	app.cogIdp.EXPECT().AdminUpdateUserAttributes(mock.Anything, mock.Anything).Return(
 		nil, errors.New("could not update user attributes"))
-	err := handleClearImpersonate(app, gt1.c)
+	err := handleClearImpersonation(app, gt1.c)
 	s.Error(err)
 }
 
-func (s *HandleClearImpersonateTestSuite) TestNoSubClaim() {
+func (s *HandleClearImpersonationTestSuite) TestNoSubClaim() {
 	app := NewMockApp()
-	gt1 := withDefaultClearImpersonateRequest(newGinTest(s.T()))
+	gt1 := withDefaultClearImpersonationRequest(newGinTest(s.T()))
 	rt := withSetupRootTenant(app)
 	u1 := newTestUser(rt)
 	withSetupQueryUser2(app, u1)
@@ -170,13 +170,13 @@ func (s *HandleClearImpersonateTestSuite) TestNoSubClaim() {
 			UserPoolClient: &types.UserPoolClientType{
 				ClientId:     aws.String("test-client-id1"),
 				ClientSecret: aws.String("test-client-secret")}}, nil).Once()
-	err := handleClearImpersonate(app, gt1.c)
+	err := handleClearImpersonation(app, gt1.c)
 	s.Error(err)
 }
 
-func (s *HandleClearImpersonateTestSuite) TestSuccess() {
+func (s *HandleClearImpersonationTestSuite) TestSuccess() {
 	app := NewMockApp()
-	gt1 := withDefaultClearImpersonateRequest(newGinTest(s.T()))
+	gt1 := withDefaultClearImpersonationRequest(newGinTest(s.T()))
 	rt := withSetupRootTenant(app)
 	u1 := newTestUser(rt)
 	withSetupQueryUser2(app, u1)
@@ -202,9 +202,9 @@ func (s *HandleClearImpersonateTestSuite) TestSuccess() {
 			AuthenticationResult: &types.AuthenticationResultType{
 				IdToken:     aws.String("id-token"),
 				AccessToken: aws.String("access-token")}}, nil).Once()
-	err := handleClearImpersonate(app, gt1.c)
+	err := handleClearImpersonation(app, gt1.c)
 	s.NoError(err)
-	resp := ClearImpersonateResponse{}
+	resp := ClearImpersonationResponse{}
 	MustJSONUnmarshal(gt1.w.Body.Bytes(), &resp)
 	s.Equal("id-token", resp.IdToken)
 	s.Equal("access-token", resp.AccessToken)

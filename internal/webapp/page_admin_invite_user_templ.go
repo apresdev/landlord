@@ -15,7 +15,7 @@ const inviteUserPageTitle = "Invite User"
 
 func inviteUserPage(
 	appName string,
-	currentUser *CurrentUser,
+	sub *DisplayableSubject,
 	inviteToTenant *multi.Tenant,
 	initialUsername string,
 	mfaPolicies []string) templ.Component {
@@ -51,7 +51,7 @@ func inviteUserPage(
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = navBarFragment(currentUser).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = navBarFragment(sub).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

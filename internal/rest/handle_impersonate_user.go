@@ -26,39 +26,51 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	if req.Tenant == "" {
-		return apperr.NewBadRequest("tenant is required")
-	}
-	if req.Username == "" {
-		return apperr.NewBadRequest("username is required")
-	}
-	if req.RefreshToken == "" {
-		return apperr.NewBadRequest("refresh token is required")
-	}
-
-	sub, err := perms.SubjectFromContext(c)
+	resp, err := HandleImpersonateUser(app, c, req)
 	if err != nil {
 		return err
 	}
+	c.JSON(http.StatusOK, resp)
+	return nil
+}
+
+func HandleImpersonateUser(
+	app App, c *gin.Context, req ImpersonateUserRequest) (*ImpersonateResponse, error) {
+
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Tenant == "" {
+		return nil, apperr.NewBadRequest("tenant is required")
+	}
+	if req.Username == "" {
+		return nil, apperr.NewBadRequest("username is required")
+	}
+	if req.RefreshToken == "" {
+		return nil, apperr.NewBadRequest("refresh token is required")
+	}
+
 	targetTenantHandle, err := multi.ParseTenantHandle(req.Tenant)
 	if err != nil {
-		return apperr.NewBadRequest(err.Error())
+		return nil, apperr.NewBadRequest(err.Error())
 	}
 	targetTenant, err := db.ResolveTenant(
 		c.Request.Context(), app.DDB(), targetTenantHandle)
 	if err != nil {
-		return apperr.NewBadRequest(err.Error())
+		return nil, apperr.NewBadRequest(err.Error())
 	}
 	targetUser, err := db.GetUserByName(c.Request.Context(), app.DDB(), req.Username)
 	if err != nil {
-		return apperr.NewBadRequest(err.Error())
+		return nil, apperr.NewBadRequest(err.Error())
 	}
 	if targetUser.TenantID != targetTenant.ID {
 		zap.L().Info("user does not belong to tenant",
 			zap.String("clientID", string(sub.Cid)),
 			zap.String("username", req.Username),
 			zap.String("tenantID", targetTenant.ID.String()))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	targetGroupName := targetTenant.GroupName(targetUser.Role)
 
@@ -67,13 +79,13 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied impersonate user",
 			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
 	err = authx.ImpersonateUser(
@@ -95,7 +107,7 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 			zap.String("targetUsername", targetUser.Username),
 			zap.String("targetUserID", targetUser.ID.String()),
 			zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	upc, err := authx.GetUserPoolClient(
 		c.Request.Context(), app.CogIdp(), targetTenant.UserPoolID)
@@ -103,14 +115,14 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 		zap.L().Warn("Could not resolve user pool client",
 			zap.String("userPoolID", targetTenant.UserPoolID),
 			zap.Error(err))
-		return err
+		return nil, err
 	}
 	subClaim, err := jwx.GetClaimString(sub.AccessToken, authx.SubClaim)
 	if err != nil {
 		zap.L().Error("could not get sub claim from token",
 			zap.String("clientID", string(sub.Cid)),
 			zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	params := make(map[string]string)
 	params["REFRESH_TOKEN"] = req.RefreshToken
@@ -118,7 +130,7 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 		secretHash, err := authx.CreateSecretHash(
 			subClaim, aws.ToString(upc.ClientId), aws.ToString(upc.ClientSecret))
 		if err != nil {
-			return err
+			return nil, err
 		}
 		params["SECRET_HASH"] = secretHash
 	}
@@ -133,13 +145,11 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 		zap.L().Error("could not initiate auth",
 			zap.String("clientID", string(sub.Cid)),
 			zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
 	var resp ImpersonateResponse
 	resp.IdToken = aws.ToString(o.AuthenticationResult.IdToken)
 	resp.AccessToken = aws.ToString(o.AuthenticationResult.AccessToken)
-	c.JSON(http.StatusOK, resp)
-
-	return nil
+	return &resp, nil
 }

@@ -18,9 +18,9 @@ func ginCancelInvitation(c *gin.Context) {
 	callImpl(c, handleCancelInvitation)
 }
 
-// ClearImpersonate - Clear any impersonation for the current user.
-func ginClearImpersonate(c *gin.Context) {
-	callImpl(c, handleClearImpersonate)
+// ClearImpersonation - Clear any impersonation for the current user.
+func ginClearImpersonation(c *gin.Context) {
+	callImpl(c, handleClearImpersonation)
 }
 
 // CreateTenant - Create a new tenant

@@ -2,12 +2,12 @@ package webapp
 
 const dashboardPageTitle = "Dashboard"
 
-templ dashboardPage(appName string, currentUser *CurrentUser, stats DashboardStats) {
+templ dashboardPage(appName string, sub *DisplayableSubject, stats DashboardStats) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, tenantsPageTitle)
 <body>
-    @navBarFragment(currentUser)
+    @navBarFragment(sub)
     <div class="card-container">
         <div class="card-grid-container">
             <div class="card">

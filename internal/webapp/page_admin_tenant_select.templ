@@ -1,6 +1,7 @@
 package webapp
 
 import "github.com/apresdev/landlord/internal/multi"
+import "github.com/apresdev/landlord/internal/perms"
 
 script onTenantSelect(tenantID string, tab string) {
     window.location.href = "/ll-auth/app/admin/tenants/" + tenantID + "?tab=" + tab;
@@ -13,12 +14,12 @@ templ tenantSelectFragment(tenant *multi.Tenant, tab string) {
 </tr>
 }
 
-templ tenantSelectPage(appName string, currentUser *CurrentUser, tenants []*multi.Tenant, tab string) {
+templ tenantSelectPage(appName string, sub *DisplayableSubject, tenants []*multi.Tenant, tab string) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, tenantsPageTitle)
 <body>
-    @navBarFragment(currentUser)
+    @navBarFragment(sub)
     <div class="container">
         <h2>Select Tenant</h2>
         <table>

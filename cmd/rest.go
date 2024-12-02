@@ -100,8 +100,8 @@ func restClearImpersonateCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.AuthAPI.ClearImpersonate(ctx).ClearImpersonateRequest(
-				client.ClearImpersonateRequest{RefreshToken: s.RefreshToken}).Execute()
+			r, _, err := cl.AuthAPI.ClearImpersonation(ctx).ClearImpersonationRequest(
+				client.ClearImpersonationRequest{RefreshToken: s.RefreshToken}).Execute()
 			if err != nil {
 				return err
 			}

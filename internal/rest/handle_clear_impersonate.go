@@ -18,29 +18,40 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleClearImpersonate(app App, c *gin.Context) error {
-	var req ClearImpersonateRequest
+func handleClearImpersonation(app App, c *gin.Context) error {
+	var req ClearImpersonationRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	if req.RefreshToken == "" {
-		return apperr.NewBadRequest("refresh token is required")
-	}
-	sub, err := perms.SubjectFromContext(c)
+	resp, err := HandleClearImpersonation(app, c, req)
 	if err != nil {
 		return err
+	}
+	c.JSON(http.StatusOK, resp)
+	return nil
+}
+
+func HandleClearImpersonation(
+	app App, c *gin.Context, req ClearImpersonationRequest) (*ImpersonateResponse, error) {
+
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return nil, err
+	}
+	if req.RefreshToken == "" {
+		return nil, apperr.NewBadRequest("refresh token is required")
 	}
 
 	// The target user and tenant of this API are from the subject
 	targetUser, err := sub.ResolveUser(c.Request.Context(), app)
 	if err != nil {
 		zap.L().Error("could not resolve subject user", zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	targetTenant, err := sub.ResolveTenant(c.Request.Context(), app)
 	if err != nil {
 		zap.L().Error("could not resolve subject tenant", zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
 	resource := perms.NewResource(
@@ -48,13 +59,13 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 	effect, err := perms.Eval(c, app, sub, perms.ActionDelete, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied clearing impersonation",
 			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
 	err = authx.ClearImpersonate(
@@ -63,7 +74,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		zap.L().Error("could not clear impersonation",
 			zap.String("clientID", string(sub.Cid)),
 			zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	upc, err := authx.GetUserPoolClient(
 		c.Request.Context(), app.CogIdp(), targetTenant.UserPoolID)
@@ -71,14 +82,14 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		zap.L().Warn("Could not resolve user pool client",
 			zap.String("userPoolID", targetTenant.UserPoolID),
 			zap.Error(err))
-		return err
+		return nil, err
 	}
 	subClaim, err := jwx.GetClaimString(sub.AccessToken, authx.SubClaim)
 	if err != nil {
 		zap.L().Error("could not get sub claim from token",
 			zap.String("clientID", string(sub.Cid)),
 			zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	params := make(map[string]string)
 	params["REFRESH_TOKEN"] = req.RefreshToken
@@ -86,7 +97,7 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		secretHash, err := authx.CreateSecretHash(
 			subClaim, aws.ToString(upc.ClientId), aws.ToString(upc.ClientSecret))
 		if err != nil {
-			return err
+			return nil, err
 		}
 		params["SECRET_HASH"] = secretHash
 	}
@@ -101,13 +112,11 @@ func handleClearImpersonate(app App, c *gin.Context) error {
 		zap.L().Error("could not initiate auth",
 			zap.String("clientID", string(sub.Cid)),
 			zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
 	var resp ImpersonateResponse
 	resp.IdToken = aws.ToString(o.AuthenticationResult.IdToken)
 	resp.AccessToken = aws.ToString(o.AuthenticationResult.AccessToken)
-	c.JSON(http.StatusOK, resp)
-
-	return nil
+	return &resp, nil
 }

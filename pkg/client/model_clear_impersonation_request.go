@@ -10,36 +10,36 @@ import (
 	"fmt"
 )
 
-// checks if the ClearImpersonateRequest type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &ClearImpersonateRequest{}
+// checks if the ClearImpersonationRequest type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &ClearImpersonationRequest{}
 
-// ClearImpersonateRequest struct for ClearImpersonateRequest
-type ClearImpersonateRequest struct {
+// ClearImpersonationRequest struct for ClearImpersonationRequest
+type ClearImpersonationRequest struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-type _ClearImpersonateRequest ClearImpersonateRequest
+type _ClearImpersonationRequest ClearImpersonationRequest
 
-// NewClearImpersonateRequest instantiates a new ClearImpersonateRequest object
+// NewClearImpersonationRequest instantiates a new ClearImpersonationRequest object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewClearImpersonateRequest(refreshToken string) *ClearImpersonateRequest {
-	this := ClearImpersonateRequest{}
+func NewClearImpersonationRequest(refreshToken string) *ClearImpersonationRequest {
+	this := ClearImpersonationRequest{}
 	this.RefreshToken = refreshToken
 	return &this
 }
 
-// NewClearImpersonateRequestWithDefaults instantiates a new ClearImpersonateRequest object
+// NewClearImpersonationRequestWithDefaults instantiates a new ClearImpersonationRequest object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewClearImpersonateRequestWithDefaults() *ClearImpersonateRequest {
-	this := ClearImpersonateRequest{}
+func NewClearImpersonationRequestWithDefaults() *ClearImpersonationRequest {
+	this := ClearImpersonationRequest{}
 	return &this
 }
 
 // GetRefreshToken returns the RefreshToken field value
-func (o *ClearImpersonateRequest) GetRefreshToken() string {
+func (o *ClearImpersonationRequest) GetRefreshToken() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -50,7 +50,7 @@ func (o *ClearImpersonateRequest) GetRefreshToken() string {
 
 // GetRefreshTokenOk returns a tuple with the RefreshToken field value
 // and a boolean to check if the value has been set.
-func (o *ClearImpersonateRequest) GetRefreshTokenOk() (*string, bool) {
+func (o *ClearImpersonationRequest) GetRefreshTokenOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -58,11 +58,11 @@ func (o *ClearImpersonateRequest) GetRefreshTokenOk() (*string, bool) {
 }
 
 // SetRefreshToken sets field value
-func (o *ClearImpersonateRequest) SetRefreshToken(v string) {
+func (o *ClearImpersonationRequest) SetRefreshToken(v string) {
 	o.RefreshToken = v
 }
 
-func (o ClearImpersonateRequest) MarshalJSON() ([]byte, error) {
+func (o ClearImpersonationRequest) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -70,13 +70,13 @@ func (o ClearImpersonateRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o ClearImpersonateRequest) ToMap() (map[string]interface{}, error) {
+func (o ClearImpersonationRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["refreshToken"] = o.RefreshToken
 	return toSerialize, nil
 }
 
-func (o *ClearImpersonateRequest) UnmarshalJSON(data []byte) (err error) {
+func (o *ClearImpersonationRequest) UnmarshalJSON(data []byte) (err error) {
 	// This validates that all required properties are included in the JSON object
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
@@ -98,53 +98,53 @@ func (o *ClearImpersonateRequest) UnmarshalJSON(data []byte) (err error) {
 		}
 	}
 
-	varClearImpersonateRequest := _ClearImpersonateRequest{}
+	varClearImpersonationRequest := _ClearImpersonationRequest{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varClearImpersonateRequest)
+	err = decoder.Decode(&varClearImpersonationRequest)
 
 	if err != nil {
 		return err
 	}
 
-	*o = ClearImpersonateRequest(varClearImpersonateRequest)
+	*o = ClearImpersonationRequest(varClearImpersonationRequest)
 
 	return err
 }
 
-type NullableClearImpersonateRequest struct {
-	value *ClearImpersonateRequest
+type NullableClearImpersonationRequest struct {
+	value *ClearImpersonationRequest
 	isSet bool
 }
 
-func (v NullableClearImpersonateRequest) Get() *ClearImpersonateRequest {
+func (v NullableClearImpersonationRequest) Get() *ClearImpersonationRequest {
 	return v.value
 }
 
-func (v *NullableClearImpersonateRequest) Set(val *ClearImpersonateRequest) {
+func (v *NullableClearImpersonationRequest) Set(val *ClearImpersonationRequest) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableClearImpersonateRequest) IsSet() bool {
+func (v NullableClearImpersonationRequest) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableClearImpersonateRequest) Unset() {
+func (v *NullableClearImpersonationRequest) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableClearImpersonateRequest(val *ClearImpersonateRequest) *NullableClearImpersonateRequest {
-	return &NullableClearImpersonateRequest{value: val, isSet: true}
+func NewNullableClearImpersonationRequest(val *ClearImpersonationRequest) *NullableClearImpersonationRequest {
+	return &NullableClearImpersonationRequest{value: val, isSet: true}
 }
 
-func (v NullableClearImpersonateRequest) MarshalJSON() ([]byte, error) {
+func (v NullableClearImpersonationRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableClearImpersonateRequest) UnmarshalJSON(src []byte) error {
+func (v *NullableClearImpersonationRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

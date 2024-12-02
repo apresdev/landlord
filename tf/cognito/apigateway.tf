@@ -54,7 +54,7 @@ module "landlord_cdc_publisher" {
 }
 
 module "landlord_ecs" {
-  source               = "git@github.com:apresdev/apres-terraform.git//modules/aws/ecs?ref=rel/ecs/2.0.0"
+  source               = "git@github.com:apresdev/apres-terraform.git//modules/aws/ecs?ref=rel/ecs/2.0.1"
   application          = "Landlord"
   component            = "Auth"
   container_image_uri  = var.container_image_uri

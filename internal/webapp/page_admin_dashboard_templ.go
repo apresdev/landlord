@@ -12,7 +12,7 @@ import (
 
 const dashboardPageTitle = "Dashboard"
 
-func dashboardPage(appName string, currentUser *CurrentUser, stats DashboardStats) templ.Component {
+func dashboardPage(appName string, sub *DisplayableSubject, stats DashboardStats) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -45,7 +45,7 @@ func dashboardPage(appName string, currentUser *CurrentUser, stats DashboardStat
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = navBarFragment(currentUser).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = navBarFragment(sub).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -43,14 +43,15 @@ func newDashboardStats() DashboardStats {
 }
 
 func handleAdminDashboard(a App, c *gin.Context) error {
-	cu, err := resolveCurrentUser(a, c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
 		return nil
 	}
 	stats := newDashboardStats()
-	return render(c, dashboardPage("Landlord", cu, stats))
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+	return render(c, dashboardPage("Landlord", ds, stats))
 }
 
 func handleAdminDashboardError(a App, c *gin.Context) error {
@@ -83,8 +84,21 @@ func handleAdminDashboardError(a App, c *gin.Context) error {
 	return nil
 }
 
+func handleAdminClearImpersonation(a App, c *gin.Context) error {
+	var req rest.ClearImpersonationRequest
+	req.RefreshToken, _ = c.Cookie(LandlordRefreshTokenCookie)
+	_, err := rest.HandleClearImpersonation(a, c, req)
+	if err != nil {
+		return err
+	}
+	clearLandlordCookies(c, a.Settings().URL())
+	c.Header("HX-Redirect", appPath("/"))
+	c.Status(http.StatusNoContent)
+	return nil
+}
+
 func handleAdminTenants(a App, c *gin.Context) error {
-	cu, err := resolveCurrentUser(a, c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
@@ -94,7 +108,8 @@ func handleAdminTenants(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	return render(c, tenantsPage("Landlord", cu, tens))
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+	return render(c, tenantsPage("Landlord", ds, tens))
 }
 
 type tenantTab string
@@ -128,7 +143,7 @@ func newTenantTab(s string) tenantTab {
 }
 
 func handleAdminTenantSelect(a App, c *gin.Context) error {
-	cu, err := resolveCurrentUser(a, c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
@@ -140,12 +155,6 @@ func handleAdminTenantSelect(a App, c *gin.Context) error {
 	}
 	tens, err := db.GetAllTenants(c.Request.Context(), a.DDB())
 	if err != nil {
-		return err
-	}
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().URL())
-		redirectToLogin(c)
 		return err
 	}
 	authorizedTenants := make([]*multi.Tenant, 0)
@@ -162,8 +171,9 @@ func handleAdminTenantSelect(a App, c *gin.Context) error {
 	} else if action == "manage-invites" {
 		tab = tenantTabInvites
 	}
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
 	return render(c, tenantSelectPage(
-		a.Settings().AppName(), cu, authorizedTenants, string(tab)))
+		a.Settings().AppName(), ds, authorizedTenants, string(tab)))
 }
 
 func handleAdminNewTenant(a App, c *gin.Context) error {
@@ -239,7 +249,7 @@ func rolesWithCount(roles []string, users []*multi.User) []RoleWithCount {
 }
 
 func handleAdminTenant(a App, c *gin.Context) error {
-	cu, err := resolveCurrentUser(a, c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
@@ -262,11 +272,12 @@ func handleAdminTenant(a App, c *gin.Context) error {
 			fmt.Errorf("error getting tenants: %w", err))
 	}
 	startingTab := newTenantTab(c.Query("tab"))
-	return render(c, tenantPage(a.Settings().AppName(), cu, ten, string(startingTab)))
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+	return render(c, tenantPage(a.Settings().AppName(), ds, ten, string(startingTab)))
 }
 
 func handleAdminTenantTab(a App, c *gin.Context) error {
-	cu, err := resolveCurrentUser(a, c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
@@ -300,10 +311,15 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 	switch tab {
 	case tenantTabSummary:
 		cognitoURL := authx.CognitoUserPoolURL(a.Cfg().Region, ten.UserPoolID)
-		return render(c, tenantSummaryTab(a.Settings().AppName(), cu, ten, cognitoURL, users))
+		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+		return render(c, tenantSummaryTab(a.Settings().AppName(), ds, ten, cognitoURL, users))
 	case tenantTabUsers:
-		return render(c, tenantUsersTab(
-			a.Settings().AppName(), cu, ten, NewDisplayableUsers(users)))
+		dus, err := NewDisplayableUsers(c.Request.Context(), a, sub, ten, users)
+		if err != nil {
+			return apperr.NewInternalE(err)
+		}
+		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+		return render(c, tenantUsersTab(a.Settings().AppName(), ds, ten, dus))
 	case tenantTabInvites:
 		invites := make([]*multi.User, 0, len(users))
 		for _, user := range users {
@@ -311,10 +327,16 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 				invites = append(invites, user)
 			}
 		}
-		return render(c, tenantInvitesTab(a.Settings().AppName(), cu, ten, NewDisplayableUsers(invites)))
+		dus, err := NewDisplayableUsers(c.Request.Context(), a, sub, ten, invites)
+		if err != nil {
+			return apperr.NewInternalE(err)
+		}
+		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+		return render(c, tenantInvitesTab(a.Settings().AppName(), ds, ten, dus))
 	case tenantTabRoles:
+		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
 		return render(c, tenantRolesTab(
-			a.Settings().AppName(), cu, ten, users, rolesWithCount(ten.Roles, users)))
+			a.Settings().AppName(), ds, ten, users, rolesWithCount(ten.Roles, users)))
 	default:
 		zap.L().Info("unknown tenant tab", zap.String("tab", string(tab)))
 	}
@@ -442,6 +464,11 @@ func handleAdminInviteUserButton(a App, c *gin.Context) error {
 }
 
 func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
+
 	tenantID, err := rest.UUIDParam(c, "tenantID")
 	if err != nil {
 		return err
@@ -457,7 +484,16 @@ func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	return render(c, tenantInviteUserTableAndForm(tenantID, NewDisplayableUsers(users), ""))
+	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+	dus, err := NewDisplayableUsers(c.Request.Context(), a, sub, ten, users)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	return render(c, tenantInviteUserTableAndForm(tenantID, ds, dus, ""))
 }
 
 func handleAdminAddRoleForm(a App, c *gin.Context) error {
@@ -469,6 +505,10 @@ func handleAdminAddRoleButton(a App, c *gin.Context) error {
 }
 
 func handleAdminActivateUserSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	tenantID := c.Param("tenantID")
 	if tenantID == "" {
 		return apperr.NewBadRequest("no tenant ID provided")
@@ -487,10 +527,23 @@ func handleAdminActivateUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	return render(c, userFragment(NewDisplayableUser(user)))
+	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), user.TenantID)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+	du, err := NewDisplayableUser(c.Request.Context(), a, sub, ten, user)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	return render(c, userFragment(ds, du))
 }
 
 func handleAdminDeactivateUserSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	tenantID := c.Param("tenantID")
 	if tenantID == "" {
 		return apperr.NewBadRequest("no tenant ID provided")
@@ -509,7 +562,16 @@ func handleAdminDeactivateUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	return render(c, userFragment(NewDisplayableUser(user)))
+	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), user.TenantID)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+	du, err := NewDisplayableUser(c.Request.Context(), a, sub, ten, user)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	return render(c, userFragment(ds, du))
 }
 
 func handleAdminCancelInviteSubmit(a App, c *gin.Context) error {
@@ -529,6 +591,10 @@ func handleAdminCancelInviteSubmit(a App, c *gin.Context) error {
 }
 
 func handleAdminUpdateMFAPolicy(a App, c *gin.Context, policy rest.MfaPolicy) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	tenantID, err := rest.UUIDParam(c, "tenantID")
 	if err != nil {
 		return err
@@ -546,7 +612,16 @@ func handleAdminUpdateMFAPolicy(a App, c *gin.Context, policy rest.MfaPolicy) er
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	return render(c, userFragment(NewDisplayableUser(user)))
+	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+	du, err := NewDisplayableUser(c.Request.Context(), a, sub, ten, user)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	return render(c, userFragment(ds, du))
 }
 
 func handleAdminEnableMFASubmit(a App, c *gin.Context) error {
@@ -558,6 +633,10 @@ func handleAdminDisableMFASubmit(a App, c *gin.Context) error {
 }
 
 func handleAdminReInviteUserSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	tenantID, err := rest.UUIDParam(c, "tenantID")
 	if err != nil {
 		return err
@@ -577,11 +656,51 @@ func handleAdminReInviteUserSubmit(a App, c *gin.Context) error {
 	if err := rest.HandleInviteToTenant(a, c, tenantID, req); err != nil {
 		return err
 	}
-	return render(c, userFragment(NewDisplayableUser(user)))
+	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+	du, err := NewDisplayableUser(c.Request.Context(), a, sub, ten, user)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	return render(c, userFragment(ds, du))
+}
+
+func handleAdminImpersonateUserSubmit(a App, c *gin.Context) error {
+	_, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return err
+	}
+	userID, err := rest.UUIDParam(c, "userID")
+	if err != nil {
+		return err
+	}
+	user, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
+	if err != nil {
+		return err
+	}
+	var req rest.ImpersonateUserRequest
+	req.Tenant = tenantID.String()
+	req.Username = user.Username
+	req.RefreshToken, _ = c.Cookie(LandlordRefreshTokenCookie)
+	_, err = rest.HandleImpersonateUser(a, c, req)
+	if err != nil {
+		return err
+	}
+	clearLandlordCookies(c, a.Settings().URL())
+	c.Header("HX-Redirect", appPath("/"))
+	c.Status(http.StatusNoContent)
+	return nil
 }
 
 func handleAdminUser(a App, c *gin.Context) error {
-	cu, err := resolveCurrentUser(a, c)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
@@ -627,7 +746,8 @@ func handleAdminUser(a App, c *gin.Context) error {
 	_ = cogU
 
 	cogURL := authx.CognitoUserDetailsURL(a.Cfg().Region, ten.UserPoolID, u.ID.String())
-	return render(c, userSummary(a.Settings().AppName(), cu, u, cogURL, ten))
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+	return render(c, userSummary(a.Settings().AppName(), ds, u, cogURL, ten))
 }
 
 func handleAdminProfile(a App, c *gin.Context) error {

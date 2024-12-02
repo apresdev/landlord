@@ -4,12 +4,12 @@ import "github.com/apresdev/landlord/internal/multi"
 
 const tenantsPageTitle = "Tenants"
 
-templ tenantsPage(appName string, currentUser *CurrentUser, tenants []*multi.Tenant) {
+templ tenantsPage(appName string, sub *DisplayableSubject, tenants []*multi.Tenant) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, tenantsPageTitle)
 <body>
-    @navBarFragment(currentUser)
+    @navBarFragment(sub)
     <div class="container">
         <a href="/ll-auth/app/admin/tenants/new"><button class="button">Create New Tenant</button></a>
         <table>

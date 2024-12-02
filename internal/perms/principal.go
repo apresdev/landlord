@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/apresdev/landlord/internal/db"
 
 	"github.com/apresdev/landlord/internal/apperr"
@@ -25,25 +27,30 @@ const (
 )
 
 type Subject struct {
-	Cid         jwx.OpaqueClientID
-	AccessToken *jwt.Token
-	Username    string
-	Groups      []string
-	Roles       *multi.Roles
-	Th          multi.TenantHandle
-	user        *multi.User
-	tenant      *multi.Tenant
+	Cid               jwx.OpaqueClientID
+	AccessToken       *jwt.Token
+	Username          string
+	Groups            []string
+	Roles             *multi.Roles
+	TenantID          uuid.UUID
+	SubID             uuid.UUID
+	ImpersonateTenant uuid.UUID
+	ImpersonateGroup  string
+	ImpersonateEmail  string
+	ImpersonateSub    uuid.UUID
+	user              *multi.User
+	tenant            *multi.Tenant
 }
 
 func (p *Subject) String() string {
-	return fmt.Sprintf("%s@%s", p.Username, p.Th)
+	return fmt.Sprintf("%s@%s", p.Username, p.TenantID.String())
 }
 
 func (p *Subject) ResolveTenant(ctx context.Context, app App) (*multi.Tenant, error) {
 	if p.tenant != nil {
 		return p.tenant, nil
 	}
-	tenant, err := db.ResolveTenant(ctx, app.DDB(), p.Th)
+	tenant, err := db.GetTenantByID(ctx, app.DDB(), p.TenantID)
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +68,10 @@ func (p *Subject) ResolveUser(ctx context.Context, app App) (*multi.User, error)
 	}
 	p.user = user
 	return user, nil
+}
+
+func (p *Subject) IsImpersonating() bool {
+	return p.ImpersonateTenant != uuid.Nil
 }
 
 func ClientID(c *gin.Context) jwx.OpaqueClientID {
@@ -111,27 +122,65 @@ func SubjectFromContext(ctx context.Context) (*Subject, error) {
 			zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
-	tenant, err := jwx.GetClaimString(tok, authx.CustomTenantClaim)
+	tenantID, err := jwx.GetClaimUUID(tok, authx.CustomTenantClaim)
 	if err != nil {
-		zap.L().Error("could not get tenant claim",
+		zap.L().Error("could not parse tenant ID",
 			zap.String("clientID", string(cid)),
-			zap.Error(err),
-			zap.Any("token", tok))
-		return nil, apperr.NewUnauthorized("no tenant")
+			zap.Error(err))
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
-	th, err := multi.ParseTenantHandle(tenant)
+	subID, err := jwx.GetClaimUUID(tok, authx.SubClaim)
 	if err != nil {
-		zap.L().Error("error parsing tenant handle",
-			zap.Error(err),
-			zap.String("tenantID", tenant))
-		return nil, apperr.NewUnauthorized("invalid tenant")
+		zap.L().Error("could not get sub claim from token",
+			zap.String("clientID", string(cid)),
+			zap.Error(err))
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	return &Subject{
-		Cid:         cid,
-		AccessToken: tok,
-		Username:    username,
-		Groups:      groups,
-		Roles:       roles,
-		Th:          th,
+		Cid:               cid,
+		AccessToken:       tok,
+		Username:          username,
+		Groups:            groups,
+		Roles:             roles,
+		TenantID:          tenantID,
+		SubID:             subID,
+		ImpersonateTenant: uuidClaim(tok, authx.CustomImpersonateTenantClaim),
+		ImpersonateGroup:  stringClaim(tok, authx.CustomImpersonateGroupClaim),
+		ImpersonateEmail:  stringClaim(tok, authx.CustomImpersonateEmailClaim),
+		ImpersonateSub:    uuidClaim(tok, authx.CustomImpersonateSubClaim),
 	}, nil
+}
+
+func uuidClaim(tok *jwt.Token, key string) uuid.UUID {
+	id, err := jwx.GetClaimString(tok, key)
+	if err != nil {
+		if !apperr.IsNotFound(err) {
+			zap.L().Error("could not get claim",
+				zap.String("key", key),
+				zap.Error(err))
+		}
+		return uuid.Nil
+	}
+	u, err := uuid.Parse(id)
+	if err != nil {
+		zap.L().Error("could not parse UUID",
+			zap.String("key", key),
+			zap.String("value", id),
+			zap.Error(err))
+		return uuid.Nil
+	}
+	return u
+}
+
+func stringClaim(tok *jwt.Token, key string) string {
+	v, err := jwx.GetClaimString(tok, key)
+	if err != nil {
+		if !apperr.IsNotFound(err) {
+			zap.L().Error("could not get claim",
+				zap.String("key", key),
+				zap.Error(err))
+		}
+		return ""
+	}
+	return v
 }

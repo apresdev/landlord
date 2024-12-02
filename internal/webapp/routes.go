@@ -10,9 +10,6 @@ import (
 
 	"github.com/apresdev/landlord/internal/perms"
 
-	"github.com/apresdev/landlord/internal/multi"
-	"github.com/golang-jwt/jwt/v5"
-
 	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/google/uuid"
@@ -127,6 +124,7 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	// They utilize the setupAuthContext middleware to ensure that the token is valid.
 	auth.GET("/admin/dashboard", handleAdminDashboard)
 	auth.GET("/admin/dashboard-error", handleAdminDashboardError)
+	auth.POST("/admin/clear-impersonation", handleAdminClearImpersonation)
 	auth.GET("/admin/tenants", handleAdminTenants)
 	auth.GET("/admin/tenant-select", handleAdminTenantSelect)
 	auth.GET("/admin/tenants/new", handleAdminNewTenant)
@@ -149,6 +147,7 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	auth.POST("/admin/tenants/:tenantID/users/:userID/mfa/enable", handleAdminEnableMFASubmit)
 	auth.POST("/admin/tenants/:tenantID/users/:userID/mfa/disable", handleAdminDisableMFASubmit)
 	auth.POST("/admin/tenants/:tenantID/users/:userID/reinvite", handleAdminReInviteUserSubmit)
+	auth.POST("/admin/tenants/:tenantID/users/:userID/impersonate", handleAdminImpersonateUserSubmit)
 	auth.POST("/admin/tenants/:tenantID/roles", handleAdminAddRoleSubmit)
 	auth.DELETE("/admin/tenants/:tenantID/roles/:role", handleAdminDeleteRoleSubmit)
 	auth.GET("/admin/tenants/:tenantID/users/:userID", handleAdminUser)
@@ -245,48 +244,6 @@ func setupAuthContext(app App) gin.HandlerFunc {
 		c.Set(perms.TenantIDKey, ten.ID.String())
 		c.Next()
 	}
-}
-
-// CurrentUser represents the current logged-in user.
-type CurrentUser struct {
-	CID    jwx.OpaqueClientID
-	Tenant *multi.Tenant
-	User   *multi.User
-}
-
-func resolveCurrentUser(a App, c *gin.Context) (*CurrentUser, error) {
-	cid := clientID(c)
-	t, ok := c.Get(perms.TokenKey)
-	if !ok {
-		zap.L().Error("no token found",
-			zap.String("clientID", string(cid)))
-		return nil, apperr.NewUnauthorized("unauthorized")
-	}
-	tok, ok := t.(*jwt.Token)
-	if !ok {
-		zap.L().Error("could not convert token to *jwt.Token",
-			zap.String("clientID", string(cid)))
-		return nil, apperr.NewUnauthorized("unauthorized")
-	}
-	username, err := jwx.GetClaimString(tok, authx.EmailClaim)
-	if err != nil {
-		zap.L().Error("could not get username from token",
-			zap.String("clientID", string(cid)),
-			zap.Error(err))
-		return nil, apperr.NewUnauthorized("unauthorized")
-	}
-	user, ten, err := db.GetUserAndTenant(c.Request.Context(), a.DDB(), username)
-	if err != nil {
-		zap.L().Warn("error finding tenant for username",
-			zap.String("username", username),
-			zap.Error(err))
-		return nil, apperr.NewUnauthorized("unauthorized")
-	}
-	return &CurrentUser{
-		CID:    cid,
-		Tenant: ten,
-		User:   user,
-	}, nil
 }
 
 func appPath(s string) string {
