@@ -4,8 +4,6 @@
 
 package rest
 
-type ClearImpersonateResponse struct {
-	IdToken string `json:"idToken"`
-
-	AccessToken string `json:"accessToken"`
+type ClearImpersonationRequest struct {
+	RefreshToken string `json:"refreshToken"`
 }

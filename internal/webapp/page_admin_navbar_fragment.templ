@@ -1,6 +1,6 @@
 package webapp
 
-templ navBarFragment(currentUser *CurrentUser) {
+templ navBarFragment(sub *DisplayableSubject) {
 <div class="nav-bar">
     <div class="nav-left">
         <ul>
@@ -24,13 +24,18 @@ templ navBarFragment(currentUser *CurrentUser) {
         </ul>
     </div>
     <div class="nav-right">
-        if currentUser != nil {
+        if sub != nil {
             <div class="profile">
+                if sub.IsImpersonating() {
+                    <a href="/ll-auth/app/admin/profile">
+                        { sub.ImpersonationName() }
+                    </a>
+                }
                 <a href="/ll-auth/app/admin/profile">
-                    { currentUser.User.Username }
+                    { sub.Username() }
                 </a>
-                <a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + currentUser.Tenant.ID.String()) }>
-                    { currentUser.Tenant.Name }
+                <a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + sub.TenantID().String()) }>
+                    { sub.TenantName() }
                 </a>
                 <a href="/ll-auth/app/admin/profile">Profile</a>
                 <a href="/ll-auth/app/logout">Logout</a>

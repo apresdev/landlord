@@ -37,10 +37,10 @@ func getRoutes() []Route {
 			ginCancelInvitation,
 		},
 		{
-			"ClearImpersonate",
+			"ClearImpersonation",
 			http.MethodPost,
-			"/ll-auth/api/clear-impersonate",
-			ginClearImpersonate,
+			"/ll-auth/api/clear-impersonation",
+			ginClearImpersonation,
 		},
 		{
 			"CreateTenant",

@@ -1689,20 +1689,20 @@
         }
       }
     },
-    "/ll-auth/api/clear-impersonate": {
+    "/ll-auth/api/clear-impersonation": {
       "post": {
-        "operationId": "ClearImpersonate",
+        "operationId": "ClearImpersonation",
         "summary": "Clear any impersonation for the current user.",
         "tags": [
           "Auth"
         ],
         "parameters": [],
         "requestBody": {
-          "$ref": "#/components/requestBodies/ClearImpersonateRequest"
+          "$ref": "#/components/requestBodies/ClearImpersonationRequest"
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/ClearImpersonateResponse"
+            "$ref": "#/components/responses/ClearImpersonationResponse"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -1727,7 +1727,7 @@
           "connectionType": "VPC_LINK",
           "httpMethod": "any",
           "type": "http_proxy",
-          "uri": "${nlb_uri}/ll-auth/api/clear-impersonate",
+          "uri": "${nlb_uri}/ll-auth/api/clear-impersonation",
           "payloadFormatVersion": "1.0",
           "requestParameters": {}
         }
@@ -2027,12 +2027,12 @@
           }
         }
       },
-      "ClearImpersonateRequest": {
+      "ClearImpersonationRequest": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ClearImpersonateRequest"
+              "$ref": "#/components/schemas/ClearImpersonationRequest"
             }
           }
         }
@@ -2222,12 +2222,12 @@
           }
         }
       },
-      "ClearImpersonateResponse": {
+      "ClearImpersonationResponse": {
         "description": "Clear any impersonation",
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ClearImpersonateResponse"
+              "$ref": "#/components/schemas/ClearImpersonationResponse"
             }
           }
         }
@@ -2854,7 +2854,7 @@
           }
         }
       },
-      "ClearImpersonateRequest": {
+      "ClearImpersonationRequest": {
         "type": "object",
         "required": [
           "refreshToken"
@@ -2865,7 +2865,7 @@
           }
         }
       },
-      "ClearImpersonateResponse": {
+      "ClearImpersonationResponse": {
         "type": "object",
         "required": [
           "idToken",

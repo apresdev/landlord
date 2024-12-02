@@ -1,6 +1,5 @@
 # TODOs
 
-* affordance for impersonate and clear impersonate
 * move terraform to apres-terraform in `apps/aws` -- a new directory that
 contains terraform for apps like landlord
 * BUG: styling for builtin UI for CSH
@@ -14,7 +13,6 @@ spot in the UI that forces a logout and then redirects back to the login page.
 * invitation email could look better
 * handle the "remember me" flag on login
 * encode username as base64 in APIs when used in the URL
-* add ability to give a cross-tenant impersonation permission
 * how to handle abuse of the unauthenticated landlord APIs?
     * what does the WAF do to help here?
 * apply handling

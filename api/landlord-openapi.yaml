@@ -562,18 +562,18 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-  /ll-auth/api/clear-impersonate:
+  /ll-auth/api/clear-impersonation:
     post:
-      operationId: ClearImpersonate
+      operationId: ClearImpersonation
       summary: Clear any impersonation for the current user.
       tags:
         - Auth
       parameters: [ ]
       requestBody:
-        $ref: "#/components/requestBodies/ClearImpersonateRequest"
+        $ref: "#/components/requestBodies/ClearImpersonationRequest"
       responses:
         "200":
-          $ref: '#/components/responses/ClearImpersonateResponse'
+          $ref: '#/components/responses/ClearImpersonationResponse'
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -698,12 +698,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ImpersonateUserRequest'
-    ClearImpersonateRequest:
+    ClearImpersonationRequest:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ClearImpersonateRequest'
+            $ref: '#/components/schemas/ClearImpersonationRequest'
     SetNewPasswordRequest:
       required: true
       content:
@@ -816,12 +816,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ImpersonateResponse'
-    ClearImpersonateResponse:
+    ClearImpersonationResponse:
       description: Clear any impersonation
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ClearImpersonateResponse'
+            $ref: '#/components/schemas/ClearImpersonationResponse'
     RecoverPasswordResponse:
       description: A response for a successful initiation of a password recovery
       content:
@@ -1223,15 +1223,14 @@ components:
           type: string
         accessToken:
           type: string
-    ClearImpersonateRequest:
+    ClearImpersonationRequest:
       type: object
       required:
         - refreshToken
       properties:
         refreshToken:
           type: string
-
-    ClearImpersonateResponse:
+    ClearImpersonationResponse:
       type: object
       required:
         - idToken

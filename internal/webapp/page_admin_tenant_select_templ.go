@@ -71,7 +71,7 @@ func tenantSelectFragment(tenant *multi.Tenant, tab string) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(tenant.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant_select.templ`, Line: 11, Col: 115}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant_select.templ`, Line: 12, Col: 115}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -84,7 +84,7 @@ func tenantSelectFragment(tenant *multi.Tenant, tab string) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(tenant.Description)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant_select.templ`, Line: 12, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_tenant_select.templ`, Line: 13, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -98,7 +98,7 @@ func tenantSelectFragment(tenant *multi.Tenant, tab string) templ.Component {
 	})
 }
 
-func tenantSelectPage(appName string, currentUser *CurrentUser, tenants []*multi.Tenant, tab string) templ.Component {
+func tenantSelectPage(appName string, sub *DisplayableSubject, tenants []*multi.Tenant, tab string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -131,7 +131,7 @@ func tenantSelectPage(appName string, currentUser *CurrentUser, tenants []*multi
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = navBarFragment(currentUser).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = navBarFragment(sub).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

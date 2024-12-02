@@ -296,29 +296,29 @@ func (a *AuthAPIService) CancelInvitationExecute(r ApiCancelInvitationRequest) (
 	return localVarHTTPResponse, nil
 }
 
-type ApiClearImpersonateRequest struct {
-	ctx                     context.Context
-	ApiService              *AuthAPIService
-	clearImpersonateRequest *ClearImpersonateRequest
+type ApiClearImpersonationRequest struct {
+	ctx                       context.Context
+	ApiService                *AuthAPIService
+	clearImpersonationRequest *ClearImpersonationRequest
 }
 
-func (r ApiClearImpersonateRequest) ClearImpersonateRequest(clearImpersonateRequest ClearImpersonateRequest) ApiClearImpersonateRequest {
-	r.clearImpersonateRequest = &clearImpersonateRequest
+func (r ApiClearImpersonationRequest) ClearImpersonationRequest(clearImpersonationRequest ClearImpersonationRequest) ApiClearImpersonationRequest {
+	r.clearImpersonationRequest = &clearImpersonationRequest
 	return r
 }
 
-func (r ApiClearImpersonateRequest) Execute() (*ClearImpersonateResponse, *http.Response, error) {
-	return r.ApiService.ClearImpersonateExecute(r)
+func (r ApiClearImpersonationRequest) Execute() (*ClearImpersonationResponse, *http.Response, error) {
+	return r.ApiService.ClearImpersonationExecute(r)
 }
 
 /*
-ClearImpersonate Clear any impersonation for the current user.
+ClearImpersonation Clear any impersonation for the current user.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiClearImpersonateRequest
+	@return ApiClearImpersonationRequest
 */
-func (a *AuthAPIService) ClearImpersonate(ctx context.Context) ApiClearImpersonateRequest {
-	return ApiClearImpersonateRequest{
+func (a *AuthAPIService) ClearImpersonation(ctx context.Context) ApiClearImpersonationRequest {
+	return ApiClearImpersonationRequest{
 		ApiService: a,
 		ctx:        ctx,
 	}
@@ -326,27 +326,27 @@ func (a *AuthAPIService) ClearImpersonate(ctx context.Context) ApiClearImpersona
 
 // Execute executes the request
 //
-//	@return ClearImpersonateResponse
-func (a *AuthAPIService) ClearImpersonateExecute(r ApiClearImpersonateRequest) (*ClearImpersonateResponse, *http.Response, error) {
+//	@return ClearImpersonationResponse
+func (a *AuthAPIService) ClearImpersonationExecute(r ApiClearImpersonationRequest) (*ClearImpersonationResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue *ClearImpersonateResponse
+		localVarReturnValue *ClearImpersonationResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.ClearImpersonate")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AuthAPIService.ClearImpersonation")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ll-auth/api/clear-impersonate"
+	localVarPath := localBasePath + "/ll-auth/api/clear-impersonation"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.clearImpersonateRequest == nil {
-		return localVarReturnValue, nil, reportError("clearImpersonateRequest is required and must be specified")
+	if r.clearImpersonationRequest == nil {
+		return localVarReturnValue, nil, reportError("clearImpersonationRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -367,7 +367,7 @@ func (a *AuthAPIService) ClearImpersonateExecute(r ApiClearImpersonateRequest) (
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.clearImpersonateRequest
+	localVarPostBody = r.clearImpersonationRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
