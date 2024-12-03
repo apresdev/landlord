@@ -33,7 +33,7 @@ func handleGetRolesForTenant(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewNotFoundE(err)
 	}
-	if !perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, sub.Roles) {
+	if !perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, sub.Role) {
 		zap.L().Info("user not unauthorized for tenant",
 			zap.String("clientID", string(sub.Cid)),
 			zap.String("username", sub.Username),

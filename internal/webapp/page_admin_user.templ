@@ -1,21 +1,14 @@
 package webapp
 
 import "github.com/apresdev/landlord/internal/multi"
-import "github.com/apresdev/landlord/internal/perms"
 
 const userPageTitle = "User"
 
-templ userSummary(
-    appName string,
-    sub *DisplayableSubject,
+templ userSummaryCard(
+    tenant *multi.Tenant,
     user *multi.User,
-    userCognitoURL string,
-    tenant *multi.Tenant) {
-<!DOCTYPE html>
-<html lang="en">
-@headerFragment(appName, userPageTitle)
-<body>
-    @navBarFragment(sub)
+    cogUser *DisplayableCognitoUser) {
+
     <div class="container">
         <div class="card">
             <div class="card-header">
@@ -36,14 +29,14 @@ templ userSummary(
                     <div class="field">
                         <span class="label">Cognito User ID</span>
                         <span class="value">
-                            <a href={ templ.SafeURL(userCognitoURL) } target="_blank">{ user.ID.String() }</a>
+                            <a href={ templ.SafeURL(cogUser.cogURL) } target="_blank">{ user.ID.String() }</a>
                         </span>
                     </div>
                 </div>
 
                 <!-- Column 2 -->
                 <div class="column">
-                    <h3>Roles</h3>
+                    <h3>Role</h3>
                     <div class="field">
                         <span class="label">Tenant</span>
                         <span class="value">
@@ -51,12 +44,16 @@ templ userSummary(
                         </span>
                     </div>
                     <div class="field">
-                        <span class="label">Roles</span>
+                        <span class="label">Role</span>
                         <span class="value">{ user.Role }</span>
                     </div>
                     <div class="field">
                         <span class="label">Impersonation</span>
-                        <span class="value">None</span>
+                        if cogUser.IsImpersonating() {
+                            <span class="value">{ cogUser.ImpersonationName() }</span>
+                        } else {
+                            <span class="value">None</span>
+                        }
                     </div>
                 </div>
 
@@ -75,6 +72,20 @@ templ userSummary(
             </div>
         </div>
     </div>
+}
+
+templ userSummary(
+    appName string,
+    sub *DisplayableSubject,
+    tenant *multi.Tenant,
+    user *multi.User,
+    cogUser *DisplayableCognitoUser) {
+<!DOCTYPE html>
+<html lang="en">
+@headerFragment(appName, userPageTitle)
+<body>
+    @navBarFragment(sub)
+    @userSummaryCard(tenant, user, cogUser)
 </body>
 </html>
 }

@@ -11,7 +11,6 @@ contains terraform for apps like landlord
 * in the URL we send for signing up a new account, make the URL navigate to a
 spot in the UI that forces a logout and then redirects back to the login page.
 * invitation email could look better
-* handle the "remember me" flag on login
 * encode username as base64 in APIs when used in the URL
 * how to handle abuse of the unauthenticated landlord APIs?
     * what does the WAF do to help here?
@@ -26,11 +25,8 @@ spot in the UI that forces a logout and then redirects back to the login page.
 * add IP address and device-fingerprinting data to signups:
   https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-adaptive-authentication.html#user-pool-settings-adaptive-authentication-device-fingerprint
 * UI
-  * grab details from the user pool and user pool client to show in UI
   * friendly timestamp in frontend -- normalize to browser time
   * many htmx routes that are just HTML can be unauthorized routes #perf
-  * sort jwt claims in the profile view, they are a map, so in display
-    it's worth showing them in alphabetical order instead of random
   * add affordance to display a token in the UI given its base64 form
   * general styling improvements for the htmx version
     * add password fields that have the little eyeball to reveal the password

@@ -12,12 +12,9 @@ import (
 	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/db"
-	"github.com/apresdev/landlord/internal/jwx"
 	"github.com/apresdev/landlord/internal/multi"
 	"github.com/apresdev/landlord/internal/rest"
 	"github.com/apresdev/landlord/internal/tinytools"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/google/uuid"
 
 	"github.com/a-h/templ"
@@ -159,7 +156,7 @@ func handleAdminTenantSelect(a App, c *gin.Context) error {
 	}
 	authorizedTenants := make([]*multi.Tenant, 0)
 	for _, ten := range tens {
-		if perms.IsAuthorizedToReadTenant(a.RootTenantID(), ten, sub.Roles) {
+		if perms.IsAuthorizedToReadTenant(a.RootTenantID(), ten, sub.Role) {
 			authorizedTenants = append(authorizedTenants, ten)
 		}
 	}
@@ -734,60 +731,79 @@ func handleAdminUser(a App, c *gin.Context) error {
 		return apperr.NewNotFoundE(
 			fmt.Errorf("error getting user: %w", err))
 	}
-
-	cogU, err := a.CogIdp().AdminGetUser(c.Request.Context(), &cognitoidentityprovider.AdminGetUserInput{
-		UserPoolId: aws.String(ten.UserPoolID),
-		Username:   aws.String(u.Username),
-	})
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+	cogUser, err := NewDisplayableCognitoUser(
+		c.Request.Context(), a, ten.UserPoolID, u.ID.String())
 	if err != nil {
 		return apperr.NewInternalE(
-			fmt.Errorf("error getting user from Cognito: %w", err))
+			fmt.Errorf("error getting cognito user: %w", err))
 	}
-	_ = cogU
-
-	cogURL := authx.CognitoUserDetailsURL(a.Cfg().Region, ten.UserPoolID, u.ID.String())
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	return render(c, userSummary(a.Settings().AppName(), ds, u, cogURL, ten))
+	return render(c, userSummary(a.Settings().AppName(), ds, ten, u, cogUser))
 }
 
 func handleAdminProfile(a App, c *gin.Context) error {
-	var rawTokens jwx.RawTokens
-	rawTokens.IdToken, _ = c.Cookie(LandlordIDTokenCookie)
-	rawTokens.AccessToken, _ = c.Cookie(LandlordAccessTokenCookie)
-	rawTokens.RefreshToken, _ = c.Cookie(LandlordRefreshTokenCookie)
-	if rawTokens.IdToken == "" || rawTokens.AccessToken == "" || rawTokens.RefreshToken == "" {
-		redirectToLogin(c)
-		return nil
-	}
-	username, _ := c.Cookie(LandlordUsernameCookie)
-	if username == "" {
-		redirectToLogin(c)
-		return nil
-	}
-	_, tenant, err := db.GetUserAndTenant(c.Request.Context(), a.DDB(), username)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
-		zap.L().Warn("error finding tenant for username",
-			zap.String("username", username),
-			zap.Error(err))
 		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
 		return nil
 	}
-	validationURL := jwx.ValidationURL(a.Cfg().Region, tenant.UserPoolID)
-	tks, err := jwx.ValidateAllTokens(
-		c.Request.Context(), clientID(c), a.Validator(), validationURL, rawTokens)
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+	return render(c, profilePage(a.Settings().AppName(), ds, string(profileTabSummary)))
+}
+
+type profileTab string
+
+const (
+	profileTabSummary     profileTab = "summary"
+	profileTabAccessToken profileTab = "access-token"
+)
+
+var profileTabs = []profileTab{profileTabSummary, profileTabAccessToken}
+
+func newProfileTab(s string) profileTab {
+	if s == "" {
+		return profileTabSummary
+	}
+	switch s {
+	case "summary":
+		return profileTabSummary
+	case "access-token":
+		return profileTabAccessToken
+	default:
+		zap.L().Info("bad value for profile tab", zap.String("tab", s))
+		return profileTabSummary
+	}
+}
+
+func handleAdminProfileTab(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
+		clearLandlordCookies(c, a.Settings().URL())
 		redirectToLogin(c)
-		return err
+		return nil
 	}
 
-	idTokDesc, err := jwx.Describe("ID Token", tks.IdToken)
-	if err != nil {
-		return err
+	tab := newProfileTab(c.Param("tab"))
+	switch tab {
+	case profileTabSummary:
+		subTenant, err := sub.ResolveTenant(c.Request.Context(), a)
+		if err != nil {
+			return err
+		}
+		subUser, err := sub.ResolveUser(c.Request.Context(), a)
+		if err != nil {
+			return err
+		}
+		cog, err := NewDisplayableCognitoUser(
+			c.Request.Context(), a, subTenant.UserPoolID, subUser.ID.String())
+		return render(c, profileSummaryTab(subTenant, subUser, cog))
+	case profileTabAccessToken:
+		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+		dt := NewDisplayableJWT("Access Token", sub.AccessToken)
+		return render(c, profileTokenTab(profileTabAccessToken, ds, dt))
+	default:
+		zap.L().Info("unknown profile tab", zap.String("tab", string(tab)))
 	}
-	accessTokDesc, err := jwx.Describe("Access Token", tks.AccessToken)
-	if err != nil {
-		return err
-	}
-	return render(c, displayJWTPage(idTokDesc, accessTokDesc))
+	return nil
 }

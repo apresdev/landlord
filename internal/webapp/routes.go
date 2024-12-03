@@ -152,6 +152,7 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	auth.DELETE("/admin/tenants/:tenantID/roles/:role", handleAdminDeleteRoleSubmit)
 	auth.GET("/admin/tenants/:tenantID/users/:userID", handleAdminUser)
 	auth.GET("/admin/profile", handleAdminProfile)
+	auth.GET("/admin/profile/:tab", handleAdminProfileTab)
 
 	// In dev mode, we serve the static files from the local filesystem to make
 	// hot reloading easier during dev. In the production build, we serve via the

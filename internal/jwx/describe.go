@@ -2,6 +2,7 @@ package jwx
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -37,8 +38,13 @@ func Describe(tokName string, tok *jwt.Token) (string, error) {
 		sb.WriteString(fmt.Sprintf("    Subject: %s\n", subject))
 		if claims, ok := tok.Claims.(jwt.MapClaims); ok {
 			sb.WriteString("    Claims:\n")
-			for k, v := range claims {
-				sb.WriteString(fmt.Sprintf("      %s: %v\n", k, v))
+			keys := make([]string, 0, len(claims))
+			for k := range claims {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			for _, k := range keys {
+				sb.WriteString(fmt.Sprintf("      %s: %v\n", k, claims[k]))
 			}
 		}
 	}
