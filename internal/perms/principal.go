@@ -31,7 +31,7 @@ type Subject struct {
 	AccessToken       *jwt.Token
 	Username          string
 	Groups            []string
-	Roles             *multi.Roles
+	Role              *multi.Role
 	TenantID          uuid.UUID
 	SubID             uuid.UUID
 	ImpersonateTenant uuid.UUID
@@ -115,6 +115,20 @@ func SubjectFromContext(ctx context.Context) (*Subject, error) {
 			zap.Any("groups", groups))
 		return nil, apperr.NewUnauthorized("no groups")
 	}
+	if len(roles.Roles) == 0 {
+		zap.L().Error("no roles found",
+			zap.String("clientID", string(cid)),
+			zap.Any("groups", groups))
+		return nil, apperr.NewUnauthorized("no roles")
+	}
+	if len(roles.Roles) > 1 {
+		zap.L().Info("more than one role found, using first",
+			zap.String("clientID", string(cid)),
+			zap.Any("groups", groups),
+			zap.String("first-role", roles.Roles[0].String()))
+	}
+	role := roles.Roles[0]
+
 	username, err := jwx.GetClaimString(tok, authx.EmailClaim)
 	if err != nil {
 		zap.L().Error("could not get username from token",
@@ -141,7 +155,7 @@ func SubjectFromContext(ctx context.Context) (*Subject, error) {
 		AccessToken:       tok,
 		Username:          username,
 		Groups:            groups,
-		Roles:             roles,
+		Role:              role,
 		TenantID:          tenantID,
 		SubID:             subID,
 		ImpersonateTenant: uuidClaim(tok, authx.CustomImpersonateTenantClaim),

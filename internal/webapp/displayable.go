@@ -3,7 +3,18 @@ package webapp
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+
+	"github.com/apresdev/landlord/internal/jwx"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/db"
@@ -108,6 +119,83 @@ func (du *DisplayableUser) SubjectCanImpersonate() bool {
 	return du.subjectCanImpersonate
 }
 
+type DisplayableCognitoUser struct {
+	ctx    context.Context
+	app    App
+	o      *cognitoidentityprovider.AdminGetUserOutput
+	cogURL string
+}
+
+func NewDisplayableCognitoUser(
+	ctx context.Context,
+	app App,
+	userPoolID string,
+	username string) (*DisplayableCognitoUser, error) {
+
+	o, err := app.CogIdp().AdminGetUser(ctx, &cognitoidentityprovider.AdminGetUserInput{
+		UserPoolId: aws.String(userPoolID),
+		Username:   aws.String(username),
+	})
+	if err != nil {
+		return nil, err
+	}
+	cogURL := authx.CognitoUserDetailsURL(
+		app.Cfg().Region, userPoolID, aws.ToString(o.Username))
+
+	return &DisplayableCognitoUser{ctx: ctx, app: app, o: o, cogURL: cogURL}, nil
+}
+
+func (dcu *DisplayableCognitoUser) IsImpersonating() bool {
+	for _, attr := range dcu.o.UserAttributes {
+		if aws.ToString(attr.Name) == authx.CustomImpersonateTenantClaim {
+			return true
+		}
+	}
+	return false
+}
+
+func (dcu *DisplayableCognitoUser) ImpersonationName() string {
+	impersonateEmail := ""
+	impersonateTenant := ""
+	impersonateRole := ""
+	for _, attr := range dcu.o.UserAttributes {
+		if aws.ToString(attr.Name) == authx.CustomImpersonateGroupClaim {
+			role, err := authx.ParseRoleFromGroup(aws.ToString(attr.Value))
+			if err != nil {
+				zap.L().Error("error parsing role from group",
+					zap.String("group", aws.ToString(attr.Value)),
+					zap.Error(err))
+				return "error"
+			}
+			impersonateRole = role.Name
+		}
+		if aws.ToString(attr.Name) == authx.CustomImpersonateEmailClaim {
+			impersonateEmail = aws.ToString(attr.Value)
+		}
+		if aws.ToString(attr.Name) == authx.CustomImpersonateTenantClaim {
+			impersonateTenantID := aws.ToString(attr.Value)
+			impersonateTenantUUID, err := uuid.Parse(impersonateTenantID)
+			if err != nil {
+				zap.L().Error("error parsing tenant ID",
+					zap.String("tenantID", impersonateTenantID),
+					zap.Error(err))
+				impersonateTenant = "error"
+			} else {
+				ten, err := db.GetTenantByID(dcu.ctx, dcu.app.DDB(), impersonateTenantUUID)
+				if err != nil {
+					zap.L().Error("error resolving tenant",
+						zap.String("tenantID", impersonateTenantID),
+						zap.Error(err))
+					impersonateTenant = "error"
+				} else {
+					impersonateTenant = ten.Name
+				}
+			}
+		}
+	}
+	return fmt.Sprintf("%s | %s | %s", impersonateEmail, impersonateRole, impersonateTenant)
+}
+
 // DisplayableSubject wraps a perms.Subject and provides convenience methods
 // for displaying a subject in a web page.
 type DisplayableSubject struct {
@@ -128,6 +216,20 @@ func (ds *DisplayableSubject) Username() string {
 		return ""
 	}
 	return ds.sub.Username
+}
+
+func (ds *DisplayableSubject) CognitoSubID() uuid.UUID {
+	if ds.sub == nil {
+		return uuid.Nil
+	}
+	return ds.sub.SubID
+}
+
+func (ds *DisplayableSubject) RoleName() string {
+	if ds.sub == nil && ds.sub.Role != nil {
+		return "unknown"
+	}
+	return ds.sub.Role.Name
 }
 
 // TenantID returns the tenant ID of the wrapped subject or uuid.Nil
@@ -202,4 +304,58 @@ func (ds *DisplayableSubject) IsImpersonatingUser(du *DisplayableUser) bool {
 // IsUser returns true if the wrapped subject is the given user.
 func (ds *DisplayableSubject) IsUser(du *DisplayableUser) bool {
 	return ds.sub != nil && ds.sub.SubID == du.User.ID
+}
+
+// CreatedAt returns the creation timestamp of the wrapped subject or "unknown"
+func (ds *DisplayableSubject) CreatedAt() string {
+	if ds.sub == nil {
+		return "unknown"
+	}
+	user, err := ds.sub.ResolveUser(ds.ctx, ds.app)
+	if err != nil {
+		zap.L().Error("error resolving user",
+			zap.String("username", ds.sub.Username),
+			zap.Error(err))
+		return "unknown"
+	}
+	return user.CreatedAt
+}
+
+// State returns the status of the wrapped subject or "unknown"
+func (ds *DisplayableSubject) State() string {
+	if ds.sub == nil {
+		return "unknown"
+	}
+	user, err := ds.sub.ResolveUser(ds.ctx, ds.app)
+	if err != nil {
+		zap.L().Error("error resolving user",
+			zap.String("username", ds.sub.Username),
+			zap.Error(err))
+		return "unknown"
+	}
+	return user.Status.String()
+}
+
+type DisplayableJWT struct {
+	TokenName string
+	JWT       *jwt.Token
+}
+
+func NewDisplayableJWT(name string, token *jwt.Token) *DisplayableJWT {
+	return &DisplayableJWT{TokenName: name, JWT: token}
+}
+
+func (dj *DisplayableJWT) RawDescription() string {
+	rawDesc, err := jwx.Describe(dj.TokenName, dj.JWT)
+	if err != nil {
+		zap.L().Error("error describing token", zap.Error(err))
+		return "invalid-token"
+	}
+	return rawDesc
+}
+
+func titleDisplay(s string) string {
+	s = cases.Title(language.English).String(s)
+	s = strings.ReplaceAll(s, "_", " ")
+	return strings.ReplaceAll(s, "-", " ")
 }

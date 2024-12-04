@@ -222,18 +222,13 @@ func IsRoleAuthorizedForTenant(
 func IsAuthorizedToReadTenant(
 	rootTenantID uuid.UUID,
 	ten *multi.Tenant,
-	roles *multi.Roles) bool {
+	role *multi.Role) bool {
 
-	if ten == nil || roles == nil {
-		zap.L().Error("expected non-nil tenant and roles",
-			zap.Any("tenant", ten), zap.Any("roles", roles))
+	if ten == nil || role == nil {
+		zap.L().Error("expected non-nil tenant and role",
+			zap.Any("tenant", ten), zap.Any("role", role))
 		return false
 	}
 
-	for _, role := range roles.Roles {
-		if IsRoleAuthorizedForTenant(rootTenantID, ten, role) {
-			return true
-		}
-	}
-	return false
+	return IsRoleAuthorizedForTenant(rootTenantID, ten, role)
 }
