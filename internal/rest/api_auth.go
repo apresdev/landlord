@@ -118,6 +118,11 @@ func ginUpdateUserMFA(c *gin.Context) {
 	callImpl(c, handleUpdateUserMFA)
 }
 
+// UpdateUserProfileFields - Set a user's profile fields
+func ginUpdateUserProfileFields(c *gin.Context) {
+	callImpl(c, handleUpdateUserProfileFields)
+}
+
 // UpdateUserRole - Update a user's role.
 func ginUpdateUserRole(c *gin.Context) {
 	callImpl(c, handleUpdateUserRole)

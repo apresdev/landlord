@@ -15,10 +15,11 @@ var _ MappedNullable = &TenantUsersResponseUsersInner{}
 
 // TenantUsersResponseUsersInner struct for TenantUsersResponseUsersInner
 type TenantUsersResponseUsersInner struct {
-	Username  string `json:"username"`
-	Role      string `json:"role"`
-	Status    string `json:"status"`
-	CognitoID string `json:"cognitoID"`
+	Username  string               `json:"username"`
+	Role      string               `json:"role"`
+	Status    string               `json:"status"`
+	CognitoID string               `json:"cognitoID"`
+	Fields    []ProfileFormatField `json:"fields,omitempty"`
 }
 
 type _TenantUsersResponseUsersInner TenantUsersResponseUsersInner
@@ -140,6 +141,38 @@ func (o *TenantUsersResponseUsersInner) SetCognitoID(v string) {
 	o.CognitoID = v
 }
 
+// GetFields returns the Fields field value if set, zero value otherwise.
+func (o *TenantUsersResponseUsersInner) GetFields() []ProfileFormatField {
+	if o == nil || IsNil(o.Fields) {
+		var ret []ProfileFormatField
+		return ret
+	}
+	return o.Fields
+}
+
+// GetFieldsOk returns a tuple with the Fields field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *TenantUsersResponseUsersInner) GetFieldsOk() ([]ProfileFormatField, bool) {
+	if o == nil || IsNil(o.Fields) {
+		return nil, false
+	}
+	return o.Fields, true
+}
+
+// HasFields returns a boolean if a field has been set.
+func (o *TenantUsersResponseUsersInner) HasFields() bool {
+	if o != nil && !IsNil(o.Fields) {
+		return true
+	}
+
+	return false
+}
+
+// SetFields gets a reference to the given []ProfileFormatField and assigns it to the Fields field.
+func (o *TenantUsersResponseUsersInner) SetFields(v []ProfileFormatField) {
+	o.Fields = v
+}
+
 func (o TenantUsersResponseUsersInner) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -154,6 +187,9 @@ func (o TenantUsersResponseUsersInner) ToMap() (map[string]interface{}, error) {
 	toSerialize["role"] = o.Role
 	toSerialize["status"] = o.Status
 	toSerialize["cognitoID"] = o.CognitoID
+	if !IsNil(o.Fields) {
+		toSerialize["fields"] = o.Fields
+	}
 	return toSerialize, nil
 }
 

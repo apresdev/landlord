@@ -4,7 +4,6 @@ import (
 	"github.com/apresdev/landlord/internal/appcore"
 	"github.com/apresdev/landlord/internal/jwx"
 	"github.com/golang-jwt/jwt/v5"
-
 	"github.com/spf13/cobra"
 )
 

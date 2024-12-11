@@ -756,10 +756,11 @@ type profileTab string
 
 const (
 	profileTabSummary     profileTab = "summary"
+	profileTabDetails     profileTab = "details"
 	profileTabAccessToken profileTab = "access-token"
 )
 
-var profileTabs = []profileTab{profileTabSummary, profileTabAccessToken}
+var profileTabs = []profileTab{profileTabSummary, profileTabDetails, profileTabAccessToken}
 
 func newProfileTab(s string) profileTab {
 	if s == "" {
@@ -768,6 +769,8 @@ func newProfileTab(s string) profileTab {
 	switch s {
 	case "summary":
 		return profileTabSummary
+	case "details":
+		return profileTabDetails
 	case "access-token":
 		return profileTabAccessToken
 	default:
@@ -787,17 +790,35 @@ func handleAdminProfileTab(a App, c *gin.Context) error {
 	tab := newProfileTab(c.Param("tab"))
 	switch tab {
 	case profileTabSummary:
-		subTenant, err := sub.ResolveTenant(c.Request.Context(), a)
+		subjectTenant, err := sub.ResolveTenant(c.Request.Context(), a)
 		if err != nil {
 			return err
 		}
-		subUser, err := sub.ResolveUser(c.Request.Context(), a)
+		subjectUser, err := sub.ResolveUser(c.Request.Context(), a)
 		if err != nil {
 			return err
 		}
 		cog, err := NewDisplayableCognitoUser(
-			c.Request.Context(), a, subTenant.UserPoolID, subUser.ID.String())
-		return render(c, profileSummaryTab(subTenant, subUser, cog))
+			c.Request.Context(), a, subjectTenant.UserPoolID, subjectUser.ID.String())
+		if err != nil {
+			return err
+		}
+		return render(c, profileSummaryTab(subjectTenant, subjectUser, cog))
+	case profileTabDetails:
+		subjectTenant, err := sub.ResolveTenant(c.Request.Context(), a)
+		if err != nil {
+			return err
+		}
+		subjectUser, err := sub.ResolveUser(c.Request.Context(), a)
+		if err != nil {
+			return err
+		}
+		cog, err := NewDisplayableCognitoUser(
+			c.Request.Context(), a, subjectTenant.UserPoolID, subjectUser.ID.String())
+		if err != nil {
+			return err
+		}
+		return render(c, profileSummaryTab(subjectTenant, subjectUser, cog))
 	case profileTabAccessToken:
 		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
 		dt := NewDisplayableJWT("Access Token", sub.AccessToken)
@@ -806,4 +827,99 @@ func handleAdminProfileTab(a App, c *gin.Context) error {
 		zap.L().Info("unknown profile tab", zap.String("tab", string(tab)))
 	}
 	return nil
+}
+
+func handleAdminFieldSubmit(a App, c *gin.Context) error {
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return err
+	}
+	userID, err := rest.UUIDParam(c, "userID")
+	if err != nil {
+		return err
+	}
+	fieldName := c.Query("fieldName")
+	fieldValue := c.PostForm("fieldValue")
+	req := rest.UpdateUserProfileFieldsRequest{}
+	req.Fields = append(req.Fields, rest.ProfileField{
+		Name:  fieldName,
+		Value: fieldValue,
+	})
+	err = rest.HandleUpdateUserProfileFields(a, c, tenantID, userID, req)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	defn := ten.GetProfileDefinition().GetFieldDefinition(fieldName)
+	if defn == nil {
+		return apperr.NewBadRequest("invalid field name: " + fieldName)
+	}
+	return render(c, profileFieldForm(tenantID, userID, defn, fieldValue))
+}
+
+func handleAdminFieldEditForm(a App, c *gin.Context) error {
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	userID, err := rest.UUIDParam(c, "userID")
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	fieldName := c.Query("fieldName")
+	if fieldName == "" {
+		return apperr.NewBadRequest("missing field name")
+	}
+	defn := ten.GetProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
+	if defn == nil {
+		return apperr.NewBadRequest("invalid field name: " + fieldName)
+	}
+	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
+	if err != nil {
+		zap.L().Error("error fetching user",
+			zap.Error(err),
+			zap.String("tenantID", tenantID.String()),
+			zap.String("userID", userID.String()))
+		return apperr.NewUnauthorized("not authorized")
+	}
+	return render(c, profileEditFieldForm(tenantID, userID, defn, targetUser.ProfileField(fieldName)))
+}
+
+func handleAdminFieldForm(a App, c *gin.Context) error {
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	userID, err := rest.UUIDParam(c, "userID")
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	fieldName := c.Query("fieldName")
+	if fieldName == "" {
+		return apperr.NewBadRequest("missing field name")
+	}
+	defn := ten.GetProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
+	if defn == nil {
+		return apperr.NewBadRequest("invalid field name: " + fieldName)
+	}
+	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
+	if err != nil {
+		zap.L().Error("error fetching user",
+			zap.Error(err),
+			zap.String("tenantID", tenantID.String()),
+			zap.String("userID", userID.String()))
+		return apperr.NewUnauthorized("not authorized")
+	}
+	return render(c, profileFieldForm(tenantID, userID, defn, targetUser.ProfileField(fieldName)))
 }

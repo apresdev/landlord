@@ -94,7 +94,7 @@ func (s *HandleSetRolesForTenantTestSuite) TestBadRoleNames() {
 	app.cogIdp.EXPECT().CreateGroup(mock.Anything, mock.Anything).Return(nil, nil)
 	err := handleSetRolesForTenant(app, gt.c)
 	s.Error(err)
-	s.Equal("role name must be all lowercase and contain only letters, numbers, and hyphens", err.Error())
+	s.Equal("role name must be all lowercase and contain only letters, numbers, underscores, and hyphens", err.Error())
 }
 
 func (s *HandleSetRolesForTenantTestSuite) TestSuccessAdd() {
