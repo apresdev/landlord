@@ -458,6 +458,40 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: [ ]
+  /ll-auth/api/tenants/{tenantID}/users/{userID}/profileFields:
+    post:
+      operationId: UpdateUserProfileFields
+      summary: Set a user's profile fields
+      tags:
+        - Auth
+      parameters:
+        - name: tenantID
+          in: path
+          required: true
+          description: The ID of the tenant to get users for.
+          schema:
+            type: string
+        - name: userID
+          in: path
+          required: true
+          description: The ID of the user to update.
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateUserProfileFieldsRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: [ ]
   /ll-auth/api/tenants/{tenantID}/invite:
     post:
       operationId: InviteToTenant
@@ -764,6 +798,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/UpdateUserMFARequest'
+    UpdateUserProfileFieldsRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateUserProfileFieldsRequest'
   responses:
     NoContent:
       description: |
@@ -1186,6 +1226,10 @@ components:
                   - active
               cognitoID:
                 type: string
+              fields:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfileFormatField'
     ImpersonateRoleRequest:
       type: object
       required:
@@ -1295,6 +1339,29 @@ components:
       x-enum-varnames:
         - MFAPolicyNone
         - MFAPolicyRequired
+    ProfileField:
+      type: object
+      required:
+        - name
+        - value
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+    ProfileFormatField:
+      type: object
+      required:
+        - name
+        - format
+        - value
+      properties:
+        name:
+          type: string
+        format:
+          type: string
+        value:
+          type: string
     InviteRequest:
       type: object
       required:
@@ -1350,3 +1417,10 @@ components:
       properties:
         mfaPolicy:
           $ref: '#/components/schemas/MFAPolicy'
+    UpdateUserProfileFieldsRequest:
+      type: object
+      properties:
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileField'

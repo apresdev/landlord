@@ -1353,6 +1353,116 @@
         }
       }
     },
+    "/ll-auth/api/tenants/{tenantID}/users/{userID}/profileFields": {
+      "post": {
+        "operationId": "UpdateUserProfileFields",
+        "summary": "Set a user's profile fields",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the user to update.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/UpdateUserProfileFieldsRequest"
+        },
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/users/{userID}/profileFields",
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {
+            "integration.request.path.tenantID": "method.request.path.tenantID",
+            "integration.request.path.userID": "method.request.path.userID"
+          }
+        }
+      },
+      "options": {
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the user to update.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
     "/ll-auth/api/tenants/{tenantID}/invite": {
       "post": {
         "operationId": "InviteToTenant",
@@ -2136,6 +2246,16 @@
             }
           }
         }
+      },
+      "UpdateUserProfileFieldsRequest": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UpdateUserProfileFieldsRequest"
+            }
+          }
+        }
       }
     },
     "responses": {
@@ -2794,6 +2914,12 @@
                 },
                 "cognitoID": {
                   "type": "string"
+                },
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProfileFormatField"
+                  }
                 }
               }
             }
@@ -2960,6 +3086,40 @@
           "MFAPolicyRequired"
         ]
       },
+      "ProfileField": {
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "ProfileFormatField": {
+        "type": "object",
+        "required": [
+          "name",
+          "format",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
       "InviteRequest": {
         "type": "object",
         "required": [
@@ -3038,6 +3198,17 @@
         "properties": {
           "mfaPolicy": {
             "$ref": "#/components/schemas/MFAPolicy"
+          }
+        }
+      },
+      "UpdateUserProfileFieldsRequest": {
+        "type": "object",
+        "properties": {
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileField"
+            }
           }
         }
       }

@@ -31,7 +31,7 @@ func navBarFragment(sub *DisplayableSubject) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"nav-bar\"><div class=\"nav-left\"><ul><li><a href=\"/ll-auth/app/admin/dashboard\"><img src=\"/ll-auth/app/static/favicon-32x32.png\" alt=\"Search\"></a></li><li><a href=\"/ll-auth/app/admin/dashboard\">Dashboard</a></li><li><a href=\"/ll-auth/app/admin/tenants\">Tenants</a></li><li><a href=\"/ll-auth/app/admin/tenant-select?action=manage-invites\">Invites</a></li><li><a href=\"/ll-auth/app/admin/tenant-select?action=manage-users\">Users</a></li><li><label><input type=\"text\" placeholder=\"Search...\"></label></li><li><button type=\"submit\"><i class=\"fa-sharp fa-solid fa-search fa-2x\"></i></button></li></ul></div><div class=\"nav-right\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"nav-bar\"><div class=\"nav-left\"><ul><li><a href=\"/ll-auth/app/admin/dashboard\"><img src=\"/ll-auth/app/static/favicon-32x32.png\" alt=\"Landlord\"></a></li><li><a href=\"/ll-auth/app/admin/dashboard\">Dashboard</a></li><li><a href=\"/ll-auth/app/admin/tenants\">Tenants</a></li><li><a href=\"/ll-auth/app/admin/tenant-select?action=manage-invites\">Invites</a></li><li><a href=\"/ll-auth/app/admin/tenant-select?action=manage-users\">Users</a></li></ul></div><div class=\"nav-right\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -48,7 +48,7 @@ func navBarFragment(sub *DisplayableSubject) templ.Component {
 				var templ_7745c5c3_Var2 string
 				templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(sub.ImpersonationName())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_navbar_fragment.templ`, Line: 31, Col: 49}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_navbar_fragment.templ`, Line: 32, Col: 49}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 				if templ_7745c5c3_Err != nil {
@@ -66,7 +66,7 @@ func navBarFragment(sub *DisplayableSubject) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(sub.Username())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_navbar_fragment.templ`, Line: 35, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_navbar_fragment.templ`, Line: 36, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -88,7 +88,7 @@ func navBarFragment(sub *DisplayableSubject) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(sub.TenantName())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_navbar_fragment.templ`, Line: 38, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/webapp/page_admin_navbar_fragment.templ`, Line: 39, Col: 38}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {

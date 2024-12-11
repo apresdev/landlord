@@ -7,47 +7,8 @@ import (
 	"slices"
 	"time"
 
-	"github.com/apresdev/landlord/internal/apperr"
-
 	"github.com/google/uuid"
 )
-
-const (
-	RoleAdmin             = "admin"
-	RoleGuest             = "guest"
-	RootTenantName        = "root"
-	RootTenantDescription = "Root Tenant"
-	// MaxRoleNameLength is required as there is a limit to the name of a Cognito
-	// group. And we format our Cognito groups as "tenant-<tenantID>-<role>". We
-	// limit both role names and tenant names to 32 characters.
-	MaxRoleNameLength = 32
-)
-
-var BuiltInRoles = []string{RoleAdmin, RoleGuest}
-
-func IsBuiltinRole(role string) bool {
-	return slices.Contains(BuiltInRoles, role)
-}
-
-func ValidateRoleName(s string) error {
-	if s == "" {
-		return apperr.NewBadRequest("role name cannot be empty")
-	}
-	if len(s) > MaxRoleNameLength {
-		return apperr.NewBadRequest(
-			fmt.Sprintf("role name must be %d characters or less", MaxRoleNameLength))
-	}
-	// role names must be lowercase and contain only letters, numbers, and hyphens
-	matched, err := regexp.MatchString(`^[a-z0-9-]+$`, s)
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	if !matched {
-		return apperr.NewBadRequest(
-			"role name must be all lowercase and contain only letters, numbers, and hyphens")
-	}
-	return nil
-}
 
 type TenantState string
 
@@ -143,6 +104,14 @@ func (ten *Tenant) RemoveSubTenantRole(role string) error {
 
 func (ten *Tenant) UsingDefaultSubTenantRoles() bool {
 	return slices.Equal(ten.SubTenantRoles, BuiltInRoles)
+}
+
+func (ten *Tenant) GetProfileDefinition() *ProfileDefinition {
+	// TODO: make this configurable eventually -- each tenant can, in theory,
+	// have its own profile definition. We definitely want each deployment to
+	// have its own profile definition. For now, we have a pre-baked profile
+	// definition.
+	return &BasicProfileDefinition
 }
 
 const (

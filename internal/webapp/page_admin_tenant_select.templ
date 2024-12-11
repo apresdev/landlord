@@ -1,7 +1,6 @@
 package webapp
 
 import "github.com/apresdev/landlord/internal/multi"
-import "github.com/apresdev/landlord/internal/perms"
 
 script onTenantSelect(tenantID string, tab string) {
     window.location.href = "/ll-auth/app/admin/tenants/" + tenantID + "?tab=" + tab;

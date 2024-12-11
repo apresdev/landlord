@@ -61,11 +61,20 @@ func handleGetUsersForTenant(app App, c *gin.Context) error {
 				zap.Error(err))
 			return apperr.NewInternal(err.Error())
 		}
+		var fields []ProfileFormatField
+		for _, field := range user.ProfileFields() {
+			fields = append(fields, ProfileFormatField{
+				Name:   field.Name,
+				Format: field.Format.String(),
+				Value:  field.Value,
+			})
+		}
 		resp.Users = append(resp.Users, TenantUsersResponseUsersInner{
 			Username:  user.Username,
 			Role:      user.Role,
 			Status:    string(user.Status),
 			CognitoID: aws.ToString(u.Username),
+			Fields:    fields,
 		})
 	}
 	c.JSON(http.StatusOK, resp)

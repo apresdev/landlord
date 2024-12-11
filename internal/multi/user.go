@@ -1,6 +1,7 @@
 package multi
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -103,14 +104,16 @@ func (m MFAPolicy) String() string {
 }
 
 type User struct {
-	TenantID  uuid.UUID  `dynamodbav:"-"` // pk
-	ID        uuid.UUID  `dynamodbav:"-"` // sk
-	Username  string     `dynamodbav:"-"` // altName
-	Role      string     `dynamodbav:"role"`
-	Status    UserStatus `dynamodbav:"status"`
-	MFAStatus MFAStatus  `dynamodbav:"mfaStatus"`
-	MFAPolicy MFAPolicy  `dynamodbav:"mfaPolicy"`
-	CreatedAt string     `dynamodbav:"createdAt"`
+	TenantID   uuid.UUID  `dynamodbav:"-"` // pk
+	ID         uuid.UUID  `dynamodbav:"-"` // sk
+	Username   string     `dynamodbav:"-"` // altName
+	Role       string     `dynamodbav:"role"`
+	Status     UserStatus `dynamodbav:"status"`
+	MFAStatus  MFAStatus  `dynamodbav:"mfaStatus"`
+	MFAPolicy  MFAPolicy  `dynamodbav:"mfaPolicy"`
+	CreatedAt  string     `dynamodbav:"createdAt"`
+	RawProfile []byte     `dynamodbav:"rawProfile"`
+	Profile    *Profile   `dynamodbav:"-"`
 }
 
 func NewUser(tenantID uuid.UUID, cognitoID uuid.UUID, username, role string, mfaPolicy MFAPolicy) *User {
@@ -128,4 +131,38 @@ func NewUser(tenantID uuid.UUID, cognitoID uuid.UUID, username, role string, mfa
 		MFAStatus: mfaStatus,
 		CreatedAt: time.Now().UTC().Format(time.RFC3339),
 	}
+}
+
+func (u *User) internalUnmarshalProfile() {
+	if u.Profile == nil {
+		u.Profile = &Profile{}
+		if u.RawProfile != nil {
+			var profile Profile
+			err := json.Unmarshal(u.RawProfile, &profile)
+			if err != nil {
+				zap.L().Error("error unmarshalling profile", zap.Error(err))
+			} else {
+				u.Profile = &profile
+			}
+		}
+	}
+}
+
+func (u *User) ProfileField(name string) string {
+	u.internalUnmarshalProfile()
+	f := u.Profile.GetField(name)
+	if f == nil {
+		return EmptyProfileValue
+	}
+	return f.Value
+}
+
+func (u *User) UpdateProfileField(name string, format ProfileFieldFormat, value string) {
+	u.internalUnmarshalProfile()
+	u.Profile.SetField(name, format, value)
+}
+
+func (u *User) ProfileFields() []ProfileField {
+	u.internalUnmarshalProfile()
+	return u.Profile.Fields
 }

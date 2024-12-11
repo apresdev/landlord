@@ -1,9 +1,12 @@
 # TODOs
 
+* BUG: impersonate role not working (user still works) -- needs a unit test
+* BUG: edit sub-role
 * move terraform to apres-terraform in `apps/aws` -- a new directory that
 contains terraform for apps like landlord
 * BUG: styling for builtin UI for CSH
 * BUG: shouldn't use admin error page when OTP fails
+* fix styling of the Create Tenant dialog
 * React UI flow for adding MFA
 * figure out terraform for how to configure email and SMS
 * why do some apps ask for two codes when signing up to MFA?
