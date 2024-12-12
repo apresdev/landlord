@@ -18,6 +18,57 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func getUsersForTenant(
+	app App,
+	c *gin.Context,
+	ten *multi.Tenant,
+	sub *perms.Subject) (*TenantUsersResponse, error) {
+
+	if !perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, sub.Role) {
+		zap.L().Info("user not unauthorized for tenant",
+			zap.String("clientID", string(sub.Cid)),
+			zap.String("username", sub.Username),
+			zap.String("tenantID", ten.ID.String()))
+		return nil, apperr.NewUnauthorized("not authorized")
+	}
+	users, err := db.GetUsersForTenant(c.Request.Context(), app.DDB(), ten.ID)
+	if err != nil {
+		return nil, apperr.NewInternal(err.Error())
+	}
+	var resp TenantUsersResponse
+	for _, user := range users {
+		u, err := app.CogIdp().AdminGetUser(
+			c.Request.Context(),
+			&cognitoidentityprovider.AdminGetUserInput{
+				UserPoolId: aws.String(ten.UserPoolID),
+				Username:   aws.String(user.Username),
+			})
+		if err != nil {
+			zap.L().Error("error getting user",
+				zap.String("username", user.Username),
+				zap.String("tenantID", ten.ID.String()),
+				zap.Error(err))
+			return nil, apperr.NewInternal(err.Error())
+		}
+		var fields []ProfileFormatField
+		for _, field := range user.ProfileFields() {
+			fields = append(fields, ProfileFormatField{
+				Name:   field.Name,
+				Format: field.Format.String(),
+				Value:  field.Value,
+			})
+		}
+		resp.Users = append(resp.Users, TenantUsersResponseUsersInner{
+			Username:  user.Username,
+			Role:      user.Role,
+			Status:    string(user.Status),
+			CognitoID: aws.ToString(u.Username),
+			Fields:    fields,
+		})
+	}
+	return &resp, nil
+}
+
 func handleGetUsersForTenant(app App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
@@ -35,47 +86,9 @@ func handleGetUsersForTenant(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewNotFound(err.Error())
 	}
-	if !perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, sub.Role) {
-		zap.L().Info("user not unauthorized for tenant",
-			zap.String("clientID", string(sub.Cid)),
-			zap.String("username", sub.Username),
-			zap.String("tenantID", ten.ID.String()))
-		return apperr.NewUnauthorized("not authorized")
-	}
-	users, err := db.GetUsersForTenant(c.Request.Context(), app.DDB(), ten.ID)
+	resp, err := getUsersForTenant(app, c, ten, sub)
 	if err != nil {
-		return apperr.NewInternal(err.Error())
-	}
-	var resp TenantUsersResponse
-	for _, user := range users {
-		u, err := app.CogIdp().AdminGetUser(
-			c.Request.Context(),
-			&cognitoidentityprovider.AdminGetUserInput{
-				UserPoolId: aws.String(ten.UserPoolID),
-				Username:   aws.String(user.Username),
-			})
-		if err != nil {
-			zap.L().Error("error getting user",
-				zap.String("username", user.Username),
-				zap.String("tenantID", ten.ID.String()),
-				zap.Error(err))
-			return apperr.NewInternal(err.Error())
-		}
-		var fields []ProfileFormatField
-		for _, field := range user.ProfileFields() {
-			fields = append(fields, ProfileFormatField{
-				Name:   field.Name,
-				Format: field.Format.String(),
-				Value:  field.Value,
-			})
-		}
-		resp.Users = append(resp.Users, TenantUsersResponseUsersInner{
-			Username:  user.Username,
-			Role:      user.Role,
-			Status:    string(user.Status),
-			CognitoID: aws.ToString(u.Username),
-			Fields:    fields,
-		})
+		return err
 	}
 	c.JSON(http.StatusOK, resp)
 	return nil
