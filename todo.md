@@ -1,12 +1,10 @@
 # TODOs
 
-* BUG: impersonate role not working (user still works) -- needs a unit test
 * BUG: edit sub-role
 * move terraform to apres-terraform in `apps/aws` -- a new directory that
 contains terraform for apps like landlord
 * BUG: styling for builtin UI for CSH
 * BUG: shouldn't use admin error page when OTP fails
-* fix styling of the Create Tenant dialog
 * React UI flow for adding MFA
 * figure out terraform for how to configure email and SMS
 * why do some apps ask for two codes when signing up to MFA?
@@ -23,8 +21,6 @@ spot in the UI that forces a logout and then redirects back to the login page.
     * remove a group from a tenant if it no longer exists
     * adapt an existing userpool and reconcile users
 * email domain guard rails
-* Make it possible to show a token's contents when it has expired in the
-  `info` command
 * add IP address and device-fingerprinting data to signups:
   https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-adaptive-authentication.html#user-pool-settings-adaptive-authentication-device-fingerprint
 * UI

@@ -173,11 +173,15 @@ func handleAdminTenantSelect(a App, c *gin.Context) error {
 		a.Settings().AppName(), ds, authorizedTenants, string(tab)))
 }
 
-func handleAdminNewTenant(a App, c *gin.Context) error {
-	return render(c, newTenantPage(a.Settings().AppName()))
+func handleAdminCreateTenantButton(a App, c *gin.Context) error {
+	return render(c, tenantCreateTenantButton())
 }
 
-func handleAdminNewTenantSubmit(a App, c *gin.Context) error {
+func handleAdminCreateTenantForm(a App, c *gin.Context) error {
+	return render(c, tenantCreateTenantForm())
+}
+
+func handleAdminCreateTenantSubmit(a App, c *gin.Context) error {
 	var req rest.CreateTenantRequest
 	req.Name = c.PostForm("name")
 	req.Description = c.PostForm("description")
@@ -185,12 +189,15 @@ func handleAdminNewTenantSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	redirectTo(c, "admin/tenants")
-	return nil
+	tens, err := rest.HandleGetTenants(a, c)
+	if err != nil {
+		return err
+	}
+	return render(c, tenantCreateTenantTableAndForm(tens, ""))
 }
 
 func handleAdminActivateTenantSubmit(a App, c *gin.Context) error {
-	i := c.Param("id")
+	i := c.Param("tenantID")
 	if i == "" {
 		return fmt.Errorf("no id provided")
 	}
@@ -202,7 +209,7 @@ func handleAdminActivateTenantSubmit(a App, c *gin.Context) error {
 }
 
 func handleAdminDeactivateTenantSubmit(a App, c *gin.Context) error {
-	i := c.Param("id")
+	i := c.Param("tenantID")
 	if i == "" {
 		return fmt.Errorf("no id provided")
 	}
