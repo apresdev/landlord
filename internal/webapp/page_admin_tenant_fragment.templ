@@ -10,17 +10,17 @@ templ tenantFragment(tenant *multi.Tenant) {
     <td>{ tenant.UserPoolName } ({ tenant.UserPoolID })</td>
     <td>
         if tenant.State == multi.TenantStateActive {
-            <a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + tenant.ID.String() + "/invite") }>
+            <a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + tenant.ID.String() + "?tab=invites") }>
                 <button class="button">Invite</button>
             </a>
         }
         if !tenant.IsRoot() {
             if tenant.State == multi.TenantStateActive {
-                <button class="button" hx-post={ "/ll-auth/app/admin/tenants/deactivate/" + tenant.ID.String() }>
+                <button class="button" hx-post={ "/ll-auth/app/admin/tenants/" + tenant.ID.String() + "/deactivate" }>
                     Deactivate
                 </button>
             } else {
-                <button class="button" hx-post={ "/ll-auth/app/admin/tenants/activate/" + tenant.ID.String() }>
+                <button class="button" hx-post={ "/ll-auth/app/admin/tenants/" + tenant.ID.String() + "/activate" }>
                     Activate
                 </button>
             }

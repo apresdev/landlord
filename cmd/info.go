@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"net/url"
+
 	"github.com/apresdev/landlord/internal/appcore"
 	"github.com/apresdev/landlord/internal/jwx"
 	"github.com/golang-jwt/jwt/v5"
@@ -23,9 +25,35 @@ func displayToken(cmd *cobra.Command, tokName string, tok *jwt.Token) error {
 	return nil
 }
 
+// parseUnverified creates a jwt.Token instance, but does not verify the signature.
+// Useful in some diagnostic / troubleshooting scenarios.
+func parseUnverified(tokStr string) (*jwt.Token, error) {
+	p := jwt.NewParser()
+	claims := new(jwt.MapClaims)
+	tk, _, err := p.ParseUnverified(tokStr, claims)
+	if err != nil {
+		return nil, err
+	}
+	return tk, nil
+}
+
+func parseToken(
+	cs appcore.Clients,
+	validationURL *url.URL,
+	tokStr string,
+	noValidate bool) (*jwt.Token, error) {
+
+	if noValidate {
+		return parseUnverified(tokStr)
+	} else {
+		return cs.Validator().ValidateToken(cs.Ctx(), jwx.EmptyOpaqueClientID, validationURL, tokStr)
+	}
+}
+
 func infoCmd() *cobra.Command {
 	var raw bool
 	var verbose bool
+	var noValidate bool
 	c := &cobra.Command{
 		Use:   "info",
 		Short: "Display info about the current session",
@@ -37,8 +65,7 @@ func infoCmd() *cobra.Command {
 				if s.AccessToken == "" {
 					cmd.Printf("  Access  : empty\n")
 				} else {
-					accessJWT, err := cs.Validator().ValidateToken(
-						cs.Ctx(), jwx.EmptyOpaqueClientID, s.GetValidationURL(), s.AccessToken)
+					accessJWT, err := parseToken(cs, s.GetValidationURL(), s.AccessToken, noValidate)
 					if err != nil {
 						return err
 					}
@@ -49,8 +76,7 @@ func infoCmd() *cobra.Command {
 				if s.IdToken == "" {
 					cmd.Printf("  ID      : empty\n")
 				} else {
-					idJWT, err := cs.Validator().ValidateToken(
-						cs.Ctx(), jwx.EmptyOpaqueClientID, s.GetValidationURL(), s.IdToken)
+					idJWT, err := parseToken(cs, s.GetValidationURL(), s.IdToken, noValidate)
 					if err != nil {
 						return err
 					}
@@ -75,5 +101,7 @@ func infoCmd() *cobra.Command {
 		&verbose, "verbose", "v", false, "verbose output")
 	c.PersistentFlags().BoolVarP(
 		&raw, "raw", "r", false, "display raw tokens")
+	c.PersistentFlags().BoolVarP(
+		&noValidate, "no-validate", "N", false, "do not attempt to validate the token")
 	return c
 }

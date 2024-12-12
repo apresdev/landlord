@@ -31,7 +31,7 @@ func navBarFragment(sub *DisplayableSubject) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"nav-bar\"><div class=\"nav-left\"><ul><li><a href=\"/ll-auth/app/admin/dashboard\"><img src=\"/ll-auth/app/static/favicon-32x32.png\" alt=\"Landlord\"></a></li><li><a href=\"/ll-auth/app/admin/dashboard\">Dashboard</a></li><li><a href=\"/ll-auth/app/admin/tenants\">Tenants</a></li><li><a href=\"/ll-auth/app/admin/tenant-select?action=manage-invites\">Invites</a></li><li><a href=\"/ll-auth/app/admin/tenant-select?action=manage-users\">Users</a></li></ul></div><div class=\"nav-right\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"nav-bar\"><div class=\"nav-left\"><ul><li><a href=\"/ll-auth/app/admin/dashboard\"><img src=\"/ll-auth/app/static/favicon-32x32.png\" alt=\"Landlord\"></a></li><li><a href=\"/ll-auth/app/admin/dashboard\">Dashboard</a></li><li><a href=\"/ll-auth/app/admin/tenants\">Tenants</a></li><li><a href=\"/ll-auth/app/admin/tenant-ops/select?action=manage-invites\">Invites</a></li><li><a href=\"/ll-auth/app/admin/tenant-ops/select?action=manage-users\">Users</a></li></ul></div><div class=\"nav-right\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

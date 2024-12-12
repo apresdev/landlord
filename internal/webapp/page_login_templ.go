@@ -70,7 +70,7 @@ func loginPage(appName string, initialUsername string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" required></label> <label>Password <input type=\"password\" name=\"password\" placeholder=\"Password\" required></label> <button type=\"submit\">Login</button></form><div class=\"recovery\"><a href=\"/ll-auth/app/recovery\">Account Recovery</a> | <a href=\"/ll-auth/app/logout\">Logout</a></div></div></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" required autofocus></label> <label>Password <input type=\"password\" name=\"password\" placeholder=\"Password\" required></label> <button type=\"submit\">Login</button></form><div class=\"recovery\"><a href=\"/ll-auth/app/recovery\">Account Recovery</a> | <a href=\"/ll-auth/app/logout\">Logout</a></div></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

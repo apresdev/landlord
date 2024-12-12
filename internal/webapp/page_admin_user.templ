@@ -52,6 +52,12 @@ templ userSummaryCard(
                         <span class="label">Impersonation</span>
                         if cogUser.IsImpersonating() {
                             <span class="value">{ cogUser.ImpersonationName() }</span>
+                            <button
+                                class="button"
+                                hx-post="/ll-auth/app/admin/clear-impersonation"
+                            >
+                                Clear Impersonation
+                            </button>
                         } else {
                             <span class="value">None</span>
                         }
