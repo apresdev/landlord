@@ -55,6 +55,12 @@ func getRoutes() []Route {
 			ginGetRolesForTenant,
 		},
 		{
+			"GetSubjectUsers",
+			http.MethodGet,
+			"/ll-auth/api/subject/users",
+			ginGetSubjectUsers,
+		},
+		{
 			"GetTenantByID",
 			http.MethodGet,
 			"/ll-auth/api/tenants/:tenantID",
