@@ -390,6 +390,72 @@
         }
       }
     },
+    "/ll-auth/api/subject": {
+      "get": {
+        "operationId": "GetSubject",
+        "summary": "Get details about the subject",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SubjectResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/subject",
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {}
+        }
+      },
+      "options": {
+        "parameters": [],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
     "/ll-auth/api/subject/users": {
       "get": {
         "operationId": "GetSubjectUsers",
@@ -2388,6 +2454,16 @@
           }
         }
       },
+      "SubjectResponse": {
+        "description": "Return the subject's details",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SubjectResponse"
+            }
+          }
+        }
+      },
       "TenantUsersResponse": {
         "description": "Return the users associated with the tenant",
         "content": {
@@ -2950,6 +3026,70 @@
           }
         }
       },
+      "SubjectResponse": {
+        "type": "object",
+        "required": [
+          "tenantID",
+          "tenantName",
+          "userID",
+          "username",
+          "role",
+          "status"
+        ],
+        "properties": {
+          "tenantID": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenantName": {
+            "type": "string"
+          },
+          "userID": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UserStatus"
+          },
+          "impersonating": {
+            "type": "object",
+            "required": [
+              "tenantID",
+              "userID",
+              "email",
+              "role"
+            ],
+            "properties": {
+              "tenantID": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "userID": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "email": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              }
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileFormatField"
+            }
+          }
+        }
+      },
       "TenantUsersResponse": {
         "type": "object",
         "properties": {
@@ -2971,12 +3111,7 @@
                   "type": "string"
                 },
                 "status": {
-                  "type": "string",
-                  "enum": [
-                    "inactive",
-                    "invited",
-                    "active"
-                  ]
+                  "$ref": "#/components/schemas/UserStatus"
                 },
                 "cognitoID": {
                   "type": "string"

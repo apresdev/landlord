@@ -17,7 +17,7 @@ var _ MappedNullable = &TenantUsersResponseUsersInner{}
 type TenantUsersResponseUsersInner struct {
 	Username  string               `json:"username"`
 	Role      string               `json:"role"`
-	Status    string               `json:"status"`
+	Status    UserStatus           `json:"status"`
 	CognitoID string               `json:"cognitoID"`
 	Fields    []ProfileFormatField `json:"fields,omitempty"`
 }
@@ -28,7 +28,7 @@ type _TenantUsersResponseUsersInner TenantUsersResponseUsersInner
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTenantUsersResponseUsersInner(username string, role string, status string, cognitoID string) *TenantUsersResponseUsersInner {
+func NewTenantUsersResponseUsersInner(username string, role string, status UserStatus, cognitoID string) *TenantUsersResponseUsersInner {
 	this := TenantUsersResponseUsersInner{}
 	this.Username = username
 	this.Role = role
@@ -94,9 +94,9 @@ func (o *TenantUsersResponseUsersInner) SetRole(v string) {
 }
 
 // GetStatus returns the Status field value
-func (o *TenantUsersResponseUsersInner) GetStatus() string {
+func (o *TenantUsersResponseUsersInner) GetStatus() UserStatus {
 	if o == nil {
-		var ret string
+		var ret UserStatus
 		return ret
 	}
 
@@ -105,7 +105,7 @@ func (o *TenantUsersResponseUsersInner) GetStatus() string {
 
 // GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
-func (o *TenantUsersResponseUsersInner) GetStatusOk() (*string, bool) {
+func (o *TenantUsersResponseUsersInner) GetStatusOk() (*UserStatus, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -113,7 +113,7 @@ func (o *TenantUsersResponseUsersInner) GetStatusOk() (*string, bool) {
 }
 
 // SetStatus sets field value
-func (o *TenantUsersResponseUsersInner) SetStatus(v string) {
+func (o *TenantUsersResponseUsersInner) SetStatus(v UserStatus) {
 	o.Status = v
 }
 
