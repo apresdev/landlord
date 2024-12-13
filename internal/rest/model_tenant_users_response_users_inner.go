@@ -9,7 +9,7 @@ type TenantUsersResponseUsersInner struct {
 
 	Role string `json:"role"`
 
-	Status string `json:"status"`
+	Status UserStatus `json:"status"`
 
 	CognitoID string `json:"cognitoID"`
 

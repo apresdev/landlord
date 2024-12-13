@@ -33,6 +33,11 @@ func ginGetRolesForTenant(c *gin.Context) {
 	callImpl(c, handleGetRolesForTenant)
 }
 
+// GetSubject - Get details about the subject
+func ginGetSubject(c *gin.Context) {
+	callImpl(c, handleGetSubject)
+}
+
 // GetSubjectUsers - Get the users of the subject's tenant
 func ginGetSubjectUsers(c *gin.Context) {
 	callImpl(c, handleGetSubjectUsers)

@@ -543,6 +543,56 @@ func restSetRolesCmd() *cobra.Command {
 	return c
 }
 
+func restSubjectCmd() *cobra.Command {
+	var server string
+	c := &cobra.Command{
+		Use:   "subject",
+		Short: "Get details about the current subject",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := MustSession()
+			if s.AccessToken == "" {
+				return errors.New("need to login")
+			}
+			cl, err := apiClient(s.AccessToken, server)
+			if err != nil {
+				return err
+			}
+			ctx := context.Background()
+			sub, _, err := cl.AuthAPI.GetSubject(ctx).Execute()
+			if err != nil {
+				return err
+			}
+			cmd.Printf("Username: %s\n", sub.Username)
+			cmd.Printf("User ID: %s\n", sub.UserID)
+			cmd.Printf("Role: %s\n", sub.Role)
+			cmd.Printf("Status: %s\n", sub.Status)
+			cmd.Printf("Tenant ID: %s\n", sub.TenantID)
+			cmd.Printf("Tenant Name: %s\n", sub.TenantName)
+			if sub.Impersonating != nil && len(sub.Impersonating.TenantID) > 0 {
+				cmd.Printf("Impersonating:\n")
+				cmd.Printf("  Tenant ID: %s\n", sub.Impersonating.TenantID)
+				cmd.Printf("  User ID: %s\n", sub.Impersonating.UserID)
+				cmd.Printf("  Email: %s\n", sub.Impersonating.Email)
+				cmd.Printf("  Role: %s\n", sub.Impersonating.Role)
+			}
+			if len(sub.Fields) > 0 {
+				cmd.Printf("Fields:\n")
+				table := NewTable([]string{"Name", "Format", "Value"})
+				for _, f := range sub.Fields {
+					err := table.AddRow([]string{f.Name, f.Format, f.Value})
+					if err != nil {
+						return err
+					}
+				}
+			}
+			return err
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&server, "server", "s", "", "Server to connect to")
+	return c
+}
+
 func restTenantsCmd() *cobra.Command {
 	var token string
 	var server string
@@ -612,7 +662,7 @@ func restUsersCmd() *cobra.Command {
 			}
 			table := NewTable([]string{"Username", "Role", "Status", "CognitoID"})
 			for _, user := range o.Users {
-				err := table.AddRow([]string{user.Username, user.Role, user.Status, user.CognitoID})
+				err := table.AddRow([]string{user.Username, user.Role, string(user.Status), user.CognitoID})
 				if err != nil {
 					return err
 				}
@@ -747,6 +797,7 @@ func restCmd() *cobra.Command {
 	c.AddCommand(restNewPassword())
 	c.AddCommand(restRefreshCmd())
 	c.AddCommand(restSetRolesCmd())
+	c.AddCommand(restSubjectCmd())
 	c.AddCommand(restTenantsCmd())
 	c.AddCommand(restUsersCmd())
 	c.AddCommand(restValidateMFACodeCmd())

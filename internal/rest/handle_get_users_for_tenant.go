@@ -61,7 +61,7 @@ func getUsersForTenant(
 		resp.Users = append(resp.Users, TenantUsersResponseUsersInner{
 			Username:  user.Username,
 			Role:      user.Role,
-			Status:    string(user.Status),
+			Status:    UserStatus(user.Status.String()),
 			CognitoID: aws.ToString(u.Username),
 			Fields:    fields,
 		})
