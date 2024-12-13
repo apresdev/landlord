@@ -18,16 +18,6 @@ func ginClearImpersonation(c *gin.Context) {
 	callImpl(c, handleClearImpersonation)
 }
 
-// GetSubject - Get details about the subject
-func ginGetSubject(c *gin.Context) {
-	callImpl(c, handleGetSubject)
-}
-
-// GetSubjectUsers - Get the users of the subject's tenant
-func ginGetSubjectUsers(c *gin.Context) {
-	callImpl(c, handleGetSubjectUsers)
-}
-
 // ImpersonateRole - Impersonate a role within a tenant.
 func ginImpersonateRole(c *gin.Context) {
 	callImpl(c, handleImpersonateRole)
@@ -36,6 +26,11 @@ func ginImpersonateRole(c *gin.Context) {
 // ImpersonateUser - Impersonate a user within a tenant.
 func ginImpersonateUser(c *gin.Context) {
 	callImpl(c, handleImpersonateUser)
+}
+
+// ListSubjectUsers - Get the list of users of the subject's tenant
+func ginListSubjectUsers(c *gin.Context) {
+	callImpl(c, handleListSubjectUsers)
 }
 
 // Login - Login with a username and password.
@@ -61,6 +56,11 @@ func ginRefresh(c *gin.Context) {
 // ResetPassword - Reset a password.
 func ginResetPassword(c *gin.Context) {
 	callImpl(c, handleResetPassword)
+}
+
+// RetrieveSubject - Get details about the subject
+func ginRetrieveSubject(c *gin.Context) {
+	callImpl(c, handleRetrieveSubject)
 }
 
 // SetNewPassword - Set a new password after being issued a temporary password.

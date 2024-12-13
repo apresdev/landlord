@@ -510,7 +510,7 @@ func restSetRolesCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			ten, _, err := cl.LandlordAdminAPI.GetTenantByID(ctx, tenant).Execute()
+			ten, _, err := cl.LandlordAdminAPI.RetrieveTenant(ctx, tenant).Execute()
 			if err != nil {
 				return err
 			}
@@ -521,7 +521,7 @@ func restSetRolesCmd() *cobra.Command {
 			req.SubTenantRoles = append(ten.Tenant.SubTenantRoles, addSubRoles...)
 			req.SubTenantRoles = tinytools.RemoveAllFromSlice(req.SubTenantRoles, removeSubRoles)
 
-			_, _, err = cl.LandlordAdminAPI.SetRolesForTenant(ctx, tenant).TenantRolesRequest(req).Execute()
+			_, _, err = cl.LandlordAdminAPI.UpdateRolesForTenant(ctx, tenant).TenantRolesRequest(req).Execute()
 
 			return err
 		},
@@ -558,7 +558,7 @@ func restSubjectCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			sub, _, err := cl.LandlordUserAPI.GetSubject(ctx).Execute()
+			sub, _, err := cl.LandlordUserAPI.RetrieveSubject(ctx).Execute()
 			if err != nil {
 				return err
 			}
@@ -612,7 +612,7 @@ func restTenantsCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			tenants, _, err := cl.LandlordAdminAPI.GetTenants(ctx).Execute()
+			tenants, _, err := cl.LandlordAdminAPI.ListTenants(ctx).Execute()
 			if err != nil {
 				return err
 			}
@@ -652,7 +652,7 @@ func restUsersCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			o, _, err := cl.LandlordAdminAPI.GetUsersForTenant(ctx, tenant).Execute()
+			o, _, err := cl.LandlordAdminAPI.ListUsersForTenant(ctx, tenant).Execute()
 			if err != nil {
 				return err
 			}

@@ -396,7 +396,7 @@
     },
     "/ll-auth/api/subject": {
       "get": {
-        "operationId": "GetSubject",
+        "operationId": "RetrieveSubject",
         "summary": "Get details about the subject",
         "tags": [
           "LandlordUser"
@@ -462,8 +462,8 @@
     },
     "/ll-auth/api/subject/users": {
       "get": {
-        "operationId": "GetSubjectUsers",
-        "summary": "Get the users of the subject's tenant",
+        "operationId": "ListSubjectUsers",
+        "summary": "Get the list of users of the subject's tenant",
         "tags": [
           "LandlordUser"
         ],
@@ -528,7 +528,7 @@
     },
     "/ll-auth/api/tenants": {
       "get": {
-        "operationId": "GetTenants",
+        "operationId": "ListTenants",
         "summary": "Get a list of tenants.",
         "tags": [
           "LandlordAdmin"
@@ -637,8 +637,8 @@
     },
     "/ll-auth/api/tenants/{tenantID}": {
       "get": {
-        "operationId": "GetTenantByID",
-        "summary": "Get a tenant by ID",
+        "operationId": "RetrieveTenant",
+        "summary": "Get a tenant by its ID",
         "tags": [
           "LandlordAdmin"
         ],
@@ -725,8 +725,8 @@
     },
     "/ll-auth/api/tenants/{tenantID}/state/{tenantState}": {
       "put": {
-        "operationId": "SetTenantState",
-        "summary": "Set a tenant's state",
+        "operationId": "UpdateTenantState",
+        "summary": "Update a tenant's state",
         "tags": [
           "LandlordAdmin"
         ],
@@ -840,8 +840,8 @@
     },
     "/ll-auth/api/tenants/{tenantID}/description": {
       "put": {
-        "operationId": "SetTenantDescription",
-        "summary": "Set a tenant's description",
+        "operationId": "UpdateTenantDescription",
+        "summary": "Update a tenant's description",
         "tags": [
           "LandlordAdmin"
         ],
@@ -931,7 +931,7 @@
     },
     "/ll-auth/api/tenants/{tenantID}/roles": {
       "get": {
-        "operationId": "GetRolesForTenant",
+        "operationId": "ListRolesForTenant",
         "summary": "Get the list of roles for a tenant",
         "tags": [
           "LandlordAdmin"
@@ -982,8 +982,8 @@
         }
       },
       "put": {
-        "operationId": "SetRolesForTenant",
-        "summary": "Set the roles for a tenant.",
+        "operationId": "UpdateRolesForTenant",
+        "summary": "Update the roles for a tenant.",
         "tags": [
           "LandlordAdmin"
         ],
@@ -1073,7 +1073,7 @@
     },
     "/ll-auth/api/tenants/{tenantID}/users": {
       "get": {
-        "operationId": "GetUsersForTenant",
+        "operationId": "ListUsersForTenant",
         "summary": "Get a list of users for a tenant.",
         "tags": [
           "LandlordAdmin"
@@ -1271,8 +1271,8 @@
     },
     "/ll-auth/api/tenants/{tenantID}/users/{userID}/status": {
       "put": {
-        "operationId": "SetUserStatus",
-        "summary": "Set a user's status.",
+        "operationId": "UpdateUserStatus",
+        "summary": "Update a user's status.",
         "tags": [
           "LandlordAdmin"
         ],
@@ -1492,7 +1492,7 @@
     "/ll-auth/api/tenants/{tenantID}/users/{userID}/profileFields": {
       "post": {
         "operationId": "UpdateUserProfileFields",
-        "summary": "Set a user's profile fields",
+        "summary": "Update a user's profile fields",
         "tags": [
           "LandlordAdmin"
         ],

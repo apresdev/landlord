@@ -18,49 +18,44 @@ func ginCreateTenant(c *gin.Context) {
 	callImpl(c, handleCreateTenant)
 }
 
-// GetRolesForTenant - Get the list of roles for a tenant
-func ginGetRolesForTenant(c *gin.Context) {
-	callImpl(c, handleGetRolesForTenant)
-}
-
-// GetTenantByID - Get a tenant by ID
-func ginGetTenantByID(c *gin.Context) {
-	callImpl(c, handleGetTenantByID)
-}
-
-// GetTenants - Get a list of tenants.
-func ginGetTenants(c *gin.Context) {
-	callImpl(c, handleGetTenants)
-}
-
-// GetUsersForTenant - Get a list of users for a tenant.
-func ginGetUsersForTenant(c *gin.Context) {
-	callImpl(c, handleGetUsersForTenant)
-}
-
 // InviteToTenant - Invite a user to join a tenant.
 func ginInviteToTenant(c *gin.Context) {
 	callImpl(c, handleInviteToTenant)
 }
 
-// SetRolesForTenant - Set the roles for a tenant.
-func ginSetRolesForTenant(c *gin.Context) {
-	callImpl(c, handleSetRolesForTenant)
+// ListRolesForTenant - Get the list of roles for a tenant
+func ginListRolesForTenant(c *gin.Context) {
+	callImpl(c, handleListRolesForTenant)
 }
 
-// SetTenantDescription - Set a tenant's description
-func ginSetTenantDescription(c *gin.Context) {
-	callImpl(c, handleSetTenantDescription)
+// ListTenants - Get a list of tenants.
+func ginListTenants(c *gin.Context) {
+	callImpl(c, handleListTenants)
 }
 
-// SetTenantState - Set a tenant's state
-func ginSetTenantState(c *gin.Context) {
-	callImpl(c, handleSetTenantState)
+// ListUsersForTenant - Get a list of users for a tenant.
+func ginListUsersForTenant(c *gin.Context) {
+	callImpl(c, handleListUsersForTenant)
 }
 
-// SetUserStatus - Set a user's status.
-func ginSetUserStatus(c *gin.Context) {
-	callImpl(c, handleSetUserStatus)
+// RetrieveTenant - Get a tenant by its ID
+func ginRetrieveTenant(c *gin.Context) {
+	callImpl(c, handleRetrieveTenant)
+}
+
+// UpdateRolesForTenant - Update the roles for a tenant.
+func ginUpdateRolesForTenant(c *gin.Context) {
+	callImpl(c, handleUpdateRolesForTenant)
+}
+
+// UpdateTenantDescription - Update a tenant's description
+func ginUpdateTenantDescription(c *gin.Context) {
+	callImpl(c, handleUpdateTenantDescription)
+}
+
+// UpdateTenantState - Update a tenant's state
+func ginUpdateTenantState(c *gin.Context) {
+	callImpl(c, handleUpdateTenantState)
 }
 
 // UpdateUserMFA - Update a user's MFA settings
@@ -68,7 +63,7 @@ func ginUpdateUserMFA(c *gin.Context) {
 	callImpl(c, handleUpdateUserMFA)
 }
 
-// UpdateUserProfileFields - Set a user's profile fields
+// UpdateUserProfileFields - Update a user's profile fields
 func ginUpdateUserProfileFields(c *gin.Context) {
 	callImpl(c, handleUpdateUserProfileFields)
 }
@@ -76,4 +71,9 @@ func ginUpdateUserProfileFields(c *gin.Context) {
 // UpdateUserRole - Update a user's role.
 func ginUpdateUserRole(c *gin.Context) {
 	callImpl(c, handleUpdateUserRole)
+}
+
+// UpdateUserStatus - Update a user's status.
+func ginUpdateUserStatus(c *gin.Context) {
+	callImpl(c, handleUpdateUserStatus)
 }

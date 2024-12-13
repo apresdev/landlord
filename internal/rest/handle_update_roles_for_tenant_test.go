@@ -22,21 +22,21 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type HandleSetRolesForTenantTestSuite struct {
+type HandleUpdateRolesForTenantTestSuite struct {
 	suite.Suite
 	ginMode string
 }
 
-func TestHandleSetRolesForTenantTestSuite(t *testing.T) {
-	suite.Run(t, &HandleSetRolesForTenantTestSuite{})
+func TestHandleUpdateRolesForTenantTestSuite(t *testing.T) {
+	suite.Run(t, &HandleUpdateRolesForTenantTestSuite{})
 }
 
-func (s *HandleSetRolesForTenantTestSuite) SetupTest() {
+func (s *HandleUpdateRolesForTenantTestSuite) SetupTest() {
 	s.ginMode = gin.Mode()
 	gin.SetMode(gin.TestMode)
 }
 
-func (s *HandleSetRolesForTenantTestSuite) TearDownTest() {
+func (s *HandleUpdateRolesForTenantTestSuite) TearDownTest() {
 	gin.SetMode(s.ginMode)
 }
 
@@ -62,29 +62,29 @@ func testSetRolesForTenantRequest(t *testing.T, ten *multi.Tenant, user *multi.U
 	return gt
 }
 
-func (s *HandleSetRolesForTenantTestSuite) TestBadRequests() {
+func (s *HandleUpdateRolesForTenantTestSuite) TestBadRequests() {
 	app := NewMockApp()
 	gt1 := testSetRolesForTenantRequest(s.T(), nil, nil, nil)
-	err := handleSetRolesForTenant(app, gt1.c)
+	err := handleUpdateRolesForTenant(app, gt1.c)
 	s.Error(err)
 
 	gt2 := testSetRolesForTenantRequest(s.T(), nil, nil, MustJSONMarshal([]byte("{}")))
-	err = handleSetRolesForTenant(app, gt2.c)
+	err = handleUpdateRolesForTenant(app, gt2.c)
 	s.Error(err)
 
 	gt3 := testSetRolesForTenantRequest(s.T(), nil, nil, MustJSONMarshal(
 		badRequestStruct{Roles: 1}))
-	err = handleSetRolesForTenant(app, gt3.c)
+	err = handleUpdateRolesForTenant(app, gt3.c)
 	s.Error(err)
 
 	gt4 := testSetRolesForTenantRequest(s.T(), nil, nil, MustJSONMarshal(
 		TenantRolesRequest{Roles: []string{"role1"}}))
 	gt4.c.Params = nil
-	err = handleSetRolesForTenant(app, gt4.c)
+	err = handleUpdateRolesForTenant(app, gt4.c)
 	s.Error(err)
 }
 
-func (s *HandleSetRolesForTenantTestSuite) TestBadRoleNames() {
+func (s *HandleUpdateRolesForTenantTestSuite) TestBadRoleNames() {
 	app := NewMockApp()
 	t1 := withSetupGetTenantByID(app)
 	u1 := newTestUser(t1)
@@ -92,12 +92,12 @@ func (s *HandleSetRolesForTenantTestSuite) TestBadRoleNames() {
 		TenantRolesRequest{Roles: []string{"admin", "guest", "not-a-valid-role-name-###"}}))
 	withSetupQueryUsers(app, t1, []*multi.User{u1})
 	app.cogIdp.EXPECT().CreateGroup(mock.Anything, mock.Anything).Return(nil, nil)
-	err := handleSetRolesForTenant(app, gt.c)
+	err := handleUpdateRolesForTenant(app, gt.c)
 	s.Error(err)
 	s.Equal("role name must be all lowercase and contain only letters, numbers, underscores, and hyphens", err.Error())
 }
 
-func (s *HandleSetRolesForTenantTestSuite) TestSuccessAdd() {
+func (s *HandleUpdateRolesForTenantTestSuite) TestSuccessAdd() {
 	app := NewMockApp()
 	t1 := withSetupGetTenantByID(app)
 	u1 := newTestUser(t1)
@@ -118,11 +118,11 @@ func (s *HandleSetRolesForTenantTestSuite) TestSuccessAdd() {
 	}
 	app.ddb.EXPECT().PutItem(mock.Anything, input).Return(nil, nil)
 	app.cogIdp.EXPECT().CreateGroup(mock.Anything, mock.Anything).Return(nil, nil)
-	err := handleSetRolesForTenant(app, gt.c)
+	err := handleUpdateRolesForTenant(app, gt.c)
 	s.NoError(err)
 }
 
-func (s *HandleSetRolesForTenantTestSuite) TestSuccessRemove() {
+func (s *HandleUpdateRolesForTenantTestSuite) TestSuccessRemove() {
 	app := NewMockApp()
 	t1 := multi.NewTenant("ten1")
 	t1.Roles = []string{"admin", "guest", "role1"}
@@ -146,11 +146,11 @@ func (s *HandleSetRolesForTenantTestSuite) TestSuccessRemove() {
 	}
 	app.ddb.EXPECT().PutItem(mock.Anything, input).Return(nil, nil)
 	app.cogIdp.EXPECT().DeleteGroup(mock.Anything, mock.Anything).Return(nil, nil)
-	err := handleSetRolesForTenant(app, gt.c)
+	err := handleUpdateRolesForTenant(app, gt.c)
 	s.NoError(err)
 }
 
-func (s *HandleSetRolesForTenantTestSuite) TestSuccessAddSubRoles() {
+func (s *HandleUpdateRolesForTenantTestSuite) TestSuccessAddSubRoles() {
 	app := NewMockApp()
 	t1 := withSetupGetTenantByID(app)
 	u1 := newTestUser(t1)
@@ -172,11 +172,11 @@ func (s *HandleSetRolesForTenantTestSuite) TestSuccessAddSubRoles() {
 		TableName: aws.String(db.TableName()),
 	}
 	app.ddb.EXPECT().PutItem(mock.Anything, input).Return(nil, nil)
-	err := handleSetRolesForTenant(app, gt.c)
+	err := handleUpdateRolesForTenant(app, gt.c)
 	s.NoError(err)
 }
 
-func (s *HandleSetRolesForTenantTestSuite) TestSuccessRemoveSubRole() {
+func (s *HandleUpdateRolesForTenantTestSuite) TestSuccessRemoveSubRole() {
 	app := NewMockApp()
 	t1 := withSetupGetTenantByID(app)
 	t1.SubTenantRoles = []string{"admin", "guest", "role1", "role2"}
@@ -199,11 +199,11 @@ func (s *HandleSetRolesForTenantTestSuite) TestSuccessRemoveSubRole() {
 		TableName: aws.String(db.TableName()),
 	}
 	app.ddb.EXPECT().PutItem(mock.Anything, input).Return(nil, nil)
-	err := handleSetRolesForTenant(app, gt.c)
+	err := handleUpdateRolesForTenant(app, gt.c)
 	s.NoError(err)
 }
 
-func (s *HandleSetRolesForTenantTestSuite) TestSuccessAddDuplicate() {
+func (s *HandleUpdateRolesForTenantTestSuite) TestSuccessAddDuplicate() {
 	app := NewMockApp()
 	t1 := withSetupGetTenantByID(app)
 	u1 := newTestUser(t1)
@@ -228,6 +228,6 @@ func (s *HandleSetRolesForTenantTestSuite) TestSuccessAddDuplicate() {
 	}
 	app.ddb.EXPECT().PutItem(mock.Anything, input).Return(nil, nil)
 	app.cogIdp.EXPECT().CreateGroup(mock.Anything, mock.Anything).Return(nil, nil)
-	err := handleSetRolesForTenant(app, gt.c)
+	err := handleUpdateRolesForTenant(app, gt.c)
 	s.NoError(err)
 }
