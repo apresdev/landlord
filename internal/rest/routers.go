@@ -25,22 +25,10 @@ type Route struct {
 func getRoutes() []Route {
 	return []Route{
 		{
-			"AssociateOTP",
-			http.MethodGet,
-			"/ll-auth/api/associate-otp",
-			ginAssociateOTP,
-		},
-		{
 			"CancelInvitation",
 			http.MethodDelete,
 			"/ll-auth/api/tenants/:tenantID/invite/:userID",
 			ginCancelInvitation,
-		},
-		{
-			"ClearImpersonation",
-			http.MethodPost,
-			"/ll-auth/api/clear-impersonation",
-			ginClearImpersonation,
 		},
 		{
 			"CreateTenant",
@@ -53,18 +41,6 @@ func getRoutes() []Route {
 			http.MethodGet,
 			"/ll-auth/api/tenants/:tenantID/roles",
 			ginGetRolesForTenant,
-		},
-		{
-			"GetSubject",
-			http.MethodGet,
-			"/ll-auth/api/subject",
-			ginGetSubject,
-		},
-		{
-			"GetSubjectUsers",
-			http.MethodGet,
-			"/ll-auth/api/subject/users",
-			ginGetSubjectUsers,
 		},
 		{
 			"GetTenantByID",
@@ -85,58 +61,10 @@ func getRoutes() []Route {
 			ginGetUsersForTenant,
 		},
 		{
-			"ImpersonateRole",
-			http.MethodPost,
-			"/ll-auth/api/impersonate-role",
-			ginImpersonateRole,
-		},
-		{
-			"ImpersonateUser",
-			http.MethodPost,
-			"/ll-auth/api/impersonate-user",
-			ginImpersonateUser,
-		},
-		{
 			"InviteToTenant",
 			http.MethodPost,
 			"/ll-auth/api/tenants/:tenantID/invite",
 			ginInviteToTenant,
-		},
-		{
-			"Login",
-			http.MethodPost,
-			"/ll-auth/api/login",
-			ginLogin,
-		},
-		{
-			"ObtainAccessToken",
-			http.MethodPost,
-			"/ll-auth/api/oauth2/token",
-			ginObtainAccessToken,
-		},
-		{
-			"RecoverPassword",
-			http.MethodPost,
-			"/ll-auth/api/recover-password",
-			ginRecoverPassword,
-		},
-		{
-			"Refresh",
-			http.MethodPost,
-			"/ll-auth/api/refresh",
-			ginRefresh,
-		},
-		{
-			"ResetPassword",
-			http.MethodPost,
-			"/ll-auth/api/reset-password",
-			ginResetPassword,
-		},
-		{
-			"SetNewPassword",
-			http.MethodPost,
-			"/ll-auth/api/new-password",
-			ginSetNewPassword,
 		},
 		{
 			"SetRolesForTenant",
@@ -179,6 +107,78 @@ func getRoutes() []Route {
 			http.MethodPut,
 			"/ll-auth/api/tenants/:tenantID/users/:userID/role",
 			ginUpdateUserRole,
+		},
+		{
+			"AssociateOTP",
+			http.MethodGet,
+			"/ll-auth/api/associate-otp",
+			ginAssociateOTP,
+		},
+		{
+			"ClearImpersonation",
+			http.MethodPost,
+			"/ll-auth/api/clear-impersonation",
+			ginClearImpersonation,
+		},
+		{
+			"GetSubject",
+			http.MethodGet,
+			"/ll-auth/api/subject",
+			ginGetSubject,
+		},
+		{
+			"GetSubjectUsers",
+			http.MethodGet,
+			"/ll-auth/api/subject/users",
+			ginGetSubjectUsers,
+		},
+		{
+			"ImpersonateRole",
+			http.MethodPost,
+			"/ll-auth/api/impersonate-role",
+			ginImpersonateRole,
+		},
+		{
+			"ImpersonateUser",
+			http.MethodPost,
+			"/ll-auth/api/impersonate-user",
+			ginImpersonateUser,
+		},
+		{
+			"Login",
+			http.MethodPost,
+			"/ll-auth/api/login",
+			ginLogin,
+		},
+		{
+			"ObtainAccessToken",
+			http.MethodPost,
+			"/ll-auth/api/oauth2/token",
+			ginObtainAccessToken,
+		},
+		{
+			"RecoverPassword",
+			http.MethodPost,
+			"/ll-auth/api/recover-password",
+			ginRecoverPassword,
+		},
+		{
+			"Refresh",
+			http.MethodPost,
+			"/ll-auth/api/refresh",
+			ginRefresh,
+		},
+		{
+			"ResetPassword",
+			http.MethodPost,
+			"/ll-auth/api/reset-password",
+			ginResetPassword,
+		},
+		{
+			"SetNewPassword",
+			http.MethodPost,
+			"/ll-auth/api/new-password",
+			ginSetNewPassword,
 		},
 		{
 			"ValidateMFACode",

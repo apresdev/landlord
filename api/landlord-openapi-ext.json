@@ -10,8 +10,12 @@
   },
   "tags": [
     {
-      "name": "Auth",
-      "description": "Authentication operations"
+      "name": "LandlordUser",
+      "description": "User authentication and authorization operations"
+    },
+    {
+      "name": "LandlordAdmin",
+      "description": "Administrative operations"
     }
   ],
   "servers": [
@@ -27,7 +31,7 @@
         "operationId": "Login",
         "summary": "Login with a username and password.",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "parameters": [],
         "requestBody": {
@@ -93,7 +97,7 @@
         "operationId": "Refresh",
         "summary": "Refresh the access token via the refresh token found in a cookie.",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "requestBody": {
           "$ref": "#/components/requestBodies/RefreshRequest"
@@ -156,7 +160,7 @@
         "operationId": "ObtainAccessToken",
         "summary": "Obtain an access token via Oauth2 PKCE flow",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "requestBody": {
           "$ref": "#/components/requestBodies/ObtainTokenRequest"
@@ -219,7 +223,7 @@
         "operationId": "ValidateMFACode",
         "summary": "Validate an MFA code.",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "parameters": [],
         "requestBody": {
@@ -285,7 +289,7 @@
         "operationId": "AssociateOTP",
         "summary": "Associate OTP with a user.",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "parameters": [],
         "description": "Begins the process of associating an OTP provider with a user.",
@@ -325,7 +329,7 @@
         "operationId": "VerifyOTPAssociation",
         "summary": "Verify the association of an OTP device.",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "parameters": [],
         "requestBody": {
@@ -395,7 +399,7 @@
         "operationId": "GetSubject",
         "summary": "Get details about the subject",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "parameters": [],
         "responses": {
@@ -461,7 +465,7 @@
         "operationId": "GetSubjectUsers",
         "summary": "Get the users of the subject's tenant",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "parameters": [],
         "responses": {
@@ -527,7 +531,7 @@
         "operationId": "GetTenants",
         "summary": "Get a list of tenants.",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [],
         "description": "Get a list of tenants.",
@@ -567,7 +571,7 @@
         "operationId": "CreateTenant",
         "summary": "Create a new tenant",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [],
         "requestBody": {
@@ -636,7 +640,7 @@
         "operationId": "GetTenantByID",
         "summary": "Get a tenant by ID",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [
           {
@@ -724,7 +728,7 @@
         "operationId": "SetTenantState",
         "summary": "Set a tenant's state",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [
           {
@@ -839,7 +843,7 @@
         "operationId": "SetTenantDescription",
         "summary": "Set a tenant's description",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [
           {
@@ -930,7 +934,7 @@
         "operationId": "GetRolesForTenant",
         "summary": "Get the list of roles for a tenant",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [
           {
@@ -981,7 +985,7 @@
         "operationId": "SetRolesForTenant",
         "summary": "Set the roles for a tenant.",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [
           {
@@ -1072,7 +1076,7 @@
         "operationId": "GetUsersForTenant",
         "summary": "Get a list of users for a tenant.",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [
           {
@@ -1160,7 +1164,7 @@
         "operationId": "UpdateUserRole",
         "summary": "Update a user's role.",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [
           {
@@ -1270,7 +1274,7 @@
         "operationId": "SetUserStatus",
         "summary": "Set a user's status.",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [
           {
@@ -1380,7 +1384,7 @@
         "operationId": "UpdateUserMFA",
         "summary": "Update a user's MFA settings",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [
           {
@@ -1490,7 +1494,7 @@
         "operationId": "UpdateUserProfileFields",
         "summary": "Set a user's profile fields",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [
           {
@@ -1600,7 +1604,7 @@
         "operationId": "InviteToTenant",
         "summary": "Invite a user to join a tenant.",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [
           {
@@ -1691,7 +1695,7 @@
         "operationId": "CancelInvitation",
         "summary": "Cancel an invitation to a tenant.",
         "tags": [
-          "Auth"
+          "LandlordAdmin"
         ],
         "parameters": [
           {
@@ -1798,7 +1802,7 @@
         "operationId": "ImpersonateRole",
         "summary": "Impersonate a role within a tenant.",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "parameters": [],
         "requestBody": {
@@ -1867,7 +1871,7 @@
         "operationId": "ImpersonateUser",
         "summary": "Impersonate a user within a tenant.",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "parameters": [],
         "requestBody": {
@@ -1936,7 +1940,7 @@
         "operationId": "ClearImpersonation",
         "summary": "Clear any impersonation for the current user.",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "parameters": [],
         "requestBody": {
@@ -2005,7 +2009,7 @@
         "operationId": "SetNewPassword",
         "summary": "Set a new password after being issued a temporary password.",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "parameters": [],
         "requestBody": {
@@ -2070,7 +2074,7 @@
         "operationId": "RecoverPassword",
         "summary": "Recover a password.",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "parameters": [],
         "requestBody": {
@@ -2135,7 +2139,7 @@
         "operationId": "ResetPassword",
         "summary": "Reset a password.",
         "tags": [
-          "Auth"
+          "LandlordUser"
         ],
         "parameters": [],
         "requestBody": {
