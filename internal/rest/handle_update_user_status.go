@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleSetUserStatus(app App, c *gin.Context) error {
+func handleUpdateUserStatus(app App, c *gin.Context) error {
 	tenantID := c.Param("tenantID")
 	if tenantID == "" {
 		return apperr.NewBadRequest("no tenantID provided")
@@ -39,11 +39,11 @@ func handleSetUserStatus(app App, c *gin.Context) error {
 	if s == "" {
 		return apperr.NewBadRequest("no userStatus provided")
 	}
-	_, err = HandleSetUserStatus(app, c, tenantID, userID, s)
+	_, err = HandleUpdateUserStatus(app, c, tenantID, userID, s)
 	return err
 }
 
-func HandleSetUserStatus(
+func HandleUpdateUserStatus(
 	app App, c *gin.Context, tenantID string, userID uuid.UUID, rawTargetStatus string) (
 	*multi.User, error) {
 

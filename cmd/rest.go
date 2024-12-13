@@ -51,7 +51,7 @@ func restAssociateOTP() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.AuthAPI.AssociateOTP(ctx).Execute()
+			r, _, err := cl.LandlordUserAPI.AssociateOTP(ctx).Execute()
 			if err != nil {
 				return err
 			}
@@ -100,7 +100,7 @@ func restClearImpersonateCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.AuthAPI.ClearImpersonation(ctx).ClearImpersonationRequest(
+			r, _, err := cl.LandlordUserAPI.ClearImpersonation(ctx).ClearImpersonationRequest(
 				client.ClearImpersonationRequest{RefreshToken: s.RefreshToken}).Execute()
 			if err != nil {
 				return err
@@ -157,7 +157,7 @@ func restImpersonateRoleCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.AuthAPI.ImpersonateRole(ctx).ImpersonateRoleRequest(
+			r, _, err := cl.LandlordUserAPI.ImpersonateRole(ctx).ImpersonateRoleRequest(
 				client.ImpersonateRoleRequest{
 					Tenant:       tenant,
 					Role:         role,
@@ -222,7 +222,7 @@ func restImpersonateUserCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.AuthAPI.ImpersonateUser(ctx).ImpersonateUserRequest(
+			r, _, err := cl.LandlordUserAPI.ImpersonateUser(ctx).ImpersonateUserRequest(
 				client.ImpersonateUserRequest{
 					Tenant:       tenant,
 					Username:     username,
@@ -279,7 +279,7 @@ func restInviteCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, err := cl.AuthAPI.InviteToTenant(ctx, tenantID.String()).InviteRequest(
+			r, err := cl.LandlordAdminAPI.InviteToTenant(ctx, tenantID.String()).InviteRequest(
 				client.InviteRequest{
 					Username:  username,
 					Role:      role,
@@ -332,7 +332,7 @@ func restLoginCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.AuthAPI.Login(ctx).LoginRequest(client.LoginRequest{
+			r, _, err := cl.LandlordUserAPI.Login(ctx).LoginRequest(client.LoginRequest{
 				Username: username,
 				Password: password,
 			}).Execute()
@@ -394,7 +394,7 @@ func restNewPassword() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.AuthAPI.SetNewPassword(ctx).SetNewPasswordRequest(
+			r, _, err := cl.LandlordUserAPI.SetNewPassword(ctx).SetNewPasswordRequest(
 				client.SetNewPasswordRequest{
 					Username: username,
 					Password: password,
@@ -452,7 +452,7 @@ func restRefreshCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.AuthAPI.Refresh(ctx).
+			r, _, err := cl.LandlordUserAPI.Refresh(ctx).
 				RefreshRequest(client.RefreshRequest{
 					Username:     username,
 					RefreshToken: refreshToken,
@@ -510,7 +510,7 @@ func restSetRolesCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			ten, _, err := cl.AuthAPI.GetTenantByID(ctx, tenant).Execute()
+			ten, _, err := cl.LandlordAdminAPI.RetrieveTenant(ctx, tenant).Execute()
 			if err != nil {
 				return err
 			}
@@ -521,7 +521,7 @@ func restSetRolesCmd() *cobra.Command {
 			req.SubTenantRoles = append(ten.Tenant.SubTenantRoles, addSubRoles...)
 			req.SubTenantRoles = tinytools.RemoveAllFromSlice(req.SubTenantRoles, removeSubRoles)
 
-			_, _, err = cl.AuthAPI.SetRolesForTenant(ctx, tenant).TenantRolesRequest(req).Execute()
+			_, _, err = cl.LandlordAdminAPI.UpdateRolesForTenant(ctx, tenant).TenantRolesRequest(req).Execute()
 
 			return err
 		},
@@ -558,7 +558,7 @@ func restSubjectCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			sub, _, err := cl.AuthAPI.GetSubject(ctx).Execute()
+			sub, _, err := cl.LandlordUserAPI.RetrieveSubject(ctx).Execute()
 			if err != nil {
 				return err
 			}
@@ -612,7 +612,7 @@ func restTenantsCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			tenants, _, err := cl.AuthAPI.GetTenants(ctx).Execute()
+			tenants, _, err := cl.LandlordAdminAPI.ListTenants(ctx).Execute()
 			if err != nil {
 				return err
 			}
@@ -652,7 +652,7 @@ func restUsersCmd() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			o, _, err := cl.AuthAPI.GetUsersForTenant(ctx, tenant).Execute()
+			o, _, err := cl.LandlordAdminAPI.ListUsersForTenant(ctx, tenant).Execute()
 			if err != nil {
 				return err
 			}
@@ -704,7 +704,7 @@ func restValidateMFACodeCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			resp, _, err := cl.AuthAPI.ValidateMFACode(context.Background()).ValidateMFACodeRequest(
+			resp, _, err := cl.LandlordUserAPI.ValidateMFACode(context.Background()).ValidateMFACodeRequest(
 				client.ValidateMFACodeRequest{
 					Username: username,
 					MfaCode:  code,
@@ -757,7 +757,7 @@ func restVerifyOTPAssociation() *cobra.Command {
 				return err
 			}
 			ctx := context.Background()
-			_, err = cl.AuthAPI.VerifyOTPAssociation(ctx).VerifyOTPAssociationRequest(
+			_, err = cl.LandlordUserAPI.VerifyOTPAssociation(ctx).VerifyOTPAssociationRequest(
 				client.VerifyOTPAssociationRequest{
 					Username: username,
 					OtpCode:  code,

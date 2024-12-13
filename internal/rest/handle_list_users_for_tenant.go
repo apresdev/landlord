@@ -69,7 +69,7 @@ func getUsersForTenant(
 	return &resp, nil
 }
 
-func handleGetUsersForTenant(app App, c *gin.Context) error {
+func handleListUsersForTenant(app App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err

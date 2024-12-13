@@ -6,8 +6,10 @@ info:
   contact:
     email: info@apres.dev
 tags:
-  - name: Auth
-    description: Authentication operations
+  - name: LandlordUser
+    description: User authentication and authorization operations
+  - name: LandlordAdmin
+    description: Administrative operations
 servers:
   - url: http://localhost:42001
     description: The default testing URL.
@@ -18,7 +20,7 @@ paths:
       operationId: Login
       summary: Login with a username and password.
       tags:
-        - Auth
+        - LandlordUser
       parameters: []
       requestBody:
         $ref: "#/components/requestBodies/LoginRequest"
@@ -41,7 +43,7 @@ paths:
       operationId: Refresh
       summary: Refresh the access token via the refresh token found in a cookie.
       tags:
-        - Auth
+        - LandlordUser
       requestBody:
         $ref: "#/components/requestBodies/RefreshRequest"
       responses:
@@ -63,7 +65,7 @@ paths:
       operationId: ObtainAccessToken
       summary: Obtain an access token via Oauth2 PKCE flow
       tags:
-        - Auth
+        - LandlordUser
       requestBody:
         $ref: "#/components/requestBodies/ObtainTokenRequest"
       responses:
@@ -85,7 +87,7 @@ paths:
       operationId: ValidateMFACode
       summary: Validate an MFA code.
       tags:
-        - Auth
+        - LandlordUser
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/ValidateMFACodeRequest"
@@ -108,7 +110,7 @@ paths:
       operationId: AssociateOTP
       summary: Associate OTP with a user.
       tags:
-        - Auth
+        - LandlordUser
       parameters: [ ]
       description: Begins the process of associating an OTP provider with a user.
       responses:
@@ -128,7 +130,7 @@ paths:
       operationId: VerifyOTPAssociation
       summary: Verify the association of an OTP device.
       tags:
-        - Auth
+        - LandlordUser
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/VerifyOTPAssociationRequest"
@@ -148,10 +150,10 @@ paths:
         - bearerAuth: []
   /ll-auth/api/subject:
     get:
-      operationId: GetSubject
+      operationId: RetrieveSubject
       summary: Get details about the subject
       tags:
-        - Auth
+        - LandlordUser
       parameters: [ ]
       responses:
         "200":
@@ -168,10 +170,10 @@ paths:
         - bearerAuth: [ ]
   /ll-auth/api/subject/users:
     get:
-      operationId: GetSubjectUsers
-      summary: Get the users of the subject's tenant
+      operationId: ListSubjectUsers
+      summary: Get the list of users of the subject's tenant
       tags:
-        - Auth
+        - LandlordUser
       parameters: [ ]
       responses:
         "200":
@@ -188,10 +190,10 @@ paths:
         - bearerAuth: []
   /ll-auth/api/tenants:
     get:
-      operationId: GetTenants
+      operationId: ListTenants
       summary: Get a list of tenants.
       tags:
-      - Auth
+      - LandlordAdmin
       parameters: []
       description: Get a list of tenants.
       responses:
@@ -211,7 +213,7 @@ paths:
       operationId: CreateTenant
       summary: Create a new tenant
       tags:
-        - Auth
+        - LandlordAdmin
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/CreateTenantRequest"
@@ -230,10 +232,10 @@ paths:
         - bearerAuth: [ ]
   /ll-auth/api/tenants/{tenantID}:
     get:
-      operationId: GetTenantByID
-      summary: Get a tenant by ID
+      operationId: RetrieveTenant
+      summary: Get a tenant by its ID
       tags:
-        - Auth
+        - LandlordAdmin
       parameters:
         - name: tenantID
           in: path
@@ -256,10 +258,10 @@ paths:
         - bearerAuth: [ ]
   /ll-auth/api/tenants/{tenantID}/state/{tenantState}:
     put:
-      operationId: SetTenantState
-      summary: Set a tenant's state
+      operationId: UpdateTenantState
+      summary: Update a tenant's state
       tags:
-        - Auth
+        - LandlordAdmin
       parameters:
         - name: tenantID
           in: path
@@ -291,10 +293,10 @@ paths:
         - bearerAuth: [ ]
   /ll-auth/api/tenants/{tenantID}/description:
     put:
-      operationId: SetTenantDescription
-      summary: Set a tenant's description
+      operationId: UpdateTenantDescription
+      summary: Update a tenant's description
       tags:
-        - Auth
+        - LandlordAdmin
       parameters:
         - name: tenantID
           in: path
@@ -319,10 +321,10 @@ paths:
         - bearerAuth: [ ]
   /ll-auth/api/tenants/{tenantID}/roles:
     get:
-      operationId: GetRolesForTenant
+      operationId: ListRolesForTenant
       summary: Get the list of roles for a tenant
       tags:
-        - Auth
+        - LandlordAdmin
       parameters:
         - name: tenantID
           in: path
@@ -344,10 +346,10 @@ paths:
       security:
         - bearerAuth: [ ]
     put:
-      operationId: SetRolesForTenant
-      summary: Set the roles for a tenant.
+      operationId: UpdateRolesForTenant
+      summary: Update the roles for a tenant.
       tags:
-        - Auth
+        - LandlordAdmin
       parameters:
         - name: tenantID
           in: path
@@ -372,10 +374,10 @@ paths:
         - bearerAuth: [ ]
   /ll-auth/api/tenants/{tenantID}/users:
     get:
-      operationId: GetUsersForTenant
+      operationId: ListUsersForTenant
       summary: Get a list of users for a tenant.
       tags:
-        - Auth
+        - LandlordAdmin
       parameters:
         - name: tenantID
           in: path
@@ -401,7 +403,7 @@ paths:
       operationId: UpdateUserRole
       summary: Update a user's role.
       tags:
-        - Auth
+        - LandlordAdmin
       parameters:
         - name: tenantID
           in: path
@@ -432,10 +434,10 @@ paths:
         - bearerAuth: [ ]
   /ll-auth/api/tenants/{tenantID}/users/{userID}/status:
     put:
-      operationId: SetUserStatus
-      summary: Set a user's status.
+      operationId: UpdateUserStatus
+      summary: Update a user's status.
       tags:
-        - Auth
+        - LandlordAdmin
       parameters:
         - name: tenantID
           in: path
@@ -469,7 +471,7 @@ paths:
       operationId: UpdateUserMFA
       summary: Update a user's MFA settings
       tags:
-        - Auth
+        - LandlordAdmin
       parameters:
         - name: tenantID
           in: path
@@ -501,9 +503,9 @@ paths:
   /ll-auth/api/tenants/{tenantID}/users/{userID}/profileFields:
     post:
       operationId: UpdateUserProfileFields
-      summary: Set a user's profile fields
+      summary: Update a user's profile fields
       tags:
-        - Auth
+        - LandlordAdmin
       parameters:
         - name: tenantID
           in: path
@@ -537,7 +539,7 @@ paths:
       operationId: InviteToTenant
       summary: Invite a user to join a tenant.
       tags:
-        - Auth
+        - LandlordAdmin
       parameters:
         - name: tenantID
           in: path
@@ -565,7 +567,7 @@ paths:
       operationId: CancelInvitation
       summary: Cancel an invitation to a tenant.
       tags:
-        - Auth
+        - LandlordAdmin
       parameters:
         - name: tenantID
           in: path
@@ -597,7 +599,7 @@ paths:
       operationId: ImpersonateRole
       summary: Impersonate a role within a tenant.
       tags:
-        - Auth
+        - LandlordUser
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/ImpersonateRoleRequest"
@@ -619,7 +621,7 @@ paths:
       operationId: ImpersonateUser
       summary: Impersonate a user within a tenant.
       tags:
-        - Auth
+        - LandlordUser
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/ImpersonateUserRequest"
@@ -641,7 +643,7 @@ paths:
       operationId: ClearImpersonation
       summary: Clear any impersonation for the current user.
       tags:
-        - Auth
+        - LandlordUser
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/ClearImpersonationRequest"
@@ -663,7 +665,7 @@ paths:
       operationId: SetNewPassword
       summary: Set a new password after being issued a temporary password.
       tags:
-        - Auth
+        - LandlordUser
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/SetNewPasswordRequest"
@@ -686,7 +688,7 @@ paths:
       operationId: RecoverPassword
       summary: Recover a password.
       tags:
-        - Auth
+        - LandlordUser
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/RecoverPasswordRequest"
@@ -709,7 +711,7 @@ paths:
       operationId: ResetPassword
       summary: Reset a password.
       tags:
-        - Auth
+        - LandlordUser
       parameters: [ ]
       requestBody:
         $ref: "#/components/requestBodies/ResetPasswordRequest"

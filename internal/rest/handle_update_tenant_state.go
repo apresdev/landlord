@@ -3,42 +3,36 @@ package rest
 import (
 	"net/http"
 
+	"github.com/apresdev/landlord/internal/db"
 	"github.com/apresdev/landlord/internal/perms"
 	"go.uber.org/zap"
-
-	"github.com/apresdev/landlord/internal/db"
 
 	"github.com/apresdev/landlord/internal/multi"
 
 	"github.com/apresdev/landlord/internal/apperr"
+	"github.com/apresdev/landlord/internal/authx"
 	"github.com/gin-gonic/gin"
 )
 
-func handleSetTenantDescription(app App, c *gin.Context) error {
+func handleUpdateTenantState(app App, c *gin.Context) error {
 	id := c.Param("tenantID")
 	if id == "" {
 		return apperr.NewBadRequest("no tenantID provided")
 	}
-	var req TenantSetDescriptionRequest
-	if err := c.BindJSON(&req); err != nil {
-		return apperr.NewBadRequest("invalid request")
+	state := c.Param("tenantState")
+	if state == "" {
+		return apperr.NewBadRequest("no tenantState provided")
 	}
-	if _, err := HandleSetTenantDescription(app, c, id, req); err != nil {
+	if _, err := HandleUpdateTenantState(app, c, id, state); err != nil {
 		return err
 	}
 	c.JSON(http.StatusNoContent, nil)
 	return nil
 }
 
-func HandleSetTenantDescription(
-	app App, c *gin.Context, tenantID string, req TenantSetDescriptionRequest) (*multi.Tenant, error) {
-
+func HandleUpdateTenantState(app App, c *gin.Context, tenantID, state string) (*multi.Tenant, error) {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
-		return nil, err
-	}
-
-	if err := multi.ValidateTenantDescription(req.Description); err != nil {
 		return nil, err
 	}
 
@@ -59,16 +53,17 @@ func HandleSetTenantDescription(
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
-		zap.L().Info("denied setting description for tenant",
+		zap.L().Info("denied setting state for tenant",
 			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
-	targetTenant.Description = req.Description
-	err = db.StoreTenant(c.Request.Context(), app.DDB(), targetTenant)
+	st, err := multi.ParseTenantState(state)
 	if err != nil {
-		return nil, err
+		return nil, apperr.NewBadRequest("invalid tenantState")
 	}
-	return targetTenant, nil
+	ddb := app.DDB()
+	ctx := c.Request.Context()
+	return authx.SetTenantState(ctx, ddb, targetTenant, st)
 }

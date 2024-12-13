@@ -19,21 +19,21 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type HandleGetTenantByIDTestSuite struct {
+type HandleRetrieveTenantTestSuite struct {
 	suite.Suite
 	ginMode string
 }
 
-func TestHandleGetTenantByIDTestSuite(t *testing.T) {
-	suite.Run(t, &HandleGetTenantByIDTestSuite{})
+func TestHandleRetrieveTenantTestSuite(t *testing.T) {
+	suite.Run(t, &HandleRetrieveTenantTestSuite{})
 }
 
-func (s *HandleGetTenantByIDTestSuite) SetupTest() {
+func (s *HandleRetrieveTenantTestSuite) SetupTest() {
 	s.ginMode = gin.Mode()
 	gin.SetMode(gin.TestMode)
 }
 
-func (s *HandleGetTenantByIDTestSuite) TearDownTest() {
+func (s *HandleRetrieveTenantTestSuite) TearDownTest() {
 	gin.SetMode(s.ginMode)
 }
 
@@ -54,59 +54,59 @@ func newGetTenantByIDTestSetup(t *testing.T, ten *multi.Tenant, user *multi.User
 	return gt
 }
 
-func (s *HandleGetTenantByIDTestSuite) TestNotAuthorized() {
+func (s *HandleRetrieveTenantTestSuite) TestNotAuthorized() {
 	app := NewMockApp()
 	gt1 := newGetTenantByIDTestSetup(s.T(), nil, nil)
-	err := handleGetTenantByID(app, gt1.c)
+	err := handleRetrieveTenant(app, gt1.c)
 	s.Error(err)
 	s.Equal("no token", err.Error())
 }
 
-func (s *HandleGetTenantByIDTestSuite) TestBadRequests() {
+func (s *HandleRetrieveTenantTestSuite) TestBadRequests() {
 	app := NewMockApp()
 
 	ten := multi.NewTenant("ten1")
 	user := newTestUser(ten)
 
 	gt1 := newGetTenantByIDTestSetup(s.T(), ten, user)
-	err := handleGetTenantByID(app, gt1.c)
+	err := handleRetrieveTenant(app, gt1.c)
 	s.Error(err)
 	s.Equal("no tenantID provided", err.Error())
 
 	gt1.c.Params = gin.Params{{Key: "tenantID", Value: ""}}
-	err = handleGetTenantByID(app, gt1.c)
+	err = handleRetrieveTenant(app, gt1.c)
 	s.Error(err)
 	s.Equal("no tenantID provided", err.Error())
 
 	gt1.c.Params = gin.Params{{Key: "tenantID", Value: "123456789012345678901234567890123"}}
-	err = handleGetTenantByID(app, gt1.c)
+	err = handleRetrieveTenant(app, gt1.c)
 	s.Error(err)
 	s.Equal("invalid tenantID", err.Error())
 }
 
-func (s *HandleGetTenantByIDTestSuite) TestNotFound() {
+func (s *HandleRetrieveTenantTestSuite) TestNotFound() {
 	app := NewMockApp()
 	ten := multi.NewTenant("ten1")
 	user := newTestUser(ten)
 	gt1 := newGetTenantByIDTestSetup(s.T(), ten, user)
 	gt1.c.Params = gin.Params{{Key: "tenantID", Value: uuid.New().String()}}
 	app.ddb.EXPECT().GetItem(mock.Anything, mock.Anything).Return(nil, errors.New("not found"))
-	err := handleGetTenantByID(app, gt1.c)
+	err := handleRetrieveTenant(app, gt1.c)
 	s.Error(err)
 }
 
-func (s *HandleGetTenantByIDTestSuite) TestSuccess() {
+func (s *HandleRetrieveTenantTestSuite) TestSuccess() {
 	app := NewMockApp()
 	ten := multi.NewTenant("ten1")
 	user := newTestUser(ten)
 	gt1 := newGetTenantByIDTestSetup(s.T(), ten, user)
 	gt1.c.Params = gin.Params{{Key: "tenantID", Value: ten.ID.String()}}
 	withSetupGetTenantByID2(app, ten)
-	err := handleGetTenantByID(app, gt1.c)
+	err := handleRetrieveTenant(app, gt1.c)
 	s.NoError(err)
 }
 
-func (s *HandleGetTenantByIDTestSuite) TestNotAuthorizedForTenant() {
+func (s *HandleRetrieveTenantTestSuite) TestNotAuthorizedForTenant() {
 	// user1 is in ten1, but requesting ten2 -- not authorized
 	app := NewMockApp()
 	ten1 := multi.NewTenant("ten1")
@@ -116,13 +116,13 @@ func (s *HandleGetTenantByIDTestSuite) TestNotAuthorizedForTenant() {
 
 	gt1.c.Params = gin.Params{{Key: "tenantID", Value: ten2.ID.String()}}
 	withSetupGetTenantByID2(app, ten2)
-	err := handleGetTenantByID(app, gt1.c)
+	err := handleRetrieveTenant(app, gt1.c)
 	s.Error(err)
 	s.True(apperr.IsUnauthorized(err))
 	s.Equal("not authorized", err.Error())
 }
 
-func (s *HandleGetTenantByIDTestSuite) TestAuthorizedViaRoot() {
+func (s *HandleRetrieveTenantTestSuite) TestAuthorizedViaRoot() {
 	// user1 is in root, requesting ten1 -- authorized
 	app := NewMockApp()
 	ten1 := multi.NewTenant("ten1")
@@ -132,6 +132,6 @@ func (s *HandleGetTenantByIDTestSuite) TestAuthorizedViaRoot() {
 	gt1 := newGetTenantByIDTestSetup(s.T(), ten1, user1)
 	gt1.c.Params = gin.Params{{Key: "tenantID", Value: ten1.ID.String()}}
 	withSetupGetTenantByID2(app, ten1)
-	err := handleGetTenantByID(app, gt1.c)
+	err := handleRetrieveTenant(app, gt1.c)
 	s.NoError(err)
 }

@@ -25,7 +25,7 @@ func convertTenant(ten *multi.Tenant) Tenant {
 	}
 }
 
-func handleGetTenants(app App, c *gin.Context) error {
+func handleListTenants(app App, c *gin.Context) error {
 	tens, err := HandleGetTenants(app, c)
 	if err != nil {
 		return err

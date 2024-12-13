@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleSetRolesForTenant(app App, c *gin.Context) error {
+func handleUpdateRolesForTenant(app App, c *gin.Context) error {
 	req := TenantRolesRequest{}
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
@@ -31,10 +31,15 @@ func handleSetRolesForTenant(app App, c *gin.Context) error {
 	if t == "" {
 		return apperr.NewBadRequest("no tenantID")
 	}
-	return HandleSetRolesForTenant(app, c, req, t)
+	return HandleUpdateRolesForTenant(app, c, req, t)
 }
 
-func HandleSetRolesForTenant(app App, c *gin.Context, req TenantRolesRequest, tenantID string) error {
+func HandleUpdateRolesForTenant(
+	app App,
+	c *gin.Context,
+	req TenantRolesRequest,
+	tenantID string) error {
+
 	req.Roles = tinytools.UniqueSlice(req.Roles)
 	req.SubTenantRoles = tinytools.UniqueSlice(req.SubTenantRoles)
 	if err := validateRoleNames(req.Roles); err != nil {

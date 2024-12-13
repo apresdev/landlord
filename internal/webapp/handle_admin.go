@@ -201,7 +201,7 @@ func handleAdminActivateTenantSubmit(a App, c *gin.Context) error {
 	if i == "" {
 		return fmt.Errorf("no id provided")
 	}
-	ten, err := rest.HandleSetTenantState(a, c, i, string(multi.TenantStateActive))
+	ten, err := rest.HandleUpdateTenantState(a, c, i, string(multi.TenantStateActive))
 	if err != nil {
 		return err
 	}
@@ -213,7 +213,7 @@ func handleAdminDeactivateTenantSubmit(a App, c *gin.Context) error {
 	if i == "" {
 		return fmt.Errorf("no id provided")
 	}
-	ten, err := rest.HandleSetTenantState(a, c, i, string(multi.TenantStateInactive))
+	ten, err := rest.HandleUpdateTenantState(a, c, i, string(multi.TenantStateInactive))
 	if err != nil {
 		return err
 	}
@@ -353,7 +353,7 @@ func handleAdminDescriptionSubmit(a App, c *gin.Context) error {
 	req := rest.TenantSetDescriptionRequest{
 		Description: description,
 	}
-	ten, err := rest.HandleSetTenantDescription(a, c, tenantID, req)
+	ten, err := rest.HandleUpdateTenantDescription(a, c, tenantID, req)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
@@ -408,7 +408,7 @@ func handleAdminAddRoleSubmit(a App, c *gin.Context) error {
 		var req rest.TenantRolesRequest
 		req.Roles = append(ten.Roles, role)
 		req.SubTenantRoles = ten.SubTenantRoles
-		err = rest.HandleSetRolesForTenant(a, c, req, tenantID)
+		err = rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
 		if err != nil {
 			return apperr.NewInternalE(err)
 		}
@@ -438,7 +438,7 @@ func handleAdminDeleteRoleSubmit(a App, c *gin.Context) error {
 	var req rest.TenantRolesRequest
 	req.Roles = tinytools.RemoveFromSlice(ten.Roles, role)
 	req.SubTenantRoles = ten.SubTenantRoles
-	err = rest.HandleSetRolesForTenant(a, c, req, tenantID)
+	err = rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
@@ -526,7 +526,7 @@ func handleAdminActivateUserSubmit(a App, c *gin.Context) error {
 		return apperr.NewBadRequestE(
 			fmt.Errorf("error parsing user ID: %w", err))
 	}
-	user, err := rest.HandleSetUserStatus(
+	user, err := rest.HandleUpdateUserStatus(
 		a, c, tenantID, userID, string(multi.TenantStateActive))
 	if err != nil {
 		return err
@@ -561,7 +561,7 @@ func handleAdminDeactivateUserSubmit(a App, c *gin.Context) error {
 		return apperr.NewBadRequestE(
 			fmt.Errorf("error parsing user ID: %w", err))
 	}
-	user, err := rest.HandleSetUserStatus(
+	user, err := rest.HandleUpdateUserStatus(
 		a, c, tenantID, userID, string(multi.TenantStateInactive))
 	if err != nil {
 		return err
