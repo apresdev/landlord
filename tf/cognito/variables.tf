@@ -114,3 +114,8 @@ variable "landlord_cdc_topic_arn" {
   description = "The ARN of the SNS topic to publish CDC events to"
   type        = string
 }
+
+variable "load_balancer_ssl_cert_arn" {
+  description = "The ARN of the SSL certificate to use for the load balancer"
+  type        = string
+}
