@@ -1,10 +1,14 @@
 module "landlord_webapp_ecs" {
-  source                  = "git@github.com:apresdev/apres-terraform.git//modules/aws/ecs?ref=rel/ecs/2.0.1"
+  source                  = "git@github.com:apresdev/apres-terraform.git//modules/aws/ecs?ref=rel/ecs/2.1.2"
   application             = "Landlord"
   component               = "Auth"
   container_image_uri     = var.container_image_uri
-  load_balancer_is_public = true
-  create_load_balancer    = true
+
+  load_balancer_is_public    = true
+  create_load_balancer       = true
+  load_balancer_ssl_cert_arn = var.load_balancer_ssl_cert_arn
+  load_balancer_port         = 443
+
   deployment_target       = "FARGATE"
   environment             = var.environment
   name                    = "LandlordWebAppECS"
