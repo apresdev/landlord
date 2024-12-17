@@ -1,19 +1,14 @@
 # TODOs
 
 * BUG: remove cognito ID from subject listUsers API
-* BUG: edit sub-role
 * move terraform to apres-terraform in `apps/aws` -- a new directory that
 contains terraform for apps like landlord
-* BUG: styling for builtin UI for CSH
-* BUG: shouldn't use admin error page when OTP fails
 * React UI flow for adding MFA
 * figure out terraform for how to configure email and SMS
-* why do some apps ask for two codes when signing up to MFA?
 * builtin login dialog should say "login again" after entering in OTP
 * in the URL we send for signing up a new account, make the URL navigate to a
 spot in the UI that forces a logout and then redirects back to the login page.
 * invitation email could look better
-* encode username as base64 in APIs when used in the URL
 * how to handle abuse of the unauthenticated landlord APIs?
     * what does the WAF do to help here?
 * apply handling
