@@ -42,6 +42,7 @@ const (
 	ProfileFieldFormatURI
 	ProfileFieldFormatPhoneNumber
 	ProfileFieldFormatEmail
+	ProfileFieldFormatString
 )
 
 func (pff ProfileFieldFormat) String() string {
@@ -54,6 +55,8 @@ func (pff ProfileFieldFormat) String() string {
 		return "phone-number"
 	case ProfileFieldFormatEmail:
 		return "email"
+	case ProfileFieldFormatString:
+		return "string"
 	default:
 		return "unknown"
 	}
@@ -146,6 +149,13 @@ var BasicProfileDefinition = ProfileDefinition{
 			Format: ProfileFieldFormatURI,
 			MaxLen: 255,
 			MinLen: 5,
+		},
+		{
+			Name:   "theme",
+			UIName: "Theme",
+			Format: ProfileFieldFormatString,
+			MaxLen: 50,
+			MinLen: 1,
 		},
 	},
 }

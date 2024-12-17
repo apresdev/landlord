@@ -27,10 +27,13 @@ type obtainAccessTokenForm struct {
 	CodeVerifier string `json:"code_verifier"`
 }
 
-func handleObtainAccessToken(app App, c *gin.Context) error {
+// HandleObtainAccessToken handles an oauth2 request to obtain an access token. This
+// is not a traditional JSON POST, but a form POST. Part of the oauth2 authorization
+// flow.
+func HandleObtainAccessToken(app App, c *gin.Context) (*ObtainTokenResponse, error) {
 	if err := c.Request.ParseForm(); err != nil {
 		zap.L().Error("Error parsing form", zap.Error(err))
-		return apperr.NewBadRequest("bad request")
+		return nil, apperr.NewBadRequest("bad request")
 	}
 
 	var req obtainAccessTokenForm
@@ -40,15 +43,6 @@ func handleObtainAccessToken(app App, c *gin.Context) error {
 	req.RedirectURI = c.PostForm("redirect_uri")
 	req.CodeVerifier = c.PostForm("code_verifier")
 
-	resp, err := HandleObtainAccessToken(app, c, req)
-	if err != nil {
-		return err
-	}
-	c.JSON(http.StatusOK, resp)
-	return nil
-}
-
-func HandleObtainAccessToken(app App, c *gin.Context, req obtainAccessTokenForm) (*ObtainTokenResponse, error) {
 	cid := perms.ClientID(c)
 	if req.GrantType == "" {
 		zap.L().Info("No grant type in request", zap.String("cid", string(cid)))

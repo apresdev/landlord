@@ -155,69 +155,6 @@
         }
       }
     },
-    "/ll-auth/api/oauth2/token": {
-      "post": {
-        "operationId": "ObtainAccessToken",
-        "summary": "Obtain an access token via Oauth2 PKCE flow",
-        "tags": [
-          "LandlordUser"
-        ],
-        "requestBody": {
-          "$ref": "#/components/requestBodies/ObtainTokenRequest"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/ObtainTokenResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          }
-        },
-        "security": [],
-        "x-amazon-apigateway-integration": {
-          "connectionId": "${vpc_link_connection_id}",
-          "connectionType": "VPC_LINK",
-          "httpMethod": "any",
-          "type": "http_proxy",
-          "uri": "${nlb_uri}/ll-auth/api/oauth2/token",
-          "payloadFormatVersion": "1.0"
-        }
-      },
-      "options": {
-        "parameters": [],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/CorsResponse"
-          }
-        },
-        "x-amazon-apigateway-integration": {
-          "type": "mock",
-          "requestTemplates": {
-            "application/json": "{\"statusCode\": 200}"
-          },
-          "passthroughBehavior": "never",
-          "responses": {
-            "default": {
-              "statusCode": "200",
-              "responseParameters": {
-                "method.response.header.Access-Control-Allow-Headers": "'*'",
-                "method.response.header.Access-Control-Allow-Methods": "'*'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'"
-              }
-            }
-          }
-        }
-      }
-    },
     "/ll-auth/api/validate-mfa-code": {
       "post": {
         "operationId": "ValidateMFACode",
@@ -2223,16 +2160,6 @@
           }
         }
       },
-      "ObtainTokenRequest": {
-        "required": true,
-        "content": {
-          "application/x-www-form-urlencoded": {
-            "schema": {
-              "$ref": "#/components/schemas/ObtainTokenRequest"
-            }
-          }
-        }
-      },
       "ValidateMFACodeRequest": {
         "required": true,
         "content": {
@@ -2625,6 +2552,7 @@
         }
       },
       "CorsResponse": {
+        "description": "Default response for CORS method",
         "headers": {
           "Access-Control-Allow-Origin": {
             "schema": {
@@ -2793,33 +2721,6 @@
             "type": "string"
           },
           "refreshToken": {
-            "type": "string"
-          }
-        }
-      },
-      "ObtainTokenRequest": {
-        "type": "object",
-        "required": [
-          "grant_type",
-          "code",
-          "client_id",
-          "redirect_uri",
-          "code_verifier"
-        ],
-        "properties": {
-          "grant_type": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "client_id": {
-            "type": "string"
-          },
-          "redirect_uri": {
-            "type": "string"
-          },
-          "code_verifier": {
             "type": "string"
           }
         }
