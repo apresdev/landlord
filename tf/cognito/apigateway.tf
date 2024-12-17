@@ -35,21 +35,65 @@ module "landlord_dynamo" {
   ]
 }
 
-# Create a publisher that will take DynamoDB CDC events from the DynamoDB stream and
-# publish them to the SNS topic
+
+# Create an SNS topic where all DynamoDB CDC events will be published to.
+module "landlord_cdc_topic" {
+  #checkov:skip=CKV_TF_1:False positive, we are not using a hash because we use the tagged version.
+  source = "git@github.com:apresdev/apres-terraform.git//modules/aws/sns?ref=rel/sns/1.0.0"
+
+  name         = "landlord-cdc"
+  display_name = "Landlord Change Data Capture"
+
+  environment  = var.environment
+  owner        = var.owner
+  application  = var.application
+  component    = var.component
+  default_tags = var.default_tags
+}
+
+# Create an SQS queue for all DynamoDB CDC events.
+module "landlord_sync_queue" {
+  #checkov:skip=CKV_TF_1:False positive, we are not using a hash because we use the tagged version.
+  source = "git@github.com:apresdev/apres-terraform.git//modules/aws/sqs?ref=rel/sqs/1.0.0"
+
+  name = "landlord-cdc-sync"
+
+  environment  = var.environment
+  owner        = var.owner
+  application  = var.application
+  component    = var.component
+  default_tags = var.default_tags
+}
+
+# Create a publisher that will take DynamoDB CDC events from the DynamoDB stream and publish them to the SNS topic
 module "landlord_cdc_publisher" {
-  count = var.landlord_cdc_topic_arn != "none" ? 1 : 0
   #checkov:skip=CKV_TF_1:False positive, we are not using a hash because we use the tagged version.
   source = "git@github.com:apresdev/apres-terraform.git//modules/aws/dynamodb_sns_publisher?ref=rel/dynamodb_sns_publisher/0.2.0"
 
-  name       = "landlord-cdc"
-  topic_arn  = var.landlord_cdc_topic_arn
+  name       = "landlord-publish"
+  topic_arn  = module.landlord_cdc_topic.topic_arn
   stream_arn = module.landlord_dynamo.stream_arn
 
   environment  = var.environment
   owner        = var.owner
-  application  = "Landlord"
-  component    = "Auth"
+  application  = var.application
+  component    = var.component
+  default_tags = var.default_tags
+}
+
+# Connect the sync queue and the CDC topic
+module "landlord_sns_sqs_subscription" {
+  #checkov:skip=CKV_TF_1:False positive, we are not using a hash because we use the tagged version.
+  source = "git@github.com:apresdev/apres-terraform.git//modules/aws/sns_sqs_subscription?ref=rel/sns_sqs_subscription/0.1.0"
+
+  sns_topic_arn = module.landlord_cdc_topic.topic_arn
+  sqs_queue_arn = module.landlord_sync_queue.queue_arn
+  sqs_queue_url = module.landlord_sync_queue.queue_url
+
+  environment  = var.environment
+  owner        = var.owner
+  application  = var.application
+  component    = var.component
   default_tags = var.default_tags
 }
 

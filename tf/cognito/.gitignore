@@ -1,4 +1,5 @@
 /.terraform
+/tf_generated
 .terraform.lock.hcl
 terraform.tfstate
 terraform.tfstate.backup
