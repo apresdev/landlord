@@ -1,5 +1,6 @@
 # TODOs
 
+* BUG: remove cognito ID from subject listUsers API
 * BUG: edit sub-role
 * move terraform to apres-terraform in `apps/aws` -- a new directory that
 contains terraform for apps like landlord

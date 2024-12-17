@@ -38,11 +38,6 @@ func ginLogin(c *gin.Context) {
 	callImpl(c, handleLogin)
 }
 
-// ObtainAccessToken - Obtain an access token via Oauth2 PKCE flow
-func ginObtainAccessToken(c *gin.Context) {
-	callImpl(c, handleObtainAccessToken)
-}
-
 // RecoverPassword - Recover a password.
 func ginRecoverPassword(c *gin.Context) {
 	callImpl(c, handleRecoverPassword)

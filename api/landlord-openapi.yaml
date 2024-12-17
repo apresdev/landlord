@@ -60,28 +60,6 @@ paths:
       # No security at the OpenAPI as this is the call to obtain a token. However,
       # the request will only succeed with a valid refresh token.
       security: [ ]
-  /ll-auth/api/oauth2/token:
-    post:
-      operationId: ObtainAccessToken
-      summary: Obtain an access token via Oauth2 PKCE flow
-      tags:
-        - LandlordUser
-      requestBody:
-        $ref: "#/components/requestBodies/ObtainTokenRequest"
-      responses:
-        "200":
-          $ref: '#/components/responses/ObtainTokenResponse'
-        "400":
-          $ref: '#/components/responses/BadRequest'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "403":
-          $ref: '#/components/responses/Forbidden'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-      # No security at the OpenAPI as this is the call to obtain a token. However,
-      # the request will only succeed with a valid refresh token.
-      security: [ ]
   /ll-auth/api/validate-mfa-code:
     post:
       operationId: ValidateMFACode
@@ -744,12 +722,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/RefreshRequest'
-    ObtainTokenRequest:
-      required: true
-      content:
-        application/x-www-form-urlencoded:
-          schema:
-            $ref: '#/components/schemas/ObtainTokenRequest'
     ValidateMFACodeRequest:
       required: true
       content:
@@ -1090,25 +1062,6 @@ components:
           type: string
         refreshToken:
           type: string
-    ObtainTokenRequest:
-      type: object
-      required:
-        - grant_type
-        - code
-        - client_id
-        - redirect_uri
-        - code_verifier
-      properties:
-        grant_type:
-          type: string
-        code:
-          type: string
-        client_id:
-          type: string
-        redirect_uri:
-          type: string
-        code_verifier:
-          type: string
     SetNewPasswordResponse:
       type: object
       required:
@@ -1129,6 +1082,7 @@ components:
         otpURI:
           type: string
     ObtainTokenResponse:
+
       type: object
       # Field names conform to OAuth2 spec
       required:
