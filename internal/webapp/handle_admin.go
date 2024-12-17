@@ -7,6 +7,8 @@ import (
 	"slices"
 	"sort"
 
+	"github.com/apresdev/landlord/internal/tinytools"
+
 	"github.com/apresdev/landlord/internal/perms"
 
 	"github.com/apresdev/landlord/internal/apperr"
@@ -14,7 +16,6 @@ import (
 	"github.com/apresdev/landlord/internal/db"
 	"github.com/apresdev/landlord/internal/multi"
 	"github.com/apresdev/landlord/internal/rest"
-	"github.com/apresdev/landlord/internal/tinytools"
 	"github.com/google/uuid"
 
 	"github.com/a-h/templ"
@@ -112,13 +113,20 @@ func handleAdminTenants(a App, c *gin.Context) error {
 type tenantTab string
 
 const (
-	tenantTabSummary tenantTab = "summary"
-	tenantTabUsers   tenantTab = "users"
-	tenantTabInvites tenantTab = "invites"
-	tenantTabRoles   tenantTab = "roles"
+	tenantTabSummary  tenantTab = "summary"
+	tenantTabUsers    tenantTab = "users"
+	tenantTabInvites  tenantTab = "invites"
+	tenantTabRoles    tenantTab = "roles"
+	tenantTabSubRoles tenantTab = "subroles"
 )
 
-var tenantTabs = []tenantTab{tenantTabSummary, tenantTabUsers, tenantTabInvites, tenantTabRoles}
+var tenantTabs = []tenantTab{
+	tenantTabSummary,
+	tenantTabUsers,
+	tenantTabInvites,
+	tenantTabRoles,
+	tenantTabSubRoles,
+}
 
 func newTenantTab(s string) tenantTab {
 	if s == "" {
@@ -133,6 +141,8 @@ func newTenantTab(s string) tenantTab {
 		return tenantTabInvites
 	case "roles":
 		return tenantTabRoles
+	case "subroles":
+		return tenantTabSubRoles
 	default:
 		zap.L().Info("bad value for tenant tab", zap.String("tab", s))
 		return tenantTabSummary
@@ -341,6 +351,10 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
 		return render(c, tenantRolesTab(
 			a.Settings().AppName(), ds, ten, users, rolesWithCount(ten.Roles, users)))
+	case tenantTabSubRoles:
+		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+		return render(c, tenantSubRolesTab(
+			a.Settings().AppName(), ds, ten, users, rolesWithCount(ten.SubTenantRoles, users)))
 	default:
 		zap.L().Info("unknown tenant tab", zap.String("tab", string(tab)))
 	}
@@ -384,6 +398,56 @@ func handleAdminDescriptionForm(a App, c *gin.Context) error {
 		return apperr.NewNotFoundE(err)
 	}
 	return render(c, tenantDescriptionForm(tenantID, ten.Description))
+}
+
+func handleAdminInviteUserForm(a App, c *gin.Context) error {
+	tenantID := c.Param("tenantID")
+	th, err := multi.ParseTenantHandle(tenantID)
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	return render(c, tenantInviteUserForm(tenantID, ten, multi.MFAPolicyStrings()))
+}
+
+func handleAdminInviteUserButton(a App, c *gin.Context) error {
+	return render(c, tenantInviteUserButton(c.Param("tenantID")))
+}
+
+func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return err
+	}
+	var req rest.InviteRequest
+	req.Username = c.PostForm("username")
+	req.Role = c.PostForm("role")
+	req.MfaPolicy = rest.MfaPolicy(c.PostForm("mfaPolicy"))
+	if err := rest.HandleInviteToTenant(a, c, tenantID, req); err != nil {
+		return err
+	}
+	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
+	dus, err := NewDisplayableUsers(c.Request.Context(), a, sub, ten, users)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	return render(c, tenantInviteUserTableAndForm(tenantID, ds, dus, ""))
 }
 
 func handleAdminAddRoleSubmit(a App, c *gin.Context) error {
@@ -446,11 +510,21 @@ func handleAdminDeleteRoleSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	zap.L().Info("Removed role to tenant", zap.String("role", role))
-	return render(c, tenantAddRoleTableAndForm(ten, rolesWithCount(req.Roles, users), ""))
+	zap.L().Info("Removed role from tenant", zap.String("role", role))
+	return render(c, tenantAddRoleTableAndForm(
+		ten, rolesWithCount(req.Roles, users), ""))
 }
 
-func handleAdminInviteUserForm(a App, c *gin.Context) error {
+func handleAdminAddRoleForm(a App, c *gin.Context) error {
+	return render(c, tenantAddRoleForm(c.Param("tenantID")))
+}
+
+func handleAdminAddRoleButton(a App, c *gin.Context) error {
+	return render(c, tenantAddRoleButton(c.Param("tenantID")))
+}
+
+func handleAdminAddSubRoleSubmit(a App, c *gin.Context) error {
+	role := c.PostForm("subrole")
 	tenantID := c.Param("tenantID")
 	th, err := multi.ParseTenantHandle(tenantID)
 	if err != nil {
@@ -460,52 +534,55 @@ func handleAdminInviteUserForm(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewNotFoundE(err)
 	}
-	return render(c, tenantInviteUserForm(tenantID, ten, multi.MFAPolicyStrings()))
+	if slices.Contains(ten.SubTenantRoles, role) {
+		return render(c, tenantAddSubRoleTableAndForm(
+			ten, rolesWithCount(ten.SubTenantRoles, nil), "Sub-role already exists: "+role))
+	} else {
+		var req rest.TenantRolesRequest
+		req.Roles = ten.Roles
+		req.SubTenantRoles = append(ten.SubTenantRoles, role)
+		err = rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
+		if err != nil {
+			return apperr.NewInternalE(err)
+		}
+		zap.L().Info("Adding sub-role to tenant", zap.String("sub-role", role))
+		return render(c, tenantAddSubRoleTableAndForm(
+			ten, rolesWithCount(req.SubTenantRoles, nil), ""))
+	}
 }
 
-func handleAdminInviteUserButton(a App, c *gin.Context) error {
-	return render(c, tenantInviteUserButton(c.Param("tenantID")))
-}
-
-func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
+func handleAdminDeleteSubRoleSubmit(a App, c *gin.Context) error {
+	subRole := c.Param("subrole")
+	tenantID := c.Param("tenantID")
+	th, err := multi.ParseTenantHandle(tenantID)
 	if err != nil {
-		return err
+		return apperr.NewBadRequestE(err)
 	}
-
-	tenantID, err := rest.UUIDParam(c, "tenantID")
+	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
 	if err != nil {
-		return err
+		return apperr.NewNotFoundE(err)
 	}
-	var req rest.InviteRequest
-	req.Username = c.PostForm("username")
-	req.Role = c.PostForm("role")
-	req.MfaPolicy = rest.MfaPolicy(c.PostForm("mfaPolicy"))
-	if err := rest.HandleInviteToTenant(a, c, tenantID, req); err != nil {
-		return err
+	if !slices.Contains(ten.SubTenantRoles, subRole) {
+		return apperr.NewBadRequestE(fmt.Errorf("sub-role does not exist: %s", subRole))
 	}
-	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), tenantID)
+	var req rest.TenantRolesRequest
+	req.Roles = ten.Roles
+	req.SubTenantRoles = tinytools.RemoveFromSlice(ten.SubTenantRoles, subRole)
+	err = rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	dus, err := NewDisplayableUsers(c.Request.Context(), a, sub, ten, users)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
-	return render(c, tenantInviteUserTableAndForm(tenantID, ds, dus, ""))
+	zap.L().Info("Removed sub-role from tenant", zap.String("sub-role", subRole))
+	return render(c, tenantAddSubRoleTableAndForm(
+		ten, rolesWithCount(req.SubTenantRoles, nil), ""))
 }
 
-func handleAdminAddRoleForm(a App, c *gin.Context) error {
-	return render(c, tenantAddRoleForm(c.Param("tenantID")))
+func handleAdminAddSubRoleForm(a App, c *gin.Context) error {
+	return render(c, tenantAddSubRoleForm(c.Param("tenantID")))
 }
 
-func handleAdminAddRoleButton(a App, c *gin.Context) error {
-	return render(c, tenantAddRoleButton(c.Param("tenantID")))
+func handleAdminAddSubRoleButton(a App, c *gin.Context) error {
+	return render(c, tenantAddSubRoleButton(c.Param("tenantID")))
 }
 
 func handleAdminActivateUserSubmit(a App, c *gin.Context) error {
