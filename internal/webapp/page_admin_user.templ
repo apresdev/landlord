@@ -108,9 +108,8 @@ templ profileEditFieldForm(
     hx-target={ "#edit-" + defn.Name }
     hx-swap="innerHTML"
 >
-// TODO: modify input type based on defn
     <label>
-        <input type="text" name="fieldValue" value={ value } maxlength="256" autofocus>
+        <input type={ defn.Format.HTMLInputType() } name="fieldValue" value={ value } maxlength="256" autofocus>
     </label>
     <button class="button" type="submit">Submit</button>
     <button class="button" type="button"
