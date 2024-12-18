@@ -4,6 +4,7 @@
 * move terraform to apres-terraform in `apps/aws` -- a new directory that
 contains terraform for apps like landlord
 * React UI flow for adding MFA
+* add indicators to submits https://htmx.org/attributes/hx-indicator/
 * figure out terraform for how to configure email and SMS
 * builtin login dialog should say "login again" after entering in OTP
 * in the URL we send for signing up a new account, make the URL navigate to a

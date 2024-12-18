@@ -62,6 +62,23 @@ func (pff ProfileFieldFormat) String() string {
 	}
 }
 
+func (pff ProfileFieldFormat) HTMLInputType() string {
+	switch pff {
+	case ProfileFieldFormatName:
+		return "text"
+	case ProfileFieldFormatURI:
+		return "url"
+	case ProfileFieldFormatPhoneNumber:
+		return "tel"
+	case ProfileFieldFormatEmail:
+		return "email"
+	case ProfileFieldFormatString:
+		return "text"
+	default:
+		return "text"
+	}
+}
+
 type ProfileField struct {
 	Name   string
 	Format ProfileFieldFormat
@@ -98,7 +115,7 @@ func (pfd *ProfileFieldDefinition) ValidateValue(value string) error {
 	if len(value) > pfd.MaxLen {
 		return fmt.Errorf("field %s is too long", pfd.Name)
 	}
-	if len(value) < pfd.MinLen {
+	if value != "" && len(value) < pfd.MinLen {
 		return fmt.Errorf("field %s is too short", pfd.Name)
 	}
 	if pfd.RegexValidator != "" {
@@ -141,7 +158,7 @@ var BasicProfileDefinition = ProfileDefinition{
 			UIName: "Phone Number",
 			Format: ProfileFieldFormatPhoneNumber,
 			MaxLen: 20,
-			MinLen: 10,
+			MinLen: 1,
 		},
 		{
 			Name:   "profile-picture",

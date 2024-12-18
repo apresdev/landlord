@@ -50,7 +50,9 @@ templ tenantCreateTenantForm() {
 templ tenantCreateTenantTableAndForm(tenants []*multi.Tenant, errMsg string) {
 <div id="create-tenant-table-and-form">
     @tenantCreateTenantButton()
-    <div id="create-tenant-error-message" style="color: red; margin-top: 10px;">{ errMsg }</div>
+    if errMsg != "" {
+        <div id="create-tenant-error-message" class="error-text">{ errMsg }</div>
+    }
     <table>
         <thead>
             <tr>

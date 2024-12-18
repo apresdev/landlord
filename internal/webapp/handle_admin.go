@@ -196,14 +196,15 @@ func handleAdminCreateTenantSubmit(a App, c *gin.Context) error {
 	req.Name = c.PostForm("name")
 	req.Description = c.PostForm("description")
 	_, err := rest.HandleCreateTenant(a, c, req)
+	errMsg := ""
 	if err != nil {
-		return err
+		errMsg = err.Error()
 	}
 	tens, err := rest.HandleGetTenants(a, c)
 	if err != nil {
 		return err
 	}
-	return render(c, tenantCreateTenantTableAndForm(tens, ""))
+	return render(c, tenantCreateTenantTableAndForm(tens, errMsg))
 }
 
 func handleAdminActivateTenantSubmit(a App, c *gin.Context) error {
