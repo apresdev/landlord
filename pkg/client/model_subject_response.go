@@ -15,14 +15,15 @@ var _ MappedNullable = &SubjectResponse{}
 
 // SubjectResponse struct for SubjectResponse
 type SubjectResponse struct {
-	TenantID      string                        `json:"tenantID"`
-	TenantName    string                        `json:"tenantName"`
-	UserID        string                        `json:"userID"`
-	Username      string                        `json:"username"`
-	Role          string                        `json:"role"`
-	Status        UserStatus                    `json:"status"`
-	Impersonating *SubjectResponseImpersonating `json:"impersonating,omitempty"`
-	Fields        []ProfileFormatField          `json:"fields,omitempty"`
+	TenantID            string                        `json:"tenantID"`
+	TenantName          string                        `json:"tenantName"`
+	UserID              string                        `json:"userID"`
+	Username            string                        `json:"username"`
+	Role                string                        `json:"role"`
+	Status              UserStatus                    `json:"status"`
+	TenantProfileFields []ProfileFormatField          `json:"tenantProfileFields,omitempty"`
+	Impersonating       *SubjectResponseImpersonating `json:"impersonating,omitempty"`
+	UserProfileFields   []ProfileFormatField          `json:"userProfileFields,omitempty"`
 }
 
 type _SubjectResponse SubjectResponse
@@ -194,6 +195,38 @@ func (o *SubjectResponse) SetStatus(v UserStatus) {
 	o.Status = v
 }
 
+// GetTenantProfileFields returns the TenantProfileFields field value if set, zero value otherwise.
+func (o *SubjectResponse) GetTenantProfileFields() []ProfileFormatField {
+	if o == nil || IsNil(o.TenantProfileFields) {
+		var ret []ProfileFormatField
+		return ret
+	}
+	return o.TenantProfileFields
+}
+
+// GetTenantProfileFieldsOk returns a tuple with the TenantProfileFields field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *SubjectResponse) GetTenantProfileFieldsOk() ([]ProfileFormatField, bool) {
+	if o == nil || IsNil(o.TenantProfileFields) {
+		return nil, false
+	}
+	return o.TenantProfileFields, true
+}
+
+// HasTenantProfileFields returns a boolean if a field has been set.
+func (o *SubjectResponse) HasTenantProfileFields() bool {
+	if o != nil && !IsNil(o.TenantProfileFields) {
+		return true
+	}
+
+	return false
+}
+
+// SetTenantProfileFields gets a reference to the given []ProfileFormatField and assigns it to the TenantProfileFields field.
+func (o *SubjectResponse) SetTenantProfileFields(v []ProfileFormatField) {
+	o.TenantProfileFields = v
+}
+
 // GetImpersonating returns the Impersonating field value if set, zero value otherwise.
 func (o *SubjectResponse) GetImpersonating() SubjectResponseImpersonating {
 	if o == nil || IsNil(o.Impersonating) {
@@ -226,36 +259,36 @@ func (o *SubjectResponse) SetImpersonating(v SubjectResponseImpersonating) {
 	o.Impersonating = &v
 }
 
-// GetFields returns the Fields field value if set, zero value otherwise.
-func (o *SubjectResponse) GetFields() []ProfileFormatField {
-	if o == nil || IsNil(o.Fields) {
+// GetUserProfileFields returns the UserProfileFields field value if set, zero value otherwise.
+func (o *SubjectResponse) GetUserProfileFields() []ProfileFormatField {
+	if o == nil || IsNil(o.UserProfileFields) {
 		var ret []ProfileFormatField
 		return ret
 	}
-	return o.Fields
+	return o.UserProfileFields
 }
 
-// GetFieldsOk returns a tuple with the Fields field value if set, nil otherwise
+// GetUserProfileFieldsOk returns a tuple with the UserProfileFields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *SubjectResponse) GetFieldsOk() ([]ProfileFormatField, bool) {
-	if o == nil || IsNil(o.Fields) {
+func (o *SubjectResponse) GetUserProfileFieldsOk() ([]ProfileFormatField, bool) {
+	if o == nil || IsNil(o.UserProfileFields) {
 		return nil, false
 	}
-	return o.Fields, true
+	return o.UserProfileFields, true
 }
 
-// HasFields returns a boolean if a field has been set.
-func (o *SubjectResponse) HasFields() bool {
-	if o != nil && !IsNil(o.Fields) {
+// HasUserProfileFields returns a boolean if a field has been set.
+func (o *SubjectResponse) HasUserProfileFields() bool {
+	if o != nil && !IsNil(o.UserProfileFields) {
 		return true
 	}
 
 	return false
 }
 
-// SetFields gets a reference to the given []ProfileFormatField and assigns it to the Fields field.
-func (o *SubjectResponse) SetFields(v []ProfileFormatField) {
-	o.Fields = v
+// SetUserProfileFields gets a reference to the given []ProfileFormatField and assigns it to the UserProfileFields field.
+func (o *SubjectResponse) SetUserProfileFields(v []ProfileFormatField) {
+	o.UserProfileFields = v
 }
 
 func (o SubjectResponse) MarshalJSON() ([]byte, error) {
@@ -274,11 +307,14 @@ func (o SubjectResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["username"] = o.Username
 	toSerialize["role"] = o.Role
 	toSerialize["status"] = o.Status
+	if !IsNil(o.TenantProfileFields) {
+		toSerialize["tenantProfileFields"] = o.TenantProfileFields
+	}
 	if !IsNil(o.Impersonating) {
 		toSerialize["impersonating"] = o.Impersonating
 	}
-	if !IsNil(o.Fields) {
-		toSerialize["fields"] = o.Fields
+	if !IsNil(o.UserProfileFields) {
+		toSerialize["userProfileFields"] = o.UserProfileFields
 	}
 	return toSerialize, nil
 }

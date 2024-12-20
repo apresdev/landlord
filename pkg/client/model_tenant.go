@@ -15,11 +15,12 @@ var _ MappedNullable = &Tenant{}
 
 // Tenant struct for Tenant
 type Tenant struct {
-	Id             string   `json:"id"`
-	Name           string   `json:"name"`
-	Description    string   `json:"description"`
-	Roles          []string `json:"roles"`
-	SubTenantRoles []string `json:"subTenantRoles"`
+	Id             string               `json:"id"`
+	Name           string               `json:"name"`
+	Description    string               `json:"description"`
+	Roles          []string             `json:"roles"`
+	SubTenantRoles []string             `json:"subTenantRoles"`
+	ProfileFields  []ProfileFormatField `json:"profileFields,omitempty"`
 }
 
 type _Tenant Tenant
@@ -166,6 +167,38 @@ func (o *Tenant) SetSubTenantRoles(v []string) {
 	o.SubTenantRoles = v
 }
 
+// GetProfileFields returns the ProfileFields field value if set, zero value otherwise.
+func (o *Tenant) GetProfileFields() []ProfileFormatField {
+	if o == nil || IsNil(o.ProfileFields) {
+		var ret []ProfileFormatField
+		return ret
+	}
+	return o.ProfileFields
+}
+
+// GetProfileFieldsOk returns a tuple with the ProfileFields field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Tenant) GetProfileFieldsOk() ([]ProfileFormatField, bool) {
+	if o == nil || IsNil(o.ProfileFields) {
+		return nil, false
+	}
+	return o.ProfileFields, true
+}
+
+// HasProfileFields returns a boolean if a field has been set.
+func (o *Tenant) HasProfileFields() bool {
+	if o != nil && !IsNil(o.ProfileFields) {
+		return true
+	}
+
+	return false
+}
+
+// SetProfileFields gets a reference to the given []ProfileFormatField and assigns it to the ProfileFields field.
+func (o *Tenant) SetProfileFields(v []ProfileFormatField) {
+	o.ProfileFields = v
+}
+
 func (o Tenant) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -181,6 +214,9 @@ func (o Tenant) ToMap() (map[string]interface{}, error) {
 	toSerialize["description"] = o.Description
 	toSerialize["roles"] = o.Roles
 	toSerialize["subTenantRoles"] = o.SubTenantRoles
+	if !IsNil(o.ProfileFields) {
+		toSerialize["profileFields"] = o.ProfileFields
+	}
 	return toSerialize, nil
 }
 

@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 
+	"go.uber.org/zap"
+
 	"github.com/google/uuid"
 
 	"github.com/apresdev/landlord/internal/tinytools"
@@ -575,15 +577,15 @@ func restSubjectCmd() *cobra.Command {
 				cmd.Printf("  Email: %s\n", sub.Impersonating.Email)
 				cmd.Printf("  Role: %s\n", sub.Impersonating.Role)
 			}
-			if len(sub.Fields) > 0 {
-				cmd.Printf("Fields:\n")
-				table := NewTable([]string{"Name", "Format", "Value"})
-				for _, f := range sub.Fields {
-					err := table.AddRow([]string{f.Name, f.Format, f.Value})
-					if err != nil {
-						return err
-					}
-				}
+			if len(sub.TenantProfileFields) > 0 {
+				cmd.Printf("Tenant Profile Fields:\n")
+				table := profileFieldsTable(sub.TenantProfileFields)
+				cmd.Println(table.String())
+			}
+			if len(sub.UserProfileFields) > 0 {
+				cmd.Printf("User Profile Fields:\n")
+				table := profileFieldsTable(sub.UserProfileFields)
+				cmd.Println(table.String())
 			}
 			return err
 		},
@@ -591,6 +593,17 @@ func restSubjectCmd() *cobra.Command {
 	c.PersistentFlags().StringVarP(
 		&server, "server", "s", "", "Server to connect to")
 	return c
+}
+
+func profileFieldsTable(fields []client.ProfileFormatField) *Table {
+	table := NewTable([]string{"Name", "Format", "Value"})
+	for _, f := range fields {
+		err := table.AddRow([]string{f.Name, f.Format, f.Value})
+		if err != nil {
+			zap.L().Error("coder fail: error adding row to table", zap.Error(err))
+		}
+	}
+	return table
 }
 
 func restTenantsCmd() *cobra.Command {

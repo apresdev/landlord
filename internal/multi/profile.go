@@ -130,7 +130,7 @@ func (pfd *ProfileFieldDefinition) ValidateValue(value string) error {
 	return nil
 }
 
-var BasicProfileDefinition = ProfileDefinition{
+var BasicUserProfileFieldDefinition = ProfileDefinition{
 	Fields: []ProfileFieldDefinition{
 		{
 			Name:   "first-name",
@@ -175,4 +175,22 @@ var BasicProfileDefinition = ProfileDefinition{
 			MinLen: 1,
 		},
 	},
+}
+
+var BasicTenantProfileFieldDefinition = ProfileDefinition{
+	Fields: []ProfileFieldDefinition{
+		{
+			Name:   "default-theme",
+			UIName: "Default Theme",
+			Format: ProfileFieldFormatString,
+			MaxLen: 50,
+			MinLen: 1,
+		},
+	},
+}
+
+type ProfileFieldProvider interface {
+	ProfileField(name string) string
+	UpdateProfileField(name string, format ProfileFieldFormat, value string)
+	ProfileFields() []ProfileField
 }

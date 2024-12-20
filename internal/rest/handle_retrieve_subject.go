@@ -37,15 +37,8 @@ func handleRetrieveSubject(app App, c *gin.Context) error {
 	resp.Status = UserStatus(user.Status.String())
 	resp.TenantID = ten.ID.String()
 	resp.TenantName = ten.Name
-	var fields []ProfileFormatField
-	for _, field := range user.ProfileFields() {
-		fields = append(fields, ProfileFormatField{
-			Name:   field.Name,
-			Format: field.Format.String(),
-			Value:  field.Value,
-		})
-	}
-	resp.Fields = fields
+	resp.TenantProfileFields = convertProfileFields(ten)
+	resp.UserProfileFields = convertProfileFields(user)
 
 	if sub.IsImpersonating() {
 		resp.Impersonating.TenantID = sub.ImpersonateTenant.String()
@@ -63,4 +56,16 @@ func handleRetrieveSubject(app App, c *gin.Context) error {
 
 	c.JSON(http.StatusOK, resp)
 	return nil
+}
+
+func convertProfileFields(prov multi.ProfileFieldProvider) []ProfileFormatField {
+	var result []ProfileFormatField
+	for _, field := range prov.ProfileFields() {
+		result = append(result, ProfileFormatField{
+			Name:   field.Name,
+			Format: field.Format.String(),
+			Value:  field.Value,
+		})
+	}
+	return result
 }

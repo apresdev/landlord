@@ -327,7 +327,8 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 	case tenantTabSummary:
 		cognitoURL := authx.CognitoUserPoolURL(a.Cfg().Region, ten.UserPoolID)
 		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-		return render(c, tenantSummaryTab(a.Settings().AppName(), ds, ten, cognitoURL, users))
+		baseURL := appPath("/admin/tenants/" + id)
+		return render(c, tenantSummaryTab(a.Settings().AppName(), ds, ten, cognitoURL, users, baseURL))
 	case tenantTabUsers:
 		dus, err := NewDisplayableUsers(c.Request.Context(), a, sub, ten, users)
 		if err != nil {
@@ -823,7 +824,8 @@ func handleAdminUser(a App, c *gin.Context) error {
 		return apperr.NewInternalE(
 			fmt.Errorf("error getting cognito user: %w", err))
 	}
-	return render(c, userSummary(a.Settings().AppName(), ds, ten, u, cogUser))
+	baseURL := appPath("/admin/tenants/" + tenantID + "/users/" + userID)
+	return render(c, userSummary(a.Settings().AppName(), ds, ten, u, cogUser, baseURL))
 }
 
 func handleAdminProfile(a App, c *gin.Context) error {
@@ -914,7 +916,7 @@ func handleAdminProfileTab(a App, c *gin.Context) error {
 	return nil
 }
 
-func handleAdminFieldSubmit(a App, c *gin.Context) error {
+func handleAdminUserProfileFieldSubmit(a App, c *gin.Context) error {
 	tenantID, err := rest.UUIDParam(c, "tenantID")
 	if err != nil {
 		return err
@@ -925,8 +927,8 @@ func handleAdminFieldSubmit(a App, c *gin.Context) error {
 	}
 	fieldName := c.Query("fieldName")
 	fieldValue := c.PostForm("fieldValue")
-	req := rest.UpdateUserProfileFieldsRequest{}
-	req.Fields = append(req.Fields, rest.ProfileField{
+	req := rest.UpdateProfileFieldsRequest{}
+	req.ProfileFields = append(req.ProfileFields, rest.ProfileField{
 		Name:  fieldName,
 		Value: fieldValue,
 	})
@@ -938,14 +940,15 @@ func handleAdminFieldSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	defn := ten.GetProfileDefinition().GetFieldDefinition(fieldName)
+	defn := ten.GetUserProfileDefinition().GetFieldDefinition(fieldName)
 	if defn == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
-	return render(c, profileFieldForm(tenantID, userID, defn, fieldValue))
+	baseURL := appPath("/admin/tenants/" + tenantID.String() + "/users/" + userID.String())
+	return render(c, profileFieldForm(baseURL, defn, fieldValue))
 }
 
-func handleAdminFieldEditForm(a App, c *gin.Context) error {
+func handleAdminUserProfileFieldEditForm(a App, c *gin.Context) error {
 	tenantID, err := rest.UUIDParam(c, "tenantID")
 	if err != nil {
 		return apperr.NewBadRequestE(err)
@@ -962,7 +965,7 @@ func handleAdminFieldEditForm(a App, c *gin.Context) error {
 	if fieldName == "" {
 		return apperr.NewBadRequest("missing field name")
 	}
-	defn := ten.GetProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
+	defn := ten.GetUserProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
 	if defn == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
@@ -974,10 +977,11 @@ func handleAdminFieldEditForm(a App, c *gin.Context) error {
 			zap.String("userID", userID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	return render(c, profileEditFieldForm(tenantID, userID, defn, targetUser.ProfileField(fieldName)))
+	baseURL := appPath("/admin/tenants/" + tenantID.String() + "/users/" + userID.String())
+	return render(c, profileEditFieldForm(baseURL, defn, targetUser.ProfileField(fieldName)))
 }
 
-func handleAdminFieldForm(a App, c *gin.Context) error {
+func handlerAdminUserProfileFieldForm(a App, c *gin.Context) error {
 	tenantID, err := rest.UUIDParam(c, "tenantID")
 	if err != nil {
 		return apperr.NewBadRequestE(err)
@@ -994,7 +998,7 @@ func handleAdminFieldForm(a App, c *gin.Context) error {
 	if fieldName == "" {
 		return apperr.NewBadRequest("missing field name")
 	}
-	defn := ten.GetProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
+	defn := ten.GetUserProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
 	if defn == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
@@ -1006,5 +1010,76 @@ func handleAdminFieldForm(a App, c *gin.Context) error {
 			zap.String("userID", userID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	return render(c, profileFieldForm(tenantID, userID, defn, targetUser.ProfileField(fieldName)))
+	baseURL := appPath("/admin/tenants/" + tenantID.String() + "/users/" + userID.String())
+	return render(c, profileFieldForm(baseURL, defn, targetUser.ProfileField(fieldName)))
+}
+
+func handleAdminTenantProfileFieldSubmit(a App, c *gin.Context) error {
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return err
+	}
+	fieldName := c.Query("fieldName")
+	fieldValue := c.PostForm("fieldValue")
+	req := rest.UpdateProfileFieldsRequest{}
+	req.ProfileFields = append(req.ProfileFields, rest.ProfileField{
+		Name:  fieldName,
+		Value: fieldValue,
+	})
+	err = rest.HandleUpdateTenantProfileFields(a, c, tenantID, req)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	defn := targetTenant.GetTenantProfileDefinition().GetFieldDefinition(fieldName)
+	if defn == nil {
+		return apperr.NewBadRequest("invalid field name: " + fieldName)
+	}
+	baseURL := appPath("/admin/tenants/" + tenantID.String())
+	return render(c, profileFieldForm(baseURL, defn, fieldValue))
+}
+
+func handleAdminTenantProfileFieldEditForm(a App, c *gin.Context) error {
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	fieldName := c.Query("fieldName")
+	if fieldName == "" {
+		return apperr.NewBadRequest("missing field name")
+	}
+	defn := targetTenant.GetTenantProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
+	if defn == nil {
+		return apperr.NewBadRequest("invalid field name: " + fieldName)
+	}
+	baseURL := appPath("/admin/tenants/" + tenantID.String())
+	return render(c, profileEditFieldForm(baseURL, defn, targetTenant.ProfileField(fieldName)))
+}
+
+func handlerAdminTenantProfileFieldForm(a App, c *gin.Context) error {
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	fieldName := c.Query("fieldName")
+	if fieldName == "" {
+		return apperr.NewBadRequest("missing field name")
+	}
+	defn := targetTenant.GetTenantProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
+	if defn == nil {
+		return apperr.NewBadRequest("invalid field name: " + fieldName)
+	}
+	baseURL := appPath("/admin/tenants/" + tenantID.String())
+	return render(c, profileFieldForm(baseURL, defn, targetTenant.ProfileField(fieldName)))
 }

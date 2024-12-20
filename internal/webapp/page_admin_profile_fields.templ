@@ -1,0 +1,67 @@
+package webapp
+
+import "github.com/apresdev/landlord/internal/multi"
+
+templ profileFieldForm(
+    baseURL string,
+    defn *multi.ProfileFieldDefinition,
+    value string) {
+<span class="value" id={ "edit-" + defn.Name }>
+    { value }
+    <button
+        class="icon-button"
+        hx-get={ baseURL + "/field/edit?fieldName=" + defn.Name }
+        hx-target={ "#edit-" + defn.Name }>
+        <i class="fa-sharp fa-pen-to-square"></i>
+    </button>
+</span>
+}
+
+templ profileEditFieldForm(
+    baseURL string,
+    defn *multi.ProfileFieldDefinition,
+    value string) {
+<form
+    class="form-wrapper"
+    hx-post={ baseURL + "/field/edit?fieldName=" + defn.Name }
+    hx-target={ "#edit-" + defn.Name }
+    hx-swap="innerHTML"
+>
+    <label>
+        <input type={ defn.Format.HTMLInputType() } name="fieldValue" value={ value } maxlength="256" autofocus>
+    </label>
+    <button class="button" type="submit">Submit</button>
+    <button class="button" type="button"
+        hx-get={ baseURL + "/field/form?fieldName=" + defn.Name }
+        hx-target={ "#edit-" + defn.Name }
+        hx-swap="innerHTML">Cancel</button>
+</form>
+}
+
+templ profileCard(
+    title string,
+    defs *multi.ProfileDefinition,
+    provider multi.ProfileFieldProvider,
+    baseURL string) {
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>{ title }</h2>
+            </div>
+            <div class="card-columns">
+                <div class="column">
+                for _, fieldDef := range defs.Fields {
+                    <div class="field">
+                        <span class="label">{ fieldDef.UIName }</span>
+                        @profileFieldForm(
+                            baseURL,
+                            &fieldDef,
+                            provider.ProfileField(fieldDef.Name))
+                    </div>
+                }
+                </div>
+            </div>
+        </div>
+    </div>
+}

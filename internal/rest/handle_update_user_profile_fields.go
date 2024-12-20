@@ -13,7 +13,7 @@ import (
 )
 
 func handleUpdateUserProfileFields(app App, c *gin.Context) error {
-	var req UpdateUserProfileFieldsRequest
+	var req UpdateProfileFieldsRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
@@ -29,7 +29,7 @@ func handleUpdateUserProfileFields(app App, c *gin.Context) error {
 }
 
 func HandleUpdateUserProfileFields(
-	app App, c *gin.Context, tenantID, userID uuid.UUID, req UpdateUserProfileFieldsRequest) error {
+	app App, c *gin.Context, tenantID, userID uuid.UUID, req UpdateProfileFieldsRequest) error {
 
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
@@ -51,14 +51,14 @@ func HandleUpdateUserProfileFields(
 		return apperr.NewUnauthorized("not authorized")
 	}
 
-	tenantProfileDefinition := targetTenant.GetProfileDefinition()
-	for _, update := range req.Fields {
-		defn := tenantProfileDefinition.GetFieldDefinition(update.Name)
-		if defn == nil {
+	profileDef := targetTenant.GetUserProfileDefinition()
+	for _, update := range req.ProfileFields {
+		fieldDef := profileDef.GetFieldDefinition(update.Name)
+		if fieldDef == nil {
 			return apperr.NewBadRequest("invalid field name: " + update.Name)
 		}
 		resource := perms.NewResource(
-			perms.ResourceKindUserProfile, defn.Name, targetTenant, targetUser)
+			perms.ResourceKindUserProfile, fieldDef.Name, targetTenant, targetUser)
 		effect, err := perms.Eval(c.Request.Context(), app, sub, perms.ActionWrite, resource)
 		if err != nil {
 			zap.L().Error("could not evaluate permissions",
@@ -68,19 +68,19 @@ func HandleUpdateUserProfileFields(
 			return apperr.NewUnauthorized("not authorized")
 		}
 		if effect.IsDenied() {
-			zap.L().Info("denied update user MFA",
+			zap.L().Info("denied update user profile field",
 				zap.String("subject", sub.String()),
 				zap.String("resource", resource.String()))
 			return apperr.NewUnauthorized("not authorized")
 		}
-		err = defn.ValidateValue(update.Value)
+		err = fieldDef.ValidateValue(update.Value)
 		if err != nil {
 			return apperr.NewBadRequestE(
 				fmt.Errorf("invalid value for field '%s': %w", update.Name, err))
 		}
 	}
-	for _, update := range req.Fields {
-		defn := tenantProfileDefinition.GetFieldDefinition(update.Name)
+	for _, update := range req.ProfileFields {
+		defn := profileDef.GetFieldDefinition(update.Name)
 		if defn == nil {
 			return apperr.NewBadRequest("invalid field name: " + update.Name)
 		}
