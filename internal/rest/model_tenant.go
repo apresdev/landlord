@@ -14,4 +14,6 @@ type Tenant struct {
 	Roles []string `json:"roles"`
 
 	SubTenantRoles []string `json:"subTenantRoles"`
+
+	ProfileFields []ProfileFormatField `json:"profileFields,omitempty"`
 }

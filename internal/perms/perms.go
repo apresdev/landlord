@@ -49,6 +49,7 @@ const (
 	ResourceKindUserRole
 	ResourceKindUserStatus
 	ResourceKindUserProfile
+	ResourceKindTenantProfile
 )
 
 func (k ResourceKind) String() string {
@@ -73,6 +74,8 @@ func (k ResourceKind) String() string {
 		return "user-status"
 	case ResourceKindUserProfile:
 		return "user-profile"
+	case ResourceKindTenantProfile:
+		return "tenant-profile"
 	default:
 		return "unknown"
 	}
@@ -98,7 +101,7 @@ func NewResource(kind ResourceKind, resourceName string, ten *multi.Tenant, user
 
 func (r *Resource) String() string {
 	return fmt.Sprintf("%s@%s@:%s@%s",
-		r.UserOwner.Username, r.TenantOwner, r.Name, r.Kind.String())
+		r.UserOwner.Username, r.TenantOwner.Name, r.Name, r.Kind.String())
 }
 
 type Effect struct {

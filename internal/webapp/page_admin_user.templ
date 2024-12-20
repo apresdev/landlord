@@ -1,7 +1,6 @@
 package webapp
 
 import "github.com/apresdev/landlord/internal/multi"
-import "github.com/google/uuid"
 
 const userPageTitle = "User"
 
@@ -81,86 +80,20 @@ templ userSummaryCard(
     </div>
 }
 
-templ profileFieldForm(
-    tenantID uuid.UUID,
-    userID uuid.UUID,
-    defn *multi.ProfileFieldDefinition,
-    value string) {
-<span class="value" id={ "edit-" + defn.Name }>
-    { value }
-    <button
-        class="icon-button"
-        hx-get={ appPath("/admin/tenants/" + tenantID.String() + "/users/" + userID.String() + "/field/edit?fieldName=" + defn.Name) }
-        hx-target={ "#edit-" + defn.Name }>
-        <i class="fa-sharp fa-pen-to-square"></i>
-    </button>
-</span>
-}
-
-templ profileEditFieldForm(
-    tenantID uuid.UUID,
-    userID uuid.UUID,
-    defn *multi.ProfileFieldDefinition,
-    value string) {
-<form
-    class="form-wrapper"
-    hx-post={ appPath("/admin/tenants/" + tenantID.String() + "/users/" + userID.String() + "/field/edit?fieldName=" + defn.Name) }
-    hx-target={ "#edit-" + defn.Name }
-    hx-swap="innerHTML"
->
-    <label>
-        <input type={ defn.Format.HTMLInputType() } name="fieldValue" value={ value } maxlength="256" autofocus>
-    </label>
-    <button class="button" type="submit">Submit</button>
-    <button class="button" type="button"
-        hx-get={ appPath("/admin/tenants/" + tenantID.String() + "/users/" + userID.String() + "/field/form?fieldName=" + defn.Name) }
-        hx-target={ "#edit-" + defn.Name }
-        hx-swap="innerHTML">Cancel</button>
-</form>
-}
-
-templ userProfileCard(
-    tenant *multi.Tenant,
-    user *multi.User,
-    cogUser *DisplayableCognitoUser) {
-
-    <div class="container">
-        <div class="card">
-            <div class="card-header">
-                <h2>User Profile</h2>
-            </div>
-            <div class="card-columns">
-                <!-- Column 1 -->
-                <div class="column">
-                for _, profileDefinition := range tenant.GetProfileDefinition().Fields {
-                    <div class="field">
-                        <span class="label">{ profileDefinition.UIName }</span>
-                        @profileFieldForm(
-                            tenant.ID,
-                            user.ID,
-                            &profileDefinition,
-                            user.ProfileField(profileDefinition.Name))
-                    </div>
-                }
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
 templ userSummary(
     appName string,
     sub *DisplayableSubject,
     tenant *multi.Tenant,
     user *multi.User,
-    cogUser *DisplayableCognitoUser) {
+    cogUser *DisplayableCognitoUser,
+    baseURL string) {
 <!DOCTYPE html>
 <html lang="en">
 @headerFragment(appName, userPageTitle)
 <body>
     @navBarFragment(sub)
     @userSummaryCard(tenant, user, cogUser)
-    @userProfileCard(tenant, user, cogUser)
+    @profileCard("User Profile", tenant.GetUserProfileDefinition(), user, baseURL)
 </body>
 </html>
 }

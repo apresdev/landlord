@@ -50,20 +50,12 @@ func getUsersForTenant(
 				zap.Error(err))
 			return nil, apperr.NewInternal(err.Error())
 		}
-		var fields []ProfileFormatField
-		for _, field := range user.ProfileFields() {
-			fields = append(fields, ProfileFormatField{
-				Name:   field.Name,
-				Format: field.Format.String(),
-				Value:  field.Value,
-			})
-		}
 		resp.Users = append(resp.Users, TenantUsersResponseUsersInner{
-			Username:  user.Username,
-			Role:      user.Role,
-			Status:    UserStatus(user.Status.String()),
-			CognitoID: aws.ToString(u.Username),
-			Fields:    fields,
+			Username:      user.Username,
+			Role:          user.Role,
+			Status:        UserStatus(user.Status.String()),
+			CognitoID:     aws.ToString(u.Username),
+			ProfileFields: convertProfileFields(user),
 		})
 	}
 	return &resp, nil

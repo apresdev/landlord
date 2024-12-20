@@ -13,5 +13,5 @@ type TenantUsersResponseUsersInner struct {
 
 	CognitoID string `json:"cognitoID"`
 
-	Fields []ProfileFormatField `json:"fields,omitempty"`
+	ProfileFields []ProfileFormatField `json:"profileFields,omitempty"`
 }

@@ -139,6 +139,7 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	auth.GET("/admin/tenants/:tenantID/description/form", handleAdminDescriptionForm)
 	auth.GET("/admin/tenants/:tenantID/invite-user-form", handleAdminInviteUserForm)
 	auth.GET("/admin/tenants/:tenantID/invite-user-button", handleAdminInviteUserButton)
+
 	auth.POST("/admin/tenants/:tenantID/users", handleAdminInviteUserSubmit)
 	auth.POST("/admin/tenants/:tenantID/users/:userID/activate", handleAdminActivateUserSubmit)
 	auth.POST("/admin/tenants/:tenantID/users/:userID/deactivate", handleAdminDeactivateUserSubmit)
@@ -147,11 +148,18 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	auth.POST("/admin/tenants/:tenantID/users/:userID/mfa/disable", handleAdminDisableMFASubmit)
 	auth.POST("/admin/tenants/:tenantID/users/:userID/reinvite", handleAdminReInviteUserSubmit)
 	auth.POST("/admin/tenants/:tenantID/users/:userID/impersonate", handleAdminImpersonateUserSubmit)
-	auth.POST("/admin/tenants/:tenantID/users/:userID/field/edit", handleAdminFieldSubmit)
-	auth.GET("/admin/tenants/:tenantID/users/:userID/field/edit", handleAdminFieldEditForm)
-	auth.GET("/admin/tenants/:tenantID/users/:userID/field/form", handleAdminFieldForm)
+
+	auth.POST("/admin/tenants/:tenantID/users/:userID/field/edit", handleAdminUserProfileFieldSubmit)
+	auth.GET("/admin/tenants/:tenantID/users/:userID/field/edit", handleAdminUserProfileFieldEditForm)
+	auth.GET("/admin/tenants/:tenantID/users/:userID/field/form", handlerAdminUserProfileFieldForm)
+
+	auth.POST("/admin/tenants/:tenantID/field/edit", handleAdminTenantProfileFieldSubmit)
+	auth.GET("/admin/tenants/:tenantID/field/edit", handleAdminTenantProfileFieldEditForm)
+	auth.GET("/admin/tenants/:tenantID/field/form", handlerAdminTenantProfileFieldForm)
+
 	auth.GET("/admin/tenants/:tenantID/add-role-form", handleAdminAddRoleForm)
 	auth.GET("/admin/tenants/:tenantID/add-role-button", handleAdminAddRoleButton)
+
 	auth.POST("/admin/tenants/:tenantID/roles", handleAdminAddRoleSubmit)
 	auth.DELETE("/admin/tenants/:tenantID/roles/:role", handleAdminDeleteRoleSubmit)
 	auth.GET("/admin/tenants/:tenantID/add-sub-role-form", handleAdminAddSubRoleForm)

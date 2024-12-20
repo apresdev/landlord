@@ -422,13 +422,15 @@ templ tenantSummaryTab(
     sub *DisplayableSubject,
     tenant *multi.Tenant,
     userPoolURL string,
-    users []*multi.User) {
+    users []*multi.User,
+    baseURL string) {
 
 <div class="tab-header" role="tablist">
     @tenantTabButtonsFragment(tenant.ID.String(), "summary")
 </div>
 <div id="tab-content" role="tabpanel" class="tab-content">
     @tenantSummary(appName, sub, tenant, userPoolURL, users)
+    @profileCard("Tenant Profile", tenant.GetTenantProfileDefinition(), tenant, baseURL)
 </div>
 }
 

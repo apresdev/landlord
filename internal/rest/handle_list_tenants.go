@@ -22,6 +22,7 @@ func convertTenant(ten *multi.Tenant) Tenant {
 		Description:    ten.Description,
 		Roles:          ten.Roles,
 		SubTenantRoles: ten.SubTenantRoles,
+		ProfileFields:  convertProfileFields(ten),
 	}
 }
 

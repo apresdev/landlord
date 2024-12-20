@@ -133,23 +133,24 @@ func NewUser(tenantID uuid.UUID, cognitoID uuid.UUID, username, role string, mfa
 	}
 }
 
-func (u *User) internalUnmarshalProfile() {
-	if u.Profile == nil {
-		u.Profile = &Profile{}
-		if u.RawProfile != nil {
-			var profile Profile
-			err := json.Unmarshal(u.RawProfile, &profile)
-			if err != nil {
-				zap.L().Error("error unmarshalling profile", zap.Error(err))
-			} else {
-				u.Profile = &profile
-			}
-		}
+func lazyUnmarshalProfile(profile *Profile, rawProfile []byte) *Profile {
+	if profile != nil {
+		return profile
 	}
+	if rawProfile != nil {
+		var result Profile
+		err := json.Unmarshal(rawProfile, &result)
+		if err != nil {
+			zap.L().Error("error unmarshalling profile", zap.Error(err))
+			return &Profile{}
+		}
+		return &result
+	}
+	return &Profile{}
 }
 
 func (u *User) ProfileField(name string) string {
-	u.internalUnmarshalProfile()
+	u.Profile = lazyUnmarshalProfile(u.Profile, u.RawProfile)
 	f := u.Profile.GetField(name)
 	if f == nil {
 		return EmptyProfileValue
@@ -158,11 +159,11 @@ func (u *User) ProfileField(name string) string {
 }
 
 func (u *User) UpdateProfileField(name string, format ProfileFieldFormat, value string) {
-	u.internalUnmarshalProfile()
+	u.Profile = lazyUnmarshalProfile(u.Profile, u.RawProfile)
 	u.Profile.SetField(name, format, value)
 }
 
 func (u *User) ProfileFields() []ProfileField {
-	u.internalUnmarshalProfile()
+	u.Profile = lazyUnmarshalProfile(u.Profile, u.RawProfile)
 	return u.Profile.Fields
 }

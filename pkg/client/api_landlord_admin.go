@@ -1323,6 +1323,150 @@ func (a *LandlordAdminAPIService) UpdateTenantDescriptionExecute(r ApiUpdateTena
 	return localVarHTTPResponse, nil
 }
 
+type ApiUpdateTenantProfileFieldsRequest struct {
+	ctx                        context.Context
+	ApiService                 *LandlordAdminAPIService
+	tenantID                   string
+	updateProfileFieldsRequest *UpdateProfileFieldsRequest
+}
+
+func (r ApiUpdateTenantProfileFieldsRequest) UpdateProfileFieldsRequest(updateProfileFieldsRequest UpdateProfileFieldsRequest) ApiUpdateTenantProfileFieldsRequest {
+	r.updateProfileFieldsRequest = &updateProfileFieldsRequest
+	return r
+}
+
+func (r ApiUpdateTenantProfileFieldsRequest) Execute() (*http.Response, error) {
+	return r.ApiService.UpdateTenantProfileFieldsExecute(r)
+}
+
+/*
+UpdateTenantProfileFields Update a tenant's profile fields
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param tenantID The ID of the tenant to get users for.
+	@return ApiUpdateTenantProfileFieldsRequest
+*/
+func (a *LandlordAdminAPIService) UpdateTenantProfileFields(ctx context.Context, tenantID string) ApiUpdateTenantProfileFieldsRequest {
+	return ApiUpdateTenantProfileFieldsRequest{
+		ApiService: a,
+		ctx:        ctx,
+		tenantID:   tenantID,
+	}
+}
+
+// Execute executes the request
+func (a *LandlordAdminAPIService) UpdateTenantProfileFieldsExecute(r ApiUpdateTenantProfileFieldsRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "LandlordAdminAPIService.UpdateTenantProfileFields")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ll-auth/api/tenants/{tenantID}/profileFields"
+	localVarPath = strings.Replace(localVarPath, "{"+"tenantID"+"}", url.PathEscape(parameterValueToString(r.tenantID, "tenantID")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.updateProfileFieldsRequest == nil {
+		return nil, reportError("updateProfileFieldsRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.updateProfileFieldsRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v APIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v APIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v APIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v APIError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
 type ApiUpdateTenantStateRequest struct {
 	ctx         context.Context
 	ApiService  *LandlordAdminAPIService
@@ -1609,15 +1753,15 @@ func (a *LandlordAdminAPIService) UpdateUserMFAExecute(r ApiUpdateUserMFARequest
 }
 
 type ApiUpdateUserProfileFieldsRequest struct {
-	ctx                            context.Context
-	ApiService                     *LandlordAdminAPIService
-	tenantID                       string
-	userID                         string
-	updateUserProfileFieldsRequest *UpdateUserProfileFieldsRequest
+	ctx                        context.Context
+	ApiService                 *LandlordAdminAPIService
+	tenantID                   string
+	userID                     string
+	updateProfileFieldsRequest *UpdateProfileFieldsRequest
 }
 
-func (r ApiUpdateUserProfileFieldsRequest) UpdateUserProfileFieldsRequest(updateUserProfileFieldsRequest UpdateUserProfileFieldsRequest) ApiUpdateUserProfileFieldsRequest {
-	r.updateUserProfileFieldsRequest = &updateUserProfileFieldsRequest
+func (r ApiUpdateUserProfileFieldsRequest) UpdateProfileFieldsRequest(updateProfileFieldsRequest UpdateProfileFieldsRequest) ApiUpdateUserProfileFieldsRequest {
+	r.updateProfileFieldsRequest = &updateProfileFieldsRequest
 	return r
 }
 
@@ -1662,8 +1806,8 @@ func (a *LandlordAdminAPIService) UpdateUserProfileFieldsExecute(r ApiUpdateUser
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.updateUserProfileFieldsRequest == nil {
-		return nil, reportError("updateUserProfileFieldsRequest is required and must be specified")
+	if r.updateProfileFieldsRequest == nil {
+		return nil, reportError("updateProfileFieldsRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -1684,7 +1828,7 @@ func (a *LandlordAdminAPIService) UpdateUserProfileFieldsExecute(r ApiUpdateUser
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.updateUserProfileFieldsRequest
+	localVarPostBody = r.updateProfileFieldsRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return nil, err

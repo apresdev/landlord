@@ -350,6 +350,34 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: [ ]
+  /ll-auth/api/tenants/{tenantID}/profileFields:
+    post:
+      operationId: UpdateTenantProfileFields
+      summary: Update a tenant's profile fields
+      tags:
+        - LandlordAdmin
+      parameters:
+        - name: tenantID
+          in: path
+          required: true
+          description: The ID of the tenant to get users for.
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProfileFieldsRequest"
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: [ ]
   /ll-auth/api/tenants/{tenantID}/users:
     get:
       operationId: ListUsersForTenant
@@ -498,7 +526,7 @@ paths:
           schema:
             type: string
       requestBody:
-        $ref: "#/components/requestBodies/UpdateUserProfileFieldsRequest"
+        $ref: "#/components/requestBodies/UpdateProfileFieldsRequest"
       responses:
         "204":
           description: No content
@@ -812,12 +840,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/UpdateUserMFARequest'
-    UpdateUserProfileFieldsRequest:
+    UpdateProfileFieldsRequest:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/UpdateUserProfileFieldsRequest'
+            $ref: '#/components/schemas/UpdateProfileFieldsRequest'
   responses:
     NoContent:
       description: |
@@ -1158,6 +1186,10 @@ components:
           type: array
           items:
             type: string
+        profileFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileFormatField'
     TenantResponse:
       type: object
       required:
@@ -1219,6 +1251,10 @@ components:
           format: uuid
         tenantName:
           type: string
+        tenantProfileFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileFormatField'
         userID:
           type: string
           format: uuid
@@ -1246,7 +1282,7 @@ components:
               type: string
             role:
               type: string
-        fields:
+        userProfileFields:
           type: array
           items:
             $ref: '#/components/schemas/ProfileFormatField'
@@ -1271,7 +1307,7 @@ components:
                 $ref: '#/components/schemas/UserStatus'
               cognitoID:
                 type: string
-              fields:
+              profileFields:
                 type: array
                 items:
                   $ref: '#/components/schemas/ProfileFormatField'
@@ -1462,10 +1498,10 @@ components:
       properties:
         mfaPolicy:
           $ref: '#/components/schemas/MFAPolicy'
-    UpdateUserProfileFieldsRequest:
+    UpdateProfileFieldsRequest:
       type: object
       properties:
-        fields:
+        profileFields:
           type: array
           items:
             $ref: '#/components/schemas/ProfileField'

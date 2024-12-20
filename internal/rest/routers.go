@@ -79,6 +79,12 @@ func getRoutes() []Route {
 			ginUpdateTenantDescription,
 		},
 		{
+			"UpdateTenantProfileFields",
+			http.MethodPost,
+			"/ll-auth/api/tenants/:tenantID/profileFields",
+			ginUpdateTenantProfileFields,
+		},
+		{
 			"UpdateTenantState",
 			http.MethodPut,
 			"/ll-auth/api/tenants/:tenantID/state/:tenantState",

@@ -17,7 +17,9 @@ type SubjectResponse struct {
 
 	Status UserStatus `json:"status"`
 
+	TenantProfileFields []ProfileFormatField `json:"tenantProfileFields,omitempty"`
+
 	Impersonating SubjectResponseImpersonating `json:"impersonating,omitempty"`
 
-	Fields []ProfileFormatField `json:"fields,omitempty"`
+	UserProfileFields []ProfileFormatField `json:"userProfileFields,omitempty"`
 }

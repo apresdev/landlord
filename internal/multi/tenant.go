@@ -39,6 +39,8 @@ type Tenant struct {
 	SubTenantRoles []string    `dynamodbav:"subTenantRoles"`
 	EmailDomains   []string    `dynamodbav:"emailDomains"`
 	CreatedAt      string      `dynamodbav:"createdAt"`
+	RawProfile     []byte      `dynamodbav:"rawProfile"`
+	Profile        *Profile    `dynamodbav:"-"`
 }
 
 func MustNewTenantID() uuid.UUID {
@@ -106,12 +108,35 @@ func (ten *Tenant) UsingDefaultSubTenantRoles() bool {
 	return slices.Equal(ten.SubTenantRoles, BuiltInRoles)
 }
 
-func (ten *Tenant) GetProfileDefinition() *ProfileDefinition {
+func (ten *Tenant) GetUserProfileDefinition() *ProfileDefinition {
 	// TODO: make this configurable eventually -- each tenant can, in theory,
 	// have its own profile definition. We definitely want each deployment to
 	// have its own profile definition. For now, we have a pre-baked profile
 	// definition.
-	return &BasicProfileDefinition
+	return &BasicUserProfileFieldDefinition
+}
+
+func (ten *Tenant) GetTenantProfileDefinition() *ProfileDefinition {
+	return &BasicTenantProfileFieldDefinition
+}
+
+func (ten *Tenant) ProfileField(name string) string {
+	ten.Profile = lazyUnmarshalProfile(ten.Profile, ten.RawProfile)
+	f := ten.Profile.GetField(name)
+	if f == nil {
+		return EmptyProfileValue
+	}
+	return f.Value
+}
+
+func (ten *Tenant) UpdateProfileField(name string, format ProfileFieldFormat, value string) {
+	ten.Profile = lazyUnmarshalProfile(ten.Profile, ten.RawProfile)
+	ten.Profile.SetField(name, format, value)
+}
+
+func (ten *Tenant) ProfileFields() []ProfileField {
+	ten.Profile = lazyUnmarshalProfile(ten.Profile, ten.RawProfile)
+	return ten.Profile.Fields
 }
 
 const (

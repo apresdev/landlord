@@ -53,6 +53,11 @@ func ginUpdateTenantDescription(c *gin.Context) {
 	callImpl(c, handleUpdateTenantDescription)
 }
 
+// UpdateTenantProfileFields - Update a tenant's profile fields
+func ginUpdateTenantProfileFields(c *gin.Context) {
+	callImpl(c, handleUpdateTenantProfileFields)
+}
+
 // UpdateTenantState - Update a tenant's state
 func ginUpdateTenantState(c *gin.Context) {
 	callImpl(c, handleUpdateTenantState)

@@ -1008,6 +1008,97 @@
         }
       }
     },
+    "/ll-auth/api/tenants/{tenantID}/profileFields": {
+      "post": {
+        "operationId": "UpdateTenantProfileFields",
+        "summary": "Update a tenant's profile fields",
+        "tags": [
+          "LandlordAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/UpdateProfileFieldsRequest"
+        },
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "connectionId": "${vpc_link_connection_id}",
+          "connectionType": "VPC_LINK",
+          "httpMethod": "any",
+          "type": "http_proxy",
+          "uri": "${nlb_uri}/ll-auth/api/tenants/{tenantID}/profileFields",
+          "payloadFormatVersion": "1.0",
+          "requestParameters": {
+            "integration.request.path.tenantID": "method.request.path.tenantID"
+          }
+        }
+      },
+      "options": {
+        "parameters": [
+          {
+            "name": "tenantID",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the tenant to get users for.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsResponse"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "mock",
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "never",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          }
+        }
+      }
+    },
     "/ll-auth/api/tenants/{tenantID}/users": {
       "get": {
         "operationId": "ListUsersForTenant",
@@ -1454,7 +1545,7 @@
           }
         ],
         "requestBody": {
-          "$ref": "#/components/requestBodies/UpdateUserProfileFieldsRequest"
+          "$ref": "#/components/requestBodies/UpdateProfileFieldsRequest"
         },
         "responses": {
           "204": {
@@ -2310,12 +2401,12 @@
           }
         }
       },
-      "UpdateUserProfileFieldsRequest": {
+      "UpdateProfileFieldsRequest": {
         "required": true,
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/UpdateUserProfileFieldsRequest"
+              "$ref": "#/components/schemas/UpdateProfileFieldsRequest"
             }
           }
         }
@@ -2858,6 +2949,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "profileFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileFormatField"
+            }
           }
         }
       },
@@ -2949,6 +3046,12 @@
           "tenantName": {
             "type": "string"
           },
+          "tenantProfileFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileFormatField"
+            }
+          },
           "userID": {
             "type": "string",
             "format": "uuid"
@@ -2987,7 +3090,7 @@
               }
             }
           },
-          "fields": {
+          "userProfileFields": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ProfileFormatField"
@@ -3021,7 +3124,7 @@
                 "cognitoID": {
                   "type": "string"
                 },
-                "fields": {
+                "profileFields": {
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/ProfileFormatField"
@@ -3307,10 +3410,10 @@
           }
         }
       },
-      "UpdateUserProfileFieldsRequest": {
+      "UpdateProfileFieldsRequest": {
         "type": "object",
         "properties": {
-          "fields": {
+          "profileFields": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ProfileField"

@@ -4,6 +4,6 @@
 
 package rest
 
-type UpdateUserProfileFieldsRequest struct {
-	Fields []ProfileField `json:"fields,omitempty"`
+type UpdateProfileFieldsRequest struct {
+	ProfileFields []ProfileField `json:"profileFields,omitempty"`
 }
