@@ -151,7 +151,7 @@ resource "aws_cognito_user_pool_client" "default" {
   explicit_auth_flows          = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"]
   user_pool_id                 = aws_cognito_user_pool.default.id
   default_redirect_uri         = "${var.app_url}/"
-  callback_urls                = ["${var.app_url}/"]
+  callback_urls                = concat(["${var.app_url}/"], var.cognito_callback_urls)
   logout_urls                  = ["${var.app_url}/logout"]
   generate_secret              = true
   allowed_oauth_flows          = ["code"]
