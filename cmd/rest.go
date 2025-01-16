@@ -79,7 +79,6 @@ func restAssociateOTP() *cobra.Command {
 func restClearImpersonateCmd() *cobra.Command {
 	var server string
 	var token string
-	var refreshToken string
 	c := &cobra.Command{
 		Use:   "clear-impersonate",
 		Short: "Clear impersonation for the current user",
@@ -91,35 +90,23 @@ func restClearImpersonateCmd() *cobra.Command {
 					return errors.New("no token found")
 				}
 			}
-			if refreshToken == "" {
-				refreshToken = s.RefreshToken
-				if refreshToken == "" {
-					return errors.New("no refresh token found")
-				}
-			}
 			cl, err := apiClient(token, server)
 			if err != nil {
 				return err
 			}
 			ctx := context.Background()
-			r, _, err := cl.LandlordUserAPI.ClearImpersonation(ctx).ClearImpersonationRequest(
+			_, err = cl.LandlordUserAPI.ClearImpersonation(ctx).ClearImpersonationRequest(
 				client.ClearImpersonationRequest{RefreshToken: s.RefreshToken}).Execute()
 			if err != nil {
 				return err
 			}
-			s.AccessToken = r.AccessToken
-			s.IdToken = r.IdToken
-			if err = s.SaveToFile(); err != nil {
-				return err
-			}
-			cmd.Printf("Impersonation cleared. New tokens stored.\n")
+			_ = s.Logout()
+			cmd.Printf("Impersonation cleared. Login again.\n")
 			return nil
 		},
 	}
 	c.PersistentFlags().StringVarP(
 		&token, "token", "t", "", "Token to authorize with")
-	c.PersistentFlags().StringVarP(
-		&refreshToken, "refresh-token", "f", "", "Refresh token to use")
 	c.PersistentFlags().StringVarP(
 		&server, "server", "s", "", "Server to connect to")
 	return c

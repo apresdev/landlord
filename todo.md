@@ -1,5 +1,6 @@
 # TODOs
 
+* add pk/sk as separate fields
 * BUG: remove cognito ID from subject listUsers API
 * move terraform to apres-terraform in `apps/aws` -- a new directory that
 contains terraform for apps like landlord

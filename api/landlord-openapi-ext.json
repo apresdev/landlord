@@ -1975,8 +1975,8 @@
           "$ref": "#/components/requestBodies/ClearImpersonationRequest"
         },
         "responses": {
-          "200": {
-            "$ref": "#/components/responses/ClearImpersonationResponse"
+          "204": {
+            "description": "No content"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -2502,16 +2502,6 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/ImpersonateResponse"
-            }
-          }
-        }
-      },
-      "ClearImpersonationResponse": {
-        "description": "Clear any impersonation",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/ClearImpersonationResponse"
             }
           }
         }
@@ -3065,6 +3055,12 @@
           "status": {
             "$ref": "#/components/schemas/UserStatus"
           },
+          "userProfileFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileFormatField"
+            }
+          },
           "impersonating": {
             "type": "object",
             "required": [
@@ -3087,13 +3083,13 @@
               },
               "role": {
                 "type": "string"
+              },
+              "profileFields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProfileFormatField"
+                }
               }
-            }
-          },
-          "userProfileFields": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProfileFormatField"
             }
           }
         }
@@ -3196,21 +3192,6 @@
         ],
         "properties": {
           "refreshToken": {
-            "type": "string"
-          }
-        }
-      },
-      "ClearImpersonationResponse": {
-        "type": "object",
-        "required": [
-          "idToken",
-          "accessToken"
-        ],
-        "properties": {
-          "idToken": {
-            "type": "string"
-          },
-          "accessToken": {
             "type": "string"
           }
         }

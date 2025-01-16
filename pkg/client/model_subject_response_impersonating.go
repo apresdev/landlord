@@ -15,10 +15,11 @@ var _ MappedNullable = &SubjectResponseImpersonating{}
 
 // SubjectResponseImpersonating struct for SubjectResponseImpersonating
 type SubjectResponseImpersonating struct {
-	TenantID string `json:"tenantID"`
-	UserID   string `json:"userID"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
+	TenantID      string               `json:"tenantID"`
+	UserID        string               `json:"userID"`
+	Email         string               `json:"email"`
+	Role          string               `json:"role"`
+	ProfileFields []ProfileFormatField `json:"profileFields,omitempty"`
 }
 
 type _SubjectResponseImpersonating SubjectResponseImpersonating
@@ -140,6 +141,38 @@ func (o *SubjectResponseImpersonating) SetRole(v string) {
 	o.Role = v
 }
 
+// GetProfileFields returns the ProfileFields field value if set, zero value otherwise.
+func (o *SubjectResponseImpersonating) GetProfileFields() []ProfileFormatField {
+	if o == nil || IsNil(o.ProfileFields) {
+		var ret []ProfileFormatField
+		return ret
+	}
+	return o.ProfileFields
+}
+
+// GetProfileFieldsOk returns a tuple with the ProfileFields field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *SubjectResponseImpersonating) GetProfileFieldsOk() ([]ProfileFormatField, bool) {
+	if o == nil || IsNil(o.ProfileFields) {
+		return nil, false
+	}
+	return o.ProfileFields, true
+}
+
+// HasProfileFields returns a boolean if a field has been set.
+func (o *SubjectResponseImpersonating) HasProfileFields() bool {
+	if o != nil && !IsNil(o.ProfileFields) {
+		return true
+	}
+
+	return false
+}
+
+// SetProfileFields gets a reference to the given []ProfileFormatField and assigns it to the ProfileFields field.
+func (o *SubjectResponseImpersonating) SetProfileFields(v []ProfileFormatField) {
+	o.ProfileFields = v
+}
+
 func (o SubjectResponseImpersonating) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -154,6 +187,9 @@ func (o SubjectResponseImpersonating) ToMap() (map[string]interface{}, error) {
 	toSerialize["userID"] = o.UserID
 	toSerialize["email"] = o.Email
 	toSerialize["role"] = o.Role
+	if !IsNil(o.ProfileFields) {
+		toSerialize["profileFields"] = o.ProfileFields
+	}
 	return toSerialize, nil
 }
 

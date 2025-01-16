@@ -204,8 +204,4 @@ func (s *HandleClearImpersonationTestSuite) TestSuccess() {
 				AccessToken: aws.String("access-token")}}, nil).Once()
 	err := handleClearImpersonation(app, gt1.c)
 	s.NoError(err)
-	resp := ClearImpersonationResponse{}
-	MustJSONUnmarshal(gt1.w.Body.Bytes(), &resp)
-	s.Equal("id-token", resp.IdToken)
-	s.Equal("access-token", resp.AccessToken)
 }
