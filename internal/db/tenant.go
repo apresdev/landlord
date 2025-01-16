@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"sort"
+
+	"go.uber.org/zap"
 
 	"github.com/apresdev/landlord/internal/apperr"
 
