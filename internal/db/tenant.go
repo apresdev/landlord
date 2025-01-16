@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
 	"sort"
 
 	"github.com/apresdev/landlord/internal/apperr"
@@ -68,6 +69,8 @@ func GetTenantByID(ctx context.Context, ddb AWSDynamoDB, id uuid.UUID) (*multi.T
 			fmt.Errorf("failed to get item from DynamoDB: %w", err))
 	}
 	if result.Item == nil {
+		zap.L().Warn("item not found in GetTenantByID",
+			zap.String("tenantID", id.String()))
 		return nil, apperr.NewNotFound("item not found")
 	}
 	return unmarshalTenant(result.Item)
@@ -88,6 +91,8 @@ func GetTenantByName(ctx context.Context, ddb AWSDynamoDB, name string) (*multi.
 			fmt.Errorf("failed to get item from DynamoDB: %w", err))
 	}
 	if len(result.Items) == 0 {
+		zap.L().Warn("item not found in GetTenantByName",
+			zap.String("tenantName", name))
 		return nil, apperr.NewNotFound("item not found")
 	}
 	if len(result.Items) > 1 {
