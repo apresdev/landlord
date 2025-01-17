@@ -22,8 +22,8 @@ type SubjectResponse struct {
 	Role                string                        `json:"role"`
 	Status              UserStatus                    `json:"status"`
 	TenantProfileFields []ProfileFormatField          `json:"tenantProfileFields,omitempty"`
-	Impersonating       *SubjectResponseImpersonating `json:"impersonating,omitempty"`
 	UserProfileFields   []ProfileFormatField          `json:"userProfileFields,omitempty"`
+	Impersonating       *SubjectResponseImpersonating `json:"impersonating,omitempty"`
 }
 
 type _SubjectResponse SubjectResponse
@@ -227,38 +227,6 @@ func (o *SubjectResponse) SetTenantProfileFields(v []ProfileFormatField) {
 	o.TenantProfileFields = v
 }
 
-// GetImpersonating returns the Impersonating field value if set, zero value otherwise.
-func (o *SubjectResponse) GetImpersonating() SubjectResponseImpersonating {
-	if o == nil || IsNil(o.Impersonating) {
-		var ret SubjectResponseImpersonating
-		return ret
-	}
-	return *o.Impersonating
-}
-
-// GetImpersonatingOk returns a tuple with the Impersonating field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *SubjectResponse) GetImpersonatingOk() (*SubjectResponseImpersonating, bool) {
-	if o == nil || IsNil(o.Impersonating) {
-		return nil, false
-	}
-	return o.Impersonating, true
-}
-
-// HasImpersonating returns a boolean if a field has been set.
-func (o *SubjectResponse) HasImpersonating() bool {
-	if o != nil && !IsNil(o.Impersonating) {
-		return true
-	}
-
-	return false
-}
-
-// SetImpersonating gets a reference to the given SubjectResponseImpersonating and assigns it to the Impersonating field.
-func (o *SubjectResponse) SetImpersonating(v SubjectResponseImpersonating) {
-	o.Impersonating = &v
-}
-
 // GetUserProfileFields returns the UserProfileFields field value if set, zero value otherwise.
 func (o *SubjectResponse) GetUserProfileFields() []ProfileFormatField {
 	if o == nil || IsNil(o.UserProfileFields) {
@@ -291,6 +259,38 @@ func (o *SubjectResponse) SetUserProfileFields(v []ProfileFormatField) {
 	o.UserProfileFields = v
 }
 
+// GetImpersonating returns the Impersonating field value if set, zero value otherwise.
+func (o *SubjectResponse) GetImpersonating() SubjectResponseImpersonating {
+	if o == nil || IsNil(o.Impersonating) {
+		var ret SubjectResponseImpersonating
+		return ret
+	}
+	return *o.Impersonating
+}
+
+// GetImpersonatingOk returns a tuple with the Impersonating field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *SubjectResponse) GetImpersonatingOk() (*SubjectResponseImpersonating, bool) {
+	if o == nil || IsNil(o.Impersonating) {
+		return nil, false
+	}
+	return o.Impersonating, true
+}
+
+// HasImpersonating returns a boolean if a field has been set.
+func (o *SubjectResponse) HasImpersonating() bool {
+	if o != nil && !IsNil(o.Impersonating) {
+		return true
+	}
+
+	return false
+}
+
+// SetImpersonating gets a reference to the given SubjectResponseImpersonating and assigns it to the Impersonating field.
+func (o *SubjectResponse) SetImpersonating(v SubjectResponseImpersonating) {
+	o.Impersonating = &v
+}
+
 func (o SubjectResponse) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -310,11 +310,11 @@ func (o SubjectResponse) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.TenantProfileFields) {
 		toSerialize["tenantProfileFields"] = o.TenantProfileFields
 	}
-	if !IsNil(o.Impersonating) {
-		toSerialize["impersonating"] = o.Impersonating
-	}
 	if !IsNil(o.UserProfileFields) {
 		toSerialize["userProfileFields"] = o.UserProfileFields
+	}
+	if !IsNil(o.Impersonating) {
+		toSerialize["impersonating"] = o.Impersonating
 	}
 	return toSerialize, nil
 }

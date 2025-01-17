@@ -654,8 +654,8 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/ClearImpersonationRequest"
       responses:
-        "200":
-          $ref: '#/components/responses/ClearImpersonationResponse'
+        "204":
+          description: No content
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -904,12 +904,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ImpersonateResponse'
-    ClearImpersonationResponse:
-      description: Clear any impersonation
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ClearImpersonationResponse'
     RecoverPasswordResponse:
       description: A response for a successful initiation of a password recovery
       content:
@@ -1264,6 +1258,10 @@ components:
           type: string
         status:
           $ref: '#/components/schemas/UserStatus'
+        userProfileFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileFormatField'
         impersonating:
           type: object
           required:
@@ -1282,10 +1280,10 @@ components:
               type: string
             role:
               type: string
-        userProfileFields:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfileFormatField'
+            profileFields:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProfileFormatField'
     TenantUsersResponse:
       type: object
       properties:
@@ -1354,16 +1352,6 @@ components:
         - refreshToken
       properties:
         refreshToken:
-          type: string
-    ClearImpersonationResponse:
-      type: object
-      required:
-        - idToken
-        - accessToken
-      properties:
-        idToken:
-          type: string
-        accessToken:
           type: string
     SetNewPasswordRequest:
       type: object

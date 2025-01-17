@@ -127,6 +127,9 @@ func GetUserInTenantByID(
 			fmt.Errorf("failed to get item from DynamoDB: %w", err))
 	}
 	if result.Item == nil {
+		zap.L().Warn("item not found in GetUserInTenantByID",
+			zap.String("tenantID", tenantID.String()),
+			zap.String("userID", userID.String()))
 		return nil, apperr.NewNotFound("item not found")
 	}
 	return unmarshalUser(result.Item)

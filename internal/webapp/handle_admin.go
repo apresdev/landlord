@@ -85,7 +85,7 @@ func handleAdminDashboardError(a App, c *gin.Context) error {
 func handleAdminClearImpersonation(a App, c *gin.Context) error {
 	var req rest.ClearImpersonationRequest
 	req.RefreshToken, _ = c.Cookie(LandlordRefreshTokenCookie)
-	_, err := rest.HandleClearImpersonation(a, c, req)
+	err := rest.HandleClearImpersonation(a, c, req)
 	if err != nil {
 		return err
 	}

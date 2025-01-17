@@ -3,6 +3,10 @@ package rest
 import (
 	"net/http"
 
+	"github.com/google/uuid"
+
+	"github.com/apresdev/landlord/internal/db"
+
 	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/multi"
 
@@ -52,6 +56,22 @@ func handleRetrieveSubject(app App, c *gin.Context) error {
 			roleName = role.Name
 		}
 		resp.Impersonating.Role = roleName
+
+		// ImpersonateSub is nil if the impersonation is of the role and not a
+		// specific user. In that case, there are no user profile fields. Defaults
+		// should be used.
+		if sub.ImpersonateSub != uuid.Nil {
+			impersonateUser, err := db.GetUserInTenantByID(
+				c.Request.Context(), app.DDB(), sub.ImpersonateTenant, sub.ImpersonateSub)
+			if err != nil {
+				zap.L().Error("error fetching impersonated user",
+					zap.String("user", user.ID.String()),
+					zap.String("impersonatedUser", sub.ImpersonateSub.String()),
+					zap.Error(err))
+			} else {
+				resp.Impersonating.ProfileFields = convertProfileFields(impersonateUser)
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, resp)
