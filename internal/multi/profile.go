@@ -186,6 +186,15 @@ var BasicTenantProfileFieldDefinition = ProfileDefinition{
 			MaxLen: 50,
 			MinLen: 1,
 		},
+		// TODO: this is really a clearsight specific setting. Need to add
+		// the mechanism to define the tenant-specific profile fields out-of-band.
+		{
+			Name:   "crm-setting",
+			UIName: "CRM Setting",
+			Format: ProfileFieldFormatString,
+			MaxLen: 50,
+			MinLen: 1,
+		},
 	},
 }
 
