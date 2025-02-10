@@ -26,32 +26,38 @@ templ tenantCreateTenantButton() {
     </div>
 }
 
-templ tenantCreateTenantForm() {
-<form
-    class="form-wrapper"
-    hx-post={ appPath("/admin/tenant-ops/create-tenant-submit") }
-    hx-target="#create-tenant-table-and-form"
-    hx-swap="innerHTML"
->
-    <label>Name:
-        <input type="text" name="name" />
-    </label>
-    <label>Description:
-        <input type="text" name="description" />
-    </label>
-    <button class="button" type="submit">Submit</button>
-    <button class="button" type="button"
-        hx-get={ appPath("/admin/tenant-ops/create-tenant-button") }
-        hx-target="#create-tenant-form"
-        hx-swap="innerHTML">Cancel</button>
-</form>
+templ tenantCreateTenantForm(errMsg string) {
+<div id="create-tenant-form">
+  <form
+      class="form-wrapper"
+      hx-post={ appPath("/admin/tenant-ops/create-tenant-submit") }
+      hx-target="#create-tenant-table-and-form"
+      hx-swap="innerHTML"
+  >
+      <label>Name:
+          <input type="text" name="name" />
+      </label>
+      <label>Description:
+          <input type="text" name="description" />
+      </label>
+      <button class="button" type="submit">Submit</button>
+      <button class="button" type="button"
+          hx-get={ appPath("/admin/tenant-ops/create-tenant-button") }
+          hx-target="#create-tenant-form"
+          hx-swap="innerHTML">Cancel</button>
+  </form>
+    if errMsg != "" {
+        <div id="create-tenant-error-message" class="error-text">{ errMsg }</div>
+    }
+</div>
 }
 
 templ tenantCreateTenantTableAndForm(tenants []*multi.Tenant, errMsg string) {
 <div id="create-tenant-table-and-form">
-    @tenantCreateTenantButton()
-    if errMsg != "" {
-        <div id="create-tenant-error-message" class="error-text">{ errMsg }</div>
+    if errMsg == "" {
+      @tenantCreateTenantButton()
+    } else {
+      @tenantCreateTenantForm(errMsg)
     }
     <table>
         <thead>
