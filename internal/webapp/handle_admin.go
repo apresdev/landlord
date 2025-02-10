@@ -188,7 +188,7 @@ func handleAdminCreateTenantButton(a App, c *gin.Context) error {
 }
 
 func handleAdminCreateTenantForm(a App, c *gin.Context) error {
-	return render(c, tenantCreateTenantForm())
+	return render(c, tenantCreateTenantForm(""))
 }
 
 func handleAdminCreateTenantSubmit(a App, c *gin.Context) error {
