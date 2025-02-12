@@ -99,14 +99,13 @@ func (pd *ProfileDefinition) GetFieldDefinition(name string) *ProfileFieldDefini
 }
 
 type ProfileFieldDefinition struct {
-	Name            string
-	UIName          string
-	Format          ProfileFieldFormat
-	MaxLen          int
-	MinLen          int
-	PreventEmpty    bool
-	RegexValidator  string
-	InviteTimeField bool
+	Name           string
+	UIName         string
+	Format         ProfileFieldFormat
+	MaxLen         int
+	MinLen         int
+	PreventEmpty   bool
+	RegexValidator string
 }
 
 func (pfd *ProfileFieldDefinition) ValidateValue(value string) error {
@@ -174,16 +173,6 @@ var BasicUserProfileFieldDefinition = ProfileDefinition{
 			Format: ProfileFieldFormatString,
 			MaxLen: 50,
 			MinLen: 1,
-		},
-		{
-			// TODO: clearsight-specific
-			// Comma-separated list of territory UUIDs
-			Name:            "invite-territories",
-			UIName:          "Invite Territories",
-			Format:          ProfileFieldFormatString,
-			MaxLen:          600,
-			MinLen:          1,
-			InviteTimeField: true,
 		},
 	},
 }

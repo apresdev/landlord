@@ -1445,10 +1445,6 @@ components:
           default: guest
         mfaPolicy:
           $ref: '#/components/schemas/MFAPolicy'
-        profileFields:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfileField'
     CreateTenantRequest:
       type: object
       required:
