@@ -10,4 +10,6 @@ type InviteRequest struct {
 	Role string `json:"role"`
 
 	MfaPolicy MfaPolicy `json:"mfaPolicy"`
+
+	ProfileFields []ProfileField `json:"profileFields,omitempty"`
 }

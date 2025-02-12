@@ -233,7 +233,11 @@ templ tenantInviteUserButton(tenantID string) {
     </div>
 }
 
-templ tenantInviteUserForm(tenantID string, inviteToTenant *multi.Tenant, mfaPolicies []string) {
+templ tenantInviteUserForm(
+  tenantID string,
+  inviteToTenant *multi.Tenant,
+  mfaPolicies []string,
+  profileDefinition *multi.ProfileDefinition) {
 <form
     class="form-wrapper"
     hx-post={ string(templ.SafeURL("/ll-auth/app/admin/tenants/" + tenantID + "/users")) }
@@ -257,6 +261,15 @@ templ tenantInviteUserForm(tenantID string, inviteToTenant *multi.Tenant, mfaPol
             }
         </select>
     </label>
+    <div>
+      <h2>Profile Fields</h2>
+        for _, profileFieldDef := range profileDefinition.Fields {
+          <div>
+            <label>{ profileFieldDef.UIName }</label>
+            <input type="text" name={profileFieldDef.Name} placeholder="Optional">
+          </div>
+        }
+    </div>
     <button class="button" type="submit">Submit</button>
     <button class="button" type="button"
         hx-get={ "/ll-auth/app/admin/tenants/" + tenantID + "/invite-user-button" }

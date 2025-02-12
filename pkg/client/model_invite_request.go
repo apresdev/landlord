@@ -15,9 +15,10 @@ var _ MappedNullable = &InviteRequest{}
 
 // InviteRequest struct for InviteRequest
 type InviteRequest struct {
-	Username  string    `json:"username"`
-	Role      string    `json:"role"`
-	MfaPolicy MFAPolicy `json:"mfaPolicy"`
+	Username      string         `json:"username"`
+	Role          string         `json:"role"`
+	MfaPolicy     MFAPolicy      `json:"mfaPolicy"`
+	ProfileFields []ProfileField `json:"profileFields,omitempty"`
 }
 
 type _InviteRequest InviteRequest
@@ -116,6 +117,38 @@ func (o *InviteRequest) SetMfaPolicy(v MFAPolicy) {
 	o.MfaPolicy = v
 }
 
+// GetProfileFields returns the ProfileFields field value if set, zero value otherwise.
+func (o *InviteRequest) GetProfileFields() []ProfileField {
+	if o == nil || IsNil(o.ProfileFields) {
+		var ret []ProfileField
+		return ret
+	}
+	return o.ProfileFields
+}
+
+// GetProfileFieldsOk returns a tuple with the ProfileFields field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *InviteRequest) GetProfileFieldsOk() ([]ProfileField, bool) {
+	if o == nil || IsNil(o.ProfileFields) {
+		return nil, false
+	}
+	return o.ProfileFields, true
+}
+
+// HasProfileFields returns a boolean if a field has been set.
+func (o *InviteRequest) HasProfileFields() bool {
+	if o != nil && !IsNil(o.ProfileFields) {
+		return true
+	}
+
+	return false
+}
+
+// SetProfileFields gets a reference to the given []ProfileField and assigns it to the ProfileFields field.
+func (o *InviteRequest) SetProfileFields(v []ProfileField) {
+	o.ProfileFields = v
+}
+
 func (o InviteRequest) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -129,6 +162,9 @@ func (o InviteRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize["username"] = o.Username
 	toSerialize["role"] = o.Role
 	toSerialize["mfaPolicy"] = o.MfaPolicy
+	if !IsNil(o.ProfileFields) {
+		toSerialize["profileFields"] = o.ProfileFields
+	}
 	return toSerialize, nil
 }
 
