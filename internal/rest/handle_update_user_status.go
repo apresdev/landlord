@@ -100,7 +100,7 @@ func HandleUpdateUserStatus(
 			zap.String("status", targetStatus.String()))
 		return targetUser, nil
 	}
-	if targetUser.Status == multi.UserStatusInactive {
+	if targetStatus == multi.UserStatusInactive {
 		_, err := app.CogIdp().AdminDisableUser(c.Request.Context(),
 			&cognitoidentityprovider.AdminDisableUserInput{
 				UserPoolId: aws.String(targetTenant.UserPoolID),
@@ -113,7 +113,7 @@ func HandleUpdateUserStatus(
 				zap.Error(err))
 			return nil, apperr.NewInternalE(err)
 		}
-	} else if targetUser.Status == multi.UserStatusActive {
+	} else if targetStatus == multi.UserStatusActive {
 		_, err := app.CogIdp().AdminEnableUser(c.Request.Context(),
 			&cognitoidentityprovider.AdminEnableUserInput{
 				UserPoolId: aws.String(targetTenant.UserPoolID),

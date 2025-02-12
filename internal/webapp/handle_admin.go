@@ -412,7 +412,9 @@ func handleAdminInviteUserForm(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewNotFoundE(err)
 	}
-	return render(c, tenantInviteUserForm(tenantID, ten, multi.MFAPolicyStrings()))
+	profileFieldDefs := ten.GetUserProfileDefinition()
+	return render(c, tenantInviteUserForm(
+		tenantID, ten, multi.MFAPolicyStrings(), profileFieldDefs))
 }
 
 func handleAdminInviteUserButton(a App, c *gin.Context) error {
@@ -433,14 +435,48 @@ func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
 	req.Username = c.PostForm("username")
 	req.Role = c.PostForm("role")
 	req.MfaPolicy = rest.MfaPolicy(c.PostForm("mfaPolicy"))
+
 	if err := rest.HandleInviteToTenant(a, c, tenantID, req); err != nil {
 		return err
 	}
-	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), tenantID)
+
+	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	type remembrance struct {
+		def       multi.ProfileFieldDefinition
+		formValue string
+	}
+	remebrances := make([]remembrance, 0)
+	for _, profileFieldDef := range ten.GetUserProfileDefinition().Fields {
+		v := c.PostForm(profileFieldDef.Name)
+		if v != "" {
+			remebrances = append(remebrances, remembrance{
+				def: profileFieldDef, formValue: v})
+		}
+	}
+	if len(remebrances) > 0 {
+		var updateProfileFieldsReq rest.UpdateProfileFieldsRequest
+		for _, r := range remebrances {
+			updateProfileFieldsReq.ProfileFields = append(
+				updateProfileFieldsReq.ProfileFields,
+				rest.ProfileField{
+					Name:  r.def.Name,
+					Value: r.formValue})
+		}
+		user, err := db.GetUserByName(c.Request.Context(), a.DDB(), req.Username)
+		if err != nil {
+			return apperr.NewNotFoundE(err)
+		}
+		err = rest.HandleUpdateUserProfileFields(
+			a, c, tenantID, user.ID, updateProfileFieldsReq)
+		if err != nil {
+			return err
+		}
+	}
+
+	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), tenantID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
