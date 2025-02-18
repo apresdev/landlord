@@ -3096,7 +3096,14 @@
       },
       "TenantUsersResponse": {
         "type": "object",
+        "required": [
+          "tenantID"
+        ],
         "properties": {
+          "tenantID": {
+            "type": "string",
+            "format": "uuid"
+          },
           "users": {
             "type": "array",
             "items": {
