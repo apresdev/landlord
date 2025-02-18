@@ -17,6 +17,7 @@ module "landlord_webapp_ecs" {
   container_environment_variables = {
     LANDLORD_DB_TABLE_NAME     = module.landlord_dynamo.table_name
     LANDLORD_APP_URL           = var.app_url
+    LANDLORD_CONSOLE_URL       = var.console_url
     LANDLORD_APP_NAME          = var.app_name
     LANDLORD_APP_ADMIN_EMAIL   = var.app_admin_email
     LANDLORD_LISTEN_ADDR       = "0.0.0.0:8080"

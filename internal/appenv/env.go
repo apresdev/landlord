@@ -1,9 +1,12 @@
 package appenv
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/apresdev/landlord/internal/apperr"
 
 	"go.uber.org/zap"
 
@@ -102,15 +105,20 @@ const (
 )
 
 type Settings struct {
-	url         *url.URL
+	appURL      *url.URL
+	consoleURL  *url.URL
 	appName     string
 	adminEmail  string
 	routes      RouteSetting
 	dbTableName string
 }
 
-func (s Settings) URL() *url.URL {
-	return s.url
+func (s Settings) AppURL() *url.URL {
+	return s.appURL
+}
+
+func (s Settings) ConsoleURL() *url.URL {
+	return s.consoleURL
 }
 
 func (s Settings) AppName() string {
@@ -129,14 +137,34 @@ func (s Settings) DBTableName() string {
 	return s.dbTableName
 }
 
-func MustSettings() Settings {
-	u := os.Getenv("LANDLORD_APP_URL")
+func mustEnvURL(key string) *url.URL {
+	u, err := envURL(key)
+	if err != nil {
+		zap.L().Fatal("could not parse URL", zap.String("key", key), zap.Error(err))
+	}
+	return u
+}
+
+func envURL(key string) (*url.URL, error) {
+	u := os.Getenv(key)
 	if u == "" {
-		zap.L().Fatal("LANDLORD_APP_URL not set")
+		return nil, apperr.NewNotFoundE(fmt.Errorf("environment variable %s is not set", key))
 	}
 	up, err := url.Parse(u)
 	if err != nil {
-		zap.L().Fatal("LANDLORD_APP_URL is not a valid URL", zap.Error(err))
+		return nil, apperr.NewBadRequestE(err)
+	}
+	return up, nil
+}
+
+func MustSettings() Settings {
+	appURL := mustEnvURL("LANDLORD_APP_URL")
+	// In a test setup, the consoleURL and the appURL can be the same
+	consoleURL, err := envURL("LANDLORD_CONSOLE_URL")
+	if err != nil && !apperr.IsNotFound(err) {
+		zap.L().Fatal("could not parse LANDLORD_CONSOLE_URL", zap.Error(err))
+	} else if err != nil {
+		consoleURL = appURL
 	}
 	n := os.Getenv("LANDLORD_APP_NAME")
 	if n == "" {
@@ -164,5 +192,11 @@ func MustSettings() Settings {
 	if t == "" {
 		zap.L().Fatal("LANDLORD_DB_TABLE_NAME not set")
 	}
-	return Settings{url: up, appName: n, adminEmail: e, routes: rs, dbTableName: t}
+	return Settings{
+		appURL:      appURL,
+		consoleURL:  consoleURL,
+		appName:     n,
+		adminEmail:  e,
+		routes:      rs,
+		dbTableName: t}
 }

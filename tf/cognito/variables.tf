@@ -51,6 +51,15 @@ variable "app_url" {
   }
 }
 
+variable "console_url" {
+  description = "The base URL of the Landlord Console webapp"
+  type        = string
+  validation {
+    condition = can(regex("^https?:\\/\\/[a-zA-Z0-9.-]+(:[0-9]{1,5})?$", var.console_url))
+    error_message = "The console URL must include the scheme and domain, but no path information. Do not include a trailing slash."
+  }
+}
+
 variable "app_name" {
   description = "The name of the app. Used in various UI displays when authenticating"
   type        = string

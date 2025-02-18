@@ -43,7 +43,7 @@ func handleRoot(a App, c *gin.Context) error {
 		zap.L().Warn("error finding tenant for username",
 			zap.String("username", username),
 			zap.Error(err))
-		clearLandlordCookies(c, a.Settings().URL())
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
 		redirectToLogin(c)
 		return nil
 	}
@@ -83,27 +83,27 @@ func handleLoginSubmit(a App, c *gin.Context) error {
 	}
 	switch resp.Status {
 	case rest.LoginStatusSuccess:
-		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().URL(), LandlordAccessTokenCookie, resp.AccessToken)
-		setCookie(c, a.Settings().URL(), LandlordIDTokenCookie, resp.IdToken)
-		setCookie(c, a.Settings().URL(), LandlordRefreshTokenCookie, resp.RefreshToken)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordAccessTokenCookie, resp.AccessToken)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordIDTokenCookie, resp.IdToken)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordRefreshTokenCookie, resp.RefreshToken)
 		redirectToAppRoot(c)
 	case rest.LoginStatusNewPasswordRequired:
-		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie, resp.Session)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "new-password")
 	case rest.LoginStatusPasswordResetRequired:
-		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie, resp.Session)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "reset-password")
 	case rest.LoginStatusMFASetupRequired:
-		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().URL(), LandlordAccessTokenCookie, resp.AccessToken)
-		setCookie(c, a.Settings().URL(), LandlordOTPURI, resp.OtpURI)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordAccessTokenCookie, resp.AccessToken)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordOTPURI, resp.OtpURI)
 		redirectTo(c, "setup-otp")
 	case rest.LoginStatusMFACodeRequired:
-		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie, resp.Session)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "otp")
 	default:
 		zap.L().Error("unexpected login status value",
@@ -114,7 +114,7 @@ func handleLoginSubmit(a App, c *gin.Context) error {
 }
 
 func handleLogoutSubmit(a App, c *gin.Context) error {
-	clearLandlordCookies(c, a.Settings().URL())
+	clearLandlordCookies(c, a.Settings().ConsoleURL())
 	redirectToLogin(c)
 	return nil
 }
@@ -181,18 +181,18 @@ func handleOTPSubmit(a App, c *gin.Context) error {
 	}
 	switch resp.Status {
 	case rest.LoginStatusSuccess:
-		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().URL(), LandlordAccessTokenCookie, resp.AccessToken)
-		setCookie(c, a.Settings().URL(), LandlordIDTokenCookie, resp.IdToken)
-		setCookie(c, a.Settings().URL(), LandlordRefreshTokenCookie, resp.RefreshToken)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordAccessTokenCookie, resp.AccessToken)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordIDTokenCookie, resp.IdToken)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordRefreshTokenCookie, resp.RefreshToken)
 		redirectToAppRoot(c)
 	case rest.LoginStatusNewPasswordRequired:
-		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie, resp.Session)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "new-password")
 	case rest.LoginStatusPasswordResetRequired:
-		setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie, resp.Session)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "reset-password")
 	default:
 		zap.L().Error("unexpected login status value",
@@ -223,8 +223,8 @@ func handleNewPasswordSubmit(a App, c *gin.Context) error {
 		return err
 	}
 	if resp.Status == rest.LoginStatusMFASetupRequired {
-		setCookie(c, a.Settings().URL(), LandlordOTPURI, resp.OtpURI)
-		setCookie(c, a.Settings().URL(), LandlordAccessTokenCookie, resp.AccessToken)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordOTPURI, resp.OtpURI)
+		setCookie(c, a.Settings().ConsoleURL(), LandlordAccessTokenCookie, resp.AccessToken)
 		redirectTo(c, "setup-otp")
 		return nil
 	}
@@ -235,10 +235,10 @@ func handleNewPasswordSubmit(a App, c *gin.Context) error {
 		c.String(http.StatusUnauthorized, "unauthorized")
 		return nil
 	}
-	setCookie(c, a.Settings().URL(), LandlordIDTokenCookie, resp.IdToken)
-	setCookie(c, a.Settings().URL(), LandlordAccessTokenCookie, resp.AccessToken)
-	setCookie(c, a.Settings().URL(), LandlordRefreshTokenCookie, resp.RefreshToken)
-	clearCookie(c, a.Settings().URL(), LandlordChallengeSessionCookie)
+	setCookie(c, a.Settings().ConsoleURL(), LandlordIDTokenCookie, resp.IdToken)
+	setCookie(c, a.Settings().ConsoleURL(), LandlordAccessTokenCookie, resp.AccessToken)
+	setCookie(c, a.Settings().ConsoleURL(), LandlordRefreshTokenCookie, resp.RefreshToken)
+	clearCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie)
 	redirectToAppRoot(c)
 	return nil
 }
@@ -257,7 +257,7 @@ func handleRecoverySubmit(a App, c *gin.Context) error {
 	}
 	// TODO: put the details from the response into front-end
 	_ = resp
-	setCookie(c, a.Settings().URL(), LandlordUsernameCookie, req.Username)
+	setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
 	redirectTo(c, "reset-password")
 	return err
 }
