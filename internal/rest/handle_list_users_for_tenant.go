@@ -35,7 +35,7 @@ func getUsersForTenant(
 	if err != nil {
 		return nil, apperr.NewInternal(err.Error())
 	}
-	var resp TenantUsersResponse
+	resp := TenantUsersResponse{TenantID: ten.ID.String()}
 	for _, user := range users {
 		u, err := app.CogIdp().AdminGetUser(
 			c.Request.Context(),

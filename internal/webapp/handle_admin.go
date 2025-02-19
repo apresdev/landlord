@@ -43,7 +43,7 @@ func newDashboardStats() DashboardStats {
 func handleAdminDashboard(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
-		clearLandlordCookies(c, a.Settings().URL())
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
 		redirectToLogin(c)
 		return nil
 	}
@@ -89,7 +89,7 @@ func handleAdminClearImpersonation(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	clearLandlordCookies(c, a.Settings().URL())
+	clearLandlordCookies(c, a.Settings().ConsoleURL())
 	c.Header("HX-Redirect", appPath("/"))
 	c.Status(http.StatusNoContent)
 	return nil
@@ -98,7 +98,7 @@ func handleAdminClearImpersonation(a App, c *gin.Context) error {
 func handleAdminTenants(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
-		clearLandlordCookies(c, a.Settings().URL())
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
 		redirectToLogin(c)
 		return nil
 	}
@@ -152,7 +152,7 @@ func newTenantTab(s string) tenantTab {
 func handleAdminTenantSelect(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
-		clearLandlordCookies(c, a.Settings().URL())
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
 		redirectToLogin(c)
 		return nil
 	}
@@ -266,7 +266,7 @@ func rolesWithCount(roles []string, users []*multi.User) []RoleWithCount {
 func handleAdminTenant(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
-		clearLandlordCookies(c, a.Settings().URL())
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
 		redirectToLogin(c)
 		return nil
 	}
@@ -294,7 +294,7 @@ func handleAdminTenant(a App, c *gin.Context) error {
 func handleAdminTenantTab(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
-		clearLandlordCookies(c, a.Settings().URL())
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
 		redirectToLogin(c)
 		return nil
 	}
@@ -812,7 +812,7 @@ func handleAdminImpersonateUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	clearLandlordCookies(c, a.Settings().URL())
+	clearLandlordCookies(c, a.Settings().ConsoleURL())
 	c.Header("HX-Redirect", appPath("/"))
 	c.Status(http.StatusNoContent)
 	return nil
@@ -821,7 +821,7 @@ func handleAdminImpersonateUserSubmit(a App, c *gin.Context) error {
 func handleAdminUser(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
-		clearLandlordCookies(c, a.Settings().URL())
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
 		redirectToLogin(c)
 		return nil
 	}
@@ -867,7 +867,7 @@ func handleAdminUser(a App, c *gin.Context) error {
 func handleAdminProfile(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
-		clearLandlordCookies(c, a.Settings().URL())
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
 		redirectToLogin(c)
 		return nil
 	}
@@ -905,7 +905,7 @@ func newProfileTab(s string) profileTab {
 func handleAdminProfileTab(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
-		clearLandlordCookies(c, a.Settings().URL())
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
 		redirectToLogin(c)
 		return nil
 	}

@@ -68,10 +68,11 @@ aws sso login
 * `LANDLORD_APP_URL=<url>`: URL of the application. Where cookies
   from authentication are stored and where the app is expected to be
   delivered from.
-* `LANDLORD_APP_NAME=<name>`: Name of the application. Used in email
-  notifications and UI components.
+* `LANDLORD_APP_NAME=<name>`: Name of the target application that Landlord
+  is managing auth for. Used in email notifications and UI components.
 * `LANDLORD_APP_ADMIN_EMAIL=<email>`: Email address of the application
   administrator. Used in email notifications.
+* `LANDLORD_CONSOLE_URL=<name>`: URL of the Landlord Console webapp.
 * `LANDLORD_SENDER_EMAIL=<email>`: Email address to send alerts and invites
   from.
 * `LANDLORD_LISTEN_ADDR=<address>`: Address to listen on when running
