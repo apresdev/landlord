@@ -6,7 +6,6 @@ set -x
 go get -v
 
 go generate ./...
-templ generate
 
 goimports -w .
 

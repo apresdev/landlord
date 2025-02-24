@@ -1,0 +1,82 @@
+{{ define "userSummaryCard" }}
+{{- /*gotype: github.com/apresdev/landlord/internal/webapp.UserView*/}}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h2>User Summary</h2>
+        </div>
+        <div class="card-columns">
+            <!-- Column 1 -->
+            <div class="column">
+                <h3>Details</h3>
+                <div class="field">
+                    <span class="label">Name</span>
+                    <span class="value">{{ .Username }}</span>
+                </div>
+                <div class="field">
+                    <span class="label">MFA Policy</span>
+                    <span class="value">{{ .MFAPolicy }}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Cognito User ID</span>
+                    <span class="value">
+                        <a href="{{ .CogURL }}" target="_blank">{{ .ID }}</a>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Column 2 -->
+            <div class="column">
+                <h3>Role</h3>
+                <div class="field">
+                    <span class="label">Tenant</span>
+                    <span class="value">
+                        <a href="{{ .Tenant.Link }}">{{ .Tenant.Name }}</a>
+                    </span>
+                </div>
+                <div class="field">
+                    <span class="label">Role</span>
+                    <span class="value">{{ .Role }}</span>
+                </div>
+                <div class="field">
+                    <span class="label">Impersonation</span>
+                    {{ if .IsImpersonating }}
+                        <span class="value">{{ .ImpersonationName }}</span>
+                        <button class="button" hx-post="/ll-auth/app/admin/clear-impersonation">
+                            Clear Impersonation
+                        </button>
+                    {{ else }}
+                        <span class="value">None</span>
+                    {{ end }}
+                </div>
+            </div>
+
+            <!-- Column 3 -->
+            <div class="column">
+                <h3>Additional Information</h3>
+                <div class="field">
+                    <span class="label">Time Created</span>
+                    <span class="value">{{ .CreatedAt }}</span>
+                </div>
+                <div class="field">
+                    <span class="label">State</span>
+                    <span class="value">{{ .Status }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "userSummary" }}
+{{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
+<!DOCTYPE html>
+<html lang="en">
+    {{ template "header" . }}
+    <body>
+        {{ template "navbar" . }}
+        {{ template "userSummaryCard" .SelectedUser }}
+        {{ template "profileCard" .SelectedUser.Profile }}
+    </body>
+</html>
+{{ end }}

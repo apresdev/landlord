@@ -227,9 +227,6 @@ The `landlord` tool uses a few types of generated sources:
 
 * openapi-generator that creates server stubs (`internal/rest/model_*` and
   `internal/rest/routers.go`) and a client package (`pkg/client`).
-* .go files associated with [templ](https://templ.guide/) templates in the
-  `internal/server` directory. The .go files here are each created from
-  one .templ file.
 * mocks for unit testing in the `internal/mocks` directory.
 
 Our decision is to commit these sources. The argument for not including

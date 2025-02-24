@@ -1,0 +1,14 @@
+{{ define "unauthorized" }}
+{{- /*gotype: github.com/apresdev/landlord/internal/webapp.UnauthenticatedView*/}}
+<!DOCTYPE html>
+<html lang="en">
+{{ template "header" . }}
+<body>
+    <div class="error-container">
+      <h2>Unauthorized Access</h2>
+      <p>{{ .ErrMsg }}</p>
+      <a href="/ll-auth/app/login">Return to Login</a>
+    </div>
+</body>
+</html>
+{{ end }}

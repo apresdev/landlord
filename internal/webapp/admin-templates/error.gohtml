@@ -1,0 +1,15 @@
+{{ define "error" }}
+{{- /*gotype: github.com/apresdev/landlord/internal/webapp.ErrorPageView*/}}
+<!DOCTYPE html>
+<html lang="en">
+{{ template "header" . }}
+<body>
+    <div class="error-container">
+        <h2>Error Occurred</h2>
+        <p>{{ .ErrMsg }}</p>
+        <p>If the error persists, contact: <a href="{{ .Settings.AdminEmailLink }}">{{ .Settings.AdminEmail }}</a></p>
+        <a href="/">Home</a>
+    </div>
+</body>
+</html>
+{{ end }}

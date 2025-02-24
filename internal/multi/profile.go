@@ -210,7 +210,8 @@ var BasicTenantProfileFieldDefinition = ProfileDefinition{
 }
 
 type ProfileFieldProvider interface {
-	ProfileField(name string) string
+	ProfileFieldValue(name string) string
+	ProfileField(name string) *ProfileField
 	UpdateProfileField(name string, format ProfileFieldFormat, value string)
 	ProfileFields() []ProfileField
 }

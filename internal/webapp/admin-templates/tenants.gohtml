@@ -1,0 +1,74 @@
+{{ define "tenants" }}
+{{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
+<!DOCTYPE html>
+<html lang="en">
+{{ template "header" . }}
+<body>
+    {{ template "navbar" . }}
+    <div class="container">
+        {{ template "createTenantTableAndForm" . }}
+    </div>
+</body>
+</html>
+{{ end }}
+
+{{ define "createTenantButton" }}
+<div id="create-tenant-form">
+    <button
+        hx-get="/ll-auth/app/admin/tenant-ops/create-tenant-form"
+        hx-target="#create-tenant-form"
+        class="button">Create New Tenant</button>
+</div>
+{{ end }}
+
+{{ define "createTenantForm" }}
+{{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
+<div id="create-tenant-form">
+  <form class="form-wrapper"
+    hx-post="/ll-auth/app/admin/tenant-ops/create-tenant-submit"
+    hx-target="#create-tenant-table-and-form"
+    hx-swap="innerHTML">
+    <label>Name:
+        <input type="text" name="name" />
+    </label>
+    <label>Description:
+        <input type="text" name="description" />
+    </label>
+    <button class="button" type="submit">Submit</button>
+    <button class="button" type="button"
+        hx-get="/ll-auth/app/admin/tenant-ops/create-tenant-button"
+        hx-target="#create-tenant-form"
+        hx-swap="innerHTML">Cancel</button>
+  </form>
+  {{ if .ErrMsg }}
+      <div id="create-tenant-error-message" class="error-text">{{ .ErrMsg }}</div>
+  {{ end }}
+</div>
+{{ end }}
+
+{{ define "createTenantTableAndForm" }}
+{{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
+<div id="create-tenant-table-and-form">
+  {{ if .ErrMsg }}
+      {{ template "createTenantForm" . }}
+  {{ else }}
+      {{ template "createTenantButton" }}
+  {{ end }}
+  <table>
+      <thead>
+          <tr>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Description</th>
+              <th>User Pool</th>
+              <th>Actions</th>
+          </tr>
+      </thead>
+      <tbody hx-target="closest tr" hx-swap="outerHTML">
+      {{ range .Tenants }}
+          {{ template "tenantFragment" . }}
+      {{ end }}
+      </tbody>
+  </table>
+</div>
+{{ end }}

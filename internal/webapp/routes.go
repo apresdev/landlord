@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/apresdev/landlord/internal/timers"
+
 	"github.com/apresdev/landlord/internal/perms"
 
 	"github.com/apresdev/landlord/internal/apperr"
@@ -21,8 +23,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 
 	"github.com/apresdev/landlord/internal/appenv"
-
-	"github.com/a-h/templ"
 
 	"go.uber.org/zap"
 
@@ -42,25 +42,16 @@ type App interface {
 	RootTenantID() uuid.UUID
 }
 
-func mailToAdminLink(adminEmail string) templ.SafeURL {
-	return templ.URL(fmt.Sprintf("mailto:%s", adminEmail))
-}
-
 type handler func(App, *gin.Context) error
 
-func addRoute(group *gin.RouterGroup, app App, method, path string, h handler) {
+func addRoute(group *gin.RouterGroup, a App, method, path string, h handler) {
 	group.Handle(method, path, func(c *gin.Context) {
-		if err := h(app, c); err != nil {
+		if err := h(a, c); err != nil {
 			base64ErrMsg := base64.URLEncoding.EncodeToString([]byte(err.Error()))
 			c.Header("HX-Redirect", appPath("/admin/dashboard-error?error="+base64ErrMsg))
 			c.Status(apperr.ToHTTPStatus(err))
-			err2 := render(c, errorPage(
-				app.Settings().AppName(),
-				app.Settings().AdminEmail(),
-				mailToAdminLink(app.Settings().AdminEmail()),
-				err.Error(),
-				"Return to dashboard",
-				templ.URL(appPath("/admin/dashboard"))))
+			ev := NewErrorPageView(a, err.Error())
+			err2 := executeErrorTemplate(c, "error", ev)
 			if err2 != nil {
 				// We are already in an error context and have hit another error.
 				zap.L().Error("Error rendering error page", zap.Error(err2))
@@ -133,7 +124,7 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	auth.POST("/admin/tenants/:tenantID/activate", handleAdminActivateTenantSubmit)
 	auth.POST("/admin/tenants/:tenantID/deactivate", handleAdminDeactivateTenantSubmit)
 	auth.GET("/admin/tenants/:tenantID", handleAdminTenant)
-	auth.GET("/admin/tenants/:tenantID/:tab", handleAdminTenantTab)
+	auth.GET("/admin/tenants/:tenantID/tabs/:tab", handleAdminTenantTab)
 	auth.POST("/admin/tenants/:tenantID/description/edit", handleAdminDescriptionSubmit)
 	auth.GET("/admin/tenants/:tenantID/description/edit", handleAdminDescriptionEditForm)
 	auth.GET("/admin/tenants/:tenantID/description/form", handleAdminDescriptionForm)
@@ -190,14 +181,6 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	}
 }
 
-func render(c *gin.Context, t templ.Component) error {
-	if err := t.Render(c.Request.Context(), c.Writer); err != nil {
-		zap.L().Error("Error rendering page", zap.Error(err))
-		return err
-	}
-	return nil
-}
-
 func clientID(c *gin.Context) jwx.OpaqueClientID {
 	return jwx.OpaqueClientID(c.ClientIP())
 }
@@ -210,8 +193,9 @@ func unauthorizedResponse(app App, c *gin.Context) {
 	c.Status(http.StatusUnauthorized)
 	// The message here is purposefully vague to avoid leaking information.
 	// See the logs for diagnosing the issue.
-	err := render(c, unauthorizedPage(
-		app.Settings().AppName(), "Credentials are invalid or expired"))
+	uv := NewUnauthenticatedView(app.Settings()).
+		WithErrMsg("Credentials are invalid or expired")
+	err := executeUnauthenticatedView(c, "unauthorized", uv)
 	if err != nil {
 		zap.L().Error("Error rendering unauthorized page", zap.Error(err))
 	}
@@ -259,6 +243,7 @@ func setupAuthContext(app App) gin.HandlerFunc {
 		}
 		c.Set(perms.TokenKey, tok)
 		c.Set(perms.TenantIDKey, ten.ID.String())
+		c.Set(timers.ContextKey, timers.New())
 		c.Next()
 	}
 }
@@ -266,10 +251,6 @@ func setupAuthContext(app App) gin.HandlerFunc {
 func appPath(s string) string {
 	s = strings.TrimPrefix(s, "/")
 	return fmt.Sprintf("/ll-auth/app/%s", s)
-}
-
-func appURL(s string) templ.SafeURL {
-	return templ.URL(appPath(s))
 }
 
 func redirectTo(c *gin.Context, path string) {

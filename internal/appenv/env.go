@@ -129,6 +129,10 @@ func (s Settings) AdminEmail() string {
 	return s.adminEmail
 }
 
+func (s Settings) AdminEmailLink() string {
+	return fmt.Sprintf("mailto:%s", s.AdminEmail())
+}
+
 func (s Settings) Routes() RouteSetting {
 	return s.routes
 }
