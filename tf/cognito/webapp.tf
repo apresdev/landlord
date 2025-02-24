@@ -36,6 +36,8 @@ module "landlord_webapp_ecs" {
         "cognito-idp:AdminConfirmSignUp",
         "cognito-idp:AdminCreateUser",
         "cognito-idp:AdminDeleteUser",
+        "cognito-idp:AdminDisableUser",
+        "cognito-idp:AdminEnableUser",
         "cognito-idp:AdminGetUser",
         "cognito-idp:AdminListUserAuthEvents",
         "cognito-idp:AdminRemoveUserFromGroup",
