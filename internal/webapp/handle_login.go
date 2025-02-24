@@ -61,16 +61,14 @@ func handleRoot(a App, c *gin.Context) error {
 }
 
 func handleHelp(a App, c *gin.Context) error {
-	return render(c, helpPage(
-		a.Settings().AppName(),
-		a.Settings().AdminEmail(),
-		mailToAdminLink(a.Settings().AdminEmail())))
+	return executeUnauthenticatedView(
+		c, "helpPage", NewUnauthenticatedView(a.Settings()))
 }
 
 func handleLogin(a App, c *gin.Context) error {
 	username, _ := c.Cookie(LandlordUsernameCookie)
-	// It's okay for username to be empty, it's just a hit, if available.
-	return render(c, loginPage(a.Settings().AppName(), username))
+	uv := NewUnauthenticatedView(a.Settings()).WithPotentialUsername(username)
+	return executeUnauthenticatedView(c, "loginPage", uv)
 }
 
 func handleLoginSubmit(a App, c *gin.Context) error {
@@ -143,7 +141,9 @@ func handleSetupOTP(a App, c *gin.Context) error {
 	otpImageURI := appPath(fmt.Sprintf(
 		"/qrcode?uri=%s", base64.URLEncoding.EncodeToString([]byte(otpURI))))
 	username, _ := c.Cookie(LandlordUsernameCookie)
-	return render(c, setupOTPPage(a.Settings().AppName(), otpImageURI, username))
+	uv := NewUnauthenticatedView(a.Settings()).
+		WithPotentialUsername(username).WithOTPImageLink(otpImageURI)
+	return executeUnauthenticatedView(c, "setupOTPPage", uv)
 }
 
 func handleSetupOTPSubmit(a App, c *gin.Context) error {
@@ -167,7 +167,8 @@ func handleSetupOTPSubmit(a App, c *gin.Context) error {
 
 func handleOTP(a App, c *gin.Context) error {
 	username, _ := c.Cookie(LandlordUsernameCookie)
-	return render(c, otpCodePage(a.Settings().AppName(), username))
+	uv := NewUnauthenticatedView(a.Settings()).WithPotentialUsername(username)
+	return executeUnauthenticatedView(c, "otpCodePage", uv)
 }
 
 func handleOTPSubmit(a App, c *gin.Context) error {
@@ -204,7 +205,8 @@ func handleOTPSubmit(a App, c *gin.Context) error {
 
 func handleNewPassword(a App, c *gin.Context) error {
 	username, _ := c.Cookie(LandlordUsernameCookie)
-	return render(c, newPasswordPage(a.Settings().AppName(), username))
+	uv := NewUnauthenticatedView(a.Settings()).WithPotentialUsername(username)
+	return executeUnauthenticatedView(c, "newPasswordPage", uv)
 }
 
 func handleNewPasswordSubmit(a App, c *gin.Context) error {
@@ -245,7 +247,8 @@ func handleNewPasswordSubmit(a App, c *gin.Context) error {
 
 func handleRecovery(a App, c *gin.Context) error {
 	username, _ := c.Cookie(LandlordUsernameCookie)
-	return render(c, recoveryPage(a.Settings().AppName(), username))
+	uv := NewUnauthenticatedView(a.Settings()).WithPotentialUsername(username)
+	return executeUnauthenticatedView(c, "recoveryPage", uv)
 }
 
 func handleRecoverySubmit(a App, c *gin.Context) error {
@@ -264,7 +267,8 @@ func handleRecoverySubmit(a App, c *gin.Context) error {
 
 func handleResetPassword(a App, c *gin.Context) error {
 	username, _ := c.Cookie(LandlordUsernameCookie)
-	return render(c, resetPasswordPage(a.Settings().AppName(), username))
+	uv := NewUnauthenticatedView(a.Settings()).WithPotentialUsername(username)
+	return executeUnauthenticatedView(c, "resetPasswordPage", uv)
 }
 
 func handleResetPasswordSubmit(a App, c *gin.Context) error {

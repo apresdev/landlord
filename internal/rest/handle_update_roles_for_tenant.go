@@ -31,34 +31,35 @@ func handleUpdateRolesForTenant(app App, c *gin.Context) error {
 	if t == "" {
 		return apperr.NewBadRequest("no tenantID")
 	}
-	return HandleUpdateRolesForTenant(app, c, req, t)
+	_, err := HandleUpdateRolesForTenant(app, c, req, t)
+	return err
 }
 
 func HandleUpdateRolesForTenant(
 	app App,
 	c *gin.Context,
 	req TenantRolesRequest,
-	tenantID string) error {
+	tenantID string) (*multi.Tenant, error) {
 
 	req.Roles = tinytools.UniqueSlice(req.Roles)
 	req.SubTenantRoles = tinytools.UniqueSlice(req.SubTenantRoles)
 	if err := validateRoleNames(req.Roles); err != nil {
-		return err
+		return nil, err
 	}
 	if err := validateRoleNames(req.SubTenantRoles); err != nil {
-		return err
+		return nil, err
 	}
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	th, err := multi.ParseTenantHandle(tenantID)
 	if err != nil {
-		return apperr.NewBadRequest(err.Error())
+		return nil, apperr.NewBadRequest(err.Error())
 	}
 	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
 	if err != nil {
-		return apperr.NewNotFound(err.Error())
+		return nil, apperr.NewNotFound(err.Error())
 	}
 
 	resource := perms.NewResource(
@@ -66,18 +67,18 @@ func HandleUpdateRolesForTenant(
 	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied setting roles for tenant",
 			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
 	users, err := db.GetUsersForTenant(c.Request.Context(), app.DDB(), targetTenant.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	newRoles := make([]string, 0, len(req.Roles))
 	deletedRoles := make([]string, 0, len(targetTenant.Roles))
@@ -97,7 +98,7 @@ func HandleUpdateRolesForTenant(
 	for _, r := range deletedRoles {
 		for _, user := range users {
 			if user.Role == r {
-				return apperr.NewBadRequest(fmt.Sprintf("role still in use: %s", r))
+				return nil, apperr.NewBadRequest(fmt.Sprintf("role still in use: %s", r))
 			}
 		}
 	}
@@ -134,7 +135,12 @@ func HandleUpdateRolesForTenant(
 	targetTenant.Roles = ensureBuiltinNames(req.Roles)
 	targetTenant.SubTenantRoles = ensureBuiltinNames(req.SubTenantRoles)
 
-	return db.StoreTenant(c.Request.Context(), app.DDB(), targetTenant)
+	err = db.StoreTenant(c.Request.Context(), app.DDB(), targetTenant)
+	if err != nil {
+		return nil, err
+	}
+
+	return targetTenant, err
 }
 
 func ensureBuiltinNames(roles []string) []string {

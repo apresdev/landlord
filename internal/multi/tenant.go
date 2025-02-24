@@ -28,6 +28,10 @@ func ParseTenantState(state string) (TenantState, error) {
 	}
 }
 
+func (ts TenantState) String() string {
+	return string(ts)
+}
+
 type Tenant struct {
 	ID             uuid.UUID   `dynamodbav:"-"` // sk -- pk is 'Global:*'
 	Name           string      `dynamodbav:"-"` // altName
@@ -120,13 +124,18 @@ func (ten *Tenant) GetTenantProfileDefinition() *ProfileDefinition {
 	return &BasicTenantProfileFieldDefinition
 }
 
-func (ten *Tenant) ProfileField(name string) string {
+func (ten *Tenant) ProfileFieldValue(name string) string {
 	ten.Profile = lazyUnmarshalProfile(ten.Profile, ten.RawProfile)
 	f := ten.Profile.GetField(name)
 	if f == nil {
 		return EmptyProfileValue
 	}
 	return f.Value
+}
+
+func (ten *Tenant) ProfileField(name string) *ProfileField {
+	ten.Profile = lazyUnmarshalProfile(ten.Profile, ten.RawProfile)
+	return ten.Profile.GetField(name)
 }
 
 func (ten *Tenant) UpdateProfileField(name string, format ProfileFieldFormat, value string) {

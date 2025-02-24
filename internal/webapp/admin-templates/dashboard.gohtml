@@ -1,13 +1,10 @@
-package webapp
-
-const dashboardPageTitle = "Dashboard"
-
-templ dashboardPage(appName string, sub *DisplayableSubject, stats DashboardStats) {
+{{ define "dashboard" }}
+{{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
 <!DOCTYPE html>
 <html lang="en">
-@headerFragment(appName, tenantsPageTitle)
+{{ template "header" . }}
 <body>
-    @navBarFragment(sub)
+    {{ template "navbar" . }}
     <div class="card-container">
         <div class="card-grid-container">
             <div class="card">
@@ -16,7 +13,7 @@ templ dashboardPage(appName string, sub *DisplayableSubject, stats DashboardStat
                     <h3>Alerts</h3>
                 </div>
                 <div class="card-body">
-                    <p>{ stats.SecurityAlertMessage }</p>
+                    <p>No current security alerts</p>
                 </div>
             </div>
             <div class="card">
@@ -57,4 +54,4 @@ templ dashboardPage(appName string, sub *DisplayableSubject, stats DashboardStat
     </div>
 </body>
 </html>
-}
+{{ end }}

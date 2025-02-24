@@ -1,23 +1,21 @@
-package webapp
-
-templ setupOTPPage(appName string, otpImageURI string, username string) {
+{{ define "otpCodePage" }}
+{{- /*gotype: github.com/apresdev/landlord/internal/webapp.UnauthenticatedView*/}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{ appName } | Login</title>
+    <title>{{ .Settings.AppName }} | Login</title>
     <link rel="stylesheet" href="/ll-auth/app/static/landlord-login.css">
 </head>
 <body>
     <div class="container">
-        <h2>{ appName } | Setup OTP</h2>
-        <img src={ otpImageURI } alt="QR Code" style="display: block; margin: 0 auto;">
-        <form action="/ll-auth/app/setup-otp/submit" method="POST">
+        <h2>{{ .Settings.AppName }} | Authenticator Code</h2>
+        <form action="/ll-auth/app/otp/submit" method="POST">
             <label>Code
-                <input type="text" name="code" placeholder="OTP Code" required>
+                <input type="text" name="code" placeholder="Enter the code from your authenticator app..." required>
             </label>
-            <input type="hidden" name="username" value={ username } />
+            <input type="hidden" name="username" value="{{ .PotentialUsername }}" />
             <button type="submit">Submit</button>
         </form>
         <div class="recovery">
@@ -28,4 +26,4 @@ templ setupOTPPage(appName string, otpImageURI string, username string) {
     </div>
 </body>
 </html>
-}
+{{ end }}

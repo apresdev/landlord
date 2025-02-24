@@ -1,44 +1,28 @@
 package webapp
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net/http"
 	"slices"
 	"sort"
 
+	"github.com/apresdev/landlord/internal/timers"
+
 	"github.com/apresdev/landlord/internal/tinytools"
 
 	"github.com/apresdev/landlord/internal/perms"
 
 	"github.com/apresdev/landlord/internal/apperr"
-	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/db"
 	"github.com/apresdev/landlord/internal/multi"
 	"github.com/apresdev/landlord/internal/rest"
 	"github.com/google/uuid"
 
-	"github.com/a-h/templ"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
-
-type DashboardStats struct {
-	OutstandingInvites    string
-	ConfiguredTenantCount string
-	ConfiguredUserCount   string
-	SecurityAlertMessage  string
-}
-
-func newDashboardStats() DashboardStats {
-	// TODO: real stats
-	return DashboardStats{
-		OutstandingInvites:    "12",
-		ConfiguredTenantCount: "4",
-		ConfiguredUserCount:   "32",
-		SecurityAlertMessage:  "No current security alerts",
-	}
-}
 
 func handleAdminDashboard(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
@@ -47,9 +31,8 @@ func handleAdminDashboard(a App, c *gin.Context) error {
 		redirectToLogin(c)
 		return nil
 	}
-	stats := newDashboardStats()
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	return render(c, dashboardPage("Landlord", ds, stats))
+	asv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub)
+	return executeAdminTemplate(c, "dashboard", asv)
 }
 
 func handleAdminDashboardError(a App, c *gin.Context) error {
@@ -63,14 +46,8 @@ func handleAdminDashboardError(a App, c *gin.Context) error {
 			errMsg = string(decodedErrMsg)
 		}
 	}
-	err := render(c, errorPage(
-		a.Settings().AppName(),
-		a.Settings().AdminEmail(),
-		mailToAdminLink(a.Settings().AdminEmail()),
-		errMsg,
-		"Return to dashboard",
-		templ.URL(appPath("/admin/dashboard"))))
-
+	ev := NewErrorPageView(a, errMsg)
+	err := executeErrorTemplate(c, "error", ev)
 	if err != nil {
 		// We are already in an error context and have hit another error.
 		// Log it and just try redirecting to the root page. Something is
@@ -106,47 +83,8 @@ func handleAdminTenants(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	return render(c, tenantsPage("Landlord", ds, tens))
-}
-
-type tenantTab string
-
-const (
-	tenantTabSummary  tenantTab = "summary"
-	tenantTabUsers    tenantTab = "users"
-	tenantTabInvites  tenantTab = "invites"
-	tenantTabRoles    tenantTab = "roles"
-	tenantTabSubRoles tenantTab = "subroles"
-)
-
-var tenantTabs = []tenantTab{
-	tenantTabSummary,
-	tenantTabUsers,
-	tenantTabInvites,
-	tenantTabRoles,
-	tenantTabSubRoles,
-}
-
-func newTenantTab(s string) tenantTab {
-	if s == "" {
-		return tenantTabSummary
-	}
-	switch s {
-	case "summary":
-		return tenantTabSummary
-	case "users":
-		return tenantTabUsers
-	case "invites":
-		return tenantTabInvites
-	case "roles":
-		return tenantTabRoles
-	case "subroles":
-		return tenantTabSubRoles
-	default:
-		zap.L().Info("bad value for tenant tab", zap.String("tab", s))
-		return tenantTabSummary
-	}
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).WithTenants(tens)
+	return executeAdminTemplate(c, "tenants", sv)
 }
 
 func handleAdminTenantSelect(a App, c *gin.Context) error {
@@ -170,25 +108,18 @@ func handleAdminTenantSelect(a App, c *gin.Context) error {
 			authorizedTenants = append(authorizedTenants, ten)
 		}
 	}
-	tab := tenantTabSummary
-	if action == "manage-users" {
-		tab = tenantTabUsers
-	} else if action == "manage-roles" {
-		tab = tenantTabRoles
-	} else if action == "manage-invites" {
-		tab = tenantTabInvites
-	}
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	return render(c, tenantSelectPage(
-		a.Settings().AppName(), ds, authorizedTenants, string(tab)))
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+		WithTenants(authorizedTenants).
+		WithTenantTab(parseTabFromAction(action))
+	return executeAdminTemplate(c, "selectTenant", sv)
 }
 
 func handleAdminCreateTenantButton(a App, c *gin.Context) error {
-	return render(c, tenantCreateTenantButton())
+	return executeFragmentTemplate(c, "createTenantButton", NewFragmentView())
 }
 
 func handleAdminCreateTenantForm(a App, c *gin.Context) error {
-	return render(c, tenantCreateTenantForm(""))
+	return executeFragmentTemplate(c, "createTenantForm", NewFragmentView())
 }
 
 func handleAdminCreateTenantSubmit(a App, c *gin.Context) error {
@@ -204,10 +135,21 @@ func handleAdminCreateTenantSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	return render(c, tenantCreateTenantTableAndForm(tens, errMsg))
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+		WithTenants(tens).
+		WithErrMsg(errMsg)
+	return executeAdminTemplate(c, "createTenantTableAndForm", sv)
 }
 
 func handleAdminActivateTenantSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	i := c.Param("tenantID")
 	if i == "" {
 		return fmt.Errorf("no id provided")
@@ -216,10 +158,16 @@ func handleAdminActivateTenantSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	return render(c, tenantFragment(ten))
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+		WithSelectedTen(ten)
+	return executeAdminTemplate(c, "tenantFragment", sv)
 }
 
 func handleAdminDeactivateTenantSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	i := c.Param("tenantID")
 	if i == "" {
 		return fmt.Errorf("no id provided")
@@ -228,39 +176,9 @@ func handleAdminDeactivateTenantSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	return render(c, tenantFragment(ten))
-}
-
-type RoleWithCount struct {
-	Role             string
-	Count            int
-	RemovableTooltip string
-}
-
-func rolesWithCount(roles []string, users []*multi.User) []RoleWithCount {
-	sort.Strings(roles)
-	roleCounts := make(map[string]int)
-	for _, u := range users {
-		roleCounts[u.Role]++
-	}
-	var rwc []RoleWithCount
-	for _, r := range roles {
-		tooltip := ""
-		if multi.IsBuiltinRole(r) {
-			tooltip = "Cannot remove built-in role"
-		} else if roleCounts[r] > 0 {
-			tooltip = "Cannot remove role that is in use"
-		}
-		rwc = append(rwc, RoleWithCount{
-			Role:             r,
-			Count:            roleCounts[r],
-			RemovableTooltip: tooltip,
-		})
-	}
-	sort.Slice(rwc, func(i, j int) bool {
-		return rwc[i].Role < rwc[j].Role
-	})
-	return rwc
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+		WithSelectedTen(ten)
+	return executeAdminTemplate(c, "tenantFragment", sv)
 }
 
 func handleAdminTenant(a App, c *gin.Context) error {
@@ -287,11 +205,26 @@ func handleAdminTenant(a App, c *gin.Context) error {
 			fmt.Errorf("error getting tenants: %w", err))
 	}
 	startingTab := newTenantTab(c.Query("tab"))
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	return render(c, tenantPage(a.Settings().AppName(), ds, ten, string(startingTab)))
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+		WithSelectedTen(ten).
+		WithTenantTab(startingTab)
+	return executeAdminTemplate(c, "tenant", sv)
+}
+
+func usersForTenant(ctx context.Context, a App, ten *multi.Tenant) ([]*multi.User, error) {
+	users, err := db.GetUsersForTenant(ctx, a.DDB(), ten.ID)
+	if err != nil {
+		return nil, apperr.NewInternalE(
+			fmt.Errorf("error getting users for tenant: %w", err))
+	}
+	sort.Slice(users, func(i, j int) bool {
+		return users[i].Username < users[j].Username
+	})
+	return users, nil
 }
 
 func handleAdminTenantTab(a App, c *gin.Context) error {
+	timers.Checkpoint(c, "handleAdminTenantTab")
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		clearLandlordCookies(c, a.Settings().ConsoleURL())
@@ -314,53 +247,50 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 		return apperr.NewInternalE(
 			fmt.Errorf("error getting tenants: %w", err))
 	}
-	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), ten.ID)
-	if err != nil {
-		return apperr.NewInternalE(
-			fmt.Errorf("error getting users for tenant: %w", err))
-	}
-	sort.Slice(users, func(i, j int) bool {
-		return users[i].Username < users[j].Username
-	})
+
 	tab := newTenantTab(c.Param("tab"))
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+		WithSelectedTen(ten).
+		WithTenantTab(tab)
+	timers.Checkpoint(c, "handleAdminTenantTab.switch")
+	defer timers.Checkpoint(c, "handleAdminTenantTab.done")
 	switch tab {
-	case tenantTabSummary:
-		cognitoURL := authx.CognitoUserPoolURL(a.Cfg().Region, ten.UserPoolID)
-		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-		baseURL := appPath("/admin/tenants/" + id)
-		return render(c, tenantSummaryTab(a.Settings().AppName(), ds, ten, cognitoURL, users, baseURL))
-	case tenantTabUsers:
-		dus, err := NewDisplayableUsers(c.Request.Context(), a, sub, ten, users)
+	case tenantSummaryTab:
+		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
+	case tenantUsersTab:
+		users, err := usersForTenant(c.Request.Context(), a, ten)
 		if err != nil {
-			return apperr.NewInternalE(err)
+			return err
 		}
-		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-		return render(c, tenantUsersTab(a.Settings().AppName(), ds, ten, dus))
-	case tenantTabInvites:
+		sv = sv.WithUsers(users)
+		timers.Checkpoint(c, "handleAdminTenantTab.withUsers")
+		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
+	case tenantInvitesTab:
+		users, err := usersForTenant(c.Request.Context(), a, ten)
+		if err != nil {
+			return err
+		}
 		invites := make([]*multi.User, 0, len(users))
 		for _, user := range users {
 			if user.Status == multi.UserStatusInvited {
 				invites = append(invites, user)
 			}
 		}
-		dus, err := NewDisplayableUsers(c.Request.Context(), a, sub, ten, invites)
+		sv = sv.WithUsers(invites)
+		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
+	case tenantRolesTab:
+		fallthrough
+	case tenantSubRolesTab:
+		users, err := usersForTenant(c.Request.Context(), a, ten)
 		if err != nil {
-			return apperr.NewInternalE(err)
+			return err
 		}
-		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-		return render(c, tenantInvitesTab(a.Settings().AppName(), ds, ten, dus))
-	case tenantTabRoles:
-		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-		return render(c, tenantRolesTab(
-			a.Settings().AppName(), ds, ten, users, rolesWithCount(ten.Roles, users)))
-	case tenantTabSubRoles:
-		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-		return render(c, tenantSubRolesTab(
-			a.Settings().AppName(), ds, ten, users, rolesWithCount(ten.SubTenantRoles, users)))
+		sv = sv.WithUsers(users)
+		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
 	default:
 		zap.L().Info("unknown tenant tab", zap.String("tab", string(tab)))
+		return executeAdminTemplate(c, tenantSummaryTab.TabTemplateName(), sv)
 	}
-	return nil
 }
 
 func handleAdminDescriptionSubmit(a App, c *gin.Context) error {
@@ -373,7 +303,8 @@ func handleAdminDescriptionSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	return render(c, tenantDescriptionForm(tenantID, ten.Description))
+	return executeTenantTemplate(
+		c, "tenantDescriptionForm", NewTenantView(c.Request.Context(), a, ten))
 }
 
 func handleAdminDescriptionEditForm(a App, c *gin.Context) error {
@@ -386,7 +317,8 @@ func handleAdminDescriptionEditForm(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewNotFoundE(err)
 	}
-	return render(c, tenantDescriptionEditForm(tenantID, ten.Description))
+	return executeTenantTemplate(
+		c, "tenantDescriptionEditForm", NewTenantView(c.Request.Context(), a, ten))
 }
 
 func handleAdminDescriptionForm(a App, c *gin.Context) error {
@@ -399,7 +331,8 @@ func handleAdminDescriptionForm(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewNotFoundE(err)
 	}
-	return render(c, tenantDescriptionForm(tenantID, ten.Description))
+	return executeTenantTemplate(
+		c, "tenantDescriptionForm", NewTenantView(c.Request.Context(), a, ten))
 }
 
 func handleAdminInviteUserForm(a App, c *gin.Context) error {
@@ -412,13 +345,22 @@ func handleAdminInviteUserForm(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewNotFoundE(err)
 	}
-	profileFieldDefs := ten.GetUserProfileDefinition()
-	return render(c, tenantInviteUserForm(
-		tenantID, ten, multi.MFAPolicyStrings(), profileFieldDefs))
+	return executeTenantTemplate(
+		c, "inviteUserForm", NewTenantView(c.Request.Context(), a, ten))
 }
 
 func handleAdminInviteUserButton(a App, c *gin.Context) error {
-	return render(c, tenantInviteUserButton(c.Param("tenantID")))
+	tenantID := c.Param("tenantID")
+	th, err := multi.ParseTenantHandle(tenantID)
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	return executeTenantTemplate(
+		c, "inviteUserButton", NewTenantView(c.Request.Context(), a, ten))
 }
 
 func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
@@ -426,7 +368,6 @@ func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-
 	tenantID, err := rest.UUIDParam(c, "tenantID")
 	if err != nil {
 		return err
@@ -448,17 +389,17 @@ func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
 		def       multi.ProfileFieldDefinition
 		formValue string
 	}
-	remebrances := make([]remembrance, 0)
+	remembrances := make([]remembrance, 0)
 	for _, profileFieldDef := range ten.GetUserProfileDefinition().Fields {
 		v := c.PostForm(profileFieldDef.Name)
 		if v != "" {
-			remebrances = append(remebrances, remembrance{
+			remembrances = append(remembrances, remembrance{
 				def: profileFieldDef, formValue: v})
 		}
 	}
-	if len(remebrances) > 0 {
+	if len(remembrances) > 0 {
 		var updateProfileFieldsReq rest.UpdateProfileFieldsRequest
-		for _, r := range remebrances {
+		for _, r := range remembrances {
 			updateProfileFieldsReq.ProfileFields = append(
 				updateProfileFieldsReq.ProfileFields,
 				rest.ProfileField{
@@ -480,15 +421,17 @@ func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	dus, err := NewDisplayableUsers(c.Request.Context(), a, sub, ten, users)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
-	return render(c, tenantInviteUserTableAndForm(tenantID, ds, dus, ""))
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+		WithSelectedTen(ten).
+		WithUsers(users)
+	return executeAdminTemplate(c, "inviteUserTableAndForm", sv)
 }
 
 func handleAdminAddRoleSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	role := c.PostForm("role")
 	tenantID := c.Param("tenantID")
 	th, err := multi.ParseTenantHandle(tenantID)
@@ -504,13 +447,16 @@ func handleAdminAddRoleSubmit(a App, c *gin.Context) error {
 		if err != nil {
 			return apperr.NewInternalE(err)
 		}
-		return render(c, tenantAddRoleTableAndForm(ten, rolesWithCount(ten.Roles, users),
-			"Role already exists: "+role))
+		sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+			WithSelectedTen(ten).
+			WithUsers(users).
+			WithErrMsg("Role already exists: " + role)
+		return executeAdminTemplate(c, "addRoleTableAndForm", sv)
 	} else {
 		var req rest.TenantRolesRequest
 		req.Roles = append(ten.Roles, role)
 		req.SubTenantRoles = ten.SubTenantRoles
-		err = rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
+		updatedTenant, err := rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
 		if err != nil {
 			return apperr.NewInternalE(err)
 		}
@@ -519,11 +465,19 @@ func handleAdminAddRoleSubmit(a App, c *gin.Context) error {
 			return apperr.NewInternalE(err)
 		}
 		zap.L().Info("Adding role to tenant", zap.String("role", role))
-		return render(c, tenantAddRoleTableAndForm(ten, rolesWithCount(req.Roles, users), ""))
+
+		sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+			WithSelectedTen(updatedTenant).
+			WithUsers(users)
+		return executeAdminTemplate(c, "addRoleTableAndForm", sv)
 	}
 }
 
 func handleAdminDeleteRoleSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	role := c.Param("role")
 	tenantID := c.Param("tenantID")
 	th, err := multi.ParseTenantHandle(tenantID)
@@ -540,7 +494,7 @@ func handleAdminDeleteRoleSubmit(a App, c *gin.Context) error {
 	var req rest.TenantRolesRequest
 	req.Roles = tinytools.RemoveFromSlice(ten.Roles, role)
 	req.SubTenantRoles = ten.SubTenantRoles
-	err = rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
+	updatedTenant, err := rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
@@ -549,19 +503,25 @@ func handleAdminDeleteRoleSubmit(a App, c *gin.Context) error {
 		return apperr.NewInternalE(err)
 	}
 	zap.L().Info("Removed role from tenant", zap.String("role", role))
-	return render(c, tenantAddRoleTableAndForm(
-		ten, rolesWithCount(req.Roles, users), ""))
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+		WithSelectedTen(updatedTenant).
+		WithUsers(users)
+	return executeAdminTemplate(c, "addRoleTableAndForm", sv)
 }
 
 func handleAdminAddRoleForm(a App, c *gin.Context) error {
-	return render(c, tenantAddRoleForm(c.Param("tenantID")))
+	return executeStringTemplate(c, "tenantAddRoleForm", c.Param("tenantID"))
 }
 
 func handleAdminAddRoleButton(a App, c *gin.Context) error {
-	return render(c, tenantAddRoleButton(c.Param("tenantID")))
+	return executeStringTemplate(c, "tenantAddRoleButton", c.Param("tenantID"))
 }
 
 func handleAdminAddSubRoleSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	role := c.PostForm("subrole")
 	tenantID := c.Param("tenantID")
 	th, err := multi.ParseTenantHandle(tenantID)
@@ -573,23 +533,30 @@ func handleAdminAddSubRoleSubmit(a App, c *gin.Context) error {
 		return apperr.NewNotFoundE(err)
 	}
 	if slices.Contains(ten.SubTenantRoles, role) {
-		return render(c, tenantAddSubRoleTableAndForm(
-			ten, rolesWithCount(ten.SubTenantRoles, nil), "Sub-role already exists: "+role))
+		sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+			WithSelectedTen(ten).
+			WithErrMsg("Role already exists: " + role)
+		return executeAdminTemplate(c, "addSubRoleTableAndForm", sv)
 	} else {
 		var req rest.TenantRolesRequest
 		req.Roles = ten.Roles
 		req.SubTenantRoles = append(ten.SubTenantRoles, role)
-		err = rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
+		updatedTenant, err := rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
 		if err != nil {
 			return apperr.NewInternalE(err)
 		}
 		zap.L().Info("Adding sub-role to tenant", zap.String("sub-role", role))
-		return render(c, tenantAddSubRoleTableAndForm(
-			ten, rolesWithCount(req.SubTenantRoles, nil), ""))
+		sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+			WithSelectedTen(updatedTenant)
+		return executeAdminTemplate(c, "addSubRoleTableAndForm", sv)
 	}
 }
 
 func handleAdminDeleteSubRoleSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	subRole := c.Param("subrole")
 	tenantID := c.Param("tenantID")
 	th, err := multi.ParseTenantHandle(tenantID)
@@ -606,21 +573,22 @@ func handleAdminDeleteSubRoleSubmit(a App, c *gin.Context) error {
 	var req rest.TenantRolesRequest
 	req.Roles = ten.Roles
 	req.SubTenantRoles = tinytools.RemoveFromSlice(ten.SubTenantRoles, subRole)
-	err = rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
+	updatedTenant, err := rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
 	zap.L().Info("Removed sub-role from tenant", zap.String("sub-role", subRole))
-	return render(c, tenantAddSubRoleTableAndForm(
-		ten, rolesWithCount(req.SubTenantRoles, nil), ""))
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+		WithSelectedTen(updatedTenant)
+	return executeAdminTemplate(c, "addSubRoleTableAndForm", sv)
 }
 
 func handleAdminAddSubRoleForm(a App, c *gin.Context) error {
-	return render(c, tenantAddSubRoleForm(c.Param("tenantID")))
+	return executeStringTemplate(c, "addSubRoleForm", c.Param("tenantID"))
 }
 
 func handleAdminAddSubRoleButton(a App, c *gin.Context) error {
-	return render(c, tenantAddSubRoleButton(c.Param("tenantID")))
+	return executeStringTemplate(c, "addSubRoleButton", c.Param("tenantID"))
 }
 
 func handleAdminActivateUserSubmit(a App, c *gin.Context) error {
@@ -650,12 +618,8 @@ func handleAdminActivateUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	du, err := NewDisplayableUser(c.Request.Context(), a, sub, ten, user)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
-	return render(c, userFragment(ds, du))
+	return executeUserTemplate(
+		c, "userFragment", NewUserView(c.Request.Context(), a, sub, ten, user))
 }
 
 func handleAdminDeactivateUserSubmit(a App, c *gin.Context) error {
@@ -685,12 +649,8 @@ func handleAdminDeactivateUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	du, err := NewDisplayableUser(c.Request.Context(), a, sub, ten, user)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
-	return render(c, userFragment(ds, du))
+	return executeUserTemplate(
+		c, "userFragment", NewUserView(c.Request.Context(), a, sub, ten, user))
 }
 
 func handleAdminCancelInviteSubmit(a App, c *gin.Context) error {
@@ -735,12 +695,8 @@ func handleAdminUpdateMFAPolicy(a App, c *gin.Context, policy rest.MfaPolicy) er
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	du, err := NewDisplayableUser(c.Request.Context(), a, sub, ten, user)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
-	return render(c, userFragment(ds, du))
+	return executeUserTemplate(
+		c, "userFragment", NewUserView(c.Request.Context(), a, sub, ten, user))
 }
 
 func handleAdminEnableMFASubmit(a App, c *gin.Context) error {
@@ -779,12 +735,8 @@ func handleAdminReInviteUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	du, err := NewDisplayableUser(c.Request.Context(), a, sub, ten, user)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
-	return render(c, userFragment(ds, du))
+	return executeUserTemplate(
+		c, "userFragment", NewUserView(c.Request.Context(), a, sub, ten, user))
 }
 
 func handleAdminImpersonateUserSubmit(a App, c *gin.Context) error {
@@ -848,20 +800,15 @@ func handleAdminUser(a App, c *gin.Context) error {
 		return apperr.NewBadRequestE(
 			fmt.Errorf("error parsing user ID: %w", err))
 	}
-	u, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), ten.ID, userUUID)
+	user, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), ten.ID, userUUID)
 	if err != nil {
 		return apperr.NewNotFoundE(
 			fmt.Errorf("error getting user: %w", err))
 	}
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	cogUser, err := NewDisplayableCognitoUser(
-		c.Request.Context(), a, ten.UserPoolID, u.ID.String())
-	if err != nil {
-		return apperr.NewInternalE(
-			fmt.Errorf("error getting cognito user: %w", err))
-	}
-	baseURL := appPath("/admin/tenants/" + tenantID + "/users/" + userID)
-	return render(c, userSummary(a.Settings().AppName(), ds, ten, u, cogUser, baseURL))
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+		WithSelectedTen(ten).
+		WithSelectedUser(user)
+	return executeAdminTemplate(c, "userSummary", sv)
 }
 
 func handleAdminProfile(a App, c *gin.Context) error {
@@ -871,35 +818,8 @@ func handleAdminProfile(a App, c *gin.Context) error {
 		redirectToLogin(c)
 		return nil
 	}
-	ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-	return render(c, profilePage(a.Settings().AppName(), ds, string(profileTabSummary)))
-}
-
-type profileTab string
-
-const (
-	profileTabSummary     profileTab = "summary"
-	profileTabDetails     profileTab = "details"
-	profileTabAccessToken profileTab = "access-token"
-)
-
-var profileTabs = []profileTab{profileTabSummary, profileTabDetails, profileTabAccessToken}
-
-func newProfileTab(s string) profileTab {
-	if s == "" {
-		return profileTabSummary
-	}
-	switch s {
-	case "summary":
-		return profileTabSummary
-	case "details":
-		return profileTabDetails
-	case "access-token":
-		return profileTabAccessToken
-	default:
-		zap.L().Info("bad value for profile tab", zap.String("tab", s))
-		return profileTabSummary
-	}
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub)
+	return executeAdminTemplate(c, "profile", sv)
 }
 
 func handleAdminProfileTab(a App, c *gin.Context) error {
@@ -921,12 +841,11 @@ func handleAdminProfileTab(a App, c *gin.Context) error {
 		if err != nil {
 			return err
 		}
-		cog, err := NewDisplayableCognitoUser(
-			c.Request.Context(), a, subjectTenant.UserPoolID, subjectUser.ID.String())
-		if err != nil {
-			return err
-		}
-		return render(c, profileSummaryTab(subjectTenant, subjectUser, cog))
+		sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+			WithSelectedTen(subjectTenant).
+			WithSelectedUser(subjectUser).
+			WithProfileTab(tab)
+		return executeAdminTemplate(c, "profileSummaryTab", sv)
 	case profileTabDetails:
 		subjectTenant, err := sub.ResolveTenant(c.Request.Context(), a)
 		if err != nil {
@@ -936,16 +855,15 @@ func handleAdminProfileTab(a App, c *gin.Context) error {
 		if err != nil {
 			return err
 		}
-		cog, err := NewDisplayableCognitoUser(
-			c.Request.Context(), a, subjectTenant.UserPoolID, subjectUser.ID.String())
-		if err != nil {
-			return err
-		}
-		return render(c, profileSummaryTab(subjectTenant, subjectUser, cog))
+		sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+			WithSelectedTen(subjectTenant).
+			WithSelectedUser(subjectUser).
+			WithProfileTab(tab)
+		return executeAdminTemplate(c, "profileDetailsTab", sv)
 	case profileTabAccessToken:
-		ds := NewDisplayableSubject(c.Request.Context(), a, sub)
-		dt := NewDisplayableJWT("Access Token", sub.AccessToken)
-		return render(c, profileTokenTab(profileTabAccessToken, ds, dt))
+		sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+			WithProfileTab(tab)
+		return executeAdminTemplate(c, "profileTokenTab", sv)
 	default:
 		zap.L().Info("unknown profile tab", zap.String("tab", string(tab)))
 	}
@@ -976,12 +894,17 @@ func handleAdminUserProfileFieldSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	defn := ten.GetUserProfileDefinition().GetFieldDefinition(fieldName)
-	if defn == nil {
+	def := ten.GetUserProfileDefinition().GetFieldDefinition(fieldName)
+	if def == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
+	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
 	baseURL := appPath("/admin/tenants/" + tenantID.String() + "/users/" + userID.String())
-	return render(c, profileFieldForm(baseURL, defn, fieldValue))
+	pfv := NewProfileFieldView(baseURL, *def, targetUser.ProfileField(fieldName))
+	return executeProfileFieldTemplate(c, "profileFieldForm", pfv)
 }
 
 func handleAdminUserProfileFieldEditForm(a App, c *gin.Context) error {
@@ -1001,8 +924,8 @@ func handleAdminUserProfileFieldEditForm(a App, c *gin.Context) error {
 	if fieldName == "" {
 		return apperr.NewBadRequest("missing field name")
 	}
-	defn := ten.GetUserProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
-	if defn == nil {
+	def := ten.GetUserProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
+	if def == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
 	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
@@ -1014,7 +937,8 @@ func handleAdminUserProfileFieldEditForm(a App, c *gin.Context) error {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	baseURL := appPath("/admin/tenants/" + tenantID.String() + "/users/" + userID.String())
-	return render(c, profileEditFieldForm(baseURL, defn, targetUser.ProfileField(fieldName)))
+	pfv := NewProfileFieldView(baseURL, *def, targetUser.ProfileField(fieldName))
+	return executeProfileFieldTemplate(c, "profileEditFieldForm", pfv)
 }
 
 func handlerAdminUserProfileFieldForm(a App, c *gin.Context) error {
@@ -1034,8 +958,8 @@ func handlerAdminUserProfileFieldForm(a App, c *gin.Context) error {
 	if fieldName == "" {
 		return apperr.NewBadRequest("missing field name")
 	}
-	defn := ten.GetUserProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
-	if defn == nil {
+	def := ten.GetUserProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
+	if def == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
 	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
@@ -1047,7 +971,8 @@ func handlerAdminUserProfileFieldForm(a App, c *gin.Context) error {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	baseURL := appPath("/admin/tenants/" + tenantID.String() + "/users/" + userID.String())
-	return render(c, profileFieldForm(baseURL, defn, targetUser.ProfileField(fieldName)))
+	pfv := NewProfileFieldView(baseURL, *def, targetUser.ProfileField(fieldName))
+	return executeProfileFieldTemplate(c, "profileFieldForm", pfv)
 }
 
 func handleAdminTenantProfileFieldSubmit(a App, c *gin.Context) error {
@@ -1070,12 +995,13 @@ func handleAdminTenantProfileFieldSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	defn := targetTenant.GetTenantProfileDefinition().GetFieldDefinition(fieldName)
-	if defn == nil {
+	def := targetTenant.GetTenantProfileDefinition().GetFieldDefinition(fieldName)
+	if def == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
 	baseURL := appPath("/admin/tenants/" + tenantID.String())
-	return render(c, profileFieldForm(baseURL, defn, fieldValue))
+	pfv := NewProfileFieldView(baseURL, *def, targetTenant.ProfileField(fieldName))
+	return executeProfileFieldTemplate(c, "profileFieldForm", pfv)
 }
 
 func handleAdminTenantProfileFieldEditForm(a App, c *gin.Context) error {
@@ -1091,12 +1017,13 @@ func handleAdminTenantProfileFieldEditForm(a App, c *gin.Context) error {
 	if fieldName == "" {
 		return apperr.NewBadRequest("missing field name")
 	}
-	defn := targetTenant.GetTenantProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
-	if defn == nil {
+	def := targetTenant.GetTenantProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
+	if def == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
 	baseURL := appPath("/admin/tenants/" + tenantID.String())
-	return render(c, profileEditFieldForm(baseURL, defn, targetTenant.ProfileField(fieldName)))
+	pfv := NewProfileFieldView(baseURL, *def, targetTenant.ProfileField(fieldName))
+	return executeProfileFieldTemplate(c, "profileEditFieldForm", pfv)
 }
 
 func handlerAdminTenantProfileFieldForm(a App, c *gin.Context) error {
@@ -1112,10 +1039,11 @@ func handlerAdminTenantProfileFieldForm(a App, c *gin.Context) error {
 	if fieldName == "" {
 		return apperr.NewBadRequest("missing field name")
 	}
-	defn := targetTenant.GetTenantProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
-	if defn == nil {
+	def := targetTenant.GetTenantProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
+	if def == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
 	baseURL := appPath("/admin/tenants/" + tenantID.String())
-	return render(c, profileFieldForm(baseURL, defn, targetTenant.ProfileField(fieldName)))
+	pfv := NewProfileFieldView(baseURL, *def, targetTenant.ProfileField(fieldName))
+	return executeProfileFieldTemplate(c, "profileFieldForm", pfv)
 }

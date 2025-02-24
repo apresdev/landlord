@@ -3,7 +3,6 @@ module github.com/apresdev/landlord
 go 1.23.4
 
 require (
-	github.com/a-h/templ v0.3.819
 	github.com/aws/aws-sdk-go-v2 v1.33.0
 	github.com/aws/aws-sdk-go-v2/config v1.29.0
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.15.27

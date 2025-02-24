@@ -149,13 +149,18 @@ func lazyUnmarshalProfile(profile *Profile, rawProfile []byte) *Profile {
 	return &Profile{}
 }
 
-func (u *User) ProfileField(name string) string {
+func (u *User) ProfileFieldValue(name string) string {
 	u.Profile = lazyUnmarshalProfile(u.Profile, u.RawProfile)
 	f := u.Profile.GetField(name)
 	if f == nil {
 		return EmptyProfileValue
 	}
 	return f.Value
+}
+
+func (u *User) ProfileField(name string) *ProfileField {
+	u.Profile = lazyUnmarshalProfile(u.Profile, u.RawProfile)
+	return u.Profile.GetField(name)
 }
 
 func (u *User) UpdateProfileField(name string, format ProfileFieldFormat, value string) {

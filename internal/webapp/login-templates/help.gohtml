@@ -1,17 +1,16 @@
-package webapp
-
-templ helpPage(appName, appAdminEmail string, mailToAdminLink templ.SafeURL) {
+{{ define "helpPage" }}
+{{- /*gotype: github.com/apresdev/landlord/internal/webapp.SettingsProvider*/}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{ appName } | Help</title>
+    <title>{{ .Settings.AppName }} | Help</title>
     <link rel="stylesheet" href="/ll-auth/app/static/landlord-login.css">
 </head>
 <body>
     <div class="container">
-        <h2>{ appName } | Help</h2>
+        <h2>{{ .Settings.AppName }} | Help</h2>
         <div>
         Custom content related to the application that could also provide
         links to additional resources found here.
@@ -22,4 +21,4 @@ templ helpPage(appName, appAdminEmail string, mailToAdminLink templ.SafeURL) {
     </div>
 </body>
 </html>
-}
+{{ end }}

@@ -1,6 +1,5 @@
-package webapp
-
-templ navBarFragment(sub *DisplayableSubject) {
+{{ define "navbar" }}
+{{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
 <div class="nav-bar">
     <div class="nav-left">
         <ul>
@@ -11,37 +10,26 @@ templ navBarFragment(sub *DisplayableSubject) {
             <li><a href="/ll-auth/app/admin/tenants">Tenants</a></li>
             <li><a href="/ll-auth/app/admin/tenant-ops/select?action=manage-invites">Invites</a></li>
             <li><a href="/ll-auth/app/admin/tenant-ops/select?action=manage-users">Users</a></li>
-            // TODO: disable UI for search -- not yet implemented
-            // <li>
-                // <label>
-                    // <input type="text" placeholder="Search...">
-                // </label>
-            // </li>
-            // <li>
-                // <button type="submit">
-                    // <i class="fa-sharp fa-solid fa-search fa-2x"></i>
-                // </button>
-            // </li>
         </ul>
     </div>
     <div class="nav-right">
-        if sub != nil {
+        {{ if .Subject }}
             <div class="profile">
-                if sub.IsImpersonating() {
+                {{ if .Subject.IsImpersonating }}
                     <a href="/ll-auth/app/admin/profile">
-                        { sub.ImpersonationName() }
+                        {{ .Subject.ImpersonationName }}
                     </a>
-                }
+                {{ end }}
                 <a href="/ll-auth/app/admin/profile">
-                    { sub.Username() }
+                    {{ .Subject.Username }}
                 </a>
-                <a href={ templ.SafeURL("/ll-auth/app/admin/tenants/" + sub.TenantID().String()) }>
-                    { sub.TenantName() }
+                <a href="{{ .Subject.TenantLink }}">
+                    {{ .Subject.TenantName }}
                 </a>
                 <a href="/ll-auth/app/admin/profile">Profile</a>
                 <a href="/ll-auth/app/logout">Logout</a>
             </div>
-        }
+        {{ end }}
     </div>
 </div>
-}
+{{ end }}
