@@ -206,6 +206,13 @@ var BasicTenantProfileFieldDefinition = ProfileDefinition{
 			MaxLen: 50,
 			MinLen: 1,
 		},
+		{
+			Name:   "procedure-revenue",
+			UIName: "Procedure Revenue",
+			Format: ProfileFieldFormatString,
+			MaxLen: 50,
+			MinLen: 1,
+		},
 	},
 }
 
