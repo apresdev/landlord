@@ -1,11 +1,14 @@
 package multi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
 	"slices"
 	"time"
+
+	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/google/uuid"
 )
@@ -44,7 +47,7 @@ type Tenant struct {
 	EmailDomains   []string    `dynamodbav:"emailDomains"`
 	CreatedAt      string      `dynamodbav:"createdAt"`
 	RawProfile     []byte      `dynamodbav:"rawProfile"`
-	Profile        *Profile    `dynamodbav:"-"`
+	profile        *Profile    `dynamodbav:"-"`
 }
 
 func MustNewTenantID() uuid.UUID {
@@ -124,9 +127,26 @@ func (ten *Tenant) GetTenantProfileDefinition() *ProfileDefinition {
 	return &BasicTenantProfileFieldDefinition
 }
 
+func (ten *Tenant) Profile() *Profile {
+	return lazyUnmarshalProfile(ten.profile, ten.RawProfile)
+}
+
+func (ten *Tenant) PrepareProfile() error {
+	if ten.profile == nil {
+		return nil
+	}
+	var err error
+	ten.RawProfile, err = json.Marshal(ten.profile)
+	if err != nil {
+		return apperr.NewInternalE(
+			fmt.Errorf("failed to marshal profile: %w", err))
+	}
+	return nil
+}
+
 func (ten *Tenant) ProfileFieldValue(name string) string {
-	ten.Profile = lazyUnmarshalProfile(ten.Profile, ten.RawProfile)
-	f := ten.Profile.GetField(name)
+	ten.profile = lazyUnmarshalProfile(ten.profile, ten.RawProfile)
+	f := ten.profile.GetField(name)
 	if f == nil {
 		return EmptyProfileValue
 	}
@@ -134,18 +154,18 @@ func (ten *Tenant) ProfileFieldValue(name string) string {
 }
 
 func (ten *Tenant) ProfileField(name string) *ProfileField {
-	ten.Profile = lazyUnmarshalProfile(ten.Profile, ten.RawProfile)
-	return ten.Profile.GetField(name)
+	ten.profile = lazyUnmarshalProfile(ten.profile, ten.RawProfile)
+	return ten.profile.GetField(name)
 }
 
 func (ten *Tenant) UpdateProfileField(name string, format ProfileFieldFormat, value string) {
-	ten.Profile = lazyUnmarshalProfile(ten.Profile, ten.RawProfile)
-	ten.Profile.SetField(name, format, value)
+	ten.profile = lazyUnmarshalProfile(ten.profile, ten.RawProfile)
+	ten.profile.SetField(name, format, value)
 }
 
 func (ten *Tenant) ProfileFields() []ProfileField {
-	ten.Profile = lazyUnmarshalProfile(ten.Profile, ten.RawProfile)
-	return ten.Profile.Fields
+	ten.profile = lazyUnmarshalProfile(ten.profile, ten.RawProfile)
+	return ten.profile.Fields
 }
 
 const (

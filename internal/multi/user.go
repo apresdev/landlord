@@ -113,7 +113,7 @@ type User struct {
 	MFAPolicy  MFAPolicy  `dynamodbav:"mfaPolicy"`
 	CreatedAt  string     `dynamodbav:"createdAt"`
 	RawProfile []byte     `dynamodbav:"rawProfile"`
-	Profile    *Profile   `dynamodbav:"-"`
+	profile    *Profile   `dynamodbav:"-"`
 }
 
 func NewUser(tenantID uuid.UUID, cognitoID uuid.UUID, username, role string, mfaPolicy MFAPolicy) *User {
@@ -149,9 +149,27 @@ func lazyUnmarshalProfile(profile *Profile, rawProfile []byte) *Profile {
 	return &Profile{}
 }
 
+func (u *User) Profile() *Profile {
+	u.profile = lazyUnmarshalProfile(u.profile, u.RawProfile)
+	return u.profile
+}
+
+func (u *User) PrepareProfile() error {
+	if u.profile == nil {
+		return nil
+	}
+	var err error
+	u.RawProfile, err = json.Marshal(u.profile)
+	if err != nil {
+		return apperr.NewInternalE(
+			fmt.Errorf("failed to marshal user profile: %w", err))
+	}
+	return nil
+}
+
 func (u *User) ProfileFieldValue(name string) string {
-	u.Profile = lazyUnmarshalProfile(u.Profile, u.RawProfile)
-	f := u.Profile.GetField(name)
+	u.profile = lazyUnmarshalProfile(u.profile, u.RawProfile)
+	f := u.profile.GetField(name)
 	if f == nil {
 		return EmptyProfileValue
 	}
@@ -159,16 +177,16 @@ func (u *User) ProfileFieldValue(name string) string {
 }
 
 func (u *User) ProfileField(name string) *ProfileField {
-	u.Profile = lazyUnmarshalProfile(u.Profile, u.RawProfile)
-	return u.Profile.GetField(name)
+	u.profile = lazyUnmarshalProfile(u.profile, u.RawProfile)
+	return u.profile.GetField(name)
 }
 
 func (u *User) UpdateProfileField(name string, format ProfileFieldFormat, value string) {
-	u.Profile = lazyUnmarshalProfile(u.Profile, u.RawProfile)
-	u.Profile.SetField(name, format, value)
+	u.profile = lazyUnmarshalProfile(u.profile, u.RawProfile)
+	u.profile.SetField(name, format, value)
 }
 
 func (u *User) ProfileFields() []ProfileField {
-	u.Profile = lazyUnmarshalProfile(u.Profile, u.RawProfile)
-	return u.Profile.Fields
+	u.profile = lazyUnmarshalProfile(u.profile, u.RawProfile)
+	return u.profile.Fields
 }

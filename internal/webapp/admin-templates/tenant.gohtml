@@ -4,7 +4,7 @@
     <td><a href="{{ .Link }}">{{ .Name }}</a></td>
     <td>{{ .State }}</td>
     <td>{{ .Description }}</td>
-    <td>{{ .UserPoolName }} ({ .UserPoolID })</td>
+    <td>{{ .UserPoolName }} ({{ .UserPoolID }})</td>
     <td>
         {{ if .IsActive }}
         <a href="{{ printf "/ll-auth/app/admin/tenants/%s?tab=invites" .ID }}">

@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -32,15 +31,9 @@ func StoreUser(ctx context.Context, ddb AWSDynamoDB, user *multi.User) error {
 	if user.Role == "" {
 		return apperr.NewInternal("cannot store user with empty role")
 	}
-	if user.Profile != nil {
-		var err error
-		user.RawProfile, err = json.Marshal(user.Profile)
-		if err != nil {
-			return apperr.NewInternalE(
-				fmt.Errorf("failed to marshal user profile: %w", err))
-		}
+	if err := user.PrepareProfile(); err != nil {
+		return err
 	}
-
 	av, err := attributevalue.MarshalMap(user)
 	if err != nil {
 		return err
