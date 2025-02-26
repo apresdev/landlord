@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -28,13 +27,8 @@ func StoreTenant(ctx context.Context, ddb AWSDynamoDB, ten *multi.Tenant) error 
 	sort.Strings(ten.Roles)
 	sort.Strings(ten.SubTenantRoles)
 
-	if ten.Profile != nil {
-		var err error
-		ten.RawProfile, err = json.Marshal(ten.Profile)
-		if err != nil {
-			return apperr.NewInternalE(
-				fmt.Errorf("failed to marshal profile: %w", err))
-		}
+	if err := ten.PrepareProfile(); err != nil {
+		return err
 	}
 
 	av, err := attributevalue.MarshalMap(ten)

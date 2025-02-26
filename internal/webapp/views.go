@@ -287,7 +287,7 @@ func (tv TenantView) Profile() ProfileFieldsView {
 		"Tenant Profile",
 		fmt.Sprintf("/ll-auth/app/admin/tenants/%s", tv.ten.ID.String()),
 		tv.ten.GetTenantProfileDefinition(),
-		tv.ten.Profile)
+		tv.ten.Profile())
 }
 
 type UserView struct {
@@ -578,7 +578,7 @@ func (uv *UserView) Profile() ProfileFieldsView {
 		fmt.Sprintf("/ll-auth/app/admin/tenants/%s/users/%s",
 			uv.ten.ID.String(), uv.user.ID.String()),
 		uv.ten.GetUserProfileDefinition(),
-		uv.user.Profile)
+		uv.user.Profile())
 }
 
 type RoleView struct {
