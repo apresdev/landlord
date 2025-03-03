@@ -2,28 +2,59 @@
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.UnauthenticatedView*/}}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ .Settings.AppName }} | Login</title>
-    <link rel="stylesheet" href="/ll-auth/app/static/landlord-login.css">
-</head>
+{{ template "header" . }}
 <body>
-    <div class="container">
-        <h2>{{ .Settings.AppName }} | Authenticator Code</h2>
-        <form action="/ll-auth/app/otp/submit" method="POST">
-            <label>Code
-                <input type="text" name="code" placeholder="Enter the code from your authenticator app..." required>
-            </label>
-            <input type="hidden" name="username" value="{{ .PotentialUsername }}" />
-            <button type="submit">Submit</button>
-        </form>
-        <div class="recovery">
-            <a href="/ll-auth/app/recovery">Account Recovery</a>
-            |
-            <a href="/ll-auth/app/logout">Logout</a>
+    <section class="section">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-4">
+                    <div class="container has-text-centered">
+                        <div class="is-size-2">Landlord Console</div>
+                        <div class="is-size-3">Enter Authenticator Code</div>
+                    </div>
+                    <div class="box">
+                        <form action="/ll-auth/app/otp/submit" method="POST">
+                            <input type="hidden" name="username" value="{{ .PotentialUsername }}" />
+                            <!-- Code Field -->
+                            <div class="field">
+                                <label class="label">Authenticator Code</label>
+                                <div class="control has-icons-left">
+                                    <input class="input"
+                                           type="text"
+                                           name="code"
+                                           placeholder="Code from your authenticator app..."
+                                           required autofocus>
+                                    <span class="icon is-small is-left">
+                                        <i class="fa-sharp fa-solid fa-key"></i>
+                                    </span>
+                                </div>
+                            </div>
+
+                            {{ if ne .ErrMsg "" }}
+                                <div class="notification is-danger">
+                                    {{ .ErrMsg }}
+                                </div>
+                            {{ end }}
+
+                            <!-- Submit Button -->
+                            <div class="field">
+                                <div class="control">
+                                    <button class="button is-primary is-fullwidth">
+                                        Submit
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Links -->
+                            <div class="has-text-centered mt-4">
+                                <a href="/ll-auth/app/logout">Logout</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
 </body>
 </html>
 {{ end }}

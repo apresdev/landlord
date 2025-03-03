@@ -5,9 +5,18 @@
 {{ template "header" . }}
 <body>
     {{ template "navbar" . }}
-    <div class="container">
-        {{ template "createTenantTableAndForm" . }}
-    </div>
+    <section class="section">
+        <div class="container">
+            <div class="panel is-primary">
+                <p class="panel-heading">Tenants</p>
+                <div class="panel-block">
+                    <div class="container">
+                        {{ template "createTenantTableAndForm" . }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </body>
 </html>
 {{ end }}
@@ -29,10 +38,10 @@
     hx-target="#create-tenant-table-and-form"
     hx-swap="innerHTML">
     <label>Name:
-        <input type="text" name="name" />
+        <input class="input" type="text" name="name" />
     </label>
     <label>Description:
-        <input type="text" name="description" />
+        <input class="input" type="text" name="description" />
     </label>
     <button class="button" type="submit">Submit</button>
     <button class="button" type="button"
@@ -54,21 +63,22 @@
   {{ else }}
       {{ template "createTenantButton" }}
   {{ end }}
-  <table>
-      <thead>
-          <tr>
-              <th>Name</th>
-              <th>Status</th>
-              <th>Description</th>
-              <th>User Pool</th>
-              <th>Actions</th>
-          </tr>
-      </thead>
-      <tbody hx-target="closest tr" hx-swap="outerHTML">
-      {{ range .Tenants }}
-          {{ template "tenantFragment" . }}
-      {{ end }}
-      </tbody>
-  </table>
+  <div class="box">
+    <table id="tenants-table" class="datatable display">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody hx-target="closest tr" hx-swap="outerHTML">
+        {{ range .Tenants }}
+            {{ template "tenantFragment" . }}
+        {{ end }}
+        </tbody>
+    </table>
+  </div>
 </div>
 {{ end }}

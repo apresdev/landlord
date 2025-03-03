@@ -86,7 +86,7 @@ func SubjectFromContext(ctx context.Context) (*Subject, error) {
 	tok, ok := t.(*jwt.Token)
 	if !ok {
 		zap.L().Error("could not convert token to *jwt.Token")
-		return nil, apperr.NewUnauthorized("no token")
+		return nil, apperr.NewUnauthorized("invalid internal token")
 	}
 
 	// We do not fail if the client ID is not present. It's only for
@@ -99,6 +99,10 @@ func SubjectFromContext(ctx context.Context) (*Subject, error) {
 		}
 	}
 
+	return subjectFromToken(tok, cid)
+}
+
+func subjectFromToken(tok *jwt.Token, cid jwx.OpaqueClientID) (*Subject, error) {
 	groups, err := jwx.GetClaimStrings(tok, authx.CognitoGroupsClaim)
 	if err != nil {
 		zap.L().Error("could get groups",

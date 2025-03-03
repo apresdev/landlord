@@ -86,8 +86,6 @@ func GetTenantByName(ctx context.Context, ddb AWSDynamoDB, name string) (*multi.
 			fmt.Errorf("failed to get item from DynamoDB: %w", err))
 	}
 	if len(result.Items) == 0 {
-		zap.L().Warn("item not found in GetTenantByName",
-			zap.String("tenantName", name))
 		return nil, apperr.NewNotFound("item not found")
 	}
 	if len(result.Items) > 1 {

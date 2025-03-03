@@ -141,6 +141,10 @@ func (s Settings) DBTableName() string {
 	return s.dbTableName
 }
 
+func (s Settings) DevMode() bool {
+	return DevMode()
+}
+
 func mustEnvURL(key string) *url.URL {
 	u, err := envURL(key)
 	if err != nil {

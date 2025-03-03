@@ -27,11 +27,11 @@ func handleCancelInvitation(app App, c *gin.Context) error {
 }
 
 func HandleCancelInvitation(app App, c *gin.Context, tenantID, userID uuid.UUID) error {
-	ctx := c.Request.Context()
-	sub, err := perms.SubjectFromContext(ctx)
+	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
 	}
+	ctx := c.Request.Context()
 	ten, err := db.GetTenantByID(ctx, app.DDB(), tenantID)
 	if err != nil {
 		return err

@@ -60,11 +60,6 @@ func handleRoot(a App, c *gin.Context) error {
 	return nil
 }
 
-func handleHelp(a App, c *gin.Context) error {
-	return executeUnauthenticatedView(
-		c, "helpPage", NewUnauthenticatedView(a.Settings()))
-}
-
 func handleLogin(a App, c *gin.Context) error {
 	username, _ := c.Cookie(LandlordUsernameCookie)
 	uv := NewUnauthenticatedView(a.Settings()).WithPotentialUsername(username)
@@ -77,7 +72,9 @@ func handleLoginSubmit(a App, c *gin.Context) error {
 	req.Password = c.PostForm("password")
 	resp, err := rest.HandleLogin(a, c, req)
 	if err != nil {
-		return err
+		uv := NewUnauthenticatedView(a.Settings()).
+			WithPotentialUsername(req.Username).WithErrMsg(err.Error())
+		return executeUnauthenticatedView(c, "loginPage", uv)
 	}
 	switch resp.Status {
 	case rest.LoginStatusSuccess:
@@ -86,29 +83,36 @@ func handleLoginSubmit(a App, c *gin.Context) error {
 		setCookie(c, a.Settings().ConsoleURL(), LandlordIDTokenCookie, resp.IdToken)
 		setCookie(c, a.Settings().ConsoleURL(), LandlordRefreshTokenCookie, resp.RefreshToken)
 		redirectToAppRoot(c)
+		return nil
 	case rest.LoginStatusNewPasswordRequired:
 		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
 		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "new-password")
+		return nil
 	case rest.LoginStatusPasswordResetRequired:
 		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
 		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "reset-password")
+		return nil
 	case rest.LoginStatusMFASetupRequired:
 		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
 		setCookie(c, a.Settings().ConsoleURL(), LandlordAccessTokenCookie, resp.AccessToken)
 		setCookie(c, a.Settings().ConsoleURL(), LandlordOTPURI, resp.OtpURI)
 		redirectTo(c, "setup-otp")
+		return nil
 	case rest.LoginStatusMFACodeRequired:
 		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
 		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "otp")
+		return nil
 	default:
 		zap.L().Error("unexpected login status value",
 			zap.String("status", string(resp.Status)))
-		c.String(http.StatusInternalServerError, "internal error")
+		uv := NewUnauthenticatedView(a.Settings()).
+			WithPotentialUsername(req.Username).
+			WithErrMsg("unexpected login status value")
+		return executeUnauthenticatedView(c, "loginPage", uv)
 	}
-	return nil
 }
 
 func handleLogoutSubmit(a App, c *gin.Context) error {

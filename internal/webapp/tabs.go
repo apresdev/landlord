@@ -11,19 +11,19 @@ import (
 type TenantTab string
 
 const (
-	tenantSummaryTab  TenantTab = "summary"
-	tenantUsersTab    TenantTab = "users"
-	tenantInvitesTab  TenantTab = "invites"
-	tenantRolesTab    TenantTab = "roles"
-	tenantSubRolesTab TenantTab = "subroles"
+	tenantSummaryTab TenantTab = "summary"
+	tenantProfileTab TenantTab = "profile"
+	tenantUsersTab   TenantTab = "users"
+	tenantInvitesTab TenantTab = "invites"
+	tenantRolesTab   TenantTab = "roles"
 )
 
 var tenantTabs = []TenantTab{
 	tenantSummaryTab,
+	tenantProfileTab,
 	tenantUsersTab,
 	tenantInvitesTab,
 	tenantRolesTab,
-	tenantSubRolesTab,
 }
 
 func newTenantTab(s string) TenantTab {
@@ -33,14 +33,14 @@ func newTenantTab(s string) TenantTab {
 	switch s {
 	case "summary":
 		return tenantSummaryTab
+	case "profile":
+		return tenantProfileTab
 	case "users":
 		return tenantUsersTab
 	case "invites":
 		return tenantInvitesTab
 	case "roles":
 		return tenantRolesTab
-	case "subroles":
-		return tenantSubRolesTab
 	default:
 		zap.L().Info("bad value for tenant tab", zap.String("tab", s))
 		return tenantSummaryTab
@@ -91,4 +91,48 @@ func newProfileTab(s string) profileTab {
 		zap.L().Info("bad value for profile tab", zap.String("tab", s))
 		return profileTabSummary
 	}
+}
+
+func (pt profileTab) title() string {
+	switch pt {
+	case profileTabSummary:
+		return "Summary"
+	case profileTabDetails:
+		return "Profile"
+	case profileTabAccessToken:
+		return "Access Token"
+	}
+	return ""
+}
+
+type UserTab string
+
+const (
+	userSummaryTab UserTab = "summary"
+	userProfileTab UserTab = "profile"
+)
+
+var userTabs = []UserTab{
+	userSummaryTab,
+	userProfileTab,
+}
+
+func newUserTab(s string) UserTab {
+	if s == "" {
+		return userSummaryTab
+	}
+	switch s {
+	case "summary":
+		return userSummaryTab
+	case "profile":
+		return userProfileTab
+	default:
+		zap.L().Info("bad value for tenant tab", zap.String("tab", s))
+		return userSummaryTab
+	}
+}
+
+func (ut UserTab) TabTemplateName() string {
+	return fmt.Sprintf("user%sTab",
+		cases.Title(language.English).String(string(ut)))
 }
