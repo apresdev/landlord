@@ -25,14 +25,8 @@ import (
 )
 
 func handleAdminDashboard(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
-	asv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub)
-	return executeAdminTemplate(c, "dashboard", asv)
+	redirectTo(c, "/admin/tenants")
+	return nil
 }
 
 func handleAdminDashboardError(a App, c *gin.Context) error {
@@ -85,33 +79,6 @@ func handleAdminTenants(a App, c *gin.Context) error {
 	}
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).WithTenants(tens)
 	return executeAdminTemplate(c, "tenants", sv)
-}
-
-func handleAdminTenantSelect(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
-	action := c.Query("action")
-	if action == "" {
-		return apperr.NewBadRequest("missing action")
-	}
-	tens, err := db.GetAllTenants(c.Request.Context(), a.DDB())
-	if err != nil {
-		return err
-	}
-	authorizedTenants := make([]*multi.Tenant, 0)
-	for _, ten := range tens {
-		if perms.IsAuthorizedToReadTenant(a.RootTenantID(), ten, sub.Role) {
-			authorizedTenants = append(authorizedTenants, ten)
-		}
-	}
-	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
-		WithTenants(authorizedTenants).
-		WithTenantTab(parseTabFromAction(action))
-	return executeAdminTemplate(c, "selectTenant", sv)
 }
 
 func handleAdminCreateTenantButton(a App, c *gin.Context) error {
@@ -257,6 +224,8 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 	switch tab {
 	case tenantSummaryTab:
 		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
+	case tenantProfileTab:
+		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
 	case tenantUsersTab:
 		users, err := usersForTenant(c.Request.Context(), a, ten)
 		if err != nil {
@@ -279,8 +248,6 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 		sv = sv.WithUsers(invites)
 		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
 	case tenantRolesTab:
-		fallthrough
-	case tenantSubRolesTab:
 		users, err := usersForTenant(c.Request.Context(), a, ten)
 		if err != nil {
 			return err
@@ -807,8 +774,9 @@ func handleAdminUser(a App, c *gin.Context) error {
 	}
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
 		WithSelectedTen(ten).
-		WithSelectedUser(user)
-	return executeAdminTemplate(c, "userSummary", sv)
+		WithSelectedUser(user).
+		WithUserTab(userSummaryTab)
+	return executeAdminTemplate(c, "user", sv)
 }
 
 func handleAdminProfile(a App, c *gin.Context) error {
@@ -1046,4 +1014,59 @@ func handlerAdminTenantProfileFieldForm(a App, c *gin.Context) error {
 	baseURL := appPath("/admin/tenants/" + tenantID.String())
 	pfv := NewProfileFieldView(baseURL, *def, targetTenant.ProfileField(fieldName))
 	return executeProfileFieldTemplate(c, "profileFieldForm", pfv)
+}
+
+func handleAdminUserTab(a App, c *gin.Context) error {
+	timers.Checkpoint(c, "handleAdminUserTab")
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
+		redirectToLogin(c)
+		return nil
+	}
+
+	tenantID := c.Param("tenantID")
+	th, err := multi.ParseTenantHandle(tenantID)
+	if err != nil {
+		return apperr.NewBadRequestE(
+			fmt.Errorf("error parsing tenant ID: %w", err))
+	}
+	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
+	if err != nil && !apperr.IsNotFound(err) {
+		return apperr.NewNotFoundE(
+			fmt.Errorf("error resolving tenant: %w", err))
+	}
+	if err != nil {
+		return apperr.NewInternalE(
+			fmt.Errorf("error getting tenants: %w", err))
+	}
+
+	userID := c.Param("userID")
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return apperr.NewBadRequestE(
+			fmt.Errorf("error parsing user ID: %w", err))
+	}
+	user, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), ten.ID, userUUID)
+	if err != nil {
+		return apperr.NewNotFoundE(
+			fmt.Errorf("error getting user: %w", err))
+	}
+	tab := newUserTab(c.Param("tab"))
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+		WithSelectedTen(ten).
+		WithSelectedUser(user).
+		WithUserTab(tab)
+
+	timers.Checkpoint(c, "handleAdminUserTab.switch")
+	defer timers.Checkpoint(c, "handleAdminUserTab.done")
+	switch tab {
+	case userSummaryTab:
+		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
+	case userProfileTab:
+		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
+	default:
+		zap.L().Info("unknown tenant tab", zap.String("tab", string(tab)))
+		return executeAdminTemplate(c, userSummaryTab.TabTemplateName(), sv)
+	}
 }

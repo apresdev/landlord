@@ -1,69 +1,59 @@
 {{ define "userSummaryCard" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.UserView*/}}
 <div class="container">
-    <div class="card">
-        <div class="card-header">
-            <h2>User Summary</h2>
-        </div>
-        <div class="card-columns">
-            <!-- Column 1 -->
-            <div class="column">
-                <h3>Details</h3>
-                <div class="field">
-                    <span class="label">Name</span>
-                    <span class="value">{{ .Username }}</span>
-                </div>
-                <div class="field">
-                    <span class="label">MFA Policy</span>
-                    <span class="value">{{ .MFAPolicy }}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Cognito User ID</span>
-                    <span class="value">
-                        <a href="{{ .CogURL }}" target="_blank">{{ .ID }}</a>
-                    </span>
-                </div>
+    <div class="columns">
+        <!-- Column 1 -->
+        <div class="column is-half">
+            <div class="field">
+                <label class="label">Name</label>
+                <span class="value">{{ .Username }}</span>
             </div>
-
-            <!-- Column 2 -->
-            <div class="column">
-                <h3>Role</h3>
-                <div class="field">
-                    <span class="label">Tenant</span>
-                    <span class="value">
-                        <a href="{{ .Tenant.Link }}">{{ .Tenant.Name }}</a>
-                    </span>
-                </div>
-                <div class="field">
-                    <span class="label">Role</span>
-                    <span class="value">{{ .Role }}</span>
-                </div>
-                <div class="field">
-                    <span class="label">Impersonation</span>
-                    {{ if .IsImpersonating }}
-                        <span class="value">{{ .ImpersonationName }}</span>
-                        <button class="button" hx-post="/ll-auth/app/admin/clear-impersonation">
-                            Clear Impersonation
-                        </button>
-                    {{ else }}
-                        <span class="value">None</span>
-                    {{ end }}
-                </div>
+            <div class="field">
+                <label class="label">Multi-Factor Authentication Policy</label>
+                <span class="value">{{ .MFAPolicy }}</span>
             </div>
-
-            <!-- Column 3 -->
-            <div class="column">
-                <h3>Additional Information</h3>
-                <div class="field">
-                    <span class="label">Time Created</span>
-                    <span class="value">{{ .CreatedAt }}</span>
-                </div>
-                <div class="field">
-                    <span class="label">State</span>
-                    <span class="value">{{ .Status }}</span>
-                </div>
+            <div class="field">
+                <label class="label">Tenant</label>
+                <span class="value">
+                    <a href="{{ .Tenant.Link }}">{{ .Tenant.Name }}</a>
+                </span>
+            </div>
+            <div class="field">
+                <label class="label">Role</label>
+                <span class="value">{{ .Role }}</span>
             </div>
         </div>
+
+        <!-- Column 2 -->
+        <div class="column is-half">
+            <div class="field">
+                <label class="label">State</label>
+                <span class="value">{{ .Status }}</span>
+            </div>
+            <div class="field">
+                <label class="label">Impersonation</label>
+                {{ if .IsImpersonating }}
+                    <span class="value">{{ .ImpersonationName }}</span>
+                    <button class="button is-small" hx-post="/ll-auth/app/admin/clear-impersonation">
+                        Clear Impersonation
+                    </button>
+                {{ else }}
+                    <span class="value">None</span>
+                {{ end }}
+            </div>
+            <div class="field">
+                <label class="label">Time Created</label>
+                <span class="value">{{ .CreatedAt }}</span>
+            </div>
+            <div class="field">
+                <label class="label">Cognito User ID</label>
+                <span class="value">
+                    <i class="fa-brands fa-aws"></i>
+                    <a href="{{ .CogURL }}" target="_blank">{{ .ID }}</a>
+                </span>
+            </div>
+        </div>
+
     </div>
 </div>
 {{ end }}
@@ -80,3 +70,72 @@
     </body>
 </html>
 {{ end }}
+
+{{ define "userTabButtonsFragment" }}
+    {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
+    <ul>
+        {{ range .UserTabs }}
+            <li class="tab {{ ifElse .Active "is-active" "" }}">
+                <a hx-get="{{ .Link }}"
+                   hx-target="#tenant-tabs"
+                   hx-swap="innerHTML"
+                   role="tab"
+                   aria-selected="{{ .Active }}"
+                   aria-controls="tab-content">
+                    {{ .Title }}
+                </a>
+            </li>
+        {{ end }}
+    </ul>
+{{ end }}
+
+
+{{ define "userSummaryTab" }}
+    {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
+    <div class="tabs" role="tablist">
+        {{ template "userTabButtonsFragment" . }}
+    </div>
+    <div id="tab-content" role="tabpanel" class="container">
+        {{ template "userSummaryCard" .SelectedUser }}
+    </div>
+{{ end }}
+
+{{ define "userProfileTab" }}
+    {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
+    <div class="tabs" role="tablist">
+        {{ template "userTabButtonsFragment" . }}
+    </div>
+    <div id="tab-content" role="tabpanel" class="container">
+        {{ template "profileCard" .SelectedUser.Profile }}
+    </div>
+{{ end }}
+
+
+{{ define "user" }}
+    {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
+    <!DOCTYPE html>
+    <html lang="en">
+        {{ template "header" . }}
+        <body>
+        {{ template "navbar" . }}
+        <section class="section">
+            <div class="container">
+                <div class="panel is-link">
+                    <p class="panel-heading">User: {{ .SelectedUser.Username }}</p>
+                    <div class="panel-block">
+                        <div class="container">
+                            <div id="tenant-tabs"
+                                 hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/users/%s/tabs/%s" .Tenant.ID .SelectedUser.ID .UserTab }}"
+                                 hx-trigger="load delay:100ms"
+                                 hx-target="#tenant-tabs"
+                                 hx-swap="innerhtml">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        </body>
+    </html>
+{{ end }}
+

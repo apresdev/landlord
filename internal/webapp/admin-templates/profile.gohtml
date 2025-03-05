@@ -1,37 +1,69 @@
+{{ define "profile" }}
+    {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
+    <!DOCTYPE html>
+    <html lang="en">
+    {{ template "header" . }}
+    <body>
+        {{ template "navbar" . }}
+        <div class="section">
+            <div class="columns">
+                <div class="column is-one-fifth"></div>
+                <div class="column">
+                    <div class="container">
+                        <div id="profile-tabs"
+                             hx-get="{{ printf "/ll-auth/app/admin/profile/%s" .ProfileTab }}"
+                             hx-trigger="load delay:100ms"
+                             hx-target="#profile-tabs"
+                             hx-swap="innerHTML">
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-one-fifth"></div>
+            </div>
+        </div>
+    </body>
+    </html>
+{{ end }}
+
 {{ define "profileTabButtonsFragment" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-    {{ range .ProfileTabs }}
-        {{ template "profileTabButton" . }}
-    {{ end }}
+    <ul>
+        {{ range .ProfileTabs }}
+            {{ template "profileTabButton" . }}
+        {{ end }}
+    </ul>
 {{ end }}
 
 {{ define "profileTabButton" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.ProfileTab*/}}
-<button class="{{ ifElse .Active "tab-button active" "tab-button" }}"
-    hx-get="{{ .Link }}"
-    role="tab"
-    aria-selected="{{ .Active }}"
-    aria-controls="tab-content">
-    {{ .Title }}
-</button>
+    <li class="tab {{ ifElse .Active "is-active" "" }}">
+        <a hx-get="{{ .Link }}"
+           hx-target="#profile-tabs"
+           hx-swap="innerHTML"
+           role="tab"
+           aria-selected="{{ .Active }}"
+           aria-controls="tab-content">
+            {{ .Title }}
+        </a>
+    </li>
 {{ end }}
 
 {{ define "profileSummaryTab" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-<div class="tab-header" role="tablist">
+<div class="tabs" role="tablist">
     {{ template "profileTabButtonsFragment" . }}
 </div>
-<div id="tab-content" role="tabpanel" class="tab-content">
+<div id="tab-content" role="tabpanel" class="container">
     {{ template "userSummaryCard" .SelectedUser }}
 </div>
 {{ end }}
 
 {{ define "profileDetailsTab" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-<div class="tab-header" role="tablist">
+<div class="tabs" role="tablist">
     {{ template "profileTabButtonsFragment" . }}
 </div>
-<div id="tab-content" role="tabpanel" class="tab-content">
+<div id="tab-content" role="tabpanel" class="container">
     {{ template "profileCard" .SelectedUser.Profile }}
 </div>
 {{ end }}
@@ -41,42 +73,24 @@
 {{ end }}
 
 {{ define "profileTokenTab" }}
-<div class="tab-header" role="tablist">
+<div class="tabs" role="tablist">
     {{ template "profileTabButtonsFragment" . }}
 </div>
-<div id="tab-content" role="tabpanel" class="tab-content">
+<div id="tab-content" role="tabpanel" class="container">
     {{ template "profileTokenDisplay" . }}
 </div>
-{{ end }}
-
-{{ define "profile" }}
-{{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-<!DOCTYPE html>
-<html lang="en">
-{{ template "header" . }}
-<body>
-    {{ template "navbar" . }}
-    <div class="container">
-        <div id="tabs"
-	          hx-get="{{ printf "/ll-auth/app/admin/profile/%s" .ProfileTab }}"
-            hx-trigger="load delay:100ms"
-            hx-target="#tabs"
-            hx-swap="innerHTML"></div>
-    </div>
-</body>
-</html>
 {{ end }}
 
 {{ define "profileFieldForm" }}
     {{- /*gotype: github.com/apresdev/landlord/internal/webapp.ProfileFieldView*/}}
     <span class="value" id="{{ printf "edit-%s" .Name }}">
-    {{ .Value }}
-    <button class="icon-button"
-            hx-get="{{ .EditLink }}"
-            hx-target="{{ printf "#edit-%s" .Name }}">
-        <i class="fa-sharp fa-pen-to-square"></i>
-    </button>
-</span>
+        {{ .Value }}
+        <button class="icon-button"
+                hx-get="{{ .EditLink }}"
+                hx-target="{{ printf "#edit-%s" .Name }}">
+            <i class="fa-sharp fa-pen-to-square"></i>
+        </button>
+    </span>
 {{ end }}
 
 {{ define "profileEditFieldForm" }}
@@ -86,7 +100,7 @@
           hx-target="{{ printf "#edit-%s" .Name }}"
           hx-swap="innerHTML">
         <label>
-            <input type="{{ .HTMLInputType }}" name="fieldValue" value="{{ .Value }}" maxlength="256" autofocus>
+            <input class="input" type="{{ .HTMLInputType }}" name="fieldValue" value="{{ .Value }}" maxlength="256" autofocus>
         </label>
         <button class="button" type="submit">Submit</button>
         <button class="button" type="button"
@@ -101,10 +115,8 @@
 {{ define "profileCard" }}
     {{- /*gotype: github.com/apresdev/landlord/internal/webapp.ProfileFieldsView*/}}
     <div class="container">
+        <div class="is-size-6">{{ .Title }}</div>
         <div class="card">
-            <div class="card-header">
-                <h2>{{ .Title }}</h2>
-            </div>
             <div class="card-columns">
                 <div class="column">
                     {{ range .Fields }}

@@ -2,15 +2,11 @@
 
 * add pk/sk as separate fields
 * BUG: remove cognito ID from subject listUsers API
-* move terraform to apres-terraform in `apps/aws` -- a new directory that
-contains terraform for apps like landlord
 * React UI flow for adding MFA
 * add indicators to submits https://htmx.org/attributes/hx-indicator/
 * figure out terraform for how to configure email and SMS
 * builtin login dialog should say "login again" after entering in OTP
-* in the URL we send for signing up a new account, make the URL navigate to a
-spot in the UI that forces a logout and then redirects back to the login page.
-* invitation email could look better
+* invitation email could look better (Cognito 2.0)
 * how to handle abuse of the unauthenticated landlord APIs?
     * what does the WAF do to help here?
 * apply handling

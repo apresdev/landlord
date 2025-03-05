@@ -2,25 +2,58 @@
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.UnauthenticatedView*/}}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ .Settings.AppName }} | Account Recovery</title>
-    <link rel="stylesheet" href="/ll-auth/app/static/landlord-login.css">
-</head>
+{{ template "header" . }}
 <body>
-    <div class="container">
-        <h2>{{ .Settings.AppName }} | Recovery Account</h2>
-        <form action="/ll-auth/app/recovery/submit" method="POST">
-            <label>Email
-                <input type="email"
-                    name="username"
-                    placeholder="Enter email address to start recovery..."
-                    value="{{ .PotentialUsername }}" required>
-            </label>
-            <button type="submit">Recover</button>
-        </form>
-    </div>
+    <section class="section">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-4">
+                    <div class="container has-text-centered">
+                        <div class="is-size-2">Landlord Console</div>
+                    </div>
+                    <div class="box">
+                        <form action="/ll-auth/app/recovery/submit" method="POST">
+                            <div class="field">
+                                <label class="label">Email</label>
+                                <div class="control has-icons-left">
+                                    <input class="input"
+                                           type="email"
+                                           name="username"
+                                           placeholder="Enter email address to start recovery..."
+                                           value="{{ .PotentialUsername }}"
+                                           required autofocus>
+                                    <span class="icon is-small is-left">
+                                    <i class="fa-sharp fa-solid fa-image-portrait"></i>
+                                </span>
+                                </div>
+                            </div>
+                            {{ if ne .ErrMsg "" }}
+                                <div class="notification is-danger">
+                                    {{ .ErrMsg }}
+                                </div>
+                            {{ end }}
+
+                            <!-- Submit Button -->
+                            <div class="field">
+                                <div class="control">
+                                    <button class="button is-warning is-fullwidth">
+                                        Recover
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Links -->
+                            <div class="has-text-centered mt-4">
+                                <a href="/ll-auth/app/logout">Logout</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </body>
 </html>
+
+
 {{ end }}

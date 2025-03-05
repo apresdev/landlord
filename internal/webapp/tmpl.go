@@ -13,6 +13,9 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:embed shared-templates/*
+var sharedTemplatesFS embed.FS
+
 //go:embed login-templates/*
 var loginTemplatesFS embed.FS
 
@@ -98,12 +101,20 @@ func init() {
 		},
 	}
 	loginTemplates.Funcs(funcs)
+	loginTemplates, err = parseTemplates(loginTemplates, sharedTemplatesFS, "shared-templates")
+	if err != nil {
+		zap.L().Fatal("error parsing shared template files", zap.Error(err))
+	}
 	loginTemplates, err = parseTemplates(loginTemplates, loginTemplatesFS, "login-templates")
 	if err != nil {
 		zap.L().Fatal("error parsing login template files", zap.Error(err))
 	}
 
 	adminTemplates.Funcs(funcs)
+	adminTemplates, err = parseTemplates(adminTemplates, sharedTemplatesFS, "shared-templates")
+	if err != nil {
+		zap.L().Fatal("error parsing shared template files", zap.Error(err))
+	}
 	adminTemplates, err = parseTemplates(adminTemplates, adminTemplatesFS, "admin-templates")
 	if err != nil {
 		zap.L().Fatal("error parsing admin template files", zap.Error(err))

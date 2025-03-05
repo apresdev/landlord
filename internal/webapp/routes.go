@@ -95,7 +95,6 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	// unauthorized because they are the routes that result in the user obtaining
 	// a token for the authorized routes.
 	noAuth.GET("/", handleRoot)
-	noAuth.GET("/help", handleHelp)
 	noAuth.GET("/login", handleLogin)
 	noAuth.POST("/login/submit", handleLoginSubmit)
 	noAuth.GET("/logout", handleLogoutSubmit)
@@ -117,7 +116,6 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	auth.GET("/admin/dashboard-error", handleAdminDashboardError)
 	auth.POST("/admin/clear-impersonation", handleAdminClearImpersonation)
 	auth.GET("/admin/tenants", handleAdminTenants)
-	auth.GET("/admin/tenant-ops/select", handleAdminTenantSelect)
 	auth.GET("/admin/tenant-ops/create-tenant-button", handleAdminCreateTenantButton)
 	auth.GET("/admin/tenant-ops/create-tenant-form", handleAdminCreateTenantForm)
 	auth.POST("/admin/tenant-ops/create-tenant-submit", handleAdminCreateTenantSubmit)
@@ -143,6 +141,8 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	auth.POST("/admin/tenants/:tenantID/users/:userID/field/edit", handleAdminUserProfileFieldSubmit)
 	auth.GET("/admin/tenants/:tenantID/users/:userID/field/edit", handleAdminUserProfileFieldEditForm)
 	auth.GET("/admin/tenants/:tenantID/users/:userID/field/form", handlerAdminUserProfileFieldForm)
+
+	auth.GET("/admin/tenants/:tenantID/users/:userID/tabs/:tab", handleAdminUserTab)
 
 	auth.POST("/admin/tenants/:tenantID/field/edit", handleAdminTenantProfileFieldSubmit)
 	auth.GET("/admin/tenants/:tenantID/field/edit", handleAdminTenantProfileFieldEditForm)

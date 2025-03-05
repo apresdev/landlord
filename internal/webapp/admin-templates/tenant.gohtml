@@ -2,28 +2,29 @@
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.TenantView*/}}
 <tr>
     <td><a href="{{ .Link }}">{{ .Name }}</a></td>
-    <td>{{ .State }}</td>
     <td>{{ .Description }}</td>
-    <td>{{ .UserPoolName }} ({{ .UserPoolID }})</td>
+    <td>{{ .State }}</td>
     <td>
-        {{ if .IsActive }}
-        <a href="{{ printf "/ll-auth/app/admin/tenants/%s?tab=invites" .ID }}">
-            <button class="button">Invite</button>
-        </a>
-        {{ end }}
-        {{ if not .IsRoot }}
+        <div class="buttons are-small">
             {{ if .IsActive }}
-                <button class="button"
-                        hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/deactivate" .ID }}">
-                    Deactivate
-                </button>
-            {{ else }}
-                <button class="button"
-                        hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/activate" .ID }}">
-                    Activate
-                </button>
+            <a href="{{ printf "/ll-auth/app/admin/tenants/%s?tab=invites" .ID }}">
+                <button class="button">Invite User</button>
+            </a>
             {{ end }}
-        {{ end }}
+            {{ if not .IsRoot }}
+                {{ if .IsActive }}
+                    <button class="button"
+                            hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/deactivate" .ID }}">
+                        Deactivate
+                    </button>
+                {{ else }}
+                    <button class="button"
+                            hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/activate" .ID }}">
+                        Activate
+                    </button>
+                {{ end }}
+            {{ end }}
+        </div>
     </td>
 </tr>
 {{ end }}
@@ -31,20 +32,19 @@
 {{ define "roleFragment" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.RoleView*/}}
 <tr>
+    <td class="numeric-column">{{ .Count }}</td>
     <td>{{ .Name }}</td>
-    <td>{{ .Count }}</td>
     <td>
         {{ if .RemovableToolTip }}
-            <button
-                class="button"
-                hx-delete="{{ printf "/ll-auth/app/admin/tenants/%s/roles/%s" .TenantID .Name }}"
-                hx-target="#add-role-table-and-form">
-                Remove
-            </button>
-        {{ else }}
-            <button class="button" disabled>
-                Remove
+            <div class="tooltip-wrapper">
+                <button class="button is-small" disabled>Remove</button>
                 <span class="tooltip">{{ .RemovableToolTip }}</span>
+            </div>
+        {{ else }}
+            <button class="button is-small is-danger"
+                    hx-delete="{{ printf "/ll-auth/app/admin/tenants/%s/roles/%s" .TenantID .Name }}"
+                    hx-target="#add-role-table-and-form">
+                Remove
             </button>
         {{ end }}
     </td>
@@ -64,12 +64,11 @@
 
 {{ define "tenantAddRoleForm" }}
 {{/*string*/}}
-<form class="form-wrapper"
-    hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/roles" . }}"
-    hx-target="#add-role-table-and-form"
-    hx-swap="innerHTML">
+<form hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/roles" . }}"
+      hx-target="#add-role-table-and-form"
+      hx-swap="innerHTML">
     <label>
-        <input type="text" name="role" placeholder="Enter role">
+        <input class="input" type="text" name="role" placeholder="Enter role">
     </label>
     <button class="button" type="submit">Submit</button>
     <button class="button" type="button"
@@ -84,22 +83,28 @@
 {{ define "addRoleTableAndForm" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
 <div id="add-role-table-and-form">
-    {{ template "tenantAddRoleButton" .Tenant.ID }}
-    <div id="add-role-error-message" style="color: red; margin-top: 10px;">{{ .ErrMsg }}</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Role Name</th>
-                <th>Members</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody hx-target="closest tr" hx-swap="outerHTML">
-            {{ range .Tenant.Roles.Views }}
-                {{ template "roleFragment" . }}
-            {{ end }}
-        </tbody>
-    </table>
+    <div class="box">
+        <section>
+            {{ template "tenantAddRoleButton" .Tenant.ID }}
+            <div id="add-role-error-message" class="error-container">{{ .ErrMsg }}</div>
+        </section>
+        <section>
+            <table id="tenant-role-table" class="table">
+                <thead>
+                    <tr>
+                        <th class="narrow-numeric">Members</th>
+                        <th>Role Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody hx-target="closest tr" hx-swap="outerHTML">
+                    {{ range .Tenant.Roles.Views }}
+                        {{ template "roleFragment" . }}
+                    {{ end }}
+                </tbody>
+            </table>
+        </section>
+    </div>
 </div>
 {{ end }}
 
@@ -109,13 +114,15 @@
     <td>{{ .Name }}</td>
     <td>
         {{ if .RemovableToolTip  }}
-            <button class="button" disabled>
-                Remove
+            <div class="tooltip-wrapper">
+                <button class="button is-small" disabled>
+                    Remove
+                </button>
                 <span class="tooltip">{{ .RemovableToolTip }}</span>
-            </button>
+            </div>
         {{ else }}
-            <button class="button"
-                hx-delete="{{ printf "/ll-auth/app/admin/tenants/%s/sub-roles/" .Name }}"
+            <button class="button is-small is-danger"
+                hx-delete="{{ printf "/ll-auth/app/admin/tenants/%s/sub-roles/%s" .TenantID .Name }}"
                 hx-target="#add-sub-role-table-and-form">
                 Remove
             </button>
@@ -137,12 +144,11 @@
 
 {{ define "addSubRoleForm" }}
 {{/*string*/}}
-<form class="form-wrapper"
-    hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/sub-roles" . }}"
-    hx-target="#add-sub-role-table-and-form"
-    hx-swap="innerHTML">
+<form hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/sub-roles" . }}"
+      hx-target="#add-sub-role-table-and-form"
+      hx-swap="innerHTML">
     <label>
-        <input type="text" name="subrole" placeholder="Enter sub role">
+        <input class="input" type="text" name="subrole" placeholder="Enter sub role">
     </label>
     <button class="button" type="submit">Submit</button>
     <button class="button" type="button"
@@ -155,22 +161,27 @@
 {{ define "addSubRoleTableAndForm" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
 <div id="add-sub-role-table-and-form">
-    {{ template "addSubRoleButton" .Tenant.ID }}
-{{/*    TODO on this class for error message*/}}
-    <div id="add-role-error-message" style="color: red; margin-top: 10px;">{{ .ErrMsg }}</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Sub Role Name</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody hx-target="closest tr" hx-swap="outerHTML">
-        {{ range .Tenant.SubTenantRoles.Views }}
-            {{ template "subRoleFragment" . }}
-        {{ end }}
-        </tbody>
-    </table>
+    <div class="box">
+        <section>
+            {{ template "addSubRoleButton" .Tenant.ID }}
+            <div id="add-role-error-message" class="error-container">{{ .ErrMsg }}</div>
+        </section>
+        <section>
+            <table id="tenant-sub-role-table" class="table">
+                <thead>
+                    <tr>
+                        <th>Sub Role Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody hx-target="closest tr" hx-swap="outerHTML">
+                {{ range .Tenant.SubTenantRoles.Views }}
+                    {{ template "subRoleFragment" . }}
+                {{ end }}
+                </tbody>
+            </table>
+        </section>
+    </div>
 </div>
 {{ end }}
 
@@ -186,42 +197,44 @@
     <td>{{ .MFAStatus }}</td>
     <td>{{ .Status }}</td>
     <td>
-        {{ if .CanSubjectImpersonate }}
-            {{ if .IsSubjectImpersonating }}
-                <button class="button" hx-post="/ll-auth/app/admin/clear-impersonation">
-                    Clear Impersonation
+        <div class="buttons are-small">
+            {{ if .CanSubjectImpersonate }}
+                {{ if .IsSubjectImpersonating }}
+                    <button class="button" hx-post="/ll-auth/app/admin/clear-impersonation">
+                        Clear Impersonation
+                    </button>
+                {{ else if not .IsTheSubject }}
+                    <button class="button" hx-post="{{ .ImpersonateLink }}">
+                        Impersonate
+                    </button>
+                {{ end }}
+            {{ end }}
+            {{ if .IsActive }}
+                <button class="button is-danger" hx-post="{{ .DeactivateLink }}">
+                    Deactivate
                 </button>
-            {{ else if not .IsTheSubject }}
-                <button class="button" hx-post="{{ .ImpersonateLink }}">
-                    Impersonate
+            {{ else if .IsInvited }}
+                <button class="button" hx-post="{{ .ReInviteLink }}">
+                    Resend Invite
+                </button>
+                <button class="button is-warning" hx-post="{{ .CancelInviteLink }}">
+                    Cancel Invite
+                </button>
+            {{ else if not .IsActive }}
+                <button class="button" hx-post="{{ .ActivateLink }}">
+                    Activate
                 </button>
             {{ end }}
-        {{ end }}
-        {{ if .IsActive }}
-            <button class="button" hx-post="{{ .DeactivateLink }}">
-                Deactivate
-            </button>
-        {{ else if .IsInvited }}
-            <button class="button" hx-post="{{ .ReInviteLink }}">
-                Resend Invite
-            </button>
-            <button class="button" hx-post="{{ .CancelInviteLink }}">
-                Cancel Invite
-            </button>
-        {{ else if not .IsActive }}
-            <button class="button" hx-post="{{ .ActivateLink }}">
-                Activate
-            </button>
-        {{ end }}
-        {{ if .HasMFAPolicyNone }}
-            <button class="button" hx-post="{{ .MFAEnableLink }}">
-                Attach MFA
-            </button>
-        {{ else if and .IsActive .IsMFAActive }}
-            <button class="button" hx-post="{{ .MFADisableLink }}">
-                Detach MFA
-            </button>
-        {{ end }}
+            {{ if .HasMFAPolicyNone }}
+                <button class="button" hx-post="{{ .MFAEnableLink }}">
+                    Attach MFA
+                </button>
+            {{ else if and .IsActive .IsMFAActive }}
+                <button class="button" hx-post="{{ .MFADisableLink }}">
+                    Detach MFA
+                </button>
+            {{ end }}
+        </div>
     </td>
 </tr>
 {{ end }}
@@ -239,138 +252,122 @@
 
 {{ define "inviteUserForm" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.TenantView*/}}
-<form class="form-wrapper"
-    hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/users" .Tenant.ID }}"
-    hx-target="#invite-user-table-and-form"
-    hx-swap="innerHTML">
-    <label>Email:
-        <input type="text" name="username" placeholder="Enter email address">
-    </label>
-    <label>Role:
-        <select id="role" name="role">
-            {{ range .Roles.Views }}
-                <option value="{{ .Name }}">{{ .Name }}</option>
-            {{ end }}
-        </select>
-    </label>
-    <label>MFA Policy:
-        <select id="mfaPolicy" name="mfaPolicy">
-            {{ range .MFAPolicyStrings }}
-                <option value="{{ . }}">{{ . }}</option>
-            {{ end }}
-        </select>
-    </label>
-    <div>
-      <h2>Profile Fields</h2>
+<form class="box"
+      hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/users" .Tenant.ID }}"
+      hx-target="#invite-user-table-and-form"
+      hx-swap="innerHTML">
+    <div class="block">
+        <label>Email:
+            <input class="input" type="email" name="username" placeholder="Enter email address">
+        </label>
+    </div>
+    <div class="block">
+        <label>Role:
+            <select class="select" id="role" name="role">
+                {{ range .Roles.Views }}
+                    <option value="{{ .Name }}">{{ .Name }}</option>
+                {{ end }}
+            </select>
+        </label>
+        <label>Multi-Factor Authentication Policy:
+            <select class="select" id="mfaPolicy" name="mfaPolicy">
+                {{ range .MFAPolicyStrings }}
+                    <option value="{{ . }}">{{ . }}</option>
+                {{ end }}
+            </select>
+        </label>
+    </div>
+    <button class="button is-primary" type="submit">Submit</button>
+    <button class="button is-warning" type="button"
+            hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/invite-user-button" .Tenant.ID }}"
+            hx-target="#invite-user-form"
+            hx-swap="innerHTML">
+        Cancel
+    </button>
+    <div class="box">
+      <div class="is-size-4">Optional Profile Fields</div>
         {{ range .UserProfileDefinition.Fields }}
           <div>
             <label>{{ .UIName }}</label>
-            <input type="text" name="{{ .Name }}" placeholder="Optional">
+            <input class="input" type="text" name="{{ .Name }}" placeholder="Optional">
           </div>
         {{ end }}
     </div>
-    <button class="button" type="submit">Submit</button>
-    <button class="button" type="button"
-        hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/invite-user-button" .Tenant.ID }}"
-        hx-target="#invite-user-form"
-        hx-swap="innerHTML">
-        Cancel
-    </button>
 </form>
 {{ end }}
 
 {{ define "inviteUserTableAndForm" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
 <div id="invite-user-table-and-form">
-    {{ template "inviteUserButton" . }}
-{{/*    TODO style*/}}
-    <div id="invite-user-error-message" style="color: red; margin-top: 10px;">{{ .ErrMsg }}</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Role</th>
-                <th>MFA</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody hx-target="closest tr" hx-swap="outerHTML">
-            {{ if not .Users }}
-                <p>No Users</p>
-            {{ else }}
-                {{ range .Users }}
-                    {{ template "userFragment" . }}
-                {{ end }}
-            {{ end }}
-        </tbody>
-    </table>
+    <div class="block">
+        {{ template "inviteUserButton" . }}
+        <div id="invite-user-error-message" class="error-container">{{ .ErrMsg }}</div>
+    </div>
+    {{ if .Users }}
+        <div class="block">
+            <table id="tenant-user-table" class="datatable display">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>MFA</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody hx-target="closest tr" hx-swap="outerHTML">
+                    {{ range .Users }}
+                        {{ template "userFragment" . }}
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    {{ else }}
+        <div class="block has-text-warning">No Users</div>
+    {{ end }}
 </div>
 {{ end }}
 
 {{ define "tenantSummary" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.TenantView*/}}
-<div class="card">
-    <div class="card-header">
-        <h2>Tenant Summary</h2>
-    </div>
-    <div class="card-columns">
+<div class="container">
+    <div class="columns">
         <!-- Column 1 -->
-        <div class="column">
-            <h3>Details</h3>
+        <div class="column is-half">
             <div class="field">
-                <span class="label">Name</span>
+                <label class="label">Name</label>
                 <span class="value">{{ .Name }}</span>
             </div>
             <div class="field">
-                <span class="label">Description</span>
+                <label class="label">Description</label>
                 {{ template "tenantDescriptionForm" . }}
             </div>
             <div class="field">
-                <span class="label">Cognito User Pool</span>
-                <span class="value">
-                    <i class="fa-brands fa-aws"></i>
-                    <a href="{{ .UserPoolCognitoURL }}" target="_blank">{{ .UserPoolID }}</a>
-                </span>
+                <label class="label">Roles</label>
+                <span class="value">{{ .Roles.Display }}</span>
+            </div>
+            <div class="field">
+                <label class="label">Sub-Roles</label>
+                <span class="value">{{ .SubTenantRoles.Display }}</span>
             </div>
         </div>
 
         <!-- Column 2 -->
-        <div class="column">
-            <h3>Roles</h3>
+        <div class="column is-half">
             <div class="field">
-                <span class="label">Roles</span>
-                <span class="value">
-                    {{ .Roles.Display }}
-                    <button class="icon-button"
-                        hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/roles" .ID }}">
-                        <i class="fa-sharp fa-pen-to-square"></i>
-                    </button>
-                </span>
-            </div>
-            <div class="field">
-                <span class="label">Sub-Roles</span>
-                <span class="value">
-                    {{ .SubTenantRoles.Display }}
-                    <button
-                        class="icon-button"
-                        hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/subroles" .ID }}">
-                        <i class="fa-sharp fa-pen-to-square"></i>
-                    </button>
-                </span>
-            </div>
-        </div>
-
-        <!-- Column 3 -->
-        <div class="column">
-            <h3>Additional Information</h3>
-            <div class="field">
-                <span class="label">Time Created</span>
+                <label class="label">Time Created</label>
                 <span class="value">{{ .CreatedAt }}</span>
             </div>
             <div class="field">
-                <span class="label">State</span>
+                <label class="label">State</label>
                 <span class="value">{{ .State }}</span>
+            </div>
+            <div class="field">
+                <label class="label">Cognito User Pool</label>
+                <span class="value">
+                    <i class="fa-brands fa-aws"></i>
+                    <a href="{{ .UserPoolCognitoURL }}" target="_blank">{{ .UserPoolID }}</a>
+                </span>
             </div>
         </div>
     </div>
@@ -391,12 +388,11 @@
 
 {{ define "tenantDescriptionEditForm" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.TenantView*/}}
-<form class="form-wrapper"
-    hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/description/edit" .ID }}"
+<form hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/description/edit" .ID }}"
     hx-target="#edit-description-form"
     hx-swap="innerHTML">
     <label>
-        <input type="text" name="description" value="{{ .Description }}" maxlength="256">
+        <input class="input" type="text" name="description" value="{{ .Description }}" maxlength="256">
     </label>
     <button class="button" type="submit">Submit</button>
     <button class="button" type="button"
@@ -408,82 +404,109 @@
 
 {{ define "tenantTabButtonsFragment" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-    {{ range .TenantTabs }}
-        <button class="{{ ifElse .Active "tab-button active" "tab-button" }}"
-            hx-get="{{ .Link }}"
-            role="tab"
-            aria-selected="{{ ifElse .Active "true" "false" }}"
-            aria-controls="tab-content">
-            {{ .Title }}
-        </button>
-    {{ end }}
+    <ul>
+        {{ range .TenantTabs }}
+            <li class="tab {{ ifElse .Active "is-active" "" }}">
+                <a hx-get="{{ .Link }}"
+                   hx-target="#tenant-tabs"
+                   hx-swap="innerHTML"
+                   role="tab"
+                   aria-selected="{{ .Active }}"
+                   aria-controls="tab-content">
+                    {{ .Title }}
+                </a>
+            </li>
+        {{ end }}
+    </ul>
 {{ end }}
 
 {{ define "tenantSummaryTab" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-<div class="tab-header" role="tablist">
+<div class="tabs" role="tablist">
     {{ template "tenantTabButtonsFragment" . }}
 </div>
-<div id="tab-content" role="tabpanel" class="tab-content">
+<div id="tab-content" role="tabpanel" class="container">
     {{ template "tenantSummary" .Tenant }}
-    {{ template "profileCard" .Tenant.Profile }}
 </div>
+{{ end }}
+
+{{ define "tenantProfileTab" }}
+    {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
+    <div class="tabs" role="tablist">
+        {{ template "tenantTabButtonsFragment" . }}
+    </div>
+    <div id="tab-content" role="tabpanel" class="container">
+        {{ template "profileCard" .Tenant.Profile }}
+    </div>
 {{ end }}
 
 {{ define "tenantUsersTab" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-<div class="tab-header" role="tablist">
+<div class="tabs" role="tablist">
     {{ template "tenantTabButtonsFragment" . }}
 </div>
-<div id="tab-content" role="tabpanel" class="tab-content">
+<div id="tab-content" role="tabpanel" class="container">
     {{ template "inviteUserTableAndForm" . }}
 </div>
 {{ end }}
 
 {{ define "tenantInvitesTab" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-<div class="tab-header" role="tablist">
+<div class="tabs" role="tablist">
     {{ template "tenantTabButtonsFragment" . }}
 </div>
-<div id="tab-content" role="tabpanel" class="tab-content">
+<div id="tab-content" role="tabpanel" class="container">
     {{ template "inviteUserTableAndForm" . }}
 </div>
 {{ end }}
 
 {{ define "tenantRolesTab" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-<div class="tab-header" role="tablist">
+<div class="tabs" role="tablist">
     {{ template "tenantTabButtonsFragment" . }}
 </div>
-<div id="tab-content" role="tabpanel" class="tab-content">
-    {{ template "addRoleTableAndForm" . }}
-</div>
-{{ end }}
-
-{{ define "tenantSubrolesTab" }}
-{{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-<div class="tab-header" role="tablist">
-    {{ template "tenantTabButtonsFragment" . }}
-</div>
-<div id="tab-content" role="tabpanel" class="tab-content">
-    {{ template "addSubRoleTableAndForm" . }}
-</div>
+    <div class="box">
+        <div class="columns">
+            <div class="column is-half">
+                <div id="tab-content" role="tabpanel" class="container">
+                    {{ template "addRoleTableAndForm" . }}
+                </div>
+            </div>
+            <div class="column is-half">
+                {{ if .Tenant.IsRoot }}
+                    <div id="tab-content" role="tabpanel" class="container">
+                        {{ template "addSubRoleTableAndForm" . }}
+                    </div>
+                {{ end }}
+            </div>
+        </div>
+    </div>
 {{ end }}
 
 {{ define "tenant" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-<!DOCTYPE html>
-<html lang="en">
+    <!DOCTYPE html>
+    <html lang="en">
     {{ template "header" . }}
     <body>
         {{ template "navbar" . }}
+        <section class="section">
         <div class="container">
-            <div id="tabs"
-                hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/tabs/%s" .Tenant.ID .TenantTab }}"
-                hx-trigger="load delay:100ms"
-                hx-target="#tabs"
-                hx-swap="innerHTML"></div>
+            <div class="panel is-info">
+                <p class="panel-heading">Tenant: {{ .Tenant.Name }}</p>
+                <div class="panel-block">
+                    <div class="container">
+                        <div id="tenant-tabs"
+                             hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/tabs/%s" .Tenant.ID .TenantTab }}"
+                             hx-trigger="load delay:100ms"
+                             hx-target="#tenant-tabs"
+                             hx-swap="innerhtml">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+        </section>
     </body>
 </html>
 {{ end }}

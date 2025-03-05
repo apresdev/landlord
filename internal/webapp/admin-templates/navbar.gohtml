@@ -1,35 +1,49 @@
 {{ define "navbar" }}
-{{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-<div class="nav-bar">
-    <div class="nav-left">
-        <ul>
-            <li><a href="/ll-auth/app/admin/dashboard">
+    {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
                 <img src="/ll-auth/app/static/favicon-32x32.png"  alt="Landlord" />
-            </a></li>
-            <li><a href="/ll-auth/app/admin/dashboard">Dashboard</a></li>
-            <li><a href="/ll-auth/app/admin/tenants">Tenants</a></li>
-            <li><a href="/ll-auth/app/admin/tenant-ops/select?action=manage-invites">Invites</a></li>
-            <li><a href="/ll-auth/app/admin/tenant-ops/select?action=manage-users">Users</a></li>
-        </ul>
-    </div>
-    <div class="nav-right">
-        {{ if .Subject }}
-            <div class="profile">
-                {{ if .Subject.IsImpersonating }}
-                    <a href="/ll-auth/app/admin/profile">
-                        {{ .Subject.ImpersonationName }}
-                    </a>
-                {{ end }}
-                <a href="/ll-auth/app/admin/profile">
-                    {{ .Subject.Username }}
+            </a>
+            <a class="navbar-burger" role="button" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+
+        <div id="mainNavbar" class="navbar-menu">
+            <div class="navbar-start">
+                <a class="navbar-item" href="/ll-auth/app/admin/tenants">
+                    Tenants
                 </a>
-                <a href="{{ .Subject.TenantLink }}">
-                    {{ .Subject.TenantName }}
-                </a>
-                <a href="/ll-auth/app/admin/profile">Profile</a>
-                <a href="/ll-auth/app/logout">Logout</a>
             </div>
-        {{ end }}
-    </div>
-</div>
+
+            <div class="navbar-end">
+                {{ if .Subject }}
+                    {{ if .Subject.IsImpersonating }}
+                        <a class="navbar-item" href="/ll-auth/app/admin/profile">
+                            {{ .Subject.ImpersonationName }}
+                        </a>
+                    {{ end }}
+                    <a class="navbar-item" href="/ll-auth/app/admin/profile">
+                        {{ .Subject.Username }}
+                    </a>
+                    <a class="navbar-item" href="{{ .Subject.TenantLink }}">
+                        {{ .Subject.TenantName }}
+                    </a>
+                    <a class="navbar-item" href="/ll-auth/app/admin/profile">Profile</a>
+                {{ end }}
+
+                <div class="navbar-item">
+                    <div class="buttons">
+                        <a class="button is-light" href="/ll-auth/app/logout">
+                            Log out
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
 {{ end }}

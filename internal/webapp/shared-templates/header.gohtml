@@ -1,0 +1,50 @@
+{{ define "header" }}
+    {{- /*gotype: github.com/apresdev/landlord/internal/webapp.SettingsProvider*/}}
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{{ .Settings.AppName }}</title>
+
+        <link rel="apple-touch-icon" sizes="180x180" href="/ll-auth/app/static/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/ll-auth/app/static/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/ll-auth/app/static/favicon-16x16.png">
+        <link rel="manifest" href="/ll-auth/app/static/site.webmanifest">
+
+        <!-- Include HTMX -->
+        {{ if .Settings.DevMode }}
+            <script src="/ll-auth/app/static/htmx.js"></script>
+        {{ else }}
+            <script src="/ll-auth/app/static/htmx.min.js"></script>
+        {{ end }}
+
+        <!-- Include Font Awesome -->
+        <script src="/ll-auth/app/static/brands.min.js"></script>
+        <script src="/ll-auth/app/static/sharp-solid.min.js"></script>
+        <script src="/ll-auth/app/static/fontawesome.min.js"></script>
+
+        <!-- Include Bulma CSS -->
+        <link href="/ll-auth/app/static/bulma.min.css" rel="stylesheet">
+
+        <!-- Include DataTables -->
+        {{ if .Settings.DevMode }}
+            <link href="/ll-auth/app/static/datatables.css" rel="stylesheet">
+            <script src="/ll-auth/app/static/jquery-3.7.1.min.js"></script>
+            <script src="/ll-auth/app/static/datatables.js"></script>
+        {{ else }}
+            <link href="/ll-auth/app/static/datatables.min.css" rel="stylesheet">
+            <script src="/ll-auth/app/static/jquery-3.7.1.min.js"></script>
+            <script src="/ll-auth/app/static/datatables.min.js"></script>
+        {{ end }}
+
+        <script src="/ll-auth/app/static/dt.js"></script>
+
+        <!-- Include Landlord CSS -->
+        <link href="/ll-auth/app/static/landlord.css" rel="stylesheet">
+
+        <script>
+            function navigateTo(url) {
+                window.location.replace(url);
+            }
+        </script>
+    </head>
+{{ end }}

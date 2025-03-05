@@ -284,7 +284,7 @@ func (tv TenantView) Profile() ProfileFieldsView {
 		return ProfileFieldsView{}
 	}
 	return NewProfileFieldsView(
-		"Tenant Profile",
+		fmt.Sprintf("Tenant profile for '%s'", tv.ten.Name),
 		fmt.Sprintf("/ll-auth/app/admin/tenants/%s", tv.ten.ID.String()),
 		tv.ten.GetTenantProfileDefinition(),
 		tv.ten.Profile())
@@ -574,7 +574,7 @@ func (uv *UserView) Profile() ProfileFieldsView {
 		return ProfileFieldsView{}
 	}
 	return NewProfileFieldsView(
-		"User Profile",
+		fmt.Sprintf("User profile for '%s'", uv.user.Username),
 		fmt.Sprintf("/ll-auth/app/admin/tenants/%s/users/%s",
 			uv.ten.ID.String(), uv.user.ID.String()),
 		uv.ten.GetUserProfileDefinition(),
@@ -699,6 +699,7 @@ type AuthenticatedSubjectView struct {
 	errMsg       string
 	profileTab   profileTab
 	tenTab       TenantTab
+	userTab      UserTab
 	tens         []TenantView
 	selectedTen  TenantView
 	users        []*UserView
@@ -745,6 +746,11 @@ func (asv AuthenticatedSubjectView) WithSelectedTen(ten *multi.Tenant) Authentic
 
 func (asv AuthenticatedSubjectView) WithTenantTab(tab TenantTab) AuthenticatedSubjectView {
 	asv.tenTab = tab
+	return asv
+}
+
+func (asv AuthenticatedSubjectView) WithUserTab(tab UserTab) AuthenticatedSubjectView {
+	asv.userTab = tab
 	return asv
 }
 
@@ -804,7 +810,7 @@ func (asv AuthenticatedSubjectView) ProfileTabs() []ProfileTab {
 		result = append(result, ProfileTab{
 			Link:   fmt.Sprintf("/ll-auth/app/admin/profile/%s", tab),
 			Active: tab == asv.profileTab,
-			Title:  titleFromSlug(string(tab)),
+			Title:  tab.title(),
 		})
 	}
 	return result
@@ -841,6 +847,27 @@ func (asv AuthenticatedSubjectView) TenantTabs() []TenantTabView {
 
 func (asv AuthenticatedSubjectView) TenantTab() TenantTab {
 	return asv.tenTab
+}
+
+func (asv AuthenticatedSubjectView) UserTabs() []UserTabView {
+	result := make([]UserTabView, 0, len(userTabs))
+	for _, tab := range userTabs {
+		active := false
+		if tab == asv.userTab {
+			active = true
+		}
+		result = append(result, UserTabView{
+			Name:   tab,
+			Active: active,
+			Link: fmt.Sprintf("/ll-auth/app/admin/tenants/%s/users/%s/tabs/%s",
+				asv.selectedTen.ID(), asv.selectedUser.ID(), tab),
+		})
+	}
+	return result
+}
+
+func (asv AuthenticatedSubjectView) UserTab() UserTab {
+	return asv.userTab
 }
 
 type TenantTabView struct {
@@ -944,4 +971,14 @@ func NewProfileFieldsView(
 // access to the AppName stored in Settings.
 type SettingsProvider interface {
 	Settings() appenv.Settings
+}
+
+type UserTabView struct {
+	Name   UserTab
+	Active bool
+	Link   string
+}
+
+func (utv UserTabView) Title() string {
+	return cases.Title(language.English).String(string(utv.Name))
 }
