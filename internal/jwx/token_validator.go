@@ -39,8 +39,6 @@ type OpaqueClientID string
 var EmptyOpaqueClientID = OpaqueClientID("")
 
 // TokenValidator is an interface for validating JWT tokens.
-//
-//go:generate mockery --output ../mocks --name TokenValidator --with-expecter=true
 type TokenValidator interface {
 	ValidateToken(
 		ctx context.Context,

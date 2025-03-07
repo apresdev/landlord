@@ -47,20 +47,6 @@ func newTenantTab(s string) TenantTab {
 	}
 }
 
-func parseTabFromAction(action string) TenantTab {
-	switch action {
-	case "manage-users":
-		return tenantUsersTab
-	case "manage-invites":
-		return tenantInvitesTab
-	case "manage-roles":
-		return tenantRolesTab
-	default:
-		zap.L().Error("bad value for tab action", zap.String("tab", action))
-	}
-	return tenantSummaryTab
-}
-
 func (tt TenantTab) TabTemplateName() string {
 	return fmt.Sprintf("tenant%sTab",
 		cases.Title(language.English).String(string(tt)))

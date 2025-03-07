@@ -6,7 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-//go:generate mockery --output ../mocks --name AWSDynamoDB --with-expecter=true
 type AWSDynamoDB interface {
 	DescribeTable(
 		ctx context.Context,

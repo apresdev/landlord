@@ -1,0 +1,41 @@
+with-expecter: true
+mockname: "{{.InterfaceName}}"
+packages:
+    github.com/apresdev/landlord/internal/authx:
+        interfaces:
+            AWSCognitoIdentityProvider:
+                config:
+                    dir: "internal/mocks"
+                    outpkg: "mocks"
+                    filename: "aws_cognito_identity_provider.go"
+            AWSSES:
+                config:
+                    dir: "internal/mocks"
+                    outpkg: "mocks"
+                    filename: "aws_ses.go"
+
+    github.com/apresdev/landlord/internal/db:
+        interfaces:
+            AWSDynamoDB:
+                config:
+                    dir: "internal/mocks"
+                    outpkg: "mocks"
+                    filename: "aws_dynamodb.go"
+
+    github.com/apresdev/landlord/internal/jwx:
+        interfaces:
+            TokenValidator:
+                config:
+                    dir: "internal/mocks"
+                    outpkg: "mocks"
+                    filename: "token_validator.go"
+
+
+# https://vektra.github.io/mockery/v2.53/deprecations/#resolve-type-alias
+resolve-type-alias: False
+
+# https://vektra.github.io/mockery/v2.53/deprecations/#disable-version-string
+disable-version-string: True
+
+# https://vektra.github.io/mockery/v2.53/deprecations/#issue-845-fix
+issue-845-fix: True
