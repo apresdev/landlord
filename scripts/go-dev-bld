@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 set -x
 
-go generate ./...
+mockery
 
 go get -v
 
@@ -41,7 +41,7 @@ then
 fi
 
 GH=$(git log -1 --pretty=format:%h || echo 'N/A')
-if [[ GH =~ 'fatal' ]];
+if [[ "$GH" =~ 'fatal' ]];
 then
     CommitHash=N/A
 else

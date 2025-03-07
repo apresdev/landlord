@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ses"
 )
 
-//go:generate mockery --output ../mocks --name AWSSES --with-expecter=true
 type AWSSES interface {
 	SendEmail(
 		ctx context.Context,
@@ -16,7 +15,6 @@ type AWSSES interface {
 		optFns ...func(*ses.Options)) (*ses.SendEmailOutput, error)
 }
 
-//go:generate mockery --output ../mocks --name AWSCognitoIdentityProvider --with-expecter=true
 type AWSCognitoIdentityProvider interface {
 	InitiateAuth(
 		ctx context.Context,

@@ -798,12 +798,6 @@ func (asv AuthenticatedSubjectView) ProfileTab() string {
 	return string(asv.profileTab)
 }
 
-func titleFromSlug(slug string) string {
-	return strings.TrimSpace(
-		strings.ReplaceAll(
-			cases.Title(language.English).String(slug), "-", " "))
-}
-
 func (asv AuthenticatedSubjectView) ProfileTabs() []ProfileTab {
 	result := make([]ProfileTab, 0)
 	for _, tab := range profileTabs {
