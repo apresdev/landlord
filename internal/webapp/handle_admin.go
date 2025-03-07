@@ -127,7 +127,7 @@ func handleAdminActivateTenantSubmit(a App, c *gin.Context) error {
 	}
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
 		WithSelectedTen(ten)
-	return executeAdminTemplate(c, "tenantFragment", sv)
+	return executeTenantTemplate(c, "tenantFragment", sv.Tenant())
 }
 
 func handleAdminDeactivateTenantSubmit(a App, c *gin.Context) error {
@@ -145,7 +145,7 @@ func handleAdminDeactivateTenantSubmit(a App, c *gin.Context) error {
 	}
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
 		WithSelectedTen(ten)
-	return executeAdminTemplate(c, "tenantFragment", sv)
+	return executeTenantTemplate(c, "tenantFragment", sv.Tenant())
 }
 
 func handleAdminTenant(a App, c *gin.Context) error {
