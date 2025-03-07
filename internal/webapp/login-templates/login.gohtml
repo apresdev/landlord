@@ -4,62 +4,68 @@
 <html lang="en">
 {{ template "header" . }}
 <body>
-<section class="section">
+<section class="section landlord-background-section">
     <div class="container">
         <div class="columns is-centered">
             <div class="column is-4">
                 <div class="container has-text-centered">
                     <div class="is-size-2">Landlord Console</div>
-                    <div class="is-size-4">Enter Credentials</div>
+                    <div class="is-size-6 is-italic">Target: {{ .Settings.AppName }}</div>
+                    <div class="is-size-6 is-italic">App URL: {{ .Settings.AppURL }}</div>
                 </div>
-                <div class="box">
-                    <form action="/ll-auth/app/login/submit" method="POST">
-                        <!-- Email Field -->
-                        <div class="field">
-                            <label class="label">Email</label>
-                            <div class="control has-icons-left">
-                                <input class="input" type="email" name="username" placeholder="Email" value="{{ .PotentialUsername }}" required autofocus>
-                                <span class="icon is-small is-left">
-                                    <i class="fa-sharp fa-solid fa-image-portrait"></i>
-                                </span>
-                            </div>
+                <div class="container pt-4">
+                    <div class="box">
+                        <div class="container has-text-centered">
+                            <div class="is-size-4">Enter Credentials</div>
                         </div>
-
-                        <!-- Password Field -->
-                        <div class="field">
-                            <label class="label">Password</label>
-                            <div class="control has-icons-left">
-                                <input class="input" name="password" type="password" placeholder="********" required>
-                                <span class="icon is-small is-left">
-                                    <i class="fa-sharp fa-solid fa-lock"></i>
-                                </span>
-                            </div>
-                        </div>
-
-                        {{ if ne .ErrMsg "" }}
+                        <form action="/ll-auth/app/login/submit" method="POST">
+                            <!-- Email Field -->
                             <div class="field">
-                                <div class="notification is-warning">
-                                    {{ .ErrMsg }}
+                                <label class="label">Email</label>
+                                <div class="control has-icons-left">
+                                    <input class="input" type="email" name="username" placeholder="Email" value="{{ .PotentialUsername }}" required autofocus>
+                                    <span class="icon is-small is-left">
+                                        <i class="fa-sharp fa-solid fa-image-portrait"></i>
+                                    </span>
                                 </div>
                             </div>
-                        {{ end }}
 
-                        <!-- Submit Button -->
-                        <div class="field">
-                            <div class="control">
-                                <button class="button is-primary is-fullwidth">
-                                    Login
-                                </button>
+                            <!-- Password Field -->
+                            <div class="field">
+                                <label class="label">Password</label>
+                                <div class="control has-icons-left">
+                                    <input class="input" name="password" type="password" placeholder="********" required>
+                                    <span class="icon is-small is-left">
+                                        <i class="fa-sharp fa-solid fa-lock"></i>
+                                    </span>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Links -->
-                        <div class="has-text-centered mt-4">
-                            <a href="/ll-auth/app/recovery">Account Recovery</a>
-                            |
-                            <a href="/ll-auth/app/logout">Logout</a>
-                        </div>
-                    </form>
+                            {{ if ne .ErrMsg "" }}
+                                <div class="field">
+                                    <div class="notification is-warning">
+                                        {{ .ErrMsg }}
+                                    </div>
+                                </div>
+                            {{ end }}
+
+                            <!-- Submit Button -->
+                            <div class="field">
+                                <div class="control">
+                                    <button class="button is-primary is-fullwidth">
+                                        Login
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Links -->
+                            <div class="has-text-centered mt-4">
+                                <a href="/ll-auth/app/recovery">Account Recovery</a>
+                                |
+                                <a href="/ll-auth/app/logout">Logout</a>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>

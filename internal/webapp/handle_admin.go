@@ -25,6 +25,7 @@ import (
 )
 
 func handleAdminDashboard(a App, c *gin.Context) error {
+	_ = a
 	redirectTo(c, "/admin/tenants")
 	return nil
 }
@@ -82,10 +83,12 @@ func handleAdminTenants(a App, c *gin.Context) error {
 }
 
 func handleAdminCreateTenantButton(a App, c *gin.Context) error {
+	_ = a
 	return executeFragmentTemplate(c, "createTenantButton", NewFragmentView())
 }
 
 func handleAdminCreateTenantForm(a App, c *gin.Context) error {
+	_ = a
 	return executeFragmentTemplate(c, "createTenantForm", NewFragmentView())
 }
 
@@ -477,10 +480,12 @@ func handleAdminDeleteRoleSubmit(a App, c *gin.Context) error {
 }
 
 func handleAdminAddRoleForm(a App, c *gin.Context) error {
+	_ = a
 	return executeStringTemplate(c, "tenantAddRoleForm", c.Param("tenantID"))
 }
 
 func handleAdminAddRoleButton(a App, c *gin.Context) error {
+	_ = a
 	return executeStringTemplate(c, "tenantAddRoleButton", c.Param("tenantID"))
 }
 
@@ -551,10 +556,12 @@ func handleAdminDeleteSubRoleSubmit(a App, c *gin.Context) error {
 }
 
 func handleAdminAddSubRoleForm(a App, c *gin.Context) error {
+	_ = a
 	return executeStringTemplate(c, "addSubRoleForm", c.Param("tenantID"))
 }
 
 func handleAdminAddSubRoleButton(a App, c *gin.Context) error {
+	_ = a
 	return executeStringTemplate(c, "addSubRoleButton", c.Param("tenantID"))
 }
 

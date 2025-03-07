@@ -1,6 +1,6 @@
 // DataTables HTMX Integration
 
-function dataTableConfig(tableID) {
+function dataTableConfig() {
     return {
         pageLength: 10,
         order: [], // Ordered based on what the server returns
@@ -79,7 +79,7 @@ function dataTableConfig(tableID) {
             const config = configAttr ? JSON.parse(configAttr) : {};
 
             // Default configuration
-            const defaultConfig = dataTableConfig(tableId);
+            const defaultConfig = dataTableConfig();
 
             // Server-side configuration if data-server-side attribute exists
             if (tableEl.hasAttribute('data-server-side')) {

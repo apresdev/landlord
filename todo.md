@@ -1,12 +1,11 @@
 # TODOs
 
+* command line for delete a user entirely
 * add pk/sk as separate fields
 * BUG: remove cognito ID from subject listUsers API
 * React UI flow for adding MFA
 * add indicators to submits https://htmx.org/attributes/hx-indicator/
-* figure out terraform for how to configure email and SMS
 * builtin login dialog should say "login again" after entering in OTP
-* invitation email could look better (Cognito 2.0)
 * how to handle abuse of the unauthenticated landlord APIs?
     * what does the WAF do to help here?
 * apply handling
@@ -21,7 +20,4 @@
   * friendly timestamp in frontend -- normalize to browser time
   * many htmx routes that are just HTML can be unauthorized routes #perf
   * add affordance to display a token in the UI given its base64 form
-  * general styling improvements for the htmx version
-    * add password fields that have the little eyeball to reveal the password
-  * front end validation that the passwords match in new-password page
   * shake out only the icons we need from font-awesome

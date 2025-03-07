@@ -8,12 +8,12 @@
         <div class="buttons are-small">
             {{ if .IsActive }}
             <a href="{{ printf "/ll-auth/app/admin/tenants/%s?tab=invites" .ID }}">
-                <button class="button">Invite User</button>
+                <button class="button is-primary is-outlined">Invite User</button>
             </a>
             {{ end }}
             {{ if not .IsRoot }}
                 {{ if .IsActive }}
-                    <button class="button"
+                    <button class="button is-danger is-outlined"
                             hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/deactivate" .ID }}">
                         Deactivate
                     </button>
@@ -41,7 +41,7 @@
                 <span class="tooltip">{{ .RemovableToolTip }}</span>
             </div>
         {{ else }}
-            <button class="button is-small is-danger"
+            <button class="button is-small is-danger is-outlined"
                     hx-delete="{{ printf "/ll-auth/app/admin/tenants/%s/roles/%s" .TenantID .Name }}"
                     hx-target="#add-role-table-and-form">
                 Remove
@@ -121,7 +121,7 @@
                 <span class="tooltip">{{ .RemovableToolTip }}</span>
             </div>
         {{ else }}
-            <button class="button is-small is-danger"
+            <button class="button is-small is-danger is-outlined"
                 hx-delete="{{ printf "/ll-auth/app/admin/tenants/%s/sub-roles/%s" .TenantID .Name }}"
                 hx-target="#add-sub-role-table-and-form">
                 Remove
@@ -210,14 +210,14 @@
                 {{ end }}
             {{ end }}
             {{ if .IsActive }}
-                <button class="button is-danger" hx-post="{{ .DeactivateLink }}">
+                <button class="button is-danger is-outlined" hx-post="{{ .DeactivateLink }}">
                     Deactivate
                 </button>
             {{ else if .IsInvited }}
                 <button class="button" hx-post="{{ .ReInviteLink }}">
                     Resend Invite
                 </button>
-                <button class="button is-warning" hx-post="{{ .CancelInviteLink }}">
+                <button class="button" hx-post="{{ .CancelInviteLink }}">
                     Cancel Invite
                 </button>
             {{ else if not .IsActive }}
@@ -278,7 +278,7 @@
         </label>
     </div>
     <button class="button is-primary" type="submit">Submit</button>
-    <button class="button is-warning" type="button"
+    <button class="button" type="button"
             hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/invite-user-button" .Tenant.ID }}"
             hx-target="#invite-user-form"
             hx-swap="innerHTML">
@@ -299,79 +299,83 @@
 {{ define "inviteUserTableAndForm" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
 <div id="invite-user-table-and-form">
-    <div class="block">
-        {{ template "inviteUserButton" . }}
-        <div id="invite-user-error-message" class="error-container">{{ .ErrMsg }}</div>
-    </div>
-    {{ if .Users }}
+    <div class="box">
         <div class="block">
-            <table id="tenant-user-table" class="datatable display">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Role</th>
-                        <th>MFA</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody hx-target="closest tr" hx-swap="outerHTML">
-                    {{ range .Users }}
-                        {{ template "userFragment" . }}
-                    {{ end }}
-                </tbody>
-            </table>
+            {{ template "inviteUserButton" . }}
+            <div id="invite-user-error-message" class="error-container">{{ .ErrMsg }}</div>
         </div>
-    {{ else }}
-        <div class="block has-text-warning">No Users</div>
-    {{ end }}
+        {{ if .Users }}
+            <div class="block">
+                <table id="tenant-user-table" class="datatable display">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>MFA</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody hx-target="closest tr" hx-swap="outerHTML">
+                        {{ range .Users }}
+                            {{ template "userFragment" . }}
+                        {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        {{ else }}
+            <div class="block has-text-warning">No Users</div>
+        {{ end }}
+    </div>
 </div>
 {{ end }}
 
 {{ define "tenantSummary" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.TenantView*/}}
-<div class="container">
-    <div class="columns">
-        <!-- Column 1 -->
-        <div class="column is-half">
-            <div class="field">
-                <label class="label">Name</label>
-                <span class="value">{{ .Name }}</span>
-            </div>
-            <div class="field">
-                <label class="label">Description</label>
-                {{ template "tenantDescriptionForm" . }}
-            </div>
-            <div class="field">
-                <label class="label">Roles</label>
-                <span class="value">{{ .Roles.Display }}</span>
-            </div>
-            <div class="field">
-                <label class="label">Sub-Roles</label>
-                <span class="value">{{ .SubTenantRoles.Display }}</span>
-            </div>
-        </div>
+    <div class="box">
+        <div class="container">
+            <div class="columns">
+                <!-- Column 1 -->
+                <div class="column is-half">
+                    <div class="field">
+                        <label class="label">Name</label>
+                        <span class="value">{{ .Name }}</span>
+                    </div>
+                    <div class="field">
+                        <label class="label">Description</label>
+                        {{ template "tenantDescriptionForm" . }}
+                    </div>
+                    <div class="field">
+                        <label class="label">Roles</label>
+                        <span class="value">{{ .Roles.Display }}</span>
+                    </div>
+                    <div class="field">
+                        <label class="label">Sub-Roles</label>
+                        <span class="value">{{ .SubTenantRoles.Display }}</span>
+                    </div>
+                </div>
 
-        <!-- Column 2 -->
-        <div class="column is-half">
-            <div class="field">
-                <label class="label">Time Created</label>
-                <span class="value">{{ .CreatedAt }}</span>
-            </div>
-            <div class="field">
-                <label class="label">State</label>
-                <span class="value">{{ .State }}</span>
-            </div>
-            <div class="field">
-                <label class="label">Cognito User Pool</label>
-                <span class="value">
-                    <i class="fa-brands fa-aws"></i>
-                    <a href="{{ .UserPoolCognitoURL }}" target="_blank">{{ .UserPoolID }}</a>
-                </span>
+                <!-- Column 2 -->
+                <div class="column is-half">
+                    <div class="field">
+                        <label class="label">Time Created</label>
+                        <span class="value">{{ .CreatedAt }}</span>
+                    </div>
+                    <div class="field">
+                        <label class="label">State</label>
+                        <span class="value">{{ .State }}</span>
+                    </div>
+                    <div class="field">
+                        <label class="label">Cognito User Pool</label>
+                        <span class="value">
+                            <i class="fa-brands fa-aws"></i>
+                            <a href="{{ .UserPoolCognitoURL }}" target="_blank">{{ .UserPoolID }}</a>
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 {{ end }}
 
 {{ define "tenantDescriptionForm" }}
@@ -490,22 +494,22 @@
     {{ template "header" . }}
     <body>
         {{ template "navbar" . }}
-        <section class="section">
-        <div class="container">
-            <div class="panel is-info">
-                <p class="panel-heading">Tenant: {{ .Tenant.Name }}</p>
-                <div class="panel-block">
-                    <div class="container">
-                        <div id="tenant-tabs"
-                             hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/tabs/%s" .Tenant.ID .TenantTab }}"
-                             hx-trigger="load delay:100ms"
-                             hx-target="#tenant-tabs"
-                             hx-swap="innerhtml">
+        <section class="section landlord-background-section">
+            <div class="container">
+                <div class="panel is-info landlord-panel">
+                    <p class="panel-heading">Tenant: {{ .Tenant.Name }}</p>
+                    <div class="panel-block">
+                        <div class="container">
+                            <div id="tenant-tabs"
+                                 hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/tabs/%s" .Tenant.ID .TenantTab }}"
+                                 hx-trigger="load delay:100ms"
+                                 hx-target="#tenant-tabs"
+                                 hx-swap="innerhtml">
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
         </section>
     </body>
 </html>
