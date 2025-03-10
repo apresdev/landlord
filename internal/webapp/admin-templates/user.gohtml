@@ -1,61 +1,62 @@
 {{ define "userSummaryCard" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.UserView*/}}
-<div class="container">
-    <div class="columns">
-        <!-- Column 1 -->
-        <div class="column is-half">
-            <div class="field">
-                <label class="label">Name</label>
-                <span class="value">{{ .Username }}</span>
-            </div>
-            <div class="field">
-                <label class="label">Multi-Factor Authentication Policy</label>
-                <span class="value">{{ .MFAPolicy }}</span>
-            </div>
-            <div class="field">
-                <label class="label">Tenant</label>
-                <span class="value">
-                    <a href="{{ .Tenant.Link }}">{{ .Tenant.Name }}</a>
-                </span>
-            </div>
-            <div class="field">
-                <label class="label">Role</label>
-                <span class="value">{{ .Role }}</span>
+    <div class="box">
+        <div class="container">
+            <div class="columns">
+                <!-- Column 1 -->
+                <div class="column is-half">
+                    <div class="field">
+                        <label class="label">Name</label>
+                        <span class="value">{{ .Username }}</span>
+                    </div>
+                    <div class="field">
+                        <label class="label">Multi-Factor Authentication Policy</label>
+                        <span class="value">{{ .MFAPolicy }}</span>
+                    </div>
+                    <div class="field">
+                        <label class="label">Tenant</label>
+                        <span class="value">
+                            <a href="{{ .Tenant.Link }}">{{ .Tenant.Name }}</a>
+                        </span>
+                    </div>
+                    <div class="field">
+                        <label class="label">Role</label>
+                        <span class="value">{{ .Role }}</span>
+                    </div>
+                </div>
+
+                <!-- Column 2 -->
+                <div class="column is-half">
+                    <div class="field">
+                        <label class="label">State</label>
+                        <span class="value">{{ .Status }}</span>
+                    </div>
+                    <div class="field">
+                        <label class="label">Impersonation</label>
+                        {{ if .IsImpersonating }}
+                            <span class="value">{{ .ImpersonationName }}</span>
+                            <button class="button is-small" hx-post="/ll-auth/app/admin/clear-impersonation">
+                                Clear Impersonation
+                            </button>
+                        {{ else }}
+                            <span class="value">None</span>
+                        {{ end }}
+                    </div>
+                    <div class="field">
+                        <label class="label">Time Created</label>
+                        <span class="value">{{ .CreatedAt }}</span>
+                    </div>
+                    <div class="field">
+                        <label class="label">Cognito User ID</label>
+                        <span class="value">
+                            <i class="fa-brands fa-aws"></i>
+                            <a href="{{ .CogURL }}" target="_blank">{{ .ID }}</a>
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Column 2 -->
-        <div class="column is-half">
-            <div class="field">
-                <label class="label">State</label>
-                <span class="value">{{ .Status }}</span>
-            </div>
-            <div class="field">
-                <label class="label">Impersonation</label>
-                {{ if .IsImpersonating }}
-                    <span class="value">{{ .ImpersonationName }}</span>
-                    <button class="button is-small" hx-post="/ll-auth/app/admin/clear-impersonation">
-                        Clear Impersonation
-                    </button>
-                {{ else }}
-                    <span class="value">None</span>
-                {{ end }}
-            </div>
-            <div class="field">
-                <label class="label">Time Created</label>
-                <span class="value">{{ .CreatedAt }}</span>
-            </div>
-            <div class="field">
-                <label class="label">Cognito User ID</label>
-                <span class="value">
-                    <i class="fa-brands fa-aws"></i>
-                    <a href="{{ .CogURL }}" target="_blank">{{ .ID }}</a>
-                </span>
-            </div>
-        </div>
-
     </div>
-</div>
 {{ end }}
 
 {{ define "userSummary" }}
@@ -118,9 +119,9 @@
         {{ template "header" . }}
         <body>
         {{ template "navbar" . }}
-        <section class="section">
+        <section class="section landlord-background-section">
             <div class="container">
-                <div class="panel is-link">
+                <div class="panel is-link landlord-panel">
                     <p class="panel-heading">User: {{ .SelectedUser.Username }}</p>
                     <div class="panel-block">
                         <div class="container">

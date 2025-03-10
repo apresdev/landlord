@@ -122,6 +122,7 @@ func handleLogoutSubmit(a App, c *gin.Context) error {
 }
 
 func handleQRCode(a App, c *gin.Context) error {
+	_ = a
 	uri := c.Query("uri")
 	if uri == "" {
 		c.String(http.StatusBadRequest, "missing uri")

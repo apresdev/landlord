@@ -1,3 +1,43 @@
+/* Theme colors */
+
+/* Define theme variables */
+:root {
+    /* Light theme (default) */
+    --landlord-background: var(--bulma-white-bis);
+    --landlord-panel-background: var(--bulma-white-ter);
+    --landlord-border-color: var(--bulma-grey-darker);
+}
+
+/* Dark theme class */
+.theme-dark {
+    --landlord-background: var(--bulma-grey-dark);
+    --landlord-panel-background: var(--bulma-grey-darker);
+    --landlord-border-color: var(--bulma-grey-lighter);
+}
+
+.landlord-background-section {
+    background-color: var(--landlord-background);
+}
+
+.landlord-panel {
+    background-color: var(--landlord-panel-background);
+    border-color: var(--landlord-border-color);
+}
+
+/*  Toggle button styles */
+
+.theme-toggle-btn {
+    cursor: pointer;
+    margin: 0.5rem;
+}
+
+.theme-toggle-btn .icon {
+    margin-right: 0.5rem;
+}
+
+
+/* Tooltip styles */
+
 .tooltip-wrapper {
     position: relative;
     display: inline-block;
@@ -25,6 +65,9 @@
     visibility: visible;
     opacity: 1;
 }
+
+
+/* Table styles */
 
 .narrow-numeric {
     white-space: nowrap;
