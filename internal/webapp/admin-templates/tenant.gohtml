@@ -372,6 +372,21 @@
                             <a href="{{ .UserPoolCognitoURL }}" target="_blank">{{ .UserPoolID }}</a>
                         </span>
                     </div>
+                    <div class="field">
+                        <label class="label">User Activity Reports</label>
+                        <span class="value">
+                            <button class="button is-primary is-outlined"
+                                    onclick="downloadCSV({{ .UserActivityReportLink }})">
+                                Run Activity Report
+                            </button>
+                        </span>
+                        <span class="value">
+                            <button class="button is-primary is-outlined"
+                                    onclick="downloadCSV({{ .UserSummaryReportLink }})">
+                                Run Summary Report
+                            </button>
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>

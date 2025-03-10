@@ -232,6 +232,20 @@ func (tv TenantView) UserPoolCognitoURL() string {
 	return authx.CognitoUserPoolURL(tv.a.Cfg().Region, tv.ten.UserPoolID)
 }
 
+func (tv TenantView) UserActivityReportLink() string {
+	if tv.ten == nil {
+		return unknownViewValue
+	}
+	return fmt.Sprintf("/ll-auth/app/admin/tenants/%s/activity-report", tv.ten.ID.String())
+}
+
+func (tv TenantView) UserSummaryReportLink() string {
+	if tv.ten == nil {
+		return unknownViewValue
+	}
+	return fmt.Sprintf("/ll-auth/app/admin/tenants/%s/summary-report", tv.ten.ID.String())
+}
+
 func (tv TenantView) IsRoot() bool {
 	return tv.ten != nil && tv.ten.IsRoot()
 }
