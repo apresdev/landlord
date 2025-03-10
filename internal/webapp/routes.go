@@ -158,6 +158,9 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	auth.POST("/admin/tenants/:tenantID/sub-roles", handleAdminAddSubRoleSubmit)
 	auth.DELETE("/admin/tenants/:tenantID/sub-roles/:subrole", handleAdminDeleteSubRoleSubmit)
 	auth.GET("/admin/tenants/:tenantID/users/:userID", handleAdminUser)
+	auth.GET("/admin/tenants/:tenantID/activity-report", handleAdminActivityReport)
+	auth.GET("/admin/tenants/:tenantID/summary-report", handleAdminSummaryReport)
+
 	auth.GET("/admin/profile", handleAdminProfile)
 	auth.GET("/admin/profile/:tab", handleAdminProfileTab)
 
