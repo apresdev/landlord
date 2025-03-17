@@ -1077,3 +1077,83 @@ func handleAdminUserTab(a App, c *gin.Context) error {
 		return executeAdminTemplate(c, userSummaryTab.TabTemplateName(), sv)
 	}
 }
+
+func handleAdminUserRoleSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
+		redirectToLogin(c)
+		return nil
+	}
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return err
+	}
+	userID, err := rest.UUIDParam(c, "userID")
+	if err != nil {
+		return err
+	}
+	role := c.PostForm("role")
+	targetTenant, targetUser, err := rest.HandleUpdateUserRole(a, c, sub, role, tenantID, userID)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	uv := NewUserView(c.Request.Context(), a, sub, targetTenant, targetUser)
+	return executeUserTemplate(c, "userRoleForm", uv)
+}
+
+func handleAdminUserRoleEditForm(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
+		redirectToLogin(c)
+		return nil
+	}
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	userID, err := rest.UUIDParam(c, "userID")
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
+	if err != nil {
+		zap.L().Error("error fetching user",
+			zap.Error(err),
+			zap.String("tenantID", tenantID.String()),
+			zap.String("userID", userID.String()))
+		return apperr.NewUnauthorized("not authorized")
+	}
+	uv := NewUserView(c.Request.Context(), a, sub, targetTenant, targetUser)
+	return executeUserTemplate(c, "userRoleEditForm", uv)
+}
+
+func handlerAdminUserRoleForm(a App, c *gin.Context) error {
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	userID, err := rest.UUIDParam(c, "userID")
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
+	if err != nil {
+		zap.L().Error("error fetching user",
+			zap.Error(err),
+			zap.String("tenantID", tenantID.String()),
+			zap.String("userID", userID.String()))
+		return apperr.NewUnauthorized("not authorized")
+	}
+	uv := NewUserView(c.Request.Context(), a, nil, targetTenant, targetUser)
+	return executeUserTemplate(c, "userRoleForm", uv)
+}

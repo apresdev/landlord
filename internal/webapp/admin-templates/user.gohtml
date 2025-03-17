@@ -21,7 +21,11 @@
                     </div>
                     <div class="field">
                         <label class="label">Role</label>
-                        <span class="value">{{ .Role }}</span>
+                        {{ if .IsTheSubject }}
+                            <span class="value">{{ .Role }}</span>
+                        {{ else }}
+                            <span class="value">{{ template "userRoleForm" . }}</span>
+                        {{ end }}
                     </div>
                 </div>
 
@@ -57,6 +61,38 @@
             </div>
         </div>
     </div>
+{{ end }}
+
+{{ define "userRoleForm" }}
+    {{- /*gotype: github.com/apresdev/landlord/internal/webapp.UserView*/}}
+    <span class="value" id="edit-user-role-form">
+    {{ .Role }}
+    <button class="icon-button"
+            hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/users/%s/role/edit" .Tenant.ID .ID }}"
+            hx-target="#edit-user-role-form">
+        <i class="fa-sharp fa-pen-to-square"></i>
+    </button>
+</span>
+{{ end }}
+
+{{ define "userRoleEditForm" }}
+    {{- /*gotype: github.com/apresdev/landlord/internal/webapp.UserView*/}}
+    <form hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/users/%s/role/edit" .Tenant.ID .ID }}"
+          hx-target="#edit-user-role-form"
+          hx-swap="innerHTML">
+        <label>
+            <select class="select" id="role" name="role">
+                {{ range .Tenant.Roles.Views }}
+                    <option value="{{ .Name }}" {{ if eq .Name $.Role }}selected{{ end }}>{{ .Name }}</option>
+                {{ end }}
+            </select>
+        </label>
+        <button class="button" type="submit">Submit</button>
+        <button class="button" type="button"
+                hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/users/%s/role/form" .Tenant.ID .ID }}"
+                hx-target="#edit-user-role-form"
+                hx-swap="innerHTML">Cancel</button>
+    </form>
 {{ end }}
 
 {{ define "userSummary" }}
