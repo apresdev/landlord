@@ -142,6 +142,10 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	auth.GET("/admin/tenants/:tenantID/users/:userID/field/edit", handleAdminUserProfileFieldEditForm)
 	auth.GET("/admin/tenants/:tenantID/users/:userID/field/form", handlerAdminUserProfileFieldForm)
 
+	auth.POST("/admin/tenants/:tenantID/users/:userID/role/edit", handleAdminUserRoleSubmit)
+	auth.GET("/admin/tenants/:tenantID/users/:userID/role/edit", handleAdminUserRoleEditForm)
+	auth.GET("/admin/tenants/:tenantID/users/:userID/role/form", handlerAdminUserRoleForm)
+
 	auth.GET("/admin/tenants/:tenantID/users/:userID/tabs/:tab", handleAdminUserTab)
 
 	auth.POST("/admin/tenants/:tenantID/field/edit", handleAdminTenantProfileFieldSubmit)
