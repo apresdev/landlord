@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/apresdev/landlord/internal/perms"
@@ -69,7 +68,7 @@ func HandleCreateTenant(
 		req.Name,
 		req.Description)
 	if err != nil {
-		return nil, fmt.Errorf("error creating tenant: %w", err)
+		return nil, err
 	}
 	var resp TenantResponse
 	resp.Tenant.Id = tenant.ID.String()

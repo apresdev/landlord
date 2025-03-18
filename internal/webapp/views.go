@@ -170,13 +170,23 @@ type ProfileTab struct {
 }
 
 type TenantView struct {
-	ctx context.Context
-	a   App
-	ten *multi.Tenant
+	ctx    context.Context
+	a      App
+	ten    *multi.Tenant
+	errMsg string
 }
 
 func NewTenantView(ctx context.Context, a App, ten *multi.Tenant) TenantView {
 	return TenantView{ctx: ctx, a: a, ten: ten}
+}
+
+func (tv TenantView) WithErrMsg(msg string) TenantView {
+	tv.errMsg = msg
+	return tv
+}
+
+func (tv TenantView) ErrMsg() string {
+	return tv.errMsg
 }
 
 func (tv TenantView) Tenant() *multi.Tenant {

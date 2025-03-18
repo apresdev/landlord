@@ -10,9 +10,9 @@
             <div class="panel is-primary landlord-panel">
                 <p class="panel-heading">Tenants</p>
                 <div class="panel-block">
-                  <div class="container">
+                    <div class="container">
                         {{ template "createTenantTableAndForm" . }}
-                  </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -33,38 +33,38 @@
 {{ define "createTenantForm" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
 <div id="create-tenant-form">
+  {{ if .ErrMsg }}
+    <div id="create-tenant-error-message" class="has-text-danger">{{ .ErrMsg }}</div>
+  {{ end }}
   <form class="form-wrapper"
     hx-post="/ll-auth/app/admin/tenant-ops/create-tenant-submit"
     hx-target="#create-tenant-table-and-form"
     hx-swap="innerHTML">
-    <label>Name:
+    <label class="mt-1">Name:
         <input class="input" type="text" name="name" />
     </label>
-    <label>Description:
+    <label class="mt-1">Description:
         <input class="input" type="text" name="description" />
     </label>
-    <button class="button" type="submit">Submit</button>
-    <button class="button" type="button"
+    <button class="button is-primary mt-2" type="submit">Submit</button>
+    <button class="button mt-2" type="button"
         hx-get="/ll-auth/app/admin/tenant-ops/create-tenant-button"
         hx-target="#create-tenant-form"
         hx-swap="innerHTML">Cancel</button>
   </form>
-  {{ if .ErrMsg }}
-      <div id="create-tenant-error-message" class="error-text">{{ .ErrMsg }}</div>
-  {{ end }}
 </div>
 {{ end }}
 
 {{ define "createTenantTableAndForm" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
-<div class="box">
 <div id="create-tenant-table-and-form">
   {{ if .ErrMsg }}
       {{ template "createTenantForm" . }}
   {{ else }}
       {{ template "createTenantButton" }}
   {{ end }}
-    <div class="container pt-3">
+    <div class="container mt-4">
+      <div class="box">
     <table id="tenants-table" class="datatable display">
         <thead>
             <tr>
@@ -80,7 +80,7 @@
         {{ end }}
         </tbody>
     </table>
+      </div>
     </div>
-</div>
 </div>
 {{ end }}
