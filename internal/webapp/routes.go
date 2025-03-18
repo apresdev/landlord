@@ -126,10 +126,14 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	auth.POST("/admin/tenants/:tenantID/description/edit", handleAdminDescriptionSubmit)
 	auth.GET("/admin/tenants/:tenantID/description/edit", handleAdminDescriptionEditForm)
 	auth.GET("/admin/tenants/:tenantID/description/form", handleAdminDescriptionForm)
-	auth.GET("/admin/tenants/:tenantID/invite-user-form", handleAdminInviteUserForm)
-	auth.GET("/admin/tenants/:tenantID/invite-user-button", handleAdminInviteUserButton)
 
-	auth.POST("/admin/tenants/:tenantID/users", handleAdminInviteUserSubmit)
+	auth.GET("/admin/tenants/:tenantID/invite-user-form", handleAdminInviteUserForm)
+	auth.POST("/admin/tenants/:tenantID/invite-user-form", handleAdminInviteUserSubmit)
+	auth.GET("/admin/tenants/:tenantID/bulk-invite-form", handleBulkInviteForm)
+	auth.POST("/admin/tenants/:tenantID/bulk-invite-form", handleBulkInviteSubmit)
+	auth.GET("/admin/tenants/:tenantID/invite-buttons", handleInviteButtons)
+	auth.GET("/admin/tenants/:tenantID/bulk-invite-template", handleBulkInviteTemplate)
+
 	auth.POST("/admin/tenants/:tenantID/users/:userID/activate", handleAdminActivateUserSubmit)
 	auth.POST("/admin/tenants/:tenantID/users/:userID/deactivate", handleAdminDeactivateUserSubmit)
 	auth.POST("/admin/tenants/:tenantID/users/:userID/cancel-invite", handleAdminCancelInviteSubmit)

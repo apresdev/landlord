@@ -102,8 +102,8 @@
         <label>
             <input class="input" type="{{ .HTMLInputType }}" name="fieldValue" value="{{ .Value }}" maxlength="256" autofocus>
         </label>
-        <button class="button" type="submit">Submit</button>
-        <button class="button" type="button"
+        <button class="button is-primary mt-2" type="submit">Submit</button>
+        <button class="button mt-2" type="button"
                 hx-get="{{ .FormLink }}"
                 hx-target="{{ printf "#edit-%s" .Name }}"
                 hx-swap="innerHTML">

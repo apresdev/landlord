@@ -87,7 +87,7 @@
                 {{ end }}
             </select>
         </label>
-        <button class="button" type="submit">Submit</button>
+        <button class="button is-primary" type="submit">Submit</button>
         <button class="button" type="button"
                 hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/users/%s/role/form" .Tenant.ID .ID }}"
                 hx-target="#edit-user-role-form"

@@ -239,73 +239,164 @@
 </tr>
 {{ end }}
 
-{{ define "inviteUserButton" }}
-{{- /*gotype: github.com/apresdev/landlord/internal/webapp.TenantView*/}}
-<div id="invite-user-form">
-    <button class="button"
-        hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/invite-user-form" .Tenant.ID }}"
-        hx-target="#invite-user-form">
-        Invite User
-    </button>
-</div>
+{{ define "inviteButtons" }}
+    <div class="container">
+        <button class="button"
+                hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/invite-user-form" . }}"
+                hx-target="#invite-form">
+            Invite User
+        </button>
+        <button class="button"
+                hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/bulk-invite-form" . }}"
+                hx-target="#invite-form">
+            Bulk Invite
+        </button>
+        <a class="button"
+           href="{{ printf "/ll-auth/app/admin/tenants/%s/bulk-invite-template" . }}"
+           download="bulk-invite.csv">
+            Download Bulk Invite Template
+        </a>
+    </div>
 {{ end }}
 
 {{ define "inviteUserForm" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.TenantView*/}}
 <form class="box"
-      hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/users" .Tenant.ID }}"
+      hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/invite-user-form" .Tenant.ID }}"
       hx-target="#invite-user-table-and-form"
       hx-swap="innerHTML">
-    <div class="block">
-        <label>Email:
-            <input class="input" type="email" name="username" placeholder="Enter email address">
-        </label>
-    </div>
-    <div class="block">
-        <label>Role:
-            <select class="select" id="role" name="role">
-                {{ range .Roles.Views }}
-                    <option value="{{ .Name }}">{{ .Name }}</option>
-                {{ end }}
-            </select>
-        </label>
-        <label>Multi-Factor Authentication Policy:
-            <select class="select" id="mfaPolicy" name="mfaPolicy">
-                {{ range .MFAPolicyStrings }}
-                    <option value="{{ . }}">{{ . }}</option>
-                {{ end }}
-            </select>
-        </label>
+    <div class="columns">
+        <div class="column">
+            {{ if .ErrMsg }}
+                <div class="has-text-danger">{{ .ErrMsg }}</div>
+            {{ end }}
+            <div class="mb-1">
+                <label for="username">Email</label>
+            </div>
+            <div>
+                <input class="input" type="email" name="username" id="username" placeholder="Enter email address">
+            </div>
+            <div class="mt-3 mb-1">
+                <label for="role">Role</label>
+            </div>
+            <div>
+                <select class="select" id="role" name="role">
+                    {{ range .Roles.Views }}
+                        <option value="{{ .Name }}">{{ .Name }}</option>
+                    {{ end }}
+                </select>
+            </div>
+            <div class="mt-3 mb-1">
+                <label for="mfaPolicy">Multi-Factor Authentication Policy</label>
+            </div>
+            <div>
+                <select class="select" id="mfaPolicy" name="mfaPolicy">
+                    {{ range .MFAPolicyStrings }}
+                        <option value="{{ . }}">{{ . }}</option>
+                    {{ end }}
+                </select>
+            </div>
+        </div>
+        <div class="column box">
+            <div class="is-size-5">Optional Profile Fields</div>
+            {{ range .UserProfileDefinition.Fields }}
+                <div class="mt-2">
+                    <label>{{ .UIName }}</label>
+                    <input class="input" type="text" name="{{ .Name }}" placeholder="Optional">
+                </div>
+            {{ end }}
+        </div>
     </div>
     <button class="button is-primary" type="submit">Submit</button>
     <button class="button" type="button"
-            hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/invite-user-button" .Tenant.ID }}"
-            hx-target="#invite-user-form"
+            hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/invite-buttons" .Tenant.ID }}"
+            hx-target="#invite-form"
             hx-swap="innerHTML">
         Cancel
     </button>
-    <div class="box">
-      <div class="is-size-4">Optional Profile Fields</div>
-        {{ range .UserProfileDefinition.Fields }}
-          <div>
-            <label>{{ .UIName }}</label>
-            <input class="input" type="text" name="{{ .Name }}" placeholder="Optional">
-          </div>
-        {{ end }}
-    </div>
 </form>
+{{ end }}
+
+{{ define "bulkInviteForm" }}
+    {{- /*gotype: github.com/apresdev/landlord/internal/webapp.TenantView*/}}
+    <form class="box"
+          hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/bulk-invite-form" .Tenant.ID }}"
+          hx-target="#invite-user-table-and-form"
+          hx-swap="innerHTML">
+        <div class="block">
+            {{ if .ErrMsg }}
+                <div class="has-text-danger">{{ .ErrMsg }}</div>
+            {{ end }}
+            <div class="box">
+                <!-- Drag and Drop Area -->
+                <div class="drag-area"
+                     id="dropZone"
+                     hx-on:dragover="event.preventDefault(); this.classList.add('is-dragover')"
+                     hx-on:dragleave="this.classList.remove('is-dragover')"
+                     hx-on:drop="event.preventDefault(); this.classList.remove('is-dragover'); document.getElementById('fileInput').files = event.dataTransfer.files; document.getElementById('fileName').textContent = event.dataTransfer.files[0].name;"
+                >
+                    <div class="has-text-centered">
+                        <p class="is-size-5 mb-2">Drag and drop bulk invite CSV file here</p>
+                        <p class="is-size-7 has-text-grey">or use the file browser below</p>
+                    </div>
+                </div>
+
+                <!-- File Input with Bulma Styling -->
+                <div class="file has-name is-fullwidth mt-4">
+                    <label class="file-label">
+                        <input class="file-input"
+                               id="fileInput"
+                               type="file"
+                               name="file"
+                               hx-on:change="document.getElementById('fileName').textContent = this.files[0].name;"
+                        >
+                        <span class="file-cta">
+                            <span class="file-icon">
+                                <i class="fa-sharp fa-upload"></i>
+                            </span>
+                            <span class="file-label">
+                                Choose a file...
+                            </span>
+                        </span>
+                        <span id="fileName" class="file-name">
+                            No file selected
+                        </span>
+                    </label>
+                </div>
+                <button class="button is-primary"
+                        hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/bulk-invite-form" .Tenant.ID }}"
+                        hx-encoding="multipart/form-data"
+                        hx-include="#fileInput"
+                        hx-target="#invite-user-table-and-form">
+                    Bulk Invite
+                </button>
+                <button class="button"
+                        hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/invite-buttons" .Tenant.ID }}"
+                        hx-target="#invite-form"
+                        hx-swap="innerHTML">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </form>
 {{ end }}
 
 {{ define "inviteUserTableAndForm" }}
 {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
 <div id="invite-user-table-and-form">
-    <div class="box">
-        <div class="block">
-            {{ template "inviteUserButton" . }}
-            <div id="invite-user-error-message" class="error-container">{{ .ErrMsg }}</div>
+    <div class="block">
+        <div class="container" id="invite-form">
+            {{ template "inviteButtons" .Tenant.ID }}
         </div>
+    </div>
+    <div class="box">
         {{ if .Users }}
             <div class="block">
+                {{ if eq .TenantTab "invites" }}
+                    <div class="is-size-2">Outstanding Invites</div>
+                {{ else }}
+                    <div class="is-size-2">All Users</div>
+                {{ end }}
                 <table id="tenant-user-table" class="datatable display">
                     <thead>
                         <tr>
@@ -324,7 +415,11 @@
                 </table>
             </div>
         {{ else }}
-            <div class="block has-text-warning">No Users</div>
+            {{ if eq .TenantTab "invites" }}
+                <div class="is-size-4">No Outstanding Invites</div>
+            {{ else }}
+                <div class="is-size-4 has-text-warning">No Users</div>
+            {{ end }}
         {{ end }}
     </div>
 </div>
@@ -375,15 +470,15 @@
                     <div class="field">
                         <label class="label">User Activity Reports</label>
                         <span class="value">
-                            <button class="button is-primary is-outlined"
-                                    onclick="downloadCSV({{ .UserActivityReportLink }})">
-                                Run Activity Report
+                            <button class="button is-primary is-outlined" id="runActivityReportBtn"
+                                    onclick="downloadInBackground({{ .UserActivityReportLink }}, 'runActivityReportBtn');">
+                                Download Activity Report
                             </button>
                         </span>
                         <span class="value">
-                            <button class="button is-primary is-outlined"
-                                    onclick="downloadCSV({{ .UserSummaryReportLink }})">
-                                Run Summary Report
+                            <button class="button is-primary is-outlined" id="runSummaryReportBtn"
+                                    onclick="downloadInBackground({{ .UserSummaryReportLink }}, 'runSummaryReportBtn');">
+                                Download Summary Report
                             </button>
                         </span>
                     </div>
@@ -413,8 +508,8 @@
     <label>
         <input class="input" type="text" name="description" value="{{ .Description }}" maxlength="256">
     </label>
-    <button class="button" type="submit">Submit</button>
-    <button class="button" type="button"
+    <button class="button mt-2 is-primary" type="submit">Submit</button>
+    <button class="button mt-2" type="button"
         hx-get="{{ printf "/ll-auth/app/admin/tenants/%s/description/form" .ID }}"
         hx-target="#edit-description-form"
         hx-swap="innerHTML">Cancel</button>

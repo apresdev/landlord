@@ -142,6 +142,7 @@ function dataTableConfig() {
          * @param {HTMLElement} container - The container being removed/replaced
          */
         function cleanupRemovedTables(container) {
+            if (!container) return;
             const tables = container.querySelectorAll('table.datatable.initialized');
             tables.forEach(table => {
                 destroyDataTable(table);

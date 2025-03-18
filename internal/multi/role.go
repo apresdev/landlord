@@ -82,3 +82,10 @@ func (r Roles) String() string {
 	}
 	return strings.Join(result, ", ")
 }
+
+func RoleSlug(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, " ", "-")
+	return s
+}

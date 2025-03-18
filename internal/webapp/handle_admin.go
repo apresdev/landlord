@@ -1,12 +1,19 @@
 package webapp
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/csv"
+	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"slices"
 	"sort"
+	"strings"
+	"time"
 
 	"github.com/apresdev/landlord/internal/timers"
 
@@ -99,7 +106,7 @@ func handleAdminCreateTenantSubmit(a App, c *gin.Context) error {
 	_, err := rest.HandleCreateTenant(a, c, req)
 	errMsg := ""
 	if err != nil {
-		errMsg = err.Error()
+		errMsg = fmt.Sprintf("Could not create tenant: " + err.Error())
 	}
 	tens, err := rest.HandleGetTenants(a, c)
 	if err != nil {
@@ -319,18 +326,19 @@ func handleAdminInviteUserForm(a App, c *gin.Context) error {
 		c, "inviteUserForm", NewTenantView(c.Request.Context(), a, ten))
 }
 
-func handleAdminInviteUserButton(a App, c *gin.Context) error {
-	tenantID := c.Param("tenantID")
-	th, err := multi.ParseTenantHandle(tenantID)
+func handleInviteButtons(a App, c *gin.Context) error {
+	tenantID, err := rest.UUIDParam(c, "tenantID")
 	if err != nil {
 		return apperr.NewBadRequestE(err)
 	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
-	return executeTenantTemplate(
-		c, "inviteUserButton", NewTenantView(c.Request.Context(), a, ten))
+	return executeStringTemplate(c, "inviteButtons", tenantID.String())
+}
+
+func inviteUserFormError(a App, c *gin.Context, tenant *multi.Tenant, errMsg string) error {
+	c.Header("HX-Retarget", "#invite-form")
+	tv := NewTenantView(c.Request.Context(), a, tenant).
+		WithErrMsg(errMsg)
+	return executeTenantTemplate(c, "inviteUserForm", tv)
 }
 
 func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
@@ -342,19 +350,20 @@ func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
+	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+
 	var req rest.InviteRequest
 	req.Username = c.PostForm("username")
 	req.Role = c.PostForm("role")
 	req.MfaPolicy = rest.MfaPolicy(c.PostForm("mfaPolicy"))
 
 	if err := rest.HandleInviteToTenant(a, c, tenantID, req); err != nil {
-		return err
+		return inviteUserFormError(a, c, ten, err.Error())
 	}
 
-	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
 	type remembrance struct {
 		def       multi.ProfileFieldDefinition
 		formValue string
@@ -373,7 +382,7 @@ func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
 			updateProfileFieldsReq.ProfileFields = append(
 				updateProfileFieldsReq.ProfileFields,
 				rest.ProfileField{
-					Name:  r.def.Name,
+					Name:  r.def.UIName,
 					Value: r.formValue})
 		}
 		user, err := db.GetUserByName(c.Request.Context(), a.DDB(), req.Username)
@@ -383,7 +392,8 @@ func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
 		err = rest.HandleUpdateUserProfileFields(
 			a, c, tenantID, user.ID, updateProfileFieldsReq)
 		if err != nil {
-			return err
+			return inviteUserFormError(a, c, ten,
+				"Could not update profile fields during invite: "+err.Error())
 		}
 	}
 
@@ -1156,4 +1166,199 @@ func handlerAdminUserRoleForm(a App, c *gin.Context) error {
 	}
 	uv := NewUserView(c.Request.Context(), a, nil, targetTenant, targetUser)
 	return executeUserTemplate(c, "userRoleForm", uv)
+}
+
+type spaceTrimmingRows struct {
+	r *csv.Reader
+}
+
+func newSpaceTrimmingRows(r *csv.Reader) *spaceTrimmingRows {
+	return &spaceTrimmingRows{r: r}
+}
+
+// Read reads rows from the underlying CSV reader and trims spaces from each field.
+func (s *spaceTrimmingRows) Read() ([]string, error) {
+	row, err := s.r.Read()
+	if err != nil {
+		return nil, err
+	}
+	for i, field := range row {
+		row[i] = strings.TrimSpace(field)
+	}
+	return row, nil
+}
+
+func ifEmpty(s string, def string) string {
+	if s == "" {
+		return def
+	}
+	return s
+}
+
+func bulkInviteFormError(a App, c *gin.Context, tenant *multi.Tenant, errMsg string) error {
+	c.Header("HX-Retarget", "#invite-form")
+	tv := NewTenantView(c.Request.Context(), a, tenant).
+		WithErrMsg(errMsg)
+	return executeTenantTemplate(c, "bulkInviteForm", tv)
+}
+
+func handleBulkInviteSubmit(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
+		redirectToLogin(c)
+		return nil
+	}
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return err
+	}
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	// Get the CSV file from a multipart form post
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		if errors.Is(err, http.ErrMissingFile) {
+			return bulkInviteFormError(a, c, targetTenant, "No file specified")
+		}
+		return bulkInviteFormError(a, c, targetTenant, "Could not process CSV: "+err.Error())
+	}
+	defer func(file multipart.File) {
+		err := file.Close()
+		if err != nil {
+			zap.L().Error("error closing file", zap.Error(err))
+		}
+	}(file)
+
+	r := newSpaceTrimmingRows(csv.NewReader(file))
+
+	// Read the header and validate it matches the profile fields
+	header, err := r.Read()
+	if err != nil {
+		return bulkInviteFormError(a, c, targetTenant, "Could not process CSV: "+err.Error())
+	}
+	allFields := []string{"Email", "Role", "MFA Policy"}
+	for _, profileField := range targetTenant.GetUserProfileDefinition().Fields {
+		allFields = append(allFields, profileField.UIName)
+	}
+	if len(header) != len(allFields) {
+		return bulkInviteFormError(a, c, targetTenant,
+			"CSV header does not match profile fields. Expected: "+strings.Join(allFields, ", "))
+	}
+	for i, field := range allFields {
+		if header[i] != field {
+			return bulkInviteFormError(a, c, targetTenant,
+				"CSV header does not match profile fields. Expected: "+strings.Join(allFields, ", "))
+		}
+	}
+
+	// Each row after the header is an invitation
+	for {
+		row, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return bulkInviteFormError(a, c, targetTenant,
+				"Failed reading CSV: "+err.Error())
+		}
+		username := row[0]
+		if username == "" {
+			// Skip empty rows
+			continue
+		}
+
+		// Create the invite request from the values in the csv line
+		var req rest.InviteRequest
+		req.Username = row[0]
+		req.Role = multi.RoleSlug(ifEmpty(row[1], multi.RoleGuest))
+		req.MfaPolicy = rest.MfaPolicy(ifEmpty(row[2], multi.MFAPolicyNone.String()))
+		req.ProfileFields = make([]rest.ProfileField, 0)
+		for i := 3; i < len(row); i++ {
+			if row[i] == "" {
+				// Only set profile fields that have a value
+				continue
+			}
+			req.ProfileFields = append(req.ProfileFields, rest.ProfileField{
+				Name:  allFields[i],
+				Value: row[i],
+			})
+		}
+		err = rest.HandleInviteToTenant(a, c, tenantID, req)
+		if err != nil {
+			return bulkInviteFormError(a, c, targetTenant,
+				fmt.Sprintf("Invite failed for %s: %s", req.Username, err.Error()))
+		}
+	}
+	users, err := usersForTenant(c.Request.Context(), a, targetTenant)
+	if err != nil {
+		return err
+	}
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
+		WithSelectedTen(targetTenant).
+		WithUsers(users)
+	return executeAdminTemplate(c, "inviteUserTableAndForm", sv)
+}
+
+func handleBulkInviteForm(a App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
+		redirectToLogin(c)
+		return nil
+	}
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	_ = sub
+	tv := NewTenantView(c.Request.Context(), a, targetTenant)
+	return executeTenantTemplate(c, "bulkInviteForm", tv)
+}
+
+func handleBulkInviteTemplate(a App, c *gin.Context) error {
+	_, err := perms.SubjectFromContext(c)
+	if err != nil {
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
+		redirectToLogin(c)
+		return nil
+	}
+	tenantID, err := rest.UUIDParam(c, "tenantID")
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	if err != nil {
+		return apperr.NewNotFoundE(err)
+	}
+	// Create a CSV template file for inviting users that has columns for the Email, Role, and MFA Policy
+	// and the profile fields associated with the tenant.
+	csvData := [][]string{
+		{"Email", "Role", "MFA Policy"},
+	}
+	for _, profileField := range targetTenant.GetUserProfileDefinition().Fields {
+		csvData[0] = append(csvData[0], profileField.UIName)
+	}
+	b := &bytes.Buffer{}
+	w := csv.NewWriter(b)
+	err = w.WriteAll(csvData)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	w.Flush()
+	if err := w.Error(); err != nil {
+		return apperr.NewInternalE(err)
+	}
+	c.Header("Content-Type", "text/csv")
+	filename := fmt.Sprintf(
+		"bulk_invite_%s_%s.csv", targetTenant.Name, time.Now().Format("2006-01-02"))
+	c.Header("Content-Disposition", "attachment; filename="+filename)
+	c.String(http.StatusOK, b.String())
+	return nil
 }
