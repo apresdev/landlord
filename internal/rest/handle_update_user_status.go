@@ -20,9 +20,20 @@ import (
 )
 
 func handleUpdateUserStatus(app App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	tenantID := c.Param("tenantID")
 	if tenantID == "" {
 		return apperr.NewBadRequest("no tenantID provided")
+	}
+	targetTenantID, err := uuid.Parse(tenantID)
+	if err != nil {
+		zap.L().Error("error parsing tenant handle",
+			zap.Error(err),
+			zap.String("tenantID", tenantID))
+		return apperr.NewBadRequest("invalid tenantID")
 	}
 	uID := c.Param("userID")
 	if uID == "" {
@@ -35,48 +46,39 @@ func handleUpdateUserStatus(app App, c *gin.Context) error {
 			zap.String("userID", uID))
 		return apperr.NewBadRequest("invalid userID")
 	}
-	s := c.Param("userStatus")
-	if s == "" {
-		return apperr.NewBadRequest("no userStatus provided")
-	}
-	_, err = HandleUpdateUserStatus(app, c, tenantID, userID, s)
-	return err
-}
-
-func HandleUpdateUserStatus(
-	app App, c *gin.Context, tenantID string, userID uuid.UUID, rawTargetStatus string) (
-	*multi.User, error) {
-
-	targetTenantID, err := uuid.Parse(tenantID)
-	if err != nil {
-		zap.L().Error("error parsing tenant handle",
-			zap.Error(err),
-			zap.String("tenantID", tenantID))
-		return nil, apperr.NewBadRequest("invalid tenantID")
-	}
-	targetStatus, err := multi.ParseUserStatus(rawTargetStatus)
-	if err != nil {
-		return nil, apperr.NewBadRequestE(err)
-	}
-
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return nil, err
-	}
-
 	targetTenant, err := db.GetTenantByID(c.Request.Context(), app.DDB(), targetTenantID)
 	if err != nil {
 		zap.L().Error("error resolving tenant",
 			zap.Error(err),
 			zap.String("tenantID", tenantID))
-		return nil, apperr.NewBadRequest("invalid tenant")
+		return apperr.NewBadRequest("invalid tenant")
 	}
 	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), app.DDB(), targetTenant.ID, userID)
 	if err != nil {
 		zap.L().Info("user not found when setting user status",
 			zap.String("userID", userID.String()),
 			zap.Error(err))
-		return nil, apperr.NewNotFound(fmt.Sprintf("user not found: %s", userID.String()))
+		return apperr.NewNotFound(fmt.Sprintf("user not found: %s", userID.String()))
+	}
+	s := c.Param("userStatus")
+	if s == "" {
+		return apperr.NewBadRequest("no userStatus provided")
+	}
+	_, err = HandleUpdateUserStatus(app, c, sub, targetTenant, targetUser, s)
+	return err
+}
+
+func HandleUpdateUserStatus(
+	app App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User,
+	rawTargetStatus string) (*multi.User, error) {
+
+	targetStatus, err := multi.ParseUserStatus(rawTargetStatus)
+	if err != nil {
+		return nil, apperr.NewBadRequestE(err)
 	}
 
 	resource := perms.NewResource(
@@ -95,7 +97,7 @@ func HandleUpdateUserStatus(
 
 	if targetUser.Status == targetStatus {
 		zap.L().Info("user status already set",
-			zap.String("userID", userID.String()),
+			zap.String("userID", targetUser.ID.String()),
 			zap.String("username", targetUser.Username),
 			zap.String("status", targetStatus.String()))
 		return targetUser, nil
@@ -104,11 +106,11 @@ func HandleUpdateUserStatus(
 		_, err := app.CogIdp().AdminDisableUser(c.Request.Context(),
 			&cognitoidentityprovider.AdminDisableUserInput{
 				UserPoolId: aws.String(targetTenant.UserPoolID),
-				Username:   aws.String(userID.String()),
+				Username:   aws.String(targetUser.ID.String()),
 			})
 		if err != nil {
 			zap.L().Error("error disabling user",
-				zap.String("userID", userID.String()),
+				zap.String("userID", targetUser.ID.String()),
 				zap.String("username", targetUser.Username),
 				zap.Error(err))
 			return nil, apperr.NewInternalE(err)
@@ -117,11 +119,11 @@ func HandleUpdateUserStatus(
 		_, err := app.CogIdp().AdminEnableUser(c.Request.Context(),
 			&cognitoidentityprovider.AdminEnableUserInput{
 				UserPoolId: aws.String(targetTenant.UserPoolID),
-				Username:   aws.String(userID.String()),
+				Username:   aws.String(targetUser.ID.String()),
 			})
 		if err != nil {
 			zap.L().Error("error enabling user",
-				zap.String("userID", userID.String()),
+				zap.String("userID", targetUser.ID.String()),
 				zap.String("username", targetUser.Username),
 				zap.Error(err))
 			return nil, apperr.NewInternalE(err)

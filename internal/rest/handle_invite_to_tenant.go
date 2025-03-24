@@ -26,14 +26,6 @@ func handleInviteToTenant(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewBadRequest("invalid tenant ID")
 	}
-	if err := HandleInviteToTenant(app, c, tenantID, req); err != nil {
-		return err
-	}
-	c.JSON(http.StatusNoContent, nil)
-	return nil
-}
-
-func HandleInviteToTenant(app App, c *gin.Context, tenantID uuid.UUID, req InviteRequest) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
@@ -42,6 +34,19 @@ func HandleInviteToTenant(app App, c *gin.Context, tenantID uuid.UUID, req Invit
 	if err != nil {
 		return err
 	}
+	if err := HandleInviteToTenant(app, c, sub, targetTenant, req); err != nil {
+		return err
+	}
+	c.JSON(http.StatusNoContent, nil)
+	return nil
+}
+
+func HandleInviteToTenant(
+	app App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	req InviteRequest) error {
 
 	resource := perms.NewResource(
 		perms.ResourceKindInvitation, req.Role, targetTenant, nil)

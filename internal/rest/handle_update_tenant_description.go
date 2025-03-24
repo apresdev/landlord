@@ -15,15 +15,29 @@ import (
 )
 
 func handleUpdateTenantDescription(app App, c *gin.Context) error {
-	id := c.Param("tenantID")
-	if id == "" {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
+	tenantID := c.Param("tenantID")
+	if tenantID == "" {
 		return apperr.NewBadRequest("no tenantID provided")
+	}
+	th, err := multi.ParseTenantHandle(tenantID)
+	if err != nil {
+		return apperr.NewBadRequest("invalid tenantID")
+	}
+	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
+	if err != nil {
+		return err
 	}
 	var req TenantSetDescriptionRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest("invalid request")
 	}
-	if _, err := HandleUpdateTenantDescription(app, c, id, req); err != nil {
+	if _, err := HandleUpdateTenantDescription(
+		app, c, sub, targetTenant, req.Description); err != nil {
+
 		return err
 	}
 	c.JSON(http.StatusNoContent, nil)
@@ -31,23 +45,13 @@ func handleUpdateTenantDescription(app App, c *gin.Context) error {
 }
 
 func HandleUpdateTenantDescription(
-	app App, c *gin.Context, tenantID string, req TenantSetDescriptionRequest) (*multi.Tenant, error) {
+	app App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	description string) (*multi.Tenant, error) {
 
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := multi.ValidateTenantDescription(req.Description); err != nil {
-		return nil, err
-	}
-
-	th, err := multi.ParseTenantHandle(tenantID)
-	if err != nil {
-		return nil, apperr.NewBadRequest("invalid tenantID")
-	}
-	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
-	if err != nil {
+	if err := multi.ValidateTenantDescription(description); err != nil {
 		return nil, err
 	}
 
@@ -65,7 +69,7 @@ func HandleUpdateTenantDescription(
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
-	targetTenant.Description = req.Description
+	targetTenant.Description = description
 	err = db.StoreTenant(c.Request.Context(), app.DDB(), targetTenant)
 	if err != nil {
 		return nil, err

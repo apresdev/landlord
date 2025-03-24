@@ -22,11 +22,45 @@ import (
 )
 
 func handleImpersonateUser(app App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	var req ImpersonateUserRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	resp, err := HandleImpersonateUser(app, c, req)
+	if req.Tenant == "" {
+		return apperr.NewBadRequest("tenant is required")
+	}
+	if req.Username == "" {
+		return apperr.NewBadRequest("username is required")
+	}
+	if req.RefreshToken == "" {
+		return apperr.NewBadRequest("refresh token is required")
+	}
+	targetTenantHandle, err := multi.ParseTenantHandle(req.Tenant)
+	if err != nil {
+		return apperr.NewBadRequest(err.Error())
+	}
+	targetTenant, err := db.ResolveTenant(
+		c.Request.Context(), app.DDB(), targetTenantHandle)
+	if err != nil {
+		return apperr.NewBadRequest(err.Error())
+	}
+	targetUser, err := db.GetUserByName(c.Request.Context(), app.DDB(), req.Username)
+	if err != nil {
+		return apperr.NewBadRequest(err.Error())
+	}
+	if targetUser.TenantID != targetTenant.ID {
+		zap.L().Info("user does not belong to tenant",
+			zap.String("clientID", string(sub.Cid)),
+			zap.String("username", req.Username),
+			zap.String("tenantID", targetTenant.ID.String()))
+		return apperr.NewUnauthorized("not authorized")
+	}
+	resp, err := HandleImpersonateUser(
+		app, c, sub, targetTenant, targetUser, req.RefreshToken)
 	if err != nil {
 		return err
 	}
@@ -35,47 +69,17 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 }
 
 func HandleImpersonateUser(
-	app App, c *gin.Context, req ImpersonateUserRequest) (*ImpersonateResponse, error) {
+	app App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User,
+	refreshToken string) (*ImpersonateResponse, error) {
 
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return nil, err
-	}
-
-	if req.Tenant == "" {
-		return nil, apperr.NewBadRequest("tenant is required")
-	}
-	if req.Username == "" {
-		return nil, apperr.NewBadRequest("username is required")
-	}
-	if req.RefreshToken == "" {
-		return nil, apperr.NewBadRequest("refresh token is required")
-	}
-
-	targetTenantHandle, err := multi.ParseTenantHandle(req.Tenant)
-	if err != nil {
-		return nil, apperr.NewBadRequest(err.Error())
-	}
-	targetTenant, err := db.ResolveTenant(
-		c.Request.Context(), app.DDB(), targetTenantHandle)
-	if err != nil {
-		return nil, apperr.NewBadRequest(err.Error())
-	}
-	targetUser, err := db.GetUserByName(c.Request.Context(), app.DDB(), req.Username)
-	if err != nil {
-		return nil, apperr.NewBadRequest(err.Error())
-	}
-	if targetUser.TenantID != targetTenant.ID {
-		zap.L().Info("user does not belong to tenant",
-			zap.String("clientID", string(sub.Cid)),
-			zap.String("username", req.Username),
-			zap.String("tenantID", targetTenant.ID.String()))
-		return nil, apperr.NewUnauthorized("not authorized")
-	}
 	targetGroupName := targetTenant.GroupName(targetUser.Role)
 
 	resource := perms.NewResource(
-		perms.ResourceKindImpersonation, req.Username, targetTenant, targetUser)
+		perms.ResourceKindImpersonation, targetUser.Username, targetTenant, targetUser)
 	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
@@ -125,7 +129,7 @@ func HandleImpersonateUser(
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	params := make(map[string]string)
-	params["REFRESH_TOKEN"] = req.RefreshToken
+	params["REFRESH_TOKEN"] = refreshToken
 	if upc.ClientSecret != nil {
 		secretHash, err := authx.CreateSecretHash(
 			subClaim, aws.ToString(upc.ClientId), aws.ToString(upc.ClientSecret))

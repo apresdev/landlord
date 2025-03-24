@@ -25,8 +25,6 @@ import (
 	"github.com/apresdev/landlord/internal/db"
 	"github.com/apresdev/landlord/internal/multi"
 	"github.com/apresdev/landlord/internal/rest"
-	"github.com/google/uuid"
-
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -61,10 +59,8 @@ func handleAdminDashboardError(a App, c *gin.Context) error {
 	return nil
 }
 
-func handleAdminClearImpersonation(a App, c *gin.Context) error {
-	var req rest.ClearImpersonationRequest
-	req.RefreshToken, _ = c.Cookie(LandlordRefreshTokenCookie)
-	err := rest.HandleClearImpersonation(a, c, req)
+func handleAdminClearImpersonation(a App, c *gin.Context, sub *perms.Subject) error {
+	err := rest.HandleClearImpersonation(a, c, sub)
 	if err != nil {
 		return err
 	}
@@ -74,13 +70,7 @@ func handleAdminClearImpersonation(a App, c *gin.Context) error {
 	return nil
 }
 
-func handleAdminTenants(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
+func handleAdminTenants(a App, c *gin.Context, sub *perms.Subject) error {
 	tens, err := rest.HandleGetTenants(a, c)
 	if err != nil {
 		return err
@@ -99,7 +89,7 @@ func handleAdminCreateTenantForm(a App, c *gin.Context) error {
 	return executeFragmentTemplate(c, "createTenantForm", NewFragmentView())
 }
 
-func handleAdminCreateTenantSubmit(a App, c *gin.Context) error {
+func handleAdminCreateTenantSubmit(a App, c *gin.Context, sub *perms.Subject) error {
 	var req rest.CreateTenantRequest
 	req.Name = c.PostForm("name")
 	req.Description = c.PostForm("description")
@@ -112,78 +102,44 @@ func handleAdminCreateTenantSubmit(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
 		WithTenants(tens).
 		WithErrMsg(errMsg)
 	return executeAdminTemplate(c, "createTenantTableAndForm", sv)
 }
 
-func handleAdminActivateTenantSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
-	i := c.Param("tenantID")
-	if i == "" {
-		return fmt.Errorf("no id provided")
-	}
-	ten, err := rest.HandleUpdateTenantState(a, c, i, string(multi.TenantStateActive))
+func handleAdminActivateTenantSubmit(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
+	resultTenant, err := rest.HandleUpdateTenantState(
+		a, c, sub, targetTenant, string(multi.TenantStateActive))
 	if err != nil {
 		return err
 	}
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
-		WithSelectedTen(ten)
+		WithSelectedTen(resultTenant)
 	return executeTenantTemplate(c, "tenantFragment", sv.Tenant())
 }
 
-func handleAdminDeactivateTenantSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
-	i := c.Param("tenantID")
-	if i == "" {
-		return fmt.Errorf("no id provided")
-	}
-	ten, err := rest.HandleUpdateTenantState(a, c, i, string(multi.TenantStateInactive))
+func handleAdminDeactivateTenantSubmit(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
+	resultTenant, err := rest.HandleUpdateTenantState(
+		a, c, sub, targetTenant, string(multi.TenantStateInactive))
 	if err != nil {
 		return err
 	}
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
-		WithSelectedTen(ten)
+		WithSelectedTen(resultTenant)
 	return executeTenantTemplate(c, "tenantFragment", sv.Tenant())
 }
 
-func handleAdminTenant(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
+func handleAdminTenant(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
 
-	id := c.Param("tenantID")
-	th, err := multi.ParseTenantHandle(id)
-	if err != nil {
-		return apperr.NewBadRequestE(
-			fmt.Errorf("error parsing tenant ID: %w", err))
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil && !apperr.IsNotFound(err) {
-		return apperr.NewNotFoundE(
-			fmt.Errorf("error resolving tenant: %w", err))
-	}
-	if err != nil {
-		return apperr.NewInternalE(
-			fmt.Errorf("error getting tenants: %w", err))
-	}
 	startingTab := newTenantTab(c.Query("tab"))
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
-		WithSelectedTen(ten).
+		WithSelectedTen(targetTenant).
 		WithTenantTab(startingTab)
 	return executeAdminTemplate(c, "tenant", sv)
 }
@@ -200,34 +156,12 @@ func usersForTenant(ctx context.Context, a App, ten *multi.Tenant) ([]*multi.Use
 	return users, nil
 }
 
-func handleAdminTenantTab(a App, c *gin.Context) error {
-	timers.Checkpoint(c, "handleAdminTenantTab")
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
-
-	id := c.Param("tenantID")
-	th, err := multi.ParseTenantHandle(id)
-	if err != nil {
-		return apperr.NewBadRequestE(
-			fmt.Errorf("error parsing tenant ID: %w", err))
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil && !apperr.IsNotFound(err) {
-		return apperr.NewNotFoundE(
-			fmt.Errorf("error resolving tenant: %w", err))
-	}
-	if err != nil {
-		return apperr.NewInternalE(
-			fmt.Errorf("error getting tenants: %w", err))
-	}
+func handleAdminTenantTab(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
 
 	tab := newTenantTab(c.Param("tab"))
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
-		WithSelectedTen(ten).
+		WithSelectedTen(targetTenant).
 		WithTenantTab(tab)
 	timers.Checkpoint(c, "handleAdminTenantTab.switch")
 	defer timers.Checkpoint(c, "handleAdminTenantTab.done")
@@ -237,7 +171,7 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 	case tenantProfileTab:
 		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
 	case tenantUsersTab:
-		users, err := usersForTenant(c.Request.Context(), a, ten)
+		users, err := usersForTenant(c.Request.Context(), a, targetTenant)
 		if err != nil {
 			return err
 		}
@@ -245,7 +179,7 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 		timers.Checkpoint(c, "handleAdminTenantTab.withUsers")
 		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
 	case tenantInvitesTab:
-		users, err := usersForTenant(c.Request.Context(), a, ten)
+		users, err := usersForTenant(c.Request.Context(), a, targetTenant)
 		if err != nil {
 			return err
 		}
@@ -258,7 +192,7 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 		sv = sv.WithUsers(invites)
 		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
 	case tenantRolesTab:
-		users, err := usersForTenant(c.Request.Context(), a, ten)
+		users, err := usersForTenant(c.Request.Context(), a, targetTenant)
 		if err != nil {
 			return err
 		}
@@ -270,63 +204,47 @@ func handleAdminTenantTab(a App, c *gin.Context) error {
 	}
 }
 
-func handleAdminDescriptionSubmit(a App, c *gin.Context) error {
-	tenantID := c.Param("tenantID")
-	description := c.PostForm("description")
-	req := rest.TenantSetDescriptionRequest{
-		Description: description,
-	}
-	ten, err := rest.HandleUpdateTenantDescription(a, c, tenantID, req)
+func handleAdminDescriptionSubmit(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
+	ten, err := rest.HandleUpdateTenantDescription(
+		a, c, sub, targetTenant, c.PostForm("description"))
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
 	return executeTenantTemplate(
-		c, "tenantDescriptionForm", NewTenantView(c.Request.Context(), a, ten))
+		c, "tenantDescriptionForm", NewTenantView(c.Request.Context(), a, sub, ten))
 }
 
-func handleAdminDescriptionEditForm(a App, c *gin.Context) error {
-	tenantID := c.Param("tenantID")
-	th, err := multi.ParseTenantHandle(tenantID)
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
+func handleAdminDescriptionEditForm(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
+	_ = sub
 	return executeTenantTemplate(
-		c, "tenantDescriptionEditForm", NewTenantView(c.Request.Context(), a, ten))
+		c, "tenantDescriptionEditForm",
+		NewTenantView(c.Request.Context(), a, sub, targetTenant))
 }
 
-func handleAdminDescriptionForm(a App, c *gin.Context) error {
-	tenantID := c.Param("tenantID")
-	th, err := multi.ParseTenantHandle(tenantID)
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
+func handleAdminDescriptionForm(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
+	_ = sub
 	return executeTenantTemplate(
-		c, "tenantDescriptionForm", NewTenantView(c.Request.Context(), a, ten))
+		c, "tenantDescriptionForm",
+		NewTenantView(c.Request.Context(), a, sub, targetTenant))
 }
 
-func handleAdminInviteUserForm(a App, c *gin.Context) error {
-	tenantID := c.Param("tenantID")
-	th, err := multi.ParseTenantHandle(tenantID)
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
+func handleAdminInviteUserForm(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
+	_ = sub
 	return executeTenantTemplate(
-		c, "inviteUserForm", NewTenantView(c.Request.Context(), a, ten))
+		c, "inviteUserForm",
+		NewTenantView(c.Request.Context(), a, sub, targetTenant))
 }
 
 func handleInviteButtons(a App, c *gin.Context) error {
+	_ = a
 	tenantID, err := rest.UUIDParam(c, "tenantID")
 	if err != nil {
 		return apperr.NewBadRequestE(err)
@@ -334,34 +252,25 @@ func handleInviteButtons(a App, c *gin.Context) error {
 	return executeStringTemplate(c, "inviteButtons", tenantID.String())
 }
 
-func inviteUserFormError(a App, c *gin.Context, tenant *multi.Tenant, errMsg string) error {
+func inviteUserFormError(
+	a App, c *gin.Context, sub *perms.Subject, tenant *multi.Tenant, errMsg string) error {
+
 	c.Header("HX-Retarget", "#invite-form")
-	tv := NewTenantView(c.Request.Context(), a, tenant).
+	tv := NewTenantView(c.Request.Context(), a, sub, tenant).
 		WithErrMsg(errMsg)
 	return executeTenantTemplate(c, "inviteUserForm", tv)
 }
 
-func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return err
-	}
-	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
+func handleAdminInviteUserSubmit(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
 
 	var req rest.InviteRequest
 	req.Username = c.PostForm("username")
 	req.Role = c.PostForm("role")
 	req.MfaPolicy = rest.MfaPolicy(c.PostForm("mfaPolicy"))
 
-	if err := rest.HandleInviteToTenant(a, c, tenantID, req); err != nil {
-		return inviteUserFormError(a, c, ten, err.Error())
+	if err := rest.HandleInviteToTenant(a, c, sub, targetTenant, req); err != nil {
+		return inviteUserFormError(a, c, sub, targetTenant, err.Error())
 	}
 
 	type remembrance struct {
@@ -369,7 +278,7 @@ func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
 		formValue string
 	}
 	remembrances := make([]remembrance, 0)
-	for _, profileFieldDef := range ten.GetUserProfileDefinition().Fields {
+	for _, profileFieldDef := range targetTenant.GetUserProfileDefinition().Fields {
 		v := c.PostForm(profileFieldDef.Name)
 		if v != "" {
 			remembrances = append(remembrances, remembrance{
@@ -390,57 +299,46 @@ func handleAdminInviteUserSubmit(a App, c *gin.Context) error {
 			return apperr.NewNotFoundE(err)
 		}
 		err = rest.HandleUpdateUserProfileFields(
-			a, c, tenantID, user.ID, updateProfileFieldsReq)
+			a, c, sub, targetTenant, user, updateProfileFieldsReq)
 		if err != nil {
-			return inviteUserFormError(a, c, ten,
+			return inviteUserFormError(a, c, sub, targetTenant,
 				"Could not update profile fields during invite: "+err.Error())
 		}
 	}
 
-	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), tenantID)
+	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), targetTenant.ID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
-		WithSelectedTen(ten).
+		WithSelectedTen(targetTenant).
 		WithUsers(users)
 	return executeAdminTemplate(c, "inviteUserTableAndForm", sv)
 }
 
-func handleAdminAddRoleSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
+func handleAdminAddRoleSubmit(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
 	role := c.PostForm("role")
-	tenantID := c.Param("tenantID")
-	th, err := multi.ParseTenantHandle(tenantID)
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
-	if slices.Contains(ten.Roles, role) {
-		users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), ten.ID)
+	if slices.Contains(targetTenant.Roles, role) {
+		users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), targetTenant.ID)
 		if err != nil {
 			return apperr.NewInternalE(err)
 		}
 		sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
-			WithSelectedTen(ten).
+			WithSelectedTen(targetTenant).
 			WithUsers(users).
 			WithErrMsg("Role already exists: " + role)
 		return executeAdminTemplate(c, "addRoleTableAndForm", sv)
 	} else {
 		var req rest.TenantRolesRequest
-		req.Roles = append(ten.Roles, role)
-		req.SubTenantRoles = ten.SubTenantRoles
-		updatedTenant, err := rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
+		req.Roles = append(targetTenant.Roles, role)
+		req.SubTenantRoles = targetTenant.SubTenantRoles
+		updatedTenant, err := rest.HandleUpdateRolesForTenant(a, c, sub, targetTenant, req)
 		if err != nil {
 			return apperr.NewInternalE(err)
 		}
-		users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), ten.ID)
+		users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), targetTenant.ID)
 		if err != nil {
 			return apperr.NewInternalE(err)
 		}
@@ -453,32 +351,21 @@ func handleAdminAddRoleSubmit(a App, c *gin.Context) error {
 	}
 }
 
-func handleAdminDeleteRoleSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
+func handleAdminDeleteRoleSubmit(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
 	role := c.Param("role")
-	tenantID := c.Param("tenantID")
-	th, err := multi.ParseTenantHandle(tenantID)
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
-	if !slices.Contains(ten.Roles, role) {
+	if !slices.Contains(targetTenant.Roles, role) {
 		return apperr.NewBadRequestE(fmt.Errorf("role does not exist: %s", role))
 	}
 	var req rest.TenantRolesRequest
-	req.Roles = tinytools.RemoveFromSlice(ten.Roles, role)
-	req.SubTenantRoles = ten.SubTenantRoles
-	updatedTenant, err := rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
+	req.Roles = tinytools.RemoveFromSlice(targetTenant.Roles, role)
+	req.SubTenantRoles = targetTenant.SubTenantRoles
+	updatedTenant, err := rest.HandleUpdateRolesForTenant(a, c, sub, targetTenant, req)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), ten.ID)
+	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), targetTenant.ID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
@@ -491,39 +378,28 @@ func handleAdminDeleteRoleSubmit(a App, c *gin.Context) error {
 
 func handleAdminAddRoleForm(a App, c *gin.Context) error {
 	_ = a
-	return executeStringTemplate(c, "tenantAddRoleForm", c.Param("tenantID"))
+	return executeUUIDTemplate(c, "tenantAddRoleForm", "tenantID")
 }
 
 func handleAdminAddRoleButton(a App, c *gin.Context) error {
 	_ = a
-	return executeStringTemplate(c, "tenantAddRoleButton", c.Param("tenantID"))
+	return executeUUIDTemplate(c, "tenantAddRoleButton", "tenantID")
 }
 
-func handleAdminAddSubRoleSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
+func handleAdminAddSubRoleSubmit(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
 	role := c.PostForm("subrole")
-	tenantID := c.Param("tenantID")
-	th, err := multi.ParseTenantHandle(tenantID)
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
-	if slices.Contains(ten.SubTenantRoles, role) {
+	if slices.Contains(targetTenant.SubTenantRoles, role) {
 		sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
-			WithSelectedTen(ten).
+			WithSelectedTen(targetTenant).
 			WithErrMsg("Role already exists: " + role)
 		return executeAdminTemplate(c, "addSubRoleTableAndForm", sv)
 	} else {
 		var req rest.TenantRolesRequest
-		req.Roles = ten.Roles
-		req.SubTenantRoles = append(ten.SubTenantRoles, role)
-		updatedTenant, err := rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
+		req.Roles = targetTenant.Roles
+		req.SubTenantRoles = append(targetTenant.SubTenantRoles, role)
+		updatedTenant, err := rest.HandleUpdateRolesForTenant(a, c, sub, targetTenant, req)
 		if err != nil {
 			return apperr.NewInternalE(err)
 		}
@@ -534,28 +410,17 @@ func handleAdminAddSubRoleSubmit(a App, c *gin.Context) error {
 	}
 }
 
-func handleAdminDeleteSubRoleSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
+func handleAdminDeleteSubRoleSubmit(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
 	subRole := c.Param("subrole")
-	tenantID := c.Param("tenantID")
-	th, err := multi.ParseTenantHandle(tenantID)
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
-	if !slices.Contains(ten.SubTenantRoles, subRole) {
+	if !slices.Contains(targetTenant.SubTenantRoles, subRole) {
 		return apperr.NewBadRequestE(fmt.Errorf("sub-role does not exist: %s", subRole))
 	}
 	var req rest.TenantRolesRequest
-	req.Roles = ten.Roles
-	req.SubTenantRoles = tinytools.RemoveFromSlice(ten.SubTenantRoles, subRole)
-	updatedTenant, err := rest.HandleUpdateRolesForTenant(a, c, req, tenantID)
+	req.Roles = targetTenant.Roles
+	req.SubTenantRoles = tinytools.RemoveFromSlice(targetTenant.SubTenantRoles, subRole)
+	updatedTenant, err := rest.HandleUpdateRolesForTenant(a, c, sub, targetTenant, req)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
@@ -567,34 +432,23 @@ func handleAdminDeleteSubRoleSubmit(a App, c *gin.Context) error {
 
 func handleAdminAddSubRoleForm(a App, c *gin.Context) error {
 	_ = a
-	return executeStringTemplate(c, "addSubRoleForm", c.Param("tenantID"))
+	return executeUUIDTemplate(c, "addSubRoleForm", "tenantID")
 }
 
 func handleAdminAddSubRoleButton(a App, c *gin.Context) error {
 	_ = a
-	return executeStringTemplate(c, "addSubRoleButton", c.Param("tenantID"))
+	return executeUUIDTemplate(c, "addSubRoleButton", "tenantID")
 }
 
-func handleAdminActivateUserSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
-	tenantID := c.Param("tenantID")
-	if tenantID == "" {
-		return apperr.NewBadRequest("no tenant ID provided")
-	}
-	uID := c.Param("userID")
-	if uID == "" {
-		return apperr.NewBadRequest("no user ID provided")
-	}
-	userID, err := uuid.Parse(uID)
-	if err != nil {
-		return apperr.NewBadRequestE(
-			fmt.Errorf("error parsing user ID: %w", err))
-	}
+func handleAdminActivateUserSubmit(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
 	user, err := rest.HandleUpdateUserStatus(
-		a, c, tenantID, userID, string(multi.TenantStateActive))
+		a, c, sub, targetTenant, targetUser, string(multi.TenantStateActive))
 	if err != nil {
 		return err
 	}
@@ -606,145 +460,106 @@ func handleAdminActivateUserSubmit(a App, c *gin.Context) error {
 		c, "userFragment", NewUserView(c.Request.Context(), a, sub, ten, user))
 }
 
-func handleAdminDeactivateUserSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
+func handleAdminDeactivateUserSubmit(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
+	resultUser, err := rest.HandleUpdateUserStatus(
+		a, c, sub, targetTenant, targetUser, string(multi.TenantStateInactive))
 	if err != nil {
 		return err
-	}
-	tenantID := c.Param("tenantID")
-	if tenantID == "" {
-		return apperr.NewBadRequest("no tenant ID provided")
-	}
-	uID := c.Param("userID")
-	if uID == "" {
-		return apperr.NewBadRequest("no user ID provided")
-	}
-	userID, err := uuid.Parse(uID)
-	if err != nil {
-		return apperr.NewBadRequestE(
-			fmt.Errorf("error parsing user ID: %w", err))
-	}
-	user, err := rest.HandleUpdateUserStatus(
-		a, c, tenantID, userID, string(multi.TenantStateInactive))
-	if err != nil {
-		return err
-	}
-	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), user.TenantID)
-	if err != nil {
-		return apperr.NewInternalE(err)
 	}
 	return executeUserTemplate(
-		c, "userFragment", NewUserView(c.Request.Context(), a, sub, ten, user))
+		c, "userFragment",
+		NewUserView(c.Request.Context(), a, sub, targetTenant, resultUser))
 }
 
-func handleAdminCancelInviteSubmit(a App, c *gin.Context) error {
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return err
-	}
-	userID, err := rest.UUIDParam(c, "userID")
-	if err != nil {
-		return err
-	}
-	if err := rest.HandleCancelInvitation(a, c, tenantID, userID); err != nil {
+func handleAdminCancelInviteSubmit(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
+	if err := rest.HandleCancelInvitation(a, c, sub, targetTenant, targetUser); err != nil {
 		return err
 	}
 	c.String(http.StatusOK, "<div></div>")
 	return nil
 }
 
-func handleAdminUpdateMFAPolicy(a App, c *gin.Context, policy rest.MfaPolicy) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return err
-	}
-	userID, err := rest.UUIDParam(c, "userID")
-	if err != nil {
-		return err
-	}
+func handleAdminUpdateMFAPolicy(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User,
+	policy rest.MfaPolicy) error {
+
 	req := rest.UpdateUserMfaRequest{}
 	req.MfaPolicy = policy
-	if err := rest.HandleUpdateUserMFA(a, c, tenantID, userID, req); err != nil {
+	resultUser, err := rest.HandleUpdateUserMFA(
+		a, c, sub, targetTenant, targetUser, req)
+	if err != nil {
 		return err
-	}
-	user, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
-	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewInternalE(err)
 	}
 	return executeUserTemplate(
-		c, "userFragment", NewUserView(c.Request.Context(), a, sub, ten, user))
+		c, "userFragment",
+		NewUserView(c.Request.Context(), a, sub, targetTenant, resultUser))
 }
 
-func handleAdminEnableMFASubmit(a App, c *gin.Context) error {
-	return handleAdminUpdateMFAPolicy(a, c, rest.MFAPolicyRequired)
+func handleAdminEnableMFASubmit(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+	return handleAdminUpdateMFAPolicy(
+		a, c, sub, targetTenant, targetUser, rest.MFAPolicyRequired)
 }
 
-func handleAdminDisableMFASubmit(a App, c *gin.Context) error {
-	return handleAdminUpdateMFAPolicy(a, c, rest.MFAPolicyNone)
+func handleAdminDisableMFASubmit(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
+	return handleAdminUpdateMFAPolicy(
+		a, c, sub, targetTenant, targetUser, rest.MFAPolicyNone)
 }
 
-func handleAdminReInviteUserSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return err
-	}
-	userID, err := rest.UUIDParam(c, "userID")
-	if err != nil {
-		return err
-	}
-	user, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
-	if err != nil {
-		return err
-	}
+func handleAdminReInviteUserSubmit(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
 	var req rest.InviteRequest
-	req.Username = user.Username
-	req.Role = user.Role
-	req.MfaPolicy = rest.MfaPolicy(user.MFAPolicy.String())
-	if err := rest.HandleInviteToTenant(a, c, tenantID, req); err != nil {
+	req.Username = targetUser.Username
+	req.Role = targetUser.Role
+	req.MfaPolicy = rest.MfaPolicy(targetUser.MFAPolicy.String())
+	if err := rest.HandleInviteToTenant(a, c, sub, targetTenant, req); err != nil {
 		return err
-	}
-	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewInternalE(err)
 	}
 	return executeUserTemplate(
-		c, "userFragment", NewUserView(c.Request.Context(), a, sub, ten, user))
+		c, "userFragment",
+		NewUserView(c.Request.Context(), a, sub, targetTenant, targetUser))
 }
 
-func handleAdminImpersonateUserSubmit(a App, c *gin.Context) error {
-	_, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return err
-	}
-	userID, err := rest.UUIDParam(c, "userID")
-	if err != nil {
-		return err
-	}
-	user, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
-	if err != nil {
-		return err
-	}
-	var req rest.ImpersonateUserRequest
-	req.Tenant = tenantID.String()
-	req.Username = user.Username
-	req.RefreshToken, _ = c.Cookie(LandlordRefreshTokenCookie)
-	_, err = rest.HandleImpersonateUser(a, c, req)
+func handleAdminImpersonateUserSubmit(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
+	refreshToken, _ := c.Cookie(LandlordRefreshTokenCookie)
+	_, err := rest.HandleImpersonateUser(a, c, sub, targetTenant, targetUser, refreshToken)
 	if err != nil {
 		return err
 	}
@@ -754,67 +569,28 @@ func handleAdminImpersonateUserSubmit(a App, c *gin.Context) error {
 	return nil
 }
 
-func handleAdminUser(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
+func handleAdminUser(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
 
-	tenantID := c.Param("tenantID")
-	th, err := multi.ParseTenantHandle(tenantID)
-	if err != nil {
-		return apperr.NewBadRequestE(
-			fmt.Errorf("error parsing tenant ID: %w", err))
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil && !apperr.IsNotFound(err) {
-		return apperr.NewNotFoundE(
-			fmt.Errorf("error resolving tenant: %w", err))
-	}
-	if err != nil {
-		return apperr.NewInternalE(
-			fmt.Errorf("error getting tenants: %w", err))
-	}
+	// TODO: read permissions?
 
-	userID := c.Param("userID")
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		return apperr.NewBadRequestE(
-			fmt.Errorf("error parsing user ID: %w", err))
-	}
-	user, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), ten.ID, userUUID)
-	if err != nil {
-		return apperr.NewNotFoundE(
-			fmt.Errorf("error getting user: %w", err))
-	}
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
-		WithSelectedTen(ten).
-		WithSelectedUser(user).
+		WithSelectedTen(targetTenant).
+		WithSelectedUser(targetUser).
 		WithUserTab(userSummaryTab)
 	return executeAdminTemplate(c, "user", sv)
 }
 
-func handleAdminProfile(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
+func handleAdminProfile(a App, c *gin.Context, sub *perms.Subject) error {
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub)
 	return executeAdminTemplate(c, "profile", sv)
 }
 
-func handleAdminProfileTab(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
-
+func handleAdminProfileTab(a App, c *gin.Context, sub *perms.Subject) error {
 	tab := newProfileTab(c.Param("tab"))
 	switch tab {
 	case profileTabSummary:
@@ -855,15 +631,13 @@ func handleAdminProfileTab(a App, c *gin.Context) error {
 	return nil
 }
 
-func handleAdminUserProfileFieldSubmit(a App, c *gin.Context) error {
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return err
-	}
-	userID, err := rest.UUIDParam(c, "userID")
-	if err != nil {
-		return err
-	}
+func handleAdminUserProfileFieldSubmit(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
 	fieldName := c.Query("fieldName")
 	fieldValue := c.PostForm("fieldValue")
 	req := rest.UpdateProfileFieldsRequest{}
@@ -871,100 +645,73 @@ func handleAdminUserProfileFieldSubmit(a App, c *gin.Context) error {
 		Name:  fieldName,
 		Value: fieldValue,
 	})
-	err = rest.HandleUpdateUserProfileFields(a, c, tenantID, userID, req)
+	err := rest.HandleUpdateUserProfileFields(
+		a, c, sub, targetTenant, targetUser, req)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
-	def := ten.GetUserProfileDefinition().GetFieldDefinition(fieldName)
+	def := targetTenant.GetUserProfileDefinition().GetFieldDefinition(fieldName)
 	if def == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
-	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
-	baseURL := appPath("/admin/tenants/" + tenantID.String() + "/users/" + userID.String())
-	pfv := NewProfileFieldView(baseURL, *def, targetUser.ProfileField(fieldName))
+	baseURL := appPath(
+		"/admin/tenants/" + targetTenant.ID.String() + "/users/" + targetUser.ID.String())
+	pfv := NewProfileFieldView(sub, baseURL, *def, targetUser.ProfileField(fieldName))
 	return executeProfileFieldTemplate(c, "profileFieldForm", pfv)
 }
 
-func handleAdminUserProfileFieldEditForm(a App, c *gin.Context) error {
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	userID, err := rest.UUIDParam(c, "userID")
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
+func handleAdminUserProfileFieldEditForm(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
+	_ = a
+	_ = sub // TODO: read permissions?
+
 	fieldName := c.Query("fieldName")
 	if fieldName == "" {
 		return apperr.NewBadRequest("missing field name")
 	}
-	def := ten.GetUserProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
+	def := targetTenant.GetUserProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
 	if def == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
-	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
-	if err != nil {
-		zap.L().Error("error fetching user",
-			zap.Error(err),
-			zap.String("tenantID", tenantID.String()),
-			zap.String("userID", userID.String()))
-		return apperr.NewUnauthorized("not authorized")
-	}
-	baseURL := appPath("/admin/tenants/" + tenantID.String() + "/users/" + userID.String())
-	pfv := NewProfileFieldView(baseURL, *def, targetUser.ProfileField(fieldName))
+	baseURL := appPath("/admin/tenants/" + targetTenant.ID.String() + "/users/" + targetUser.ID.String())
+	pfv := NewProfileFieldView(sub, baseURL, *def, targetUser.ProfileField(fieldName))
 	return executeProfileFieldTemplate(c, "profileEditFieldForm", pfv)
 }
 
-func handlerAdminUserProfileFieldForm(a App, c *gin.Context) error {
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	userID, err := rest.UUIDParam(c, "userID")
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
+func handlerAdminUserProfileFieldForm(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
+	_ = a
+	_ = sub // TODO: permissions?
+
 	fieldName := c.Query("fieldName")
 	if fieldName == "" {
 		return apperr.NewBadRequest("missing field name")
 	}
-	def := ten.GetUserProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
+	def := targetTenant.GetUserProfileDefinition().GetFieldDefinition(c.Query("fieldName"))
 	if def == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
-	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
-	if err != nil {
-		zap.L().Error("error fetching user",
-			zap.Error(err),
-			zap.String("tenantID", tenantID.String()),
-			zap.String("userID", userID.String()))
-		return apperr.NewUnauthorized("not authorized")
-	}
-	baseURL := appPath("/admin/tenants/" + tenantID.String() + "/users/" + userID.String())
-	pfv := NewProfileFieldView(baseURL, *def, targetUser.ProfileField(fieldName))
+	baseURL := appPath("/admin/tenants/" + targetTenant.ID.String() + "/users/" + targetUser.ID.String())
+	pfv := NewProfileFieldView(sub, baseURL, *def, targetUser.ProfileField(fieldName))
 	return executeProfileFieldTemplate(c, "profileFieldForm", pfv)
 }
 
-func handleAdminTenantProfileFieldSubmit(a App, c *gin.Context) error {
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return err
-	}
+func handleAdminTenantProfileFieldSubmit(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant) error {
+
 	fieldName := c.Query("fieldName")
 	fieldValue := c.PostForm("fieldValue")
 	req := rest.UpdateProfileFieldsRequest{}
@@ -972,11 +719,7 @@ func handleAdminTenantProfileFieldSubmit(a App, c *gin.Context) error {
 		Name:  fieldName,
 		Value: fieldValue,
 	})
-	err = rest.HandleUpdateTenantProfileFields(a, c, tenantID, req)
-	if err != nil {
-		return apperr.NewInternalE(err)
-	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
+	resultTenant, err := rest.HandleUpdateTenantProfileFields(a, c, sub, targetTenant, req)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
@@ -984,20 +727,20 @@ func handleAdminTenantProfileFieldSubmit(a App, c *gin.Context) error {
 	if def == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
-	baseURL := appPath("/admin/tenants/" + tenantID.String())
-	pfv := NewProfileFieldView(baseURL, *def, targetTenant.ProfileField(fieldName))
+	baseURL := appPath("/admin/tenants/" + resultTenant.ID.String())
+	pfv := NewProfileFieldView(sub, baseURL, *def, resultTenant.ProfileField(fieldName))
 	return executeProfileFieldTemplate(c, "profileFieldForm", pfv)
 }
 
-func handleAdminTenantProfileFieldEditForm(a App, c *gin.Context) error {
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
+func handleAdminTenantProfileFieldEditForm(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant) error {
+
+	_ = a
+	_ = sub // TODO: permissions?
+
 	fieldName := c.Query("fieldName")
 	if fieldName == "" {
 		return apperr.NewBadRequest("missing field name")
@@ -1006,20 +749,20 @@ func handleAdminTenantProfileFieldEditForm(a App, c *gin.Context) error {
 	if def == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
-	baseURL := appPath("/admin/tenants/" + tenantID.String())
-	pfv := NewProfileFieldView(baseURL, *def, targetTenant.ProfileField(fieldName))
+	baseURL := appPath("/admin/tenants/" + targetTenant.ID.String())
+	pfv := NewProfileFieldView(sub, baseURL, *def, targetTenant.ProfileField(fieldName))
 	return executeProfileFieldTemplate(c, "profileEditFieldForm", pfv)
 }
 
-func handlerAdminTenantProfileFieldForm(a App, c *gin.Context) error {
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
+func handlerAdminTenantProfileFieldForm(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant) error {
+
+	_ = a
+	_ = sub // TODO: permissions?
+
 	fieldName := c.Query("fieldName")
 	if fieldName == "" {
 		return apperr.NewBadRequest("missing field name")
@@ -1028,55 +771,24 @@ func handlerAdminTenantProfileFieldForm(a App, c *gin.Context) error {
 	if def == nil {
 		return apperr.NewBadRequest("invalid field name: " + fieldName)
 	}
-	baseURL := appPath("/admin/tenants/" + tenantID.String())
-	pfv := NewProfileFieldView(baseURL, *def, targetTenant.ProfileField(fieldName))
+	baseURL := appPath("/admin/tenants/" + targetTenant.ID.String())
+	pfv := NewProfileFieldView(sub, baseURL, *def, targetTenant.ProfileField(fieldName))
 	return executeProfileFieldTemplate(c, "profileFieldForm", pfv)
 }
 
-func handleAdminUserTab(a App, c *gin.Context) error {
-	timers.Checkpoint(c, "handleAdminUserTab")
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
+func handleAdminUserTab(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
 
-	tenantID := c.Param("tenantID")
-	th, err := multi.ParseTenantHandle(tenantID)
-	if err != nil {
-		return apperr.NewBadRequestE(
-			fmt.Errorf("error parsing tenant ID: %w", err))
-	}
-	ten, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
-	if err != nil && !apperr.IsNotFound(err) {
-		return apperr.NewNotFoundE(
-			fmt.Errorf("error resolving tenant: %w", err))
-	}
-	if err != nil {
-		return apperr.NewInternalE(
-			fmt.Errorf("error getting tenants: %w", err))
-	}
-
-	userID := c.Param("userID")
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		return apperr.NewBadRequestE(
-			fmt.Errorf("error parsing user ID: %w", err))
-	}
-	user, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), ten.ID, userUUID)
-	if err != nil {
-		return apperr.NewNotFoundE(
-			fmt.Errorf("error getting user: %w", err))
-	}
 	tab := newUserTab(c.Param("tab"))
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub).
-		WithSelectedTen(ten).
-		WithSelectedUser(user).
+		WithSelectedTen(targetTenant).
+		WithSelectedUser(targetUser).
 		WithUserTab(tab)
 
-	timers.Checkpoint(c, "handleAdminUserTab.switch")
-	defer timers.Checkpoint(c, "handleAdminUserTab.done")
 	switch tab {
 	case userSummaryTab:
 		return executeAdminTemplate(c, tab.TabTemplateName(), sv)
@@ -1088,83 +800,46 @@ func handleAdminUserTab(a App, c *gin.Context) error {
 	}
 }
 
-func handleAdminUserRoleSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return err
-	}
-	userID, err := rest.UUIDParam(c, "userID")
-	if err != nil {
-		return err
-	}
+func handleAdminUserRoleSubmit(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
 	role := c.PostForm("role")
-	targetTenant, targetUser, err := rest.HandleUpdateUserRole(a, c, sub, role, tenantID, userID)
+	resultTenant, resultUser, err := rest.HandleUpdateUserRole(
+		a, c, sub, targetTenant, targetUser, role)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	uv := NewUserView(c.Request.Context(), a, sub, targetTenant, targetUser)
+	uv := NewUserView(c.Request.Context(), a, sub, resultTenant, resultUser)
 	return executeUserTemplate(c, "userRoleForm", uv)
 }
 
-func handleAdminUserRoleEditForm(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	userID, err := rest.UUIDParam(c, "userID")
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
-	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
-	if err != nil {
-		zap.L().Error("error fetching user",
-			zap.Error(err),
-			zap.String("tenantID", tenantID.String()),
-			zap.String("userID", userID.String()))
-		return apperr.NewUnauthorized("not authorized")
-	}
+func handleAdminUserRoleEditForm(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
+	// TODO: read permissions?
+
 	uv := NewUserView(c.Request.Context(), a, sub, targetTenant, targetUser)
 	return executeUserTemplate(c, "userRoleEditForm", uv)
 }
 
-func handlerAdminUserRoleForm(a App, c *gin.Context) error {
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	userID, err := rest.UUIDParam(c, "userID")
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
-	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DDB(), tenantID, userID)
-	if err != nil {
-		zap.L().Error("error fetching user",
-			zap.Error(err),
-			zap.String("tenantID", tenantID.String()),
-			zap.String("userID", userID.String()))
-		return apperr.NewUnauthorized("not authorized")
-	}
-	uv := NewUserView(c.Request.Context(), a, nil, targetTenant, targetUser)
+func handlerAdminUserRoleForm(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
+	// TODO: read permissions?
+
+	uv := NewUserView(c.Request.Context(), a, sub, targetTenant, targetUser)
 	return executeUserTemplate(c, "userRoleForm", uv)
 }
 
@@ -1195,35 +870,25 @@ func ifEmpty(s string, def string) string {
 	return s
 }
 
-func bulkInviteFormError(a App, c *gin.Context, tenant *multi.Tenant, errMsg string) error {
+func bulkInviteFormError(
+	a App, c *gin.Context, sub *perms.Subject, tenant *multi.Tenant, errMsg string) error {
+
 	c.Header("HX-Retarget", "#invite-form")
-	tv := NewTenantView(c.Request.Context(), a, tenant).
+	tv := NewTenantView(c.Request.Context(), a, sub, tenant).
 		WithErrMsg(errMsg)
 	return executeTenantTemplate(c, "bulkInviteForm", tv)
 }
 
-func handleBulkInviteSubmit(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return err
-	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
+func handleBulkInviteSubmit(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
 	// Get the CSV file from a multipart form post
 	file, _, err := c.Request.FormFile("file")
 	if err != nil {
 		if errors.Is(err, http.ErrMissingFile) {
-			return bulkInviteFormError(a, c, targetTenant, "No file specified")
+			return bulkInviteFormError(a, c, sub, targetTenant, "No file specified")
 		}
-		return bulkInviteFormError(a, c, targetTenant, "Could not process CSV: "+err.Error())
+		return bulkInviteFormError(a, c, sub, targetTenant, "Could not process CSV: "+err.Error())
 	}
 	defer func(file multipart.File) {
 		err := file.Close()
@@ -1237,19 +902,19 @@ func handleBulkInviteSubmit(a App, c *gin.Context) error {
 	// Read the header and validate it matches the profile fields
 	header, err := r.Read()
 	if err != nil {
-		return bulkInviteFormError(a, c, targetTenant, "Could not process CSV: "+err.Error())
+		return bulkInviteFormError(a, c, sub, targetTenant, "Could not process CSV: "+err.Error())
 	}
 	allFields := []string{"Email", "Role", "MFA Policy"}
 	for _, profileField := range targetTenant.GetUserProfileDefinition().Fields {
 		allFields = append(allFields, profileField.UIName)
 	}
 	if len(header) != len(allFields) {
-		return bulkInviteFormError(a, c, targetTenant,
+		return bulkInviteFormError(a, c, sub, targetTenant,
 			"CSV header does not match profile fields. Expected: "+strings.Join(allFields, ", "))
 	}
 	for i, field := range allFields {
 		if header[i] != field {
-			return bulkInviteFormError(a, c, targetTenant,
+			return bulkInviteFormError(a, c, sub, targetTenant,
 				"CSV header does not match profile fields. Expected: "+strings.Join(allFields, ", "))
 		}
 	}
@@ -1261,7 +926,7 @@ func handleBulkInviteSubmit(a App, c *gin.Context) error {
 			break
 		}
 		if err != nil {
-			return bulkInviteFormError(a, c, targetTenant,
+			return bulkInviteFormError(a, c, sub, targetTenant,
 				"Failed reading CSV: "+err.Error())
 		}
 		username := row[0]
@@ -1286,9 +951,9 @@ func handleBulkInviteSubmit(a App, c *gin.Context) error {
 				Value: row[i],
 			})
 		}
-		err = rest.HandleInviteToTenant(a, c, tenantID, req)
+		err = rest.HandleInviteToTenant(a, c, sub, targetTenant, req)
 		if err != nil {
-			return bulkInviteFormError(a, c, targetTenant,
+			return bulkInviteFormError(a, c, sub, targetTenant,
 				fmt.Sprintf("Invite failed for %s: %s", req.Username, err.Error()))
 		}
 	}
@@ -1302,41 +967,20 @@ func handleBulkInviteSubmit(a App, c *gin.Context) error {
 	return executeAdminTemplate(c, "inviteUserTableAndForm", sv)
 }
 
-func handleBulkInviteForm(a App, c *gin.Context) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
+func handleBulkInviteForm(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
 	_ = sub
-	tv := NewTenantView(c.Request.Context(), a, targetTenant)
+	tv := NewTenantView(c.Request.Context(), a, sub, targetTenant)
 	return executeTenantTemplate(c, "bulkInviteForm", tv)
 }
 
-func handleBulkInviteTemplate(a App, c *gin.Context) error {
-	_, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return apperr.NewBadRequestE(err)
-	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DDB(), tenantID)
-	if err != nil {
-		return apperr.NewNotFoundE(err)
-	}
+func handleBulkInviteTemplate(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
+	_ = a
+	_ = sub // TODO: check read permissions here?
+
 	// Create a CSV template file for inviting users that has columns for the Email, Role, and MFA Policy
 	// and the profile fields associated with the tenant.
 	csvData := [][]string{
@@ -1347,7 +991,7 @@ func handleBulkInviteTemplate(a App, c *gin.Context) error {
 	}
 	b := &bytes.Buffer{}
 	w := csv.NewWriter(b)
-	err = w.WriteAll(csvData)
+	err := w.WriteAll(csvData)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}

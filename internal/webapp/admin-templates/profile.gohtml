@@ -100,7 +100,16 @@
           hx-target="{{ printf "#edit-%s" .Name }}"
           hx-swap="innerHTML">
         <label>
-            <input class="input" type="{{ .HTMLInputType }}" name="fieldValue" value="{{ .Value }}" maxlength="256" autofocus>
+            {{ if .UseSelectPossibleValue }}
+                <select class="input" name="fieldValue">
+                    {{ $selected := .Value }}
+                    {{ range .PossibleValues }}
+                        <option value="{{ .ID }}" {{ if eq .ID $selected }}selected{{ end }}>{{ .Name }}</option>
+                    {{ end }}
+                </select>
+            {{ else }}
+                <input class="input" type="{{ .HTMLInputType }}" name="fieldValue" value="{{ .Value }}" maxlength="256" autofocus>
+            {{ end }}
         </label>
         <button class="button is-primary mt-2" type="submit">Submit</button>
         <button class="button mt-2" type="button"

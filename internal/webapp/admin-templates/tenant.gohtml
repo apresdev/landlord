@@ -301,6 +301,16 @@
             <div class="is-size-5">Optional Profile Fields</div>
             {{ range .UserProfileDefinition.Fields }}
                 <div class="mt-2">
+                    {{ if .UseSelectPossibleValue }}
+                        <select class="input" name="fieldValue">
+                            {{ $selected := .Value }}
+                            {{ range .PossibleValues }}
+                                <option value="{{ .ID }}" {{ if eq .ID $selected }}selected{{ end }}>{{ .Name }}</option>
+                            {{ end }}
+                        </select>
+                    {{ else }}
+                        <input class="input" type="{{ .HTMLInputType }}" name="fieldValue" value="{{ .Value }}" maxlength="256" autofocus>
+                    {{ end }}
                     <label>{{ .UIName }}</label>
                     <input class="input" type="text" name="{{ .Name }}" placeholder="Optional">
                 </div>

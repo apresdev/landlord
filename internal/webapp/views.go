@@ -1,12 +1,18 @@
 package webapp
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/itchyny/gojq"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -172,12 +178,13 @@ type ProfileTab struct {
 type TenantView struct {
 	ctx    context.Context
 	a      App
+	sub    *perms.Subject
 	ten    *multi.Tenant
 	errMsg string
 }
 
-func NewTenantView(ctx context.Context, a App, ten *multi.Tenant) TenantView {
-	return TenantView{ctx: ctx, a: a, ten: ten}
+func NewTenantView(ctx context.Context, a App, sub *perms.Subject, ten *multi.Tenant) TenantView {
+	return TenantView{ctx: ctx, sub: sub, a: a, ten: ten}
 }
 
 func (tv TenantView) WithErrMsg(msg string) TenantView {
@@ -289,11 +296,13 @@ func (tv TenantView) MFAPolicyStrings() []string {
 	return multi.MFAPolicyStrings()
 }
 
-func (tv TenantView) UserProfileDefinition() *multi.ProfileDefinition {
-	if tv.ten == nil {
-		return &multi.ProfileDefinition{}
-	}
-	return tv.ten.GetUserProfileDefinition()
+func (tv TenantView) UserProfileDefinition() ProfileFieldsView {
+	return NewProfileFieldsView(
+		tv.sub,
+		"Generic user profile",
+		"",
+		tv.ten.GetUserProfileDefinition(),
+		nil)
 }
 
 func (tv TenantView) CreatedAt() string {
@@ -308,6 +317,7 @@ func (tv TenantView) Profile() ProfileFieldsView {
 		return ProfileFieldsView{}
 	}
 	return NewProfileFieldsView(
+		tv.sub,
 		fmt.Sprintf("Tenant profile for '%s'", tv.ten.Name),
 		fmt.Sprintf("/ll-auth/app/admin/tenants/%s", tv.ten.ID.String()),
 		tv.ten.GetTenantProfileDefinition(),
@@ -439,7 +449,7 @@ func (uv *UserView) Tenant() TenantView {
 	if uv.ten == nil {
 		return TenantView{}
 	}
-	return NewTenantView(uv.ctx, uv.app, uv.ten)
+	return NewTenantView(uv.ctx, uv.app, uv.sub, uv.ten)
 }
 
 func (uv *UserView) IsImpersonating() bool {
@@ -598,6 +608,7 @@ func (uv *UserView) Profile() ProfileFieldsView {
 		return ProfileFieldsView{}
 	}
 	return NewProfileFieldsView(
+		uv.sub,
 		fmt.Sprintf("User profile for '%s'", uv.user.Username),
 		fmt.Sprintf("/ll-auth/app/admin/tenants/%s/users/%s",
 			uv.ten.ID.String(), uv.user.ID.String()),
@@ -757,14 +768,14 @@ func (asv AuthenticatedSubjectView) WithProfileTab(tab profileTab) Authenticated
 func (asv AuthenticatedSubjectView) WithTenants(tens []*multi.Tenant) AuthenticatedSubjectView {
 	asv.tens = make([]TenantView, 0, len(tens))
 	for _, ten := range tens {
-		tv := NewTenantView(asv.ctx, asv.a, ten)
+		tv := NewTenantView(asv.ctx, asv.a, asv.sub.Subject(), ten)
 		asv.tens = append(asv.tens, tv)
 	}
 	return asv
 }
 
 func (asv AuthenticatedSubjectView) WithSelectedTen(ten *multi.Tenant) AuthenticatedSubjectView {
-	asv.selectedTen = NewTenantView(asv.ctx, asv.a, ten)
+	asv.selectedTen = NewTenantView(asv.ctx, asv.a, asv.sub.Subject(), ten)
 	return asv
 }
 
@@ -919,16 +930,113 @@ func (epv ErrorPageView) ErrMsg() string {
 }
 
 type ProfileFieldView struct {
-	baseURL string
-	def     multi.ProfileFieldDefinition
-	value   *multi.ProfileField
+	baseURL        string
+	def            multi.ProfileFieldDefinition
+	value          *multi.ProfileField
+	possibleValues []PossibleValue
+}
+
+type PossibleValue struct {
+	Name string
+	ID   string
+}
+
+func stringFromGenericMap(s any, key string) string {
+	m, ok := s.(map[string]any)
+	if !ok {
+		return ""
+	}
+	v, ok := m[key]
+	if !ok {
+		return ""
+	}
+	result, ok := v.(string)
+	if !ok {
+		return ""
+	}
+	return result
+}
+
+func getProfileFieldPossibleValues(
+	sub *perms.Subject,
+	def multi.ProfileFieldDefinition) ([]PossibleValue, error) {
+
+	// Fetch URL providing the JWT token in a Bearer header
+	req, err := http.NewRequest("GET", def.PossibleValuesURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", sub.AccessToken.Raw))
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			zap.L().Error("error closing response body", zap.Error(err))
+		}
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		zap.L().Info("unexpected status code fetching possible values",
+			zap.Int("status", resp.StatusCode),
+			zap.String("url", def.PossibleValuesURL))
+		return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
+	}
+
+	// Read the whole body into a string buffer
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	listDoc := make(map[string]any)
+	err = json.Unmarshal(buf.Bytes(), &listDoc)
+	if err != nil {
+		return nil, err
+	}
+	query, err := gojq.Parse(def.PossibleValuesJQExpr)
+	if err != nil {
+		return nil, err
+	}
+	iter := query.Run(listDoc)
+	result := make([]PossibleValue, 0)
+	for {
+		v, ok := iter.Next()
+		if !ok {
+			break
+		}
+		name := stringFromGenericMap(v, "name")
+		id := stringFromGenericMap(v, "id")
+		if name == "" || id == "" {
+			zap.L().Warn("possible value field missing name or id",
+				zap.String("name", name), zap.String("id", id))
+			continue
+		}
+		result = append(result, PossibleValue{Name: name, ID: id})
+	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Name < result[j].Name
+	})
+	return result, nil
 }
 
 func NewProfileFieldView(
+	sub *perms.Subject,
 	baseURL string,
 	def multi.ProfileFieldDefinition,
 	value *multi.ProfileField) ProfileFieldView {
 
+	if def.PossibleValuesURL != "" {
+		possibleValues, err := getProfileFieldPossibleValues(sub, def)
+		if err != nil {
+			zap.L().Info("error getting possible values for profile field",
+				zap.Error(err))
+		}
+		return ProfileFieldView{baseURL: baseURL, def: def, value: value, possibleValues: possibleValues}
+	}
 	return ProfileFieldView{baseURL: baseURL, def: def, value: value}
 }
 
@@ -959,25 +1067,37 @@ func (pfv ProfileFieldView) FormLink() string {
 	return fmt.Sprintf("%s/field/form?fieldName=%s", pfv.baseURL, pfv.Name())
 }
 
+func (pfv ProfileFieldView) UseSelectPossibleValue() bool {
+	if pfv.def.Format == multi.ProfileFieldFormatSelect {
+		return len(pfv.possibleValues) > 0
+	}
+	return false
+}
+
+func (pfv ProfileFieldView) PossibleValues() []PossibleValue {
+	return pfv.possibleValues
+}
+
 type ProfileFieldsView struct {
 	Title  string
 	Fields []ProfileFieldView
 }
 
 func NewProfileFieldsView(
+	sub *perms.Subject,
 	title string,
 	baseURL string,
-	profileDef *multi.ProfileDefinition,
+	profileDef multi.ProfileDefinition,
 	values *multi.Profile) ProfileFieldsView {
 
 	result := ProfileFieldsView{Title: title}
 	for _, field := range profileDef.Fields {
 		if values == nil {
 			result.Fields = append(result.Fields,
-				NewProfileFieldView(baseURL, field, nil))
+				NewProfileFieldView(sub, baseURL, field, nil))
 		} else {
 			result.Fields = append(result.Fields,
-				NewProfileFieldView(baseURL, field, values.GetField(field.Name)))
+				NewProfileFieldView(sub, baseURL, field, values.GetField(field.Name)))
 		}
 	}
 	return result
