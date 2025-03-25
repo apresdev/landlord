@@ -8,13 +8,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 )
 
 func handleUpdateUserMFA(app App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	var req UpdateUserMfaRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
@@ -26,20 +29,6 @@ func handleUpdateUserMFA(app App, c *gin.Context) error {
 	userID, err := UUIDParam(c, "userID")
 	if err != nil {
 		return apperr.NewBadRequest("invalid user ID")
-	}
-	return HandleUpdateUserMFA(app, c, tenantID, userID, req)
-}
-
-func HandleUpdateUserMFA(
-	app App, c *gin.Context, tenantID, userID uuid.UUID, req UpdateUserMfaRequest) error {
-
-	if req.MfaPolicy == "" {
-		return apperr.NewBadRequest("MFA policy is empty")
-	}
-
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
 	}
 	targetTenant, err := db.GetTenantByID(c.Request.Context(), app.DDB(), tenantID)
 	if err != nil {
@@ -56,6 +45,21 @@ func HandleUpdateUserMFA(
 			zap.String("userID", userID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
+	_, err = HandleUpdateUserMFA(app, c, sub, targetTenant, targetUser, req)
+	return err
+}
+
+func HandleUpdateUserMFA(
+	app App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User,
+	req UpdateUserMfaRequest) (*multi.User, error) {
+
+	if req.MfaPolicy == "" {
+		return nil, apperr.NewBadRequest("MFA policy is empty")
+	}
 
 	resource := perms.NewResource(
 		perms.ResourceKindUserMFAPolicy, perms.ResourceNameAny, targetTenant, targetUser)
@@ -65,20 +69,20 @@ func HandleUpdateUserMFA(
 			zap.Error(err),
 			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied update user MFA",
 			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
 	if targetUser.Status == multi.UserStatusInactive {
 		zap.L().Info("user is inactive cannot change MFA",
-			zap.String("tenantID", tenantID.String()),
-			zap.String("userID", userID.String()))
-		return apperr.NewBadRequest("user is inactive, cannot modify MFA")
+			zap.String("tenantID", targetTenant.ID.String()),
+			zap.String("userID", targetUser.ID.String()))
+		return nil, apperr.NewBadRequest("user is inactive, cannot modify MFA")
 	}
 	// Transition from MFA policy None to Required initiates the flow to
 	// add an MFA token to the targetUser
@@ -89,9 +93,9 @@ func HandleUpdateUserMFA(
 		if err != nil {
 			zap.L().Error("error storing user",
 				zap.Error(err),
-				zap.String("tenantID", tenantID.String()),
-				zap.String("userID", userID.String()))
-			return apperr.NewUnauthorized("not authorized")
+				zap.String("tenantID", targetTenant.ID.String()),
+				zap.String("userID", targetUser.ID.String()))
+			return nil, apperr.NewUnauthorized("not authorized")
 		}
 	} else if req.MfaPolicy == MFAPolicyNone {
 		targetUser.MFAStatus = multi.MFAStatusNone
@@ -100,9 +104,9 @@ func HandleUpdateUserMFA(
 		if err != nil {
 			zap.L().Error("error storing user",
 				zap.Error(err),
-				zap.String("tenantID", tenantID.String()),
-				zap.String("userID", userID.String()))
-			return apperr.NewUnauthorized("not authorized")
+				zap.String("tenantID", targetTenant.ID.String()),
+				zap.String("userID", targetUser.ID.String()))
+			return nil, apperr.NewUnauthorized("not authorized")
 		}
 		_, err = app.CogIdp().AdminSetUserMFAPreference(
 			c.Request.Context(),
@@ -117,13 +121,13 @@ func HandleUpdateUserMFA(
 		if err != nil {
 			zap.L().Error("error removing MFA preference",
 				zap.Error(err),
-				zap.String("tenantID", tenantID.String()),
-				zap.String("userID", userID.String()))
-			return apperr.NewInternal("could not remove MFA preference")
+				zap.String("tenantID", targetTenant.ID.String()),
+				zap.String("userID", targetUser.ID.String()))
+			return nil, apperr.NewInternal("could not remove MFA preference")
 		}
 		zap.L().Info("removed MFA preference",
-			zap.String("tenantID", tenantID.String()),
-			zap.String("userID", userID.String()))
+			zap.String("tenantID", targetTenant.ID.String()),
+			zap.String("userID", targetUser.ID.String()))
 	}
-	return nil
+	return targetUser, nil
 }

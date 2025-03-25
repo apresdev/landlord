@@ -115,16 +115,12 @@ func (ten *Tenant) UsingDefaultSubTenantRoles() bool {
 	return slices.Equal(ten.SubTenantRoles, BuiltInRoles)
 }
 
-func (ten *Tenant) GetUserProfileDefinition() *ProfileDefinition {
-	// TODO: make this configurable eventually -- each tenant can, in theory,
-	// have its own profile definition. We definitely want each deployment to
-	// have its own profile definition. For now, we have a pre-baked profile
-	// definition.
-	return &BasicUserProfileFieldDefinition
+func (ten *Tenant) GetUserProfileDefinition() ProfileDefinition {
+	return GetUserProfileDefinition()
 }
 
-func (ten *Tenant) GetTenantProfileDefinition() *ProfileDefinition {
-	return &BasicTenantProfileFieldDefinition
+func (ten *Tenant) GetTenantProfileDefinition() ProfileDefinition {
+	return GetTenantProfileDefinition()
 }
 
 func (ten *Tenant) Profile() *Profile {

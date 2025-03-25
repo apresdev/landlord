@@ -3,55 +3,62 @@ package rest
 import (
 	"fmt"
 
+	"github.com/apresdev/landlord/internal/multi"
+
 	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/apresdev/landlord/internal/db"
 	"github.com/apresdev/landlord/internal/perms"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 )
 
 func handleUpdateUserProfileFields(app App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	var req UpdateProfileFieldsRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	tenantID, err := UUIDParam(c, "tenantID")
+	tenantID := c.Param("tenantID")
+	if tenantID == "" {
+		return apperr.NewBadRequest("no tenantID provided")
+	}
+	th, err := multi.ParseTenantHandle(tenantID)
 	if err != nil {
-		return apperr.NewBadRequest("invalid tenant ID")
+		return apperr.NewBadRequest("invalid tenantID")
+	}
+	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
+	if err != nil {
+		return err
 	}
 	userID, err := UUIDParam(c, "userID")
 	if err != nil {
 		return apperr.NewBadRequest("invalid user ID")
 	}
-	return HandleUpdateUserProfileFields(app, c, tenantID, userID, req)
-}
-
-func HandleUpdateUserProfileFields(
-	app App, c *gin.Context, tenantID, userID uuid.UUID, req UpdateProfileFieldsRequest) error {
-
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), app.DDB(), tenantID)
-	if err != nil {
-		zap.L().Error("error fetching tenant",
-			zap.Error(err),
-			zap.String("tenantID", tenantID.String()))
-		return apperr.NewUnauthorized("not authorized")
-	}
-	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), app.DDB(), tenantID, userID)
+	targetUser, err := db.GetUserInTenantByID(
+		c.Request.Context(), app.DDB(), targetTenant.ID, userID)
 	if err != nil {
 		zap.L().Error("error fetching user",
 			zap.Error(err),
-			zap.String("tenantID", tenantID.String()),
+			zap.String("tenantID", targetTenant.ID.String()),
 			zap.String("userID", userID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
+	return HandleUpdateUserProfileFields(app, c, sub, targetTenant, targetUser, req)
+}
 
-	profileDef := targetTenant.GetUserProfileDefinition()
+func HandleUpdateUserProfileFields(
+	app App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User,
+	req UpdateProfileFieldsRequest) error {
+
+	profileDef := multi.GetUserProfileDefinition()
 	for _, update := range req.ProfileFields {
 		fieldDef := profileDef.GetFieldDefinition(update.Name)
 		if fieldDef == nil {
@@ -86,8 +93,7 @@ func HandleUpdateUserProfileFields(
 		}
 		targetUser.UpdateProfileField(update.Name, defn.Format, update.Value)
 	}
-	err = db.StoreUser(c.Request.Context(), app.DDB(), targetUser)
-	if err != nil {
+	if err := db.StoreUser(c.Request.Context(), app.DDB(), targetUser); err != nil {
 		return err
 	}
 	return nil

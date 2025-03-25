@@ -13,11 +13,11 @@ import (
 )
 
 func handleClearImpersonation(app App, c *gin.Context) error {
-	var req ClearImpersonationRequest
-	if err := c.BindJSON(&req); err != nil {
-		return apperr.NewBadRequest(err.Error())
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
 	}
-	err := HandleClearImpersonation(app, c, req)
+	err = HandleClearImpersonation(app, c, sub)
 	if err != nil {
 		return err
 	}
@@ -25,14 +25,7 @@ func handleClearImpersonation(app App, c *gin.Context) error {
 	return nil
 }
 
-func HandleClearImpersonation(
-	app App, c *gin.Context, req ClearImpersonationRequest) error {
-
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
-	}
-
+func HandleClearImpersonation(app App, c *gin.Context, sub *perms.Subject) error {
 	// The target user and tenant of this API are from the subject
 	targetUser, err := sub.ResolveUser(c.Request.Context(), app)
 	if err != nil {

@@ -7,6 +7,8 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/apresdev/landlord/internal/rest"
+
 	"github.com/apresdev/landlord/internal/apperr"
 
 	"github.com/gin-gonic/gin"
@@ -151,4 +153,12 @@ func executeErrorTemplate(c *gin.Context, name string, epv ErrorPageView) error 
 
 func executeStringTemplate(c *gin.Context, name string, s string) error {
 	return adminTemplates.ExecuteTemplate(c.Writer, name, s)
+}
+
+func executeUUIDTemplate(c *gin.Context, name string, key string) error {
+	tenantID, err := rest.UUIDParam(c, key)
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	return adminTemplates.ExecuteTemplate(c.Writer, name, tenantID.String())
 }

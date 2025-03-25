@@ -15,35 +15,39 @@ import (
 )
 
 func handleUpdateTenantState(app App, c *gin.Context) error {
-	id := c.Param("tenantID")
-	if id == "" {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
+	tenantID := c.Param("tenantID")
+	if tenantID == "" {
 		return apperr.NewBadRequest("no tenantID provided")
 	}
 	state := c.Param("tenantState")
 	if state == "" {
 		return apperr.NewBadRequest("no tenantState provided")
 	}
-	if _, err := HandleUpdateTenantState(app, c, id, state); err != nil {
+	th, err := multi.ParseTenantHandle(tenantID)
+	if err != nil {
+		return apperr.NewBadRequest("invalid tenantID")
+	}
+	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
+	if err != nil {
+		return err
+	}
+	if _, err := HandleUpdateTenantState(app, c, sub, targetTenant, state); err != nil {
 		return err
 	}
 	c.JSON(http.StatusNoContent, nil)
 	return nil
 }
 
-func HandleUpdateTenantState(app App, c *gin.Context, tenantID, state string) (*multi.Tenant, error) {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return nil, err
-	}
-
-	th, err := multi.ParseTenantHandle(tenantID)
-	if err != nil {
-		return nil, apperr.NewBadRequest("invalid tenantID")
-	}
-	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
-	if err != nil {
-		return nil, err
-	}
+func HandleUpdateTenantState(
+	app App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	state string) (*multi.Tenant, error) {
 
 	resource := perms.NewResource(
 		perms.ResourceKindTenantDescription, perms.ResourceNameAny, targetTenant, nil)

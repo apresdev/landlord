@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/apresdev/landlord/internal/multi"
+
 	"github.com/apresdev/landlord/internal/perms"
-	"github.com/apresdev/landlord/internal/rest"
 	"github.com/gin-gonic/gin"
 
 	"github.com/apresdev/landlord/internal/apperr"
@@ -21,32 +22,16 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleAdminActivityReport(a App, c *gin.Context) error {
-	_, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return err
-	}
-	return deliverActivityReport(a, c, tenantID)
+func handleAdminActivityReport(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
+	return deliverActivityReport(a, c, sub, targetTenant)
 }
 
-func handleAdminSummaryReport(a App, c *gin.Context) error {
-	_, err := perms.SubjectFromContext(c)
-	if err != nil {
-		clearLandlordCookies(c, a.Settings().ConsoleURL())
-		redirectToLogin(c)
-		return nil
-	}
-	tenantID, err := rest.UUIDParam(c, "tenantID")
-	if err != nil {
-		return err
-	}
-	return deliverSummaryReport(a, c, tenantID)
+func handleAdminSummaryReport(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
+	return deliverSummaryReport(a, c, sub, targetTenant)
 }
 
 type SummaryReportRow struct {
@@ -119,8 +104,12 @@ func (row ActivityReportRow) ToRow() []string {
 
 const historyDays = 32
 
-func deliverActivityReport(a App, c *gin.Context, tenantID uuid.UUID) error {
-	events, err := getCognitoEvents(c.Request.Context(), a, tenantID)
+func deliverActivityReport(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
+	_ = sub // TODO: permission to read Cognito events?
+
+	events, err := getCognitoEvents(c.Request.Context(), a, targetTenant.ID)
 	if err != nil {
 		return err
 	}
@@ -145,8 +134,12 @@ func deliverActivityReport(a App, c *gin.Context, tenantID uuid.UUID) error {
 	return nil
 }
 
-func deliverSummaryReport(a App, c *gin.Context, tenantID uuid.UUID) error {
-	events, err := getCognitoEvents(c.Request.Context(), a, tenantID)
+func deliverSummaryReport(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
+	_ = sub // TODO: permission to read Cognito events?
+
+	events, err := getCognitoEvents(c.Request.Context(), a, targetTenant.ID)
 	if err != nil {
 		return err
 	}

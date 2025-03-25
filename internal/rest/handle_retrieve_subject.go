@@ -83,7 +83,7 @@ func convertProfileFields(prov multi.ProfileFieldProvider) []ProfileFormatField 
 	for _, field := range prov.ProfileFields() {
 		result = append(result, ProfileFormatField{
 			Name:   field.Name,
-			Format: field.Format.String(),
+			Format: field.NewFormat.String(),
 			Value:  field.Value,
 		})
 	}

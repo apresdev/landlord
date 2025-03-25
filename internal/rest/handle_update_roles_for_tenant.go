@@ -23,23 +23,36 @@ import (
 )
 
 func handleUpdateRolesForTenant(app App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
+	tenantID := c.Param("tenantID")
+	if tenantID == "" {
+		return apperr.NewBadRequest("no tenantID")
+	}
+	th, err := multi.ParseTenantHandle(tenantID)
+	if err != nil {
+		return apperr.NewBadRequest(err.Error())
+	}
+	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
+	if err != nil {
+		return apperr.NewNotFound(err.Error())
+	}
 	req := TenantRolesRequest{}
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	t := c.Param("tenantID")
-	if t == "" {
-		return apperr.NewBadRequest("no tenantID")
-	}
-	_, err := HandleUpdateRolesForTenant(app, c, req, t)
+	_, err = HandleUpdateRolesForTenant(app, c, sub, targetTenant, req)
 	return err
 }
 
 func HandleUpdateRolesForTenant(
 	app App,
 	c *gin.Context,
-	req TenantRolesRequest,
-	tenantID string) (*multi.Tenant, error) {
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	req TenantRolesRequest) (*multi.Tenant, error) {
 
 	req.Roles = tinytools.UniqueSlice(req.Roles)
 	req.SubTenantRoles = tinytools.UniqueSlice(req.SubTenantRoles)
@@ -48,18 +61,6 @@ func HandleUpdateRolesForTenant(
 	}
 	if err := validateRoleNames(req.SubTenantRoles); err != nil {
 		return nil, err
-	}
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return nil, err
-	}
-	th, err := multi.ParseTenantHandle(tenantID)
-	if err != nil {
-		return nil, apperr.NewBadRequest(err.Error())
-	}
-	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
-	if err != nil {
-		return nil, apperr.NewNotFound(err.Error())
 	}
 
 	resource := perms.NewResource(

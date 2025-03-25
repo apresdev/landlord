@@ -10,11 +10,14 @@ import (
 	"github.com/apresdev/landlord/internal/multi"
 	"github.com/apresdev/landlord/internal/perms"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
 func handleCancelInvitation(app App, c *gin.Context) error {
+	sub, err := perms.SubjectFromContext(c)
+	if err != nil {
+		return err
+	}
 	tenantID, err := UUIDParam(c, "tenantID")
 	if err != nil {
 		return err
@@ -22,14 +25,6 @@ func handleCancelInvitation(app App, c *gin.Context) error {
 	userID, err := UUIDParam(c, "userID")
 	if err != nil {
 		return apperr.NewBadRequest("no userID provided")
-	}
-	return HandleCancelInvitation(app, c, tenantID, userID)
-}
-
-func HandleCancelInvitation(app App, c *gin.Context, tenantID, userID uuid.UUID) error {
-	sub, err := perms.SubjectFromContext(c)
-	if err != nil {
-		return err
 	}
 	ctx := c.Request.Context()
 	ten, err := db.GetTenantByID(ctx, app.DDB(), tenantID)
@@ -40,7 +35,19 @@ func HandleCancelInvitation(app App, c *gin.Context, tenantID, userID uuid.UUID)
 	if err != nil {
 		return err
 	}
-	resource := perms.NewResource(perms.ResourceKindInvitation, perms.ResourceNameAny, ten, user)
+	return HandleCancelInvitation(app, c, sub, ten, user)
+}
+
+func HandleCancelInvitation(
+	app App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
+	ctx := c.Request.Context()
+	resource := perms.NewResource(
+		perms.ResourceKindInvitation, perms.ResourceNameAny, targetTenant, targetUser)
 	effect, err := perms.Eval(ctx, app, sub, perms.ActionDelete, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
@@ -53,12 +60,13 @@ func HandleCancelInvitation(app App, c *gin.Context, tenantID, userID uuid.UUID)
 		return apperr.NewUnauthorized("not authorized")
 	}
 
-	if user.Status != multi.UserStatusInvited {
+	if targetUser.Status != multi.UserStatusInvited {
 		return apperr.NewBadRequest(
-			fmt.Sprintf("cannot cancel invite, user '%s' is not invited", userID.String()))
+			fmt.Sprintf("cannot cancel invite, user '%s' is not invited",
+				targetUser.ID.String()))
 	}
 
-	authx.DeleteCognitoUser(ctx, app.CogIdp(), ten, user)
+	authx.DeleteCognitoUser(ctx, app.CogIdp(), targetTenant, targetUser)
 
-	return db.DeleteUser(ctx, app.DDB(), user)
+	return db.DeleteUser(ctx, app.DDB(), targetUser)
 }
