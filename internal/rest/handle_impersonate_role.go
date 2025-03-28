@@ -51,28 +51,47 @@ func handleImpersonateRole(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	if idx := slices.Index(targetTenant.Roles, req.Role); idx < 0 {
+
+	resp, err := HandleImpersonateRole(app, c, sub, targetTenant, req.Role, req.RefreshToken)
+	if err != nil {
+		return err
+	}
+
+	c.JSON(http.StatusOK, resp)
+
+	return nil
+}
+
+func HandleImpersonateRole(
+	app App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetRole string,
+	refreshToken string) (*ImpersonateResponse, error) {
+
+	if idx := slices.Index(targetTenant.Roles, targetRole); idx < 0 {
 		zap.L().Info("tenant does not have role",
 			zap.String("clientID", string(sub.Cid)),
-			zap.String("role", req.Role))
-		return apperr.NewUnauthorized("not authorized")
+			zap.String("role", targetRole))
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
 	resource := perms.NewResource(
-		perms.ResourceKindImpersonation, req.Role, targetTenant, nil)
+		perms.ResourceKindImpersonation, targetRole, targetTenant, nil)
 	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied impersonate role",
 			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
-	targetGroupName := targetTenant.GroupName(req.Role)
+	targetGroupName := targetTenant.GroupName(targetRole)
 	err = authx.ImpersonateRole(
 		c.Request.Context(),
 		app.CogIdp(),
@@ -88,7 +107,7 @@ func handleImpersonateRole(app App, c *gin.Context) error {
 			zap.String("targetTenantID", targetTenant.ID.String()),
 			zap.String("targetGroupName", targetGroupName),
 			zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	upc, err := authx.GetUserPoolClient(
 		c.Request.Context(), app.CogIdp(), targetTenant.UserPoolID)
@@ -96,22 +115,22 @@ func handleImpersonateRole(app App, c *gin.Context) error {
 		zap.L().Warn("Could not resolve user pool client",
 			zap.String("userPoolID", targetTenant.UserPoolID),
 			zap.Error(err))
-		return err
+		return nil, err
 	}
 	subClaim, err := jwx.GetClaimString(sub.AccessToken, authx.SubClaim)
 	if err != nil {
 		zap.L().Error("could not get sub claim from token",
 			zap.String("clientID", string(sub.Cid)),
 			zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	params := make(map[string]string)
-	params["REFRESH_TOKEN"] = req.RefreshToken
+	params["REFRESH_TOKEN"] = refreshToken
 	if upc.ClientSecret != nil {
 		secretHash, err := authx.CreateSecretHash(
 			subClaim, aws.ToString(upc.ClientId), aws.ToString(upc.ClientSecret))
 		if err != nil {
-			return err
+			return nil, err
 		}
 		params["SECRET_HASH"] = secretHash
 	}
@@ -126,13 +145,11 @@ func handleImpersonateRole(app App, c *gin.Context) error {
 		zap.L().Error("could not initiate auth",
 			zap.String("clientID", string(sub.Cid)),
 			zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
 	var resp ImpersonateResponse
 	resp.IdToken = aws.ToString(o.AuthenticationResult.IdToken)
 	resp.AccessToken = aws.ToString(o.AuthenticationResult.AccessToken)
-	c.JSON(http.StatusOK, resp)
-
-	return nil
+	return &resp, nil
 }

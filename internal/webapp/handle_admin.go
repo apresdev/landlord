@@ -351,6 +351,21 @@ func handleAdminAddRoleSubmit(
 	}
 }
 
+func handleAdminImpersonateRoleSubmit(
+	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
+
+	role := c.Param("role")
+	refreshToken, _ := c.Cookie(LandlordRefreshTokenCookie)
+	_, err := rest.HandleImpersonateRole(a, c, sub, targetTenant, role, refreshToken)
+	if err != nil {
+		return err
+	}
+	clearLandlordCookies(c, a.Settings().ConsoleURL())
+	c.Header("HX-Redirect", appPath("/"))
+	c.Status(http.StatusNoContent)
+	return nil
+}
+
 func handleAdminDeleteRoleSubmit(
 	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
 
