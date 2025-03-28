@@ -302,6 +302,7 @@
             {{ range .UserProfileDefinition.Fields }}
                 <div class="mt-2">
                     {{ if .UseSelectPossibleValue }}
+                        <label>{{ .UIName }}</label>
                         <select class="input" name="fieldValue">
                             {{ $selected := .Value }}
                             {{ range .PossibleValues }}
@@ -309,10 +310,9 @@
                             {{ end }}
                         </select>
                     {{ else }}
-                        <input class="input" type="{{ .HTMLInputType }}" name="fieldValue" value="{{ .Value }}" maxlength="256" autofocus>
+                        <label>{{ .UIName }}</label>
+                        <input class="input" type="{{ .HTMLInputType }}" name="fieldValue" value="{{ .Value }}" maxlength="256" autofocus placeholder="Optional">
                     {{ end }}
-                    <label>{{ .UIName }}</label>
-                    <input class="input" type="text" name="{{ .Name }}" placeholder="Optional">
                 </div>
             {{ end }}
         </div>
