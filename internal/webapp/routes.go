@@ -313,6 +313,7 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	authPlain.GET("/admin/tenants/:tenantID/add-role-button", handleAdminAddRoleButton)
 
 	authTenant.POST("/admin/tenants/:tenantID/roles", handleAdminAddRoleSubmit)
+	authTenant.POST("/admin/tenants/:tenantID/roles/:role/impersonate", handleAdminImpersonateRoleSubmit)
 	authTenant.DELETE("/admin/tenants/:tenantID/roles/:role", handleAdminDeleteRoleSubmit)
 	authPlain.GET("/admin/tenants/:tenantID/add-sub-role-form", handleAdminAddSubRoleForm)
 	authPlain.GET("/admin/tenants/:tenantID/add-sub-role-button", handleAdminAddSubRoleButton)

@@ -35,6 +35,10 @@
     <td class="numeric-column">{{ .Count }}</td>
     <td>{{ .Name }}</td>
     <td>
+        <button class="button is-small is-primary is-outlined"
+                hx-post="{{ printf "/ll-auth/app/admin/tenants/%s/roles/%s/impersonate" .TenantID .Name }}">
+            Impersonate
+        </button>
         {{ if .RemovableToolTip }}
             <div class="tooltip-wrapper">
                 <button class="button is-small" disabled>Remove</button>
