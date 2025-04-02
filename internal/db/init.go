@@ -11,9 +11,27 @@ import (
 	"go.uber.org/zap"
 )
 
-var tableName string
+type Context struct {
+	tableName string
+	ddb       AWSDynamoDB
+}
 
-func MustInit(ctx context.Context, settings appenv.Settings, ddb AWSDynamoDB) {
+func NewContext(tableName string, ddb AWSDynamoDB) *Context {
+	return &Context{
+		tableName: tableName,
+		ddb:       ddb,
+	}
+}
+
+func (c *Context) TableName() string {
+	return c.tableName
+}
+
+func (c *Context) DDB() AWSDynamoDB {
+	return c.ddb
+}
+
+func MustInit(ctx context.Context, settings appenv.Settings, ddb AWSDynamoDB) *Context {
 	_, err := ddb.DescribeTable(ctx, &dynamodb.DescribeTableInput{
 		TableName: aws.String(settings.DBTableName()),
 	})
@@ -28,20 +46,5 @@ func MustInit(ctx context.Context, settings appenv.Settings, ddb AWSDynamoDB) {
 			zap.String("table", settings.DBTableName()),
 			zap.Error(err))
 	}
-	tableName = settings.DBTableName()
-}
-
-func TableName() string {
-	return tableName
-}
-
-func resolveStr(v types.AttributeValue) (string, error) {
-	if v == nil {
-		return "", errors.New("unexpected nil attribute value")
-	}
-	if v1, ok := v.(*types.AttributeValueMemberS); !ok {
-		return "", errors.New("expected string attribute value")
-	} else {
-		return v1.Value, nil
-	}
+	return NewContext(settings.DBTableName(), ddb)
 }

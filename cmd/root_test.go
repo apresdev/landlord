@@ -2,18 +2,11 @@ package cmd_test
 
 import (
 	"bytes"
-	"fmt"
-	"os/exec"
-	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/apresdev/landlord/internal/appcore"
-
-	"github.com/apresdev/landlord/internal/localstack"
-
-	"github.com/apresdev/landlord/internal/authx"
-	"github.com/google/uuid"
+	"github.com/apresdev/landlord/internal/appenv"
+	"github.com/apresdev/landlord/internal/apptest"
 
 	"github.com/apresdev/landlord/cmd"
 	"github.com/spf13/cobra"
@@ -27,7 +20,7 @@ type RootTestSuite struct {
 }
 
 func TestRootTestSuite(t *testing.T) {
-	if !localstack.IsRunning() {
+	if !apptest.InitLocalStack(appenv.MustSettings()) {
 		t.Skip("localstack not running")
 	}
 	suite.Run(t, &RootTestSuite{})
@@ -36,16 +29,11 @@ func TestRootTestSuite(t *testing.T) {
 func (s *RootTestSuite) SetupTest() {
 	s.cmd = cmd.Root()
 	s.cmd.SetOut(&s.out)
-	cs := appcore.Must()
-	err := authx.DeleteAllUserPools(cs.Ctx(), cs.CogIdp())
-	s.NoError(err)
+	apptest.ResetLocalStack(appenv.MustSettings())
 }
 
 func (s *RootTestSuite) TearDownTest() {
 	s.out.Reset()
-	cs := appcore.Must()
-	err := authx.DeleteAllUserPools(cs.Ctx(), cs.CogIdp())
-	s.NoError(err)
 }
 
 func (s *RootTestSuite) CLI(args string) (*cobra.Command, error) {
@@ -63,33 +51,7 @@ func (s *RootTestSuite) TestRoot() {
 	s.NotEqual(strings.Index(s.out.String(), "Usage:"), -1)
 }
 
-func captureLocalstackLogs() (string, error) {
-	c := exec.Command("localstack", "logs", "--tail", "20")
-	var out bytes.Buffer
-	c.Stdout = &out
-	err := c.Run()
-	if err != nil {
-		return "", err
-	}
-	return out.String(), nil
-}
-
-func findConfirmationCodeInLogs(logs, email string) string {
-	pattern := `Confirmation code for Cognito user\s+[^:]+:\s*(\d+)$`
-	re := regexp.MustCompile(pattern)
-	for _, line := range strings.Split(logs, "\n") {
-		line = strings.TrimSpace(line)
-		if strings.Contains(line, email) {
-			match := re.FindStringSubmatch(line)
-			if match != nil {
-				return match[1]
-			}
-		}
-	}
-	return ""
-}
-
-func (s *RootTestSuite) logoutAndVerify() {
+func (s *RootTestSuite) TestLogoutAndVerify() {
 	_, err := s.CLI("logout")
 	s.NoError(err)
 	ses := cmd.MustReloadSession()
@@ -98,36 +60,4 @@ func (s *RootTestSuite) logoutAndVerify() {
 	s.Empty(ses.AccessToken)
 	s.Empty(ses.IdToken)
 	s.Empty(ses.RefreshToken)
-}
-
-func (s *RootTestSuite) TestSignUpScenario() {
-	testRunUUID := uuid.New().String()
-	userPoolName := fmt.Sprintf("test-userpool1-%s", testRunUUID)
-	c, err := s.CLI(fmt.Sprintf("userpool create --name %s", userPoolName))
-	s.NoError(err)
-	s.Equal("create", c.Use)
-	s.Contains(s.out.String(), "Created user pool")
-
-	testEmail := fmt.Sprintf("%s@example.com", testRunUUID)
-	c, err = s.CLI(fmt.Sprintf(
-		"signup new --userpool %s --email %s --password Test-password1",
-		userPoolName, testEmail))
-	s.NoError(err)
-	s.Equal("new", c.Use)
-
-	logs, err := captureLocalstackLogs()
-	s.NoError(err)
-	code := findConfirmationCodeInLogs(logs, testEmail)
-	s.NotEmpty(code)
-	_, err = s.CLI(fmt.Sprintf(
-		"signup confirm --userpool %s --email %s --code %s",
-		userPoolName, testEmail, code))
-	s.NoError(err)
-
-	_, err = s.CLI(fmt.Sprintf(
-		"login --userpool %s --email %s --password Test-password1",
-		userPoolName, testEmail))
-	s.NoError(err)
-
-	s.logoutAndVerify()
 }

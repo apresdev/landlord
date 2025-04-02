@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleInviteToTenant(app App, c *gin.Context) error {
+func handleInviteToTenant(a App, c *gin.Context) error {
 	var req InviteRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
@@ -30,11 +30,11 @@ func handleInviteToTenant(app App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), app.DDB(), tenantID)
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DBCtx(), tenantID)
 	if err != nil {
 		return err
 	}
-	if err := HandleInviteToTenant(app, c, sub, targetTenant, req); err != nil {
+	if err := HandleInviteToTenant(a, c, sub, targetTenant, req); err != nil {
 		return err
 	}
 	c.JSON(http.StatusNoContent, nil)
@@ -42,7 +42,7 @@ func handleInviteToTenant(app App, c *gin.Context) error {
 }
 
 func HandleInviteToTenant(
-	app App,
+	a App,
 	c *gin.Context,
 	sub *perms.Subject,
 	targetTenant *multi.Tenant,
@@ -50,7 +50,7 @@ func HandleInviteToTenant(
 
 	resource := perms.NewResource(
 		perms.ResourceKindInvitation, req.Role, targetTenant, nil)
-	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
+	effect, err := perms.Eval(c, a, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
@@ -67,7 +67,7 @@ func HandleInviteToTenant(
 		return apperr.NewBadRequest(err.Error())
 	}
 	err = authx.SendInvite(
-		c.Request.Context(), app.DDB(), app.CogIdp(), targetTenant, req.Username, req.Role, mfaPol)
+		c.Request.Context(), a.DBCtx(), a.CogIdp(), targetTenant, req.Username, req.Role, mfaPol)
 	if err != nil {
 		zap.L().Error("could not send invite",
 			zap.String("username", req.Username),

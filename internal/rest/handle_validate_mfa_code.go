@@ -16,12 +16,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleValidateMFACode(app App, c *gin.Context) error {
+func handleValidateMFACode(a App, c *gin.Context) error {
 	var req ValidateMfaCodeRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	resp, err := HandleValidateMFACode(app, c, req)
+	resp, err := HandleValidateMFACode(a, c, req)
 	if err != nil {
 		return err
 	}
@@ -29,9 +29,9 @@ func handleValidateMFACode(app App, c *gin.Context) error {
 	return nil
 }
 
-func HandleValidateMFACode(app App, c *gin.Context, req ValidateMfaCodeRequest) (*LoginResponse, error) {
-	ddb := app.DDB()
-	cogIdp := app.CogIdp()
+func HandleValidateMFACode(a App, c *gin.Context, req ValidateMfaCodeRequest) (*LoginResponse, error) {
+	ddb := a.DBCtx()
+	cogIdp := a.CogIdp()
 	ctx := c.Request.Context()
 	user, tenant, err := db.GetUserAndTenant(ctx, ddb, req.Username)
 	if err != nil {
@@ -92,7 +92,7 @@ func HandleValidateMFACode(app App, c *gin.Context, req ValidateMfaCodeRequest) 
 		zap.L().Warn("error updating email_verified user attribute", zap.Error(err))
 	}
 
-	if err := authx.OnSuccessfulLogin(ctx, app.DDB(), user); err != nil {
+	if err := authx.OnSuccessfulLogin(ctx, a.DBCtx(), user); err != nil {
 		return nil, err
 	}
 

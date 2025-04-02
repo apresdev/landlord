@@ -25,7 +25,6 @@ func Root() *cobra.Command {
 	rootCmd.AddCommand(restCmd())
 	rootCmd.AddCommand(serverCmd())
 	rootCmd.AddCommand(tenantCmd())
-	rootCmd.AddCommand(userPoolCmd())
 	rootCmd.AddCommand(versionCmd())
 
 	return rootCmd

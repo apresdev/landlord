@@ -41,6 +41,7 @@ type App interface {
 	CogIdp() authx.AWSCognitoIdentityProvider
 	Validator() jwx.TokenValidator
 	DDB() db.AWSDynamoDB
+	DBCtx() *db.Context
 	Settings() appenv.Settings
 	RootTenantID() uuid.UUID
 }
@@ -127,7 +128,7 @@ func addTenantRoute(group *gin.RouterGroup, a App, method, path string, h tenant
 			processHandlerError(a, c, apperr.NewBadRequest("no tenantID provided"))
 			return
 		}
-		targetTenant, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
+		targetTenant, err := db.ResolveTenant(c.Request.Context(), a.DBCtx(), th)
 		if err != nil {
 			processHandlerError(a, c, apperr.NewBadRequest("could not resolve tenant"))
 			return
@@ -176,7 +177,7 @@ func addUserRoute(group *gin.RouterGroup, a App, method, path string, h userHand
 			processHandlerError(a, c, apperr.NewBadRequest("no tenantID provided"))
 			return
 		}
-		targetTenant, err := db.ResolveTenant(c.Request.Context(), a.DDB(), th)
+		targetTenant, err := db.ResolveTenant(c.Request.Context(), a.DBCtx(), th)
 		if err != nil {
 			processHandlerError(a, c, apperr.NewBadRequest("could not resolve tenant"))
 			return
@@ -187,7 +188,7 @@ func addUserRoute(group *gin.RouterGroup, a App, method, path string, h userHand
 			return
 		}
 		targetUser, err := db.GetUserInTenantByID(
-			c.Request.Context(), a.DDB(), targetTenant.ID, userID)
+			c.Request.Context(), a.DBCtx(), targetTenant.ID, userID)
 		if err != nil {
 			processHandlerError(a, c, apperr.NewBadRequest("could not find user"))
 			return
@@ -350,7 +351,7 @@ func clientID(c *gin.Context) jwx.OpaqueClientID {
 	return jwx.OpaqueClientID(c.ClientIP())
 }
 
-func unauthorizedResponse(app App, c *gin.Context) {
+func unauthorizedResponse(a App, c *gin.Context) {
 	// This redirect ensures that the user is sent back to the login page
 	// if they are in an HTMX context where responses are being handling
 	// inline.
@@ -358,7 +359,7 @@ func unauthorizedResponse(app App, c *gin.Context) {
 	c.Status(http.StatusUnauthorized)
 	// The message here is purposefully vague to avoid leaking information.
 	// See the logs for diagnosing the issue.
-	uv := NewUnauthenticatedView(app.Settings()).
+	uv := NewUnauthenticatedView(a.Settings()).
 		WithErrMsg("Credentials are invalid or expired")
 	err := executeUnauthenticatedView(c, "unauthorized", uv)
 	if err != nil {
@@ -367,7 +368,7 @@ func unauthorizedResponse(app App, c *gin.Context) {
 	c.Abort()
 }
 
-func setupAuthContext(app App) gin.HandlerFunc {
+func setupAuthContext(a App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cid := perms.ClientID(c)
 		rawAccessToken, err := c.Cookie(LandlordAccessTokenCookie)
@@ -375,7 +376,7 @@ func setupAuthContext(app App) gin.HandlerFunc {
 			zap.L().Info("unauthorized: no access token cookie",
 				zap.String("clientID", string(cid)),
 				zap.Error(err))
-			unauthorizedResponse(app, c)
+			unauthorizedResponse(a, c)
 			return
 		}
 		username, err := c.Cookie(LandlordUsernameCookie)
@@ -383,27 +384,27 @@ func setupAuthContext(app App) gin.HandlerFunc {
 			zap.L().Info("unauthorized: no username cookie",
 				zap.String("clientID", string(cid)),
 				zap.Error(err))
-			unauthorizedResponse(app, c)
+			unauthorizedResponse(a, c)
 			return
 		}
-		_, ten, err := db.GetUserAndTenant(c.Request.Context(), app.DDB(), username)
+		_, ten, err := db.GetUserAndTenant(c.Request.Context(), a.DBCtx(), username)
 		if err != nil {
 			zap.L().Info("unauthorized: could not find user",
 				zap.String("clientID", string(cid)),
 				zap.String("username", username),
 				zap.Error(err))
-			unauthorizedResponse(app, c)
+			unauthorizedResponse(a, c)
 			return
 		}
-		validationURL := jwx.ValidationURL(app.Cfg().Region, ten.UserPoolID)
-		tok, err := app.Validator().ValidateToken(
+		validationURL := jwx.ValidationURL(a.Cfg().Region, ten.UserPoolID)
+		tok, err := a.Validator().ValidateToken(
 			c.Request.Context(), cid, validationURL, rawAccessToken)
 		if err != nil {
 			zap.L().Info("unauthorized: could not validate token",
 				zap.String("clientID", string(cid)),
 				zap.String("tenantID", ten.ID.String()),
 				zap.Error(err))
-			unauthorizedResponse(app, c)
+			unauthorizedResponse(a, c)
 			return
 		}
 		c.Set(perms.TokenKey, tok)

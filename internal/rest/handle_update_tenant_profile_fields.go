@@ -26,7 +26,7 @@ func handleUpdateTenantProfileFields(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewBadRequest("invalid tenant ID")
 	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), app.DDB(), tenantID)
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), app.DBCtx(), tenantID)
 	if err != nil {
 		zap.L().Error("error fetching tenant",
 			zap.Error(err),
@@ -79,7 +79,7 @@ func HandleUpdateTenantProfileFields(
 		}
 		targetTenant.UpdateProfileField(update.Name, defn.Format, update.Value)
 	}
-	err := db.StoreTenant(c.Request.Context(), app.DDB(), targetTenant)
+	err := db.StoreTenant(c.Request.Context(), app.DBCtx(), targetTenant)
 	if err != nil {
 		return nil, err
 	}

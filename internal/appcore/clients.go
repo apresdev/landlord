@@ -27,6 +27,7 @@ type Clients interface {
 	SES() authx.AWSSES
 	Validator() jwx.TokenValidator
 	DDB() db.AWSDynamoDB
+	DBCtx() *db.Context
 	RootTenantID() uuid.UUID
 }
 
@@ -38,6 +39,7 @@ type clients struct {
 	ses          authx.AWSSES
 	validator    jwx.TokenValidator
 	dynamo       db.AWSDynamoDB
+	dbCtx        *db.Context
 	rootTenantID uuid.UUID
 }
 
@@ -63,6 +65,10 @@ func (c *clients) SES() authx.AWSSES {
 
 func (c *clients) Validator() jwx.TokenValidator {
 	return c.validator
+}
+
+func (c *clients) DBCtx() *db.Context {
+	return c.dbCtx
 }
 
 func (c *clients) DDB() db.AWSDynamoDB {
@@ -91,20 +97,15 @@ func newClients() (*clients, error) {
 	}, nil
 }
 
-var OverrideClient Clients
-
 // Must returns concrete implementations of the core interfaces
 // to external services used by landlord. Further, it ensures that
 // our Dynamo DB table is created and available for use (or panics).
 func Must() Clients {
-	if OverrideClient != nil {
-		return OverrideClient
-	}
 	c, err := newClients()
 	if err != nil {
 		panic(err)
 	}
-	db.MustInit(c.Ctx(), c.Settings(), c.DDB())
-	c.rootTenantID = authx.MustRootTenant(c.Ctx(), c.DDB(), c.CogIdp())
+	c.dbCtx = db.MustInit(c.Ctx(), c.Settings(), c.DDB())
+	c.rootTenantID = authx.MustRootTenant(c.Ctx(), c.DBCtx(), c.CogIdp())
 	return c
 }

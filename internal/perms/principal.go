@@ -46,11 +46,11 @@ func (p *Subject) String() string {
 	return fmt.Sprintf("%s@%s", p.Username, p.TenantID.String())
 }
 
-func (p *Subject) ResolveTenant(ctx context.Context, app App) (*multi.Tenant, error) {
+func (p *Subject) ResolveTenant(ctx context.Context, a App) (*multi.Tenant, error) {
 	if p.tenant != nil {
 		return p.tenant, nil
 	}
-	tenant, err := db.GetTenantByID(ctx, app.DDB(), p.TenantID)
+	tenant, err := db.GetTenantByID(ctx, a.DBCtx(), p.TenantID)
 	if err != nil {
 		return nil, err
 	}
@@ -58,11 +58,11 @@ func (p *Subject) ResolveTenant(ctx context.Context, app App) (*multi.Tenant, er
 	return tenant, nil
 }
 
-func (p *Subject) ResolveUser(ctx context.Context, app App) (*multi.User, error) {
+func (p *Subject) ResolveUser(ctx context.Context, a App) (*multi.User, error) {
 	if p.user != nil {
 		return p.user, nil
 	}
-	user, err := db.GetUserByName(ctx, app.DDB(), p.Username)
+	user, err := db.GetUserByName(ctx, a.DBCtx(), p.Username)
 	if err != nil {
 		return nil, err
 	}

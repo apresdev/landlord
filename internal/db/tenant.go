@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -17,7 +18,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func StoreTenant(ctx context.Context, ddb AWSDynamoDB, ten *multi.Tenant) error {
+func StoreTenant(ctx context.Context, dbc *Context, ten *multi.Tenant) error {
 	if ten.ID == uuid.Nil {
 		return apperr.NewInternal("cannot store tenant with nil ID")
 	}
@@ -40,25 +41,25 @@ func StoreTenant(ctx context.Context, ddb AWSDynamoDB, ten *multi.Tenant) error 
 	av["altName"] = &types.AttributeValueMemberS{Value: TenantEntityID(ten.Name)}
 	input := &dynamodb.PutItemInput{
 		Item:      av,
-		TableName: aws.String(tableName),
+		TableName: aws.String(dbc.TableName()),
 	}
-	_, err = ddb.PutItem(ctx, input)
+	_, err = dbc.DDB().PutItem(ctx, input)
 	if err != nil {
 		return apperr.NewInternalE(
-			fmt.Errorf("failed to put item to %s: %w", tableName, err))
+			fmt.Errorf("failed to put item to %s: %w", dbc.TableName(), err))
 	}
 	return err
 }
 
-func GetTenantByID(ctx context.Context, ddb AWSDynamoDB, id uuid.UUID) (*multi.Tenant, error) {
+func GetTenantByID(ctx context.Context, dbc *Context, id uuid.UUID) (*multi.Tenant, error) {
 	kv := make(map[string]types.AttributeValue)
 	kv["pk"] = &types.AttributeValueMemberS{Value: GlobalEntityID("*")}
 	kv["sk"] = &types.AttributeValueMemberS{Value: TenantEntityID(id.String())}
 	input := &dynamodb.GetItemInput{
-		TableName: aws.String(tableName),
+		TableName: aws.String(dbc.TableName()),
 		Key:       kv,
 	}
-	result, err := ddb.GetItem(ctx, input)
+	result, err := dbc.DDB().GetItem(ctx, input)
 	if err != nil {
 		return nil, apperr.NewInternalE(
 			fmt.Errorf("failed to get item from DynamoDB: %w", err))
@@ -71,16 +72,16 @@ func GetTenantByID(ctx context.Context, ddb AWSDynamoDB, id uuid.UUID) (*multi.T
 	return unmarshalTenant(result.Item)
 }
 
-func GetTenantByName(ctx context.Context, ddb AWSDynamoDB, name string) (*multi.Tenant, error) {
+func GetTenantByName(ctx context.Context, dbc *Context, name string) (*multi.Tenant, error) {
 	kv := make(map[string]types.AttributeValue)
 	kv[":altName"] = &types.AttributeValueMemberS{Value: TenantEntityID(name)}
 	input := &dynamodb.QueryInput{
-		TableName:                 aws.String(tableName),
+		TableName:                 aws.String(dbc.TableName()),
 		IndexName:                 aws.String("altNameIndex"),
 		KeyConditionExpression:    aws.String("altName = :altName"),
 		ExpressionAttributeValues: kv,
 	}
-	result, err := ddb.Query(ctx, input)
+	result, err := dbc.DDB().Query(ctx, input)
 	if err != nil {
 		return nil, apperr.NewInternalE(
 			fmt.Errorf("failed to get item from DynamoDB: %w", err))
@@ -97,22 +98,22 @@ func GetTenantByName(ctx context.Context, ddb AWSDynamoDB, name string) (*multi.
 
 func GetRootTenant(
 	ctx context.Context,
-	ddb AWSDynamoDB,
+	dbc *Context,
 	rootTenantID uuid.UUID) (*multi.Tenant, error) {
 
-	return GetTenantByID(ctx, ddb, rootTenantID)
+	return GetTenantByID(ctx, dbc, rootTenantID)
 }
 
-func GetAllTenants(ctx context.Context, ddb AWSDynamoDB) ([]*multi.Tenant, error) {
+func GetAllTenants(ctx context.Context, dbc *Context) ([]*multi.Tenant, error) {
 	kv := make(map[string]types.AttributeValue)
 	kv[":pk"] = &types.AttributeValueMemberS{Value: GlobalEntityID("*")}
 	kv[":skPrefix"] = &types.AttributeValueMemberS{Value: TenantEntityID("")}
 	input := &dynamodb.QueryInput{
-		TableName:                 aws.String(tableName),
+		TableName:                 aws.String(dbc.TableName()),
 		KeyConditionExpression:    aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
 		ExpressionAttributeValues: kv,
 	}
-	result, err := ddb.Query(ctx, input)
+	result, err := dbc.DDB().Query(ctx, input)
 	if err != nil {
 		return nil, apperr.NewInternalE(
 			fmt.Errorf("failed to scan DynamoDB: %w", err))
@@ -138,14 +139,14 @@ func GetAllTenants(ctx context.Context, ddb AWSDynamoDB) ([]*multi.Tenant, error
 	return tenants, nil
 }
 
-func ResolveTenant(ctx context.Context, ddb AWSDynamoDB, h multi.TenantHandle) (*multi.Tenant, error) {
+func ResolveTenant(ctx context.Context, dbc *Context, h multi.TenantHandle) (*multi.Tenant, error) {
 	if !h.IsSet() {
 		return nil, apperr.NewBadRequest("tenant ID or tenant name must be set")
 	}
 	if h.ID.Version() != 0 {
-		return GetTenantByID(ctx, ddb, h.ID)
+		return GetTenantByID(ctx, dbc, h.ID)
 	}
-	return GetTenantByName(ctx, ddb, h.Name)
+	return GetTenantByName(ctx, dbc, h.Name)
 }
 
 func parseEntityUUID(v types.AttributeValue, entityPrefix string) (uuid.UUID, error) {
@@ -162,6 +163,17 @@ func parseEntityUUID(v types.AttributeValue, entityPrefix string) (uuid.UUID, er
 			fmt.Errorf("failed to strip entity ID: %w", err))
 	}
 	return uuid.Parse(idStr)
+}
+
+func resolveStr(v types.AttributeValue) (string, error) {
+	if v == nil {
+		return "", errors.New("unexpected nil attribute value")
+	}
+	if v1, ok := v.(*types.AttributeValueMemberS); !ok {
+		return "", errors.New("expected string attribute value")
+	} else {
+		return v1.Value, nil
+	}
 }
 
 func parseEntityName(v types.AttributeValue, entityPrefix string) (string, error) {

@@ -21,7 +21,7 @@ import (
 
 func SendInvite(
 	ctx context.Context,
-	ddb db.AWSDynamoDB,
+	dbc *db.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	ten *multi.Tenant,
 	username string,
@@ -39,13 +39,13 @@ func SendInvite(
 		return apperr.NewBadRequest(
 			fmt.Sprintf("role '%s' is not valid for tenant '%s'", role, ten.ID))
 	}
-	existingUser, err := db.GetUserByName(ctx, ddb, e.Address())
+	existingUser, err := db.GetUserByName(ctx, dbc, e.Address())
 	if err == nil {
 		if existingUser.TenantID != ten.ID {
 			return apperr.NewBadRequest(
 				fmt.Sprintf("user '%s' already belongs to another tenant", e.Address()))
 		}
-	} else if err != nil && !apperr.IsNotFound(err) {
+	} else if !apperr.IsNotFound(err) {
 		return err
 	}
 	if existingUser != nil && existingUser.Status == multi.UserStatusInactive {
@@ -83,7 +83,7 @@ func SendInvite(
 		}
 	}
 	return db.StoreUser(
-		ctx, ddb, multi.NewUser(ten.ID, cognitoUserID, e.Address(), role, mfaPolicy))
+		ctx, dbc, multi.NewUser(ten.ID, cognitoUserID, e.Address(), role, mfaPolicy))
 }
 
 func DeleteCognitoUser(

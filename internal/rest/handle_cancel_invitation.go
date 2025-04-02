@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleCancelInvitation(app App, c *gin.Context) error {
+func handleCancelInvitation(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
@@ -27,19 +27,19 @@ func handleCancelInvitation(app App, c *gin.Context) error {
 		return apperr.NewBadRequest("no userID provided")
 	}
 	ctx := c.Request.Context()
-	ten, err := db.GetTenantByID(ctx, app.DDB(), tenantID)
+	ten, err := db.GetTenantByID(ctx, a.DBCtx(), tenantID)
 	if err != nil {
 		return err
 	}
-	user, err := db.GetUserInTenantByID(ctx, app.DDB(), tenantID, userID)
+	user, err := db.GetUserInTenantByID(ctx, a.DBCtx(), tenantID, userID)
 	if err != nil {
 		return err
 	}
-	return HandleCancelInvitation(app, c, sub, ten, user)
+	return HandleCancelInvitation(a, c, sub, ten, user)
 }
 
 func HandleCancelInvitation(
-	app App,
+	a App,
 	c *gin.Context,
 	sub *perms.Subject,
 	targetTenant *multi.Tenant,
@@ -48,7 +48,7 @@ func HandleCancelInvitation(
 	ctx := c.Request.Context()
 	resource := perms.NewResource(
 		perms.ResourceKindInvitation, perms.ResourceNameAny, targetTenant, targetUser)
-	effect, err := perms.Eval(ctx, app, sub, perms.ActionDelete, resource)
+	effect, err := perms.Eval(ctx, a, sub, perms.ActionDelete, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
@@ -66,7 +66,7 @@ func HandleCancelInvitation(
 				targetUser.ID.String()))
 	}
 
-	authx.DeleteCognitoUser(ctx, app.CogIdp(), targetTenant, targetUser)
+	authx.DeleteCognitoUser(ctx, a.CogIdp(), targetTenant, targetUser)
 
-	return db.DeleteUser(ctx, app.DDB(), targetUser)
+	return db.DeleteUser(ctx, a.DBCtx(), targetUser)
 }

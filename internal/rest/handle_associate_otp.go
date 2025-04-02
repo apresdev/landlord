@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleAssociateOTP(app App, c *gin.Context) error {
-	resp, err := HandleAssociateOTP(app, c)
+func handleAssociateOTP(a App, c *gin.Context) error {
+	resp, err := HandleAssociateOTP(a, c)
 	if err != nil {
 		return err
 	}
@@ -18,14 +18,14 @@ func handleAssociateOTP(app App, c *gin.Context) error {
 	return nil
 }
 
-func HandleAssociateOTP(app App, c *gin.Context) (*AssociateOtpResponse, error) {
+func HandleAssociateOTP(a App, c *gin.Context) (*AssociateOtpResponse, error) {
 	ctx := c.Request.Context()
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return nil, err
 	}
 	result, err := authx.AssociateSoftwareToken(
-		ctx, app.CogIdp(), app.Settings().AppName(), sub.AccessToken.Raw, sub.Username)
+		ctx, a.CogIdp(), a.Settings().AppName(), sub.AccessToken.Raw, sub.Username)
 	if err != nil {
 		return nil, err
 	}

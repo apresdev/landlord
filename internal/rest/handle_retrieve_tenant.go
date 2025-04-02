@@ -14,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleRetrieveTenant(app App, c *gin.Context) error {
+func handleRetrieveTenant(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
@@ -27,11 +27,11 @@ func handleRetrieveTenant(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewBadRequest("invalid tenantID")
 	}
-	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
+	ten, err := db.ResolveTenant(c.Request.Context(), a.DBCtx(), th)
 	if err != nil {
 		return apperr.NewNotFound(err.Error())
 	}
-	if !perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, sub.Role) {
+	if !perms.IsAuthorizedToReadTenant(a.RootTenantID(), ten, sub.Role) {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	var resp TenantResponse

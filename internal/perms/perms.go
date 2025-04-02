@@ -143,12 +143,12 @@ func init() {
 
 // Eval evaluates our permission policy. It returns an Effect that indicates
 // whether the operation is allowed or denied.
-func Eval(ctx context.Context, app App, sub *Subject, a Action, r *Resource) (*Effect, error) {
-	subjectTenant, err := sub.ResolveTenant(ctx, app)
+func Eval(ctx context.Context, a App, sub *Subject, action Action, r *Resource) (*Effect, error) {
+	subjectTenant, err := sub.ResolveTenant(ctx, a)
 	if err != nil {
 		return nil, err
 	}
-	subjectUser, err := sub.ResolveUser(ctx, app)
+	subjectUser, err := sub.ResolveUser(ctx, a)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func Eval(ctx context.Context, app App, sub *Subject, a Action, r *Resource) (*E
 				"name": subjectTenant.Name,
 			},
 		},
-		"action":   a.String(),
+		"action":   action.String(),
 		"resource": resource,
 	}
 
@@ -205,7 +205,7 @@ func Eval(ctx context.Context, app App, sub *Subject, a Action, r *Resource) (*E
 }
 
 type App interface {
-	DDB() db.AWSDynamoDB
+	DBCtx() *db.Context
 	RootTenantID() uuid.UUID
 }
 

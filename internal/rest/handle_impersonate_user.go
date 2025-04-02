@@ -21,7 +21,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleImpersonateUser(app App, c *gin.Context) error {
+func handleImpersonateUser(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
@@ -44,11 +44,11 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 		return apperr.NewBadRequest(err.Error())
 	}
 	targetTenant, err := db.ResolveTenant(
-		c.Request.Context(), app.DDB(), targetTenantHandle)
+		c.Request.Context(), a.DBCtx(), targetTenantHandle)
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	targetUser, err := db.GetUserByName(c.Request.Context(), app.DDB(), req.Username)
+	targetUser, err := db.GetUserByName(c.Request.Context(), a.DBCtx(), req.Username)
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
@@ -60,7 +60,7 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	resp, err := HandleImpersonateUser(
-		app, c, sub, targetTenant, targetUser, req.RefreshToken)
+		a, c, sub, targetTenant, targetUser, req.RefreshToken)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func handleImpersonateUser(app App, c *gin.Context) error {
 }
 
 func HandleImpersonateUser(
-	app App,
+	a App,
 	c *gin.Context,
 	sub *perms.Subject,
 	targetTenant *multi.Tenant,
@@ -80,7 +80,7 @@ func HandleImpersonateUser(
 
 	resource := perms.NewResource(
 		perms.ResourceKindImpersonation, targetUser.Username, targetTenant, targetUser)
-	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
+	effect, err := perms.Eval(c, a, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
@@ -94,7 +94,7 @@ func HandleImpersonateUser(
 
 	err = authx.ImpersonateUser(
 		c.Request.Context(),
-		app.CogIdp(),
+		a.CogIdp(),
 		targetTenant.UserPoolID,
 		sub.Username,
 		targetTenant.ID,
@@ -114,7 +114,7 @@ func HandleImpersonateUser(
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	upc, err := authx.GetUserPoolClient(
-		c.Request.Context(), app.CogIdp(), targetTenant.UserPoolID)
+		c.Request.Context(), a.CogIdp(), targetTenant.UserPoolID)
 	if err != nil {
 		zap.L().Warn("Could not resolve user pool client",
 			zap.String("userPoolID", targetTenant.UserPoolID),
@@ -139,7 +139,7 @@ func HandleImpersonateUser(
 		params["SECRET_HASH"] = secretHash
 	}
 	// https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html#cognito-user-pools-computing-secret-hash
-	o, err := app.CogIdp().InitiateAuth(
+	o, err := a.CogIdp().InitiateAuth(
 		c.Request.Context(), &cognitoidentityprovider.InitiateAuthInput{
 			AuthFlow:       types.AuthFlowTypeRefreshToken,
 			ClientId:       upc.ClientId,

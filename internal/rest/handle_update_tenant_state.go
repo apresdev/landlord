@@ -14,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleUpdateTenantState(app App, c *gin.Context) error {
+func handleUpdateTenantState(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
@@ -31,11 +31,11 @@ func handleUpdateTenantState(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewBadRequest("invalid tenantID")
 	}
-	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
+	targetTenant, err := db.ResolveTenant(c.Request.Context(), a.DBCtx(), th)
 	if err != nil {
 		return err
 	}
-	if _, err := HandleUpdateTenantState(app, c, sub, targetTenant, state); err != nil {
+	if _, err := HandleUpdateTenantState(a, c, sub, targetTenant, state); err != nil {
 		return err
 	}
 	c.JSON(http.StatusNoContent, nil)
@@ -43,7 +43,7 @@ func handleUpdateTenantState(app App, c *gin.Context) error {
 }
 
 func HandleUpdateTenantState(
-	app App,
+	a App,
 	c *gin.Context,
 	sub *perms.Subject,
 	targetTenant *multi.Tenant,
@@ -51,7 +51,7 @@ func HandleUpdateTenantState(
 
 	resource := perms.NewResource(
 		perms.ResourceKindTenantDescription, perms.ResourceNameAny, targetTenant, nil)
-	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
+	effect, err := perms.Eval(c, a, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
@@ -67,7 +67,6 @@ func HandleUpdateTenantState(
 	if err != nil {
 		return nil, apperr.NewBadRequest("invalid tenantState")
 	}
-	ddb := app.DDB()
 	ctx := c.Request.Context()
-	return authx.SetTenantState(ctx, ddb, targetTenant, st)
+	return authx.SetTenantState(ctx, a.DBCtx(), targetTenant, st)
 }

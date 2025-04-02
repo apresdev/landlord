@@ -81,20 +81,20 @@ func (s *HandleSetNewPasswordTestSuite) TestBadRequests() {
 }
 
 func (s *HandleSetNewPasswordTestSuite) TestSuccess() {
-	app := NewMockApp()
+	a := NewMockApp()
 	ctx := context.Background()
 	req := SetNewPasswordRequest{
 		Username: "user1@example.com",
 		Password: "password",
 		Session:  "session-token"}
 	gt1 := withDefaultSetNewPasswordRequest(newGinTest(s.T()), &req)
-	t := withSetupGetTenantByID(app)
+	t := withSetupGetTenantByID(a)
 	u := newTestUser(t)
 	u.Status = multi.UserStatusInvited
-	withSetupQueryUser2(app, u)
-	withGetUserPoolClient(app, ctx)
+	withSetupQueryUser2(a, u)
+	withGetUserPoolClient(a, ctx)
 
-	app.cogIdp.EXPECT().RespondToAuthChallenge(ctx, mock.Anything).Return(
+	a.cogIdp.EXPECT().RespondToAuthChallenge(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.RespondToAuthChallengeOutput{
 			AuthenticationResult: &types.AuthenticationResultType{
 				AccessToken:  aws.String("access-token"),
@@ -102,11 +102,11 @@ func (s *HandleSetNewPasswordTestSuite) TestSuccess() {
 				RefreshToken: aws.String("refresh-token"),
 			},
 		}, nil).Once()
-	app.cogIdp.EXPECT().AdminConfirmSignUp(gt1.c.Request.Context(), mock.Anything).Return(
+	a.cogIdp.EXPECT().AdminConfirmSignUp(gt1.c.Request.Context(), mock.Anything).Return(
 		&cognitoidentityprovider.AdminConfirmSignUpOutput{}, nil).Once()
-	app.cogIdp.EXPECT().AdminUpdateUserAttributes(gt1.c.Request.Context(), mock.Anything).Return(
+	a.cogIdp.EXPECT().AdminUpdateUserAttributes(gt1.c.Request.Context(), mock.Anything).Return(
 		&cognitoidentityprovider.AdminUpdateUserAttributesOutput{}, nil).Once()
-	app.cogIdp.EXPECT().AdminAddUserToGroup(gt1.c.Request.Context(), mock.Anything).Return(
+	a.cogIdp.EXPECT().AdminAddUserToGroup(gt1.c.Request.Context(), mock.Anything).Return(
 		&cognitoidentityprovider.AdminAddUserToGroupOutput{}, nil).Once()
 
 	av, err := attributevalue.MarshalMap(u)
@@ -119,13 +119,13 @@ func (s *HandleSetNewPasswordTestSuite) TestSuccess() {
 	av["status"] = &ddbtypes.AttributeValueMemberS{Value: "active"}
 
 	input := &dynamodb.PutItemInput{
-		TableName: aws.String(db.TableName()),
+		TableName: aws.String(a.DBCtx().TableName()),
 		Item:      av,
 	}
-	app.ddb.EXPECT().PutItem(gt1.c.Request.Context(), input).Return(
+	a.ddb.EXPECT().PutItem(gt1.c.Request.Context(), input).Return(
 		&dynamodb.PutItemOutput{}, nil).Once()
 
-	resp, err := HandleSetNewPassword(app, gt1.c, req)
+	resp, err := HandleSetNewPassword(a, gt1.c, req)
 	s.NoError(err)
 	s.NotNil(resp)
 	s.Equal("access-token", resp.AccessToken)

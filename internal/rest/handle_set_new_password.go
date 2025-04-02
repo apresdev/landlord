@@ -18,12 +18,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleSetNewPassword(app App, c *gin.Context) error {
+func handleSetNewPassword(a App, c *gin.Context) error {
 	var req SetNewPasswordRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	resp, err := HandleSetNewPassword(app, c, req)
+	resp, err := HandleSetNewPassword(a, c, req)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func handleSetNewPassword(app App, c *gin.Context) error {
 }
 
 func HandleSetNewPassword(
-	app App, c *gin.Context, req SetNewPasswordRequest) (
+	a App, c *gin.Context, req SetNewPasswordRequest) (
 	*SetNewPasswordResponse, error) {
 
 	if req.Username == "" {
@@ -45,10 +45,9 @@ func HandleSetNewPassword(
 		return nil, apperr.NewBadRequest("session is required")
 	}
 
-	ddb := app.DDB()
-	cogIdp := app.CogIdp()
+	cogIdp := a.CogIdp()
 	ctx := c.Request.Context()
-	user, tenant, err := db.GetUserAndTenant(ctx, ddb, req.Username)
+	user, tenant, err := db.GetUserAndTenant(ctx, a.DBCtx(), req.Username)
 	if err != nil {
 		return nil, fmt.Errorf("error finding tenant for username: %w", err)
 	}
@@ -111,7 +110,7 @@ func HandleSetNewPassword(
 			result, err := authx.AssociateSoftwareToken(
 				ctx,
 				cogIdp,
-				app.Settings().AppName(),
+				a.Settings().AppName(),
 				aws.ToString(o.AuthenticationResult.AccessToken),
 				req.Username)
 			if err != nil {
@@ -124,7 +123,7 @@ func HandleSetNewPassword(
 			return &resp, nil
 		}
 	} else {
-		if err := authx.OnSuccessfulLogin(ctx, ddb, user); err != nil {
+		if err := authx.OnSuccessfulLogin(ctx, a.DBCtx(), user); err != nil {
 			return nil, err
 		}
 	}

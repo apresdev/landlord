@@ -9,12 +9,12 @@ import (
 
 func OnSuccessfulLogin(
 	ctx context.Context,
-	ddb db.AWSDynamoDB,
+	dbc *db.Context,
 	user *multi.User) error {
 
 	if user.Status == multi.UserStatusInvited {
 		user.Status = multi.UserStatusActive
-		if err := db.StoreUser(ctx, ddb, user); err != nil {
+		if err := db.StoreUser(ctx, dbc, user); err != nil {
 			return err
 		}
 	}

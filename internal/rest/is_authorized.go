@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func isAuthorized(app App) gin.HandlerFunc {
+func isAuthorized(a App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cid := perms.ClientID(c)
 		bearer := c.GetHeader("Authorization")
@@ -46,7 +46,7 @@ func isAuthorized(app App) gin.HandlerFunc {
 				c.Abort()
 				return
 			}
-			t, err := db.GetTenantByID(c.Request.Context(), app.DDB(), tenID)
+			t, err := db.GetTenantByID(c.Request.Context(), a.DBCtx(), tenID)
 			if err != nil {
 				zap.L().Info("unauthorized: tenant not found",
 					zap.Error(err),
@@ -59,7 +59,7 @@ func isAuthorized(app App) gin.HandlerFunc {
 			ten = t
 		} else {
 			rootTenant, err := db.GetRootTenant(
-				c.Request.Context(), app.DDB(), app.RootTenantID())
+				c.Request.Context(), a.DBCtx(), a.RootTenantID())
 			if err != nil {
 				zap.L().Error("could not get root tenant", zap.Error(err))
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -68,8 +68,8 @@ func isAuthorized(app App) gin.HandlerFunc {
 			}
 			ten = rootTenant
 		}
-		validationURL := jwx.ValidationURL(app.Cfg().Region, ten.UserPoolID)
-		tok, err := app.Validator().ValidateToken(
+		validationURL := jwx.ValidationURL(a.Cfg().Region, ten.UserPoolID)
+		tok, err := a.Validator().ValidateToken(
 			c.Request.Context(), cid, validationURL, token)
 		if err != nil {
 			zap.L().Info("unauthorized: could not validate token",

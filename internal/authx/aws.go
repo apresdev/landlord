@@ -26,26 +26,6 @@ type AWSCognitoIdentityProvider interface {
 		params *cognitoidentityprovider.RespondToAuthChallengeInput,
 		optFns ...func(*cognitoidentityprovider.Options)) (
 		*cognitoidentityprovider.RespondToAuthChallengeOutput, error)
-	CreateUserPool(
-		ctx context.Context,
-		params *cognitoidentityprovider.CreateUserPoolInput,
-		optFns ...func(*cognitoidentityprovider.Options)) (
-		*cognitoidentityprovider.CreateUserPoolOutput, error)
-	CreateUserPoolClient(
-		ctx context.Context,
-		params *cognitoidentityprovider.CreateUserPoolClientInput,
-		optFns ...func(*cognitoidentityprovider.Options)) (
-		*cognitoidentityprovider.CreateUserPoolClientOutput, error)
-	CreateUserPoolDomain(
-		ctx context.Context,
-		params *cognitoidentityprovider.CreateUserPoolDomainInput,
-		optFns ...func(*cognitoidentityprovider.Options)) (
-		*cognitoidentityprovider.CreateUserPoolDomainOutput, error)
-	DeleteUserPool(
-		ctx context.Context,
-		params *cognitoidentityprovider.DeleteUserPoolInput,
-		optFns ...func(*cognitoidentityprovider.Options)) (
-		*cognitoidentityprovider.DeleteUserPoolOutput, error)
 	ListUserPools(
 		ctx context.Context,
 		params *cognitoidentityprovider.ListUserPoolsInput,

@@ -7,7 +7,6 @@ import (
 	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/apresdev/landlord/internal/apptest"
 	"github.com/apresdev/landlord/internal/db"
-	"github.com/apresdev/landlord/internal/localstack"
 	"github.com/google/uuid"
 
 	"github.com/apresdev/landlord/internal/multi"
@@ -19,14 +18,14 @@ type TenantTestSuite struct {
 }
 
 func TestTenantTestSuite(t *testing.T) {
-	if !localstack.IsRunning() {
+	if !apptest.InitLocalStack(appenv.MustSettings()) {
 		t.Skip("localstack not running")
 	}
 	suite.Run(t, &TenantTestSuite{})
 }
 
 func (s *TenantTestSuite) SetupTest() {
-	apptest.DangerousDeleteAllItems(appenv.MustSettings().DBTableName())
+	apptest.ResetLocalStack(appenv.MustSettings())
 }
 
 func (s *TenantTestSuite) storeTestTenant(a appcore.Clients) *multi.Tenant {
@@ -40,7 +39,7 @@ func (s *TenantTestSuite) storeTestTenantWithName(
 		ID:   uuid.New(),
 		Name: name,
 	}
-	err := db.StoreTenant(a.Ctx(), a.DDB(), t)
+	err := db.StoreTenant(a.Ctx(), a.DBCtx(), t)
 	s.NoError(err)
 	return t
 }
@@ -48,7 +47,7 @@ func (s *TenantTestSuite) storeTestTenantWithName(
 func (s *TenantTestSuite) TestStoreTenant() {
 	a := appcore.Must()
 	t1 := s.storeTestTenant(a)
-	t2, err := db.GetTenantByID(a.Ctx(), a.DDB(), t1.ID)
+	t2, err := db.GetTenantByID(a.Ctx(), a.DBCtx(), t1.ID)
 	s.NoError(err)
 	s.NotNil(t2)
 	s.Equal(t1, t2)
@@ -57,16 +56,16 @@ func (s *TenantTestSuite) TestStoreTenant() {
 func (s *TenantTestSuite) TestGetTenantByID() {
 	a := appcore.Must()
 	t1 := s.storeTestTenant(a)
-	t2, err := db.GetTenantByID(a.Ctx(), a.DDB(), t1.ID)
+	t2, err := db.GetTenantByID(a.Ctx(), a.DBCtx(), t1.ID)
 	s.NoError(err)
 	s.NotNil(t2)
 	s.Equal(t1, t2)
 
-	t3, err := db.GetTenantByID(a.Ctx(), a.DDB(), uuid.New())
+	t3, err := db.GetTenantByID(a.Ctx(), a.DBCtx(), uuid.New())
 	s.Error(err)
 	s.Nil(t3)
 
-	t4, err := db.GetRootTenant(a.Ctx(), a.DDB(), a.RootTenantID())
+	t4, err := db.GetRootTenant(a.Ctx(), a.DBCtx(), a.RootTenantID())
 	s.NoError(err)
 	s.NotNil(t4)
 	s.Equal(a.RootTenantID(), t4.ID)
@@ -76,12 +75,12 @@ func (s *TenantTestSuite) TestGetTenantByID() {
 func (s *TenantTestSuite) TestGetTenantByName() {
 	a := appcore.Must()
 	t1 := s.storeTestTenant(a)
-	t2, err := db.GetTenantByName(a.Ctx(), a.DDB(), t1.Name)
+	t2, err := db.GetTenantByName(a.Ctx(), a.DBCtx(), t1.Name)
 	s.NoError(err)
 	s.NotNil(t2)
 	s.Equal(t1, t2)
 
-	t3, err := db.GetTenantByName(a.Ctx(), a.DDB(), "non-existent")
+	t3, err := db.GetTenantByName(a.Ctx(), a.DBCtx(), "non-existent")
 	s.Error(err)
 	s.Nil(t3)
 }
@@ -92,7 +91,7 @@ func (s *TenantTestSuite) TestGetAllTenants() {
 	tb := s.storeTestTenantWithName(a, "b-test-tenant2")
 	ta := s.storeTestTenantWithName(a, "a-test-tenant3")
 
-	ts, err := db.GetAllTenants(a.Ctx(), a.DDB())
+	ts, err := db.GetAllTenants(a.Ctx(), a.DBCtx())
 	s.NoError(err)
 	// Check that GetAllTenants sorted for us, root is put first
 	s.Len(ts, 4)

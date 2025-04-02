@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/apresdev/landlord/internal/appenv"
+	"github.com/apresdev/landlord/internal/tinytools"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
-	"go.uber.org/zap"
 )
 
 // GetUserPoolDescriptions returns the descriptions of all user pools
@@ -20,8 +20,8 @@ func GetUserPoolDescriptions(
 	[]types.UserPoolDescriptionType, error) {
 
 	result := make([]types.UserPoolDescriptionType, 0)
-	maxResults := MaxPagingResults
-	nextToken := NewNextToken()
+	maxResults := tinytools.MaxPagingResults
+	nextToken := tinytools.NewNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
 		NextToken:  &nextToken,
@@ -61,8 +61,8 @@ func getUserPoolDescriptions(
 	match func(descriptionType types.UserPoolDescriptionType) bool) (
 	[]types.UserPoolDescriptionType, error) {
 
-	maxResults := MaxPagingResults
-	nextToken := NewNextToken()
+	maxResults := tinytools.MaxPagingResults
+	nextToken := tinytools.NewNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
 		NextToken:  &nextToken,
@@ -150,135 +150,6 @@ func GetUsersInUserPool(
 		return nil, err
 	}
 	return o.Users, nil
-}
-
-func CreateUserPool(
-	ctx context.Context,
-	cogIdp AWSCognitoIdentityProvider,
-	rootUserPoolID string,
-	userPoolName string) (*types.UserPoolType, error) {
-
-	args := cognitoidentityprovider.CreateUserPoolInput{
-		PoolName: aws.String(userPoolName),
-		UsernameConfiguration: &types.UsernameConfigurationType{
-			CaseSensitive: aws.Bool(false),
-		},
-	}
-	o, err := cogIdp.CreateUserPool(ctx, &args)
-	if err != nil {
-		return nil, err
-	}
-	defaultUP, err := cogIdp.DescribeUserPool(ctx,
-		&cognitoidentityprovider.DescribeUserPoolInput{
-			UserPoolId: aws.String(rootUserPoolID),
-		})
-	if err != nil {
-		return nil, err
-	}
-	defaultUPDomain, err := cogIdp.DescribeUserPoolDomain(ctx,
-		&cognitoidentityprovider.DescribeUserPoolDomainInput{
-			Domain: defaultUP.UserPool.CustomDomain,
-		})
-	if err != nil {
-		return nil, err
-	}
-	if defaultUPDomain.DomainDescription == nil {
-		return nil, errors.New("no domain description found")
-	}
-	if defaultUPDomain.DomainDescription.CustomDomainConfig == nil {
-		return nil, errors.New("no custom domain config found")
-	}
-	if defaultUPDomain.DomainDescription.CustomDomainConfig.CertificateArn == nil {
-		return nil, errors.New("no certificate ARN found")
-	}
-	_, err = cogIdp.CreateUserPoolDomain(
-		ctx, &cognitoidentityprovider.CreateUserPoolDomainInput{
-			Domain:     defaultUP.UserPool.CustomDomain,
-			UserPoolId: o.UserPool.Id,
-			CustomDomainConfig: &types.CustomDomainConfigType{
-				CertificateArn: defaultUPDomain.DomainDescription.CustomDomainConfig.CertificateArn,
-			},
-		})
-	if err != nil {
-		return nil, err
-	}
-
-	clientName := fmt.Sprintf("%s-client", userPoolName)
-	_, err = cogIdp.CreateUserPoolClient(ctx, &cognitoidentityprovider.CreateUserPoolClientInput{
-		ClientName: aws.String(clientName),
-		UserPoolId: o.UserPool.Id,
-		ExplicitAuthFlows: []types.ExplicitAuthFlowsType{
-			types.ExplicitAuthFlowsTypeAllowUserPasswordAuth,
-			types.ExplicitAuthFlowsTypeAllowRefreshTokenAuth,
-			types.ExplicitAuthFlowsTypeAllowUserSrpAuth,
-		},
-	})
-	if err != nil {
-		var err2 error
-		_, err2 = cogIdp.DeleteUserPool(
-			ctx,
-			&cognitoidentityprovider.DeleteUserPoolInput{UserPoolId: o.UserPool.Id})
-		if err2 != nil {
-			zap.L().Error("failed to delete user pool", zap.Error(err2))
-		}
-		return nil, err
-	}
-	return o.UserPool, nil
-}
-
-func DeleteUserPool(
-	ctx context.Context,
-	cogIdp AWSCognitoIdentityProvider,
-	userPool string) (*types.UserPoolType, error) {
-
-	if !appenv.LocalStack() {
-		return nil, errors.New("cannot delete user pool in non-localstack environment")
-	}
-
-	up, err := GetUserPoolByNameOrID(ctx, cogIdp, userPool)
-	if err != nil {
-		return nil, err
-	}
-	args := cognitoidentityprovider.DeleteUserPoolInput{
-		UserPoolId: up.Id,
-	}
-	_, err = cogIdp.DeleteUserPool(ctx, &args)
-	if err != nil {
-		return nil, err
-	}
-	return up, nil
-}
-
-func DeleteAllUserPools(
-	ctx context.Context,
-	cogIdp AWSCognitoIdentityProvider) error {
-
-	maxResults := MaxPagingResults
-	nextToken := NewNextToken()
-	args := cognitoidentityprovider.ListUserPoolsInput{
-		MaxResults: &maxResults,
-		NextToken:  &nextToken,
-	}
-	for {
-		u, err := cogIdp.ListUserPools(ctx, &args)
-		if err != nil {
-			return err
-		}
-		for _, up := range u.UserPools {
-			_, err := cogIdp.DeleteUserPool(
-				ctx, &cognitoidentityprovider.DeleteUserPoolInput{
-					UserPoolId: up.Id,
-				})
-			if err != nil {
-				return err
-			}
-		}
-		if u.NextToken == nil {
-			break
-		}
-		nextToken = *u.NextToken
-	}
-	return nil
 }
 
 func DeleteUserFromUserPool(

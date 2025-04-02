@@ -19,17 +19,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleRetrieveSubject(app App, c *gin.Context) error {
+func handleRetrieveSubject(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
 	}
-	user, err := sub.ResolveUser(c.Request.Context(), app)
+	user, err := sub.ResolveUser(c.Request.Context(), a)
 	if err != nil {
 		zap.L().Error("error resolving user", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	ten, err := sub.ResolveTenant(c.Request.Context(), app)
+	ten, err := sub.ResolveTenant(c.Request.Context(), a)
 	if err != nil {
 		zap.L().Error("error resolving tenant", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
@@ -62,7 +62,7 @@ func handleRetrieveSubject(app App, c *gin.Context) error {
 		// should be used.
 		if sub.ImpersonateSub != uuid.Nil {
 			impersonateUser, err := db.GetUserInTenantByID(
-				c.Request.Context(), app.DDB(), sub.ImpersonateTenant, sub.ImpersonateSub)
+				c.Request.Context(), a.DBCtx(), sub.ImpersonateTenant, sub.ImpersonateSub)
 			if err != nil {
 				zap.L().Error("error fetching impersonated user",
 					zap.String("user", user.ID.String()),

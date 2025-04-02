@@ -11,12 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleCreateTenant(app App, c *gin.Context) error {
+func handleCreateTenant(a App, c *gin.Context) error {
 	var req CreateTenantRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	resp, err := HandleCreateTenant(app, c, req)
+	resp, err := HandleCreateTenant(a, c, req)
 	if err != nil {
 		return err
 	}
@@ -25,7 +25,7 @@ func handleCreateTenant(app App, c *gin.Context) error {
 }
 
 func HandleCreateTenant(
-	app App, c *gin.Context, req CreateTenantRequest) (
+	a App, c *gin.Context, req CreateTenantRequest) (
 	*TenantResponse, error) {
 
 	sub, err := perms.SubjectFromContext(c)
@@ -33,12 +33,12 @@ func HandleCreateTenant(
 		return nil, err
 	}
 
-	targetTenant, err := sub.ResolveTenant(c.Request.Context(), app)
+	targetTenant, err := sub.ResolveTenant(c.Request.Context(), a)
 	if err != nil {
 		zap.L().Error("could not resolve subject tenant", zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
-	targetUser, err := sub.ResolveUser(c.Request.Context(), app)
+	targetUser, err := sub.ResolveUser(c.Request.Context(), a)
 	if err != nil {
 		zap.L().Error("could not resolve subject user", zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
@@ -48,7 +48,7 @@ func HandleCreateTenant(
 	// case, the parent tenant is the one associated with the subject.
 	resource := perms.NewResource(
 		perms.ResourceKindTenant, req.Name, targetTenant, targetUser)
-	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
+	effect, err := perms.Eval(c, a, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
@@ -62,9 +62,9 @@ func HandleCreateTenant(
 
 	tenant, err := authx.CreateTenant(
 		c.Request.Context(),
-		app.DDB(),
-		app.RootTenantID(),
-		app.CogIdp(),
+		a.DBCtx(),
+		a.RootTenantID(),
+		a.CogIdp(),
 		req.Name,
 		req.Description)
 	if err != nil {

@@ -5,7 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apresdev/landlord/internal/localstack"
+	"github.com/apresdev/landlord/internal/appenv"
+	"github.com/apresdev/landlord/internal/apptest"
 
 	"github.com/apresdev/landlord/cmd"
 	"github.com/spf13/cobra"
@@ -20,7 +21,7 @@ type LoginTestSuite struct {
 }
 
 func TestLoginTestSuite(t *testing.T) {
-	if !localstack.IsRunning() {
+	if !apptest.InitLocalStack(appenv.MustSettings()) {
 		t.Skip("localstack not running")
 	}
 	suite.Run(t, &LoginTestSuite{})
@@ -52,7 +53,7 @@ func (s *LoginTestSuite) TestMissingEmail() {
 	c, err := s.CLI("login --userpool not-a-user-pool3 --password test-password3")
 	s.Error(err)
 	s.Equal(c.Use, "login")
-	s.Contains(err.Error(), "--email required")
+	s.Contains(err.Error(), "--username required")
 }
 
 func (s *LoginTestSuite) TestMissingPassword() {

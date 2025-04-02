@@ -19,25 +19,25 @@ import (
 )
 
 func getUsersForTenant(
-	app App,
+	a App,
 	c *gin.Context,
 	ten *multi.Tenant,
 	sub *perms.Subject) (*TenantUsersResponse, error) {
 
-	if !perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, sub.Role) {
+	if !perms.IsAuthorizedToReadTenant(a.RootTenantID(), ten, sub.Role) {
 		zap.L().Info("user not unauthorized for tenant",
 			zap.String("clientID", string(sub.Cid)),
 			zap.String("username", sub.Username),
 			zap.String("tenantID", ten.ID.String()))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
-	users, err := db.GetUsersForTenant(c.Request.Context(), app.DDB(), ten.ID)
+	users, err := db.GetUsersForTenant(c.Request.Context(), a.DBCtx(), ten.ID)
 	if err != nil {
 		return nil, apperr.NewInternal(err.Error())
 	}
 	resp := TenantUsersResponse{TenantID: ten.ID.String()}
 	for _, user := range users {
-		u, err := app.CogIdp().AdminGetUser(
+		u, err := a.CogIdp().AdminGetUser(
 			c.Request.Context(),
 			&cognitoidentityprovider.AdminGetUserInput{
 				UserPoolId: aws.String(ten.UserPoolID),
@@ -61,7 +61,7 @@ func getUsersForTenant(
 	return &resp, nil
 }
 
-func handleListUsersForTenant(app App, c *gin.Context) error {
+func handleListUsersForTenant(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
@@ -74,11 +74,11 @@ func handleListUsersForTenant(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	ten, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
+	ten, err := db.ResolveTenant(c.Request.Context(), a.DBCtx(), th)
 	if err != nil {
 		return apperr.NewNotFound(err.Error())
 	}
-	resp, err := getUsersForTenant(app, c, ten, sub)
+	resp, err := getUsersForTenant(a, c, ten, sub)
 	if err != nil {
 		return err
 	}

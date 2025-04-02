@@ -38,7 +38,7 @@ func handleRoot(a App, c *gin.Context) error {
 		return nil
 	}
 
-	_, tenant, err := db.GetUserAndTenant(c.Request.Context(), a.DDB(), username)
+	_, tenant, err := db.GetUserAndTenant(c.Request.Context(), a.DBCtx(), username)
 	if err != nil {
 		zap.L().Warn("error finding tenant for username",
 			zap.String("username", username),

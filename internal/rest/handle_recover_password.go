@@ -14,12 +14,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleRecoverPassword(app App, c *gin.Context) error {
+func handleRecoverPassword(a App, c *gin.Context) error {
 	var req RecoverPasswordRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	resp, err := HandleRecoverPassword(app, c, req)
+	resp, err := HandleRecoverPassword(a, c, req)
 	if err != nil {
 		return err
 	}
@@ -28,17 +28,16 @@ func handleRecoverPassword(app App, c *gin.Context) error {
 }
 
 func HandleRecoverPassword(
-	app App, c *gin.Context, req RecoverPasswordRequest) (*RecoverPasswordResponse, error) {
+	a App, c *gin.Context, req RecoverPasswordRequest) (*RecoverPasswordResponse, error) {
 
 	ctx := c.Request.Context()
-	ddb := app.DDB()
-	cogIdp := app.CogIdp()
+	cogIdp := a.CogIdp()
 	username := req.Username
 
 	if username == "" {
 		return nil, apperr.NewBadRequest("username is required")
 	}
-	_, tenant, err := db.GetUserAndTenant(ctx, ddb, username)
+	_, tenant, err := db.GetUserAndTenant(ctx, a.DBCtx(), username)
 	if err != nil {
 		return nil, err
 	}

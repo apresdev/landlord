@@ -40,7 +40,7 @@ func tenantActivateCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
@@ -49,7 +49,7 @@ func tenantActivateCmd() *cobra.Command {
 				return nil
 			}
 			ten.State = multi.TenantStateActive
-			err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten)
+			err = db.StoreTenant(cs.Ctx(), cs.DBCtx(), ten)
 			if err != nil {
 				return err
 			}
@@ -75,11 +75,11 @@ func tenantApplyCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
-			err = authx.ApplyTenant(cs.Ctx(), cs.DDB(), cs.CogIdp(), ten)
+			err = authx.ApplyTenant(cs.Ctx(), cs.DBCtx(), cs.CogIdp(), ten)
 			if err != nil {
 				return err
 			}
@@ -100,7 +100,7 @@ func tenantCreateCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cs := appcore.Must()
 			ten, err := authx.CreateTenant(
-				cs.Ctx(), cs.DDB(), cs.RootTenantID(), cs.CogIdp(), name, description)
+				cs.Ctx(), cs.DBCtx(), cs.RootTenantID(), cs.CogIdp(), name, description)
 			if err != nil {
 				return err
 			}
@@ -129,7 +129,7 @@ func tenantDeactivateCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
@@ -138,7 +138,7 @@ func tenantDeactivateCmd() *cobra.Command {
 				return nil
 			}
 			ten.State = multi.TenantStateInactive
-			err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten)
+			err = db.StoreTenant(cs.Ctx(), cs.DBCtx(), ten)
 			if err != nil {
 				return err
 			}
@@ -181,7 +181,7 @@ func tenantEmailDomainAddCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
@@ -190,7 +190,7 @@ func tenantEmailDomainAddCmd() *cobra.Command {
 				return nil
 			}
 			ten.EmailDomains = append(ten.EmailDomains, domain)
-			if err := db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+			if err := db.StoreTenant(cs.Ctx(), cs.DBCtx(), ten); err != nil {
 				return err
 			}
 			cmd.Printf("Added email domain %s to tenant %s\n", domain, ten.Name)
@@ -220,7 +220,7 @@ func tenantEmailDomainRemoveCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
@@ -230,7 +230,7 @@ func tenantEmailDomainRemoveCmd() *cobra.Command {
 				return nil
 			}
 			ten.EmailDomains = append(ten.EmailDomains[:idx], ten.EmailDomains[idx+1:]...)
-			if err := db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+			if err := db.StoreTenant(cs.Ctx(), cs.DBCtx(), ten); err != nil {
 				return err
 			}
 			cmd.Printf("Removed email domain %s from tenant %s\n", domain, ten.Name)
@@ -265,7 +265,7 @@ func tenantInviteCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
@@ -274,7 +274,7 @@ func tenantInviteCmd() *cobra.Command {
 				return err
 			}
 			err = authx.SendInvite(
-				cs.Ctx(), cs.DDB(), cs.CogIdp(), ten, username, role, mfaPol)
+				cs.Ctx(), cs.DBCtx(), cs.CogIdp(), ten, username, role, mfaPol)
 			if err != nil {
 				return err
 			}
@@ -316,7 +316,7 @@ func displayTenant(cmd *cobra.Command, ten *multi.Tenant) {
 	if len(ten.EmailDomains) > 0 {
 		cmd.Printf("  Email Domains: %s\n", strings.Join(ten.EmailDomains, ", "))
 	}
-	users, err := db.GetUsersForTenant(cmd.Context(), appcore.Must().DDB(), ten.ID)
+	users, err := db.GetUsersForTenant(cmd.Context(), appcore.Must().DBCtx(), ten.ID)
 	if err != nil {
 		zap.L().Error("Error getting users for tenant", zap.Error(err))
 	} else {
@@ -344,14 +344,14 @@ func tenantListCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+				ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 				if err != nil {
 					return err
 				}
 				displayTenant(cmd, ten)
 				return nil
 			}
-			tens, err := db.GetAllTenants(cs.Ctx(), cs.DDB())
+			tens, err := db.GetAllTenants(cs.Ctx(), cs.DBCtx())
 			if err != nil {
 				return err
 			}
@@ -403,7 +403,7 @@ func tenantRoleAddCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
@@ -419,7 +419,7 @@ func tenantRoleAddCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+			if err = db.StoreTenant(cs.Ctx(), cs.DBCtx(), ten); err != nil {
 				return err
 			}
 			cmd.Printf("Added role %s to tenant %s\n", role, ten.Name)
@@ -449,7 +449,7 @@ func tenantRoleEnsureCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
@@ -467,7 +467,7 @@ func tenantRoleEnsureCmd() *cobra.Command {
 			} else if err != nil {
 				return err
 			}
-			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+			if err = db.StoreTenant(cs.Ctx(), cs.DBCtx(), ten); err != nil {
 				return err
 			}
 			return nil
@@ -500,7 +500,7 @@ func tenantRoleRemoveCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
@@ -508,7 +508,7 @@ func tenantRoleRemoveCmd() *cobra.Command {
 			if idx == -1 {
 				return errors.New("role not found")
 			}
-			users, err := db.GetUsersForTenant(cs.Ctx(), cs.DDB(), ten.ID)
+			users, err := db.GetUsersForTenant(cs.Ctx(), cs.DBCtx(), ten.ID)
 			if err != nil {
 				return err
 			}
@@ -525,7 +525,7 @@ func tenantRoleRemoveCmd() *cobra.Command {
 				return err
 			}
 			ten.Roles = append(ten.Roles[:idx], ten.Roles[idx+1:]...)
-			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+			if err = db.StoreTenant(cs.Ctx(), cs.DBCtx(), ten); err != nil {
 				return err
 			}
 			cmd.Printf("Removed role %s from tenant %s\n", role, ten.Name)
@@ -568,14 +568,14 @@ func tenantSubTenantRoleAddCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
 			if err = ten.AddSubTenantRole(role); err != nil {
 				return err
 			}
-			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+			if err = db.StoreTenant(cs.Ctx(), cs.DBCtx(), ten); err != nil {
 				return err
 			}
 			cmd.Printf("Added role %s for new sub-tenants %s\n", role, ten.Name)
@@ -608,14 +608,14 @@ func tenantSubTenantRoleRemoveCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
 			if err := ten.RemoveSubTenantRole(role); err != nil {
 				return err
 			}
-			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+			if err = db.StoreTenant(cs.Ctx(), cs.DBCtx(), ten); err != nil {
 				return err
 			}
 			cmd.Printf("Removed sub-role %s from tenant %s\n", role, ten.Name)
@@ -769,7 +769,7 @@ func tenantUserVerifyOTP() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
@@ -811,7 +811,7 @@ func tenantUserRemoveCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
@@ -820,12 +820,12 @@ func tenantUserRemoveCmd() *cobra.Command {
 			if err != nil {
 				zap.L().Info("Error deleting user from user pool", zap.Error(err))
 			}
-			user, err := db.GetUserByName(cs.Ctx(), cs.DDB(), username)
+			user, err := db.GetUserByName(cs.Ctx(), cs.DBCtx(), username)
 			if err != nil {
 				zap.L().Info("Error getting user", zap.Error(err))
 				return err
 			}
-			if err = db.DeleteUser(cs.Ctx(), cs.DDB(), user); err != nil {
+			if err = db.DeleteUser(cs.Ctx(), cs.DBCtx(), user); err != nil {
 				return err
 			}
 			cmd.Printf("Removed user %s from tenant %s\n", e.Address(), ten.Name)
@@ -856,7 +856,7 @@ func tenantUserRoleCmd() *cobra.Command {
 				return err
 			}
 			cs := appcore.Must()
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
@@ -864,7 +864,7 @@ func tenantUserRoleCmd() *cobra.Command {
 				return fmt.Errorf("role '%s' does not exist, pick one of: %s",
 					role, strings.Join(ten.Roles, ", "))
 			}
-			user, err := db.GetUserByName(cs.Ctx(), cs.DDB(), username)
+			user, err := db.GetUserByName(cs.Ctx(), cs.DBCtx(), username)
 			if err != nil {
 				return err
 			}
@@ -872,7 +872,7 @@ func tenantUserRoleCmd() *cobra.Command {
 			if err = authx.SetCognitoGroup(cs.Ctx(), cs.CogIdp(), ten, user.Username, user.Role); err != nil {
 				return err
 			}
-			if err = db.StoreUser(cs.Ctx(), cs.DDB(), user); err != nil {
+			if err = db.StoreUser(cs.Ctx(), cs.DBCtx(), user); err != nil {
 				return err
 			}
 			cmd.Printf("Set role %s for user %s in tenant %s\n", role, username, ten.Name)
@@ -912,13 +912,13 @@ func tenantUserPoolCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			ten, err := db.ResolveTenant(cs.Ctx(), cs.DDB(), h)
+			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
 			}
 			ten.UserPoolID = aws.ToString(up.Id)
 			ten.UserPoolName = aws.ToString(up.Name)
-			if err = db.StoreTenant(cs.Ctx(), cs.DDB(), ten); err != nil {
+			if err = db.StoreTenant(cs.Ctx(), cs.DBCtx(), ten); err != nil {
 				return err
 			}
 			cmd.Printf("Set userpool %s (%s) in tenant %s\n",

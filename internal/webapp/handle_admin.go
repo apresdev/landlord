@@ -145,7 +145,7 @@ func handleAdminTenant(
 }
 
 func usersForTenant(ctx context.Context, a App, ten *multi.Tenant) ([]*multi.User, error) {
-	users, err := db.GetUsersForTenant(ctx, a.DDB(), ten.ID)
+	users, err := db.GetUsersForTenant(ctx, a.DBCtx(), ten.ID)
 	if err != nil {
 		return nil, apperr.NewInternalE(
 			fmt.Errorf("error getting users for tenant: %w", err))
@@ -294,7 +294,7 @@ func handleAdminInviteUserSubmit(
 					Name:  r.def.UIName,
 					Value: r.formValue})
 		}
-		user, err := db.GetUserByName(c.Request.Context(), a.DDB(), req.Username)
+		user, err := db.GetUserByName(c.Request.Context(), a.DBCtx(), req.Username)
 		if err != nil {
 			return apperr.NewNotFoundE(err)
 		}
@@ -306,7 +306,7 @@ func handleAdminInviteUserSubmit(
 		}
 	}
 
-	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), targetTenant.ID)
+	users, err := db.GetUsersForTenant(c.Request.Context(), a.DBCtx(), targetTenant.ID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
@@ -321,7 +321,7 @@ func handleAdminAddRoleSubmit(
 
 	role := c.PostForm("role")
 	if slices.Contains(targetTenant.Roles, role) {
-		users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), targetTenant.ID)
+		users, err := db.GetUsersForTenant(c.Request.Context(), a.DBCtx(), targetTenant.ID)
 		if err != nil {
 			return apperr.NewInternalE(err)
 		}
@@ -338,7 +338,7 @@ func handleAdminAddRoleSubmit(
 		if err != nil {
 			return apperr.NewInternalE(err)
 		}
-		users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), targetTenant.ID)
+		users, err := db.GetUsersForTenant(c.Request.Context(), a.DBCtx(), targetTenant.ID)
 		if err != nil {
 			return apperr.NewInternalE(err)
 		}
@@ -380,7 +380,7 @@ func handleAdminDeleteRoleSubmit(
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
-	users, err := db.GetUsersForTenant(c.Request.Context(), a.DDB(), targetTenant.ID)
+	users, err := db.GetUsersForTenant(c.Request.Context(), a.DBCtx(), targetTenant.ID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}
@@ -467,7 +467,7 @@ func handleAdminActivateUserSubmit(
 	if err != nil {
 		return err
 	}
-	ten, err := db.GetTenantByID(c.Request.Context(), a.DDB(), user.TenantID)
+	ten, err := db.GetTenantByID(c.Request.Context(), a.DBCtx(), user.TenantID)
 	if err != nil {
 		return apperr.NewInternalE(err)
 	}

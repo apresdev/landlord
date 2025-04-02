@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleUpdateUserRole(app App, c *gin.Context) error {
+func handleUpdateUserRole(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return apperr.NewUnauthorized("no token")
@@ -31,14 +31,14 @@ func handleUpdateUserRole(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewBadRequest("invalid user ID")
 	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), app.DDB(), tenantID)
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DBCtx(), tenantID)
 	if err != nil {
 		zap.L().Error("error fetching tenant",
 			zap.Error(err),
 			zap.String("tenantID", tenantID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), app.DDB(), tenantID, userID)
+	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DBCtx(), tenantID, userID)
 	if err != nil {
 		zap.L().Error("error fetching user",
 			zap.Error(err),
@@ -46,7 +46,7 @@ func handleUpdateUserRole(app App, c *gin.Context) error {
 			zap.String("userID", userID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	_, _, err = HandleUpdateUserRole(app, c, sub, targetTenant, targetUser, req.Role)
+	_, _, err = HandleUpdateUserRole(a, c, sub, targetTenant, targetUser, req.Role)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func handleUpdateUserRole(app App, c *gin.Context) error {
 }
 
 func HandleUpdateUserRole(
-	app App,
+	a App,
 	c *gin.Context,
 	sub *perms.Subject,
 	targetTenant *multi.Tenant,
@@ -64,7 +64,7 @@ func HandleUpdateUserRole(
 
 	resource := perms.NewResource(
 		perms.ResourceKindUserRole, role, targetTenant, targetUser)
-	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
+	effect, err := perms.Eval(c, a, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return nil, nil, apperr.NewUnauthorized("not authorized")
@@ -77,7 +77,7 @@ func HandleUpdateUserRole(
 	}
 
 	targetUser.Role = role
-	err = db.StoreUser(c.Request.Context(), app.DDB(), targetUser)
+	err = db.StoreUser(c.Request.Context(), a.DBCtx(), targetUser)
 	if err != nil {
 		zap.L().Error("error updating user",
 			zap.String("tenantID", targetTenant.ID.String()),
