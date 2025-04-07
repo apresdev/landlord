@@ -9,6 +9,8 @@ type SubjectResponseImpersonating struct {
 
 	UserID string `json:"userID"`
 
+	CognitoID string `json:"cognitoID"`
+
 	Email string `json:"email"`
 
 	Role string `json:"role"`

@@ -18,6 +18,7 @@ type TenantUsersResponseUsersInner struct {
 	Username      string               `json:"username"`
 	Role          string               `json:"role"`
 	Status        UserStatus           `json:"status"`
+	UserID        string               `json:"userID"`
 	CognitoID     string               `json:"cognitoID"`
 	ProfileFields []ProfileFormatField `json:"profileFields,omitempty"`
 }
@@ -28,11 +29,12 @@ type _TenantUsersResponseUsersInner TenantUsersResponseUsersInner
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTenantUsersResponseUsersInner(username string, role string, status UserStatus, cognitoID string) *TenantUsersResponseUsersInner {
+func NewTenantUsersResponseUsersInner(username string, role string, status UserStatus, userID string, cognitoID string) *TenantUsersResponseUsersInner {
 	this := TenantUsersResponseUsersInner{}
 	this.Username = username
 	this.Role = role
 	this.Status = status
+	this.UserID = userID
 	this.CognitoID = cognitoID
 	return &this
 }
@@ -117,6 +119,30 @@ func (o *TenantUsersResponseUsersInner) SetStatus(v UserStatus) {
 	o.Status = v
 }
 
+// GetUserID returns the UserID field value
+func (o *TenantUsersResponseUsersInner) GetUserID() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.UserID
+}
+
+// GetUserIDOk returns a tuple with the UserID field value
+// and a boolean to check if the value has been set.
+func (o *TenantUsersResponseUsersInner) GetUserIDOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.UserID, true
+}
+
+// SetUserID sets field value
+func (o *TenantUsersResponseUsersInner) SetUserID(v string) {
+	o.UserID = v
+}
+
 // GetCognitoID returns the CognitoID field value
 func (o *TenantUsersResponseUsersInner) GetCognitoID() string {
 	if o == nil {
@@ -186,6 +212,7 @@ func (o TenantUsersResponseUsersInner) ToMap() (map[string]interface{}, error) {
 	toSerialize["username"] = o.Username
 	toSerialize["role"] = o.Role
 	toSerialize["status"] = o.Status
+	toSerialize["userID"] = o.UserID
 	toSerialize["cognitoID"] = o.CognitoID
 	if !IsNil(o.ProfileFields) {
 		toSerialize["profileFields"] = o.ProfileFields
@@ -201,6 +228,7 @@ func (o *TenantUsersResponseUsersInner) UnmarshalJSON(data []byte) (err error) {
 		"username",
 		"role",
 		"status",
+		"userID",
 		"cognitoID",
 	}
 

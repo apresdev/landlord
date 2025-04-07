@@ -16,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-	"github.com/aws/aws-sdk-go-v2/service/ses"
 )
 
 type Clients interface {
@@ -24,7 +23,6 @@ type Clients interface {
 	Ctx() context.Context
 	Cfg() aws.Config
 	CogIdp() authx.AWSCognitoIdentityProvider
-	SES() authx.AWSSES
 	Validator() jwx.TokenValidator
 	DDB() db.AWSDynamoDB
 	DBCtx() *db.Context
@@ -36,7 +34,6 @@ type clients struct {
 	ctx          context.Context
 	cfg          aws.Config
 	cogIdp       authx.AWSCognitoIdentityProvider
-	ses          authx.AWSSES
 	validator    jwx.TokenValidator
 	dynamo       db.AWSDynamoDB
 	dbCtx        *db.Context
@@ -59,10 +56,6 @@ func (c *clients) CogIdp() authx.AWSCognitoIdentityProvider {
 	return c.cogIdp
 }
 
-func (c *clients) SES() authx.AWSSES {
-	return c.ses
-}
-
 func (c *clients) Validator() jwx.TokenValidator {
 	return c.validator
 }
@@ -79,7 +72,7 @@ func (c *clients) RootTenantID() uuid.UUID {
 	return c.rootTenantID
 }
 
-func newClients() (*clients, error) {
+func newClients(settings appenv.Settings) (*clients, error) {
 	ctx := context.Background()
 
 	awsCfg, err := config.LoadDefaultConfig(ctx)
@@ -87,11 +80,10 @@ func newClients() (*clients, error) {
 		return nil, err
 	}
 	return &clients{
-		settings:  appenv.MustSettings(),
+		settings:  settings,
 		ctx:       ctx,
 		cfg:       awsCfg,
 		cogIdp:    cognitoidentityprovider.NewFromConfig(awsCfg),
-		ses:       ses.NewFromConfig(awsCfg),
 		validator: jwx.NewTokenValidator(),
 		dynamo:    dynamodb.NewFromConfig(awsCfg),
 	}, nil
@@ -101,11 +93,25 @@ func newClients() (*clients, error) {
 // to external services used by landlord. Further, it ensures that
 // our Dynamo DB table is created and available for use (or panics).
 func Must() Clients {
-	c, err := newClients()
+	c, err := newClients(appenv.MustSettings())
 	if err != nil {
 		panic(err)
 	}
 	c.dbCtx = db.MustInit(c.Ctx(), c.Settings(), c.DDB())
-	c.rootTenantID = authx.MustRootTenant(c.Ctx(), c.DBCtx(), c.CogIdp())
+	c.rootTenantID = authx.MustRootTenant(
+		c.Ctx(), c.DBCtx(), c.CogIdp(), c.Settings().UserPoolName())
+	return c
+}
+
+// MustWithSettings is like Must, but takes a settings object instead of
+// using the global singleton. Useful in testing.
+func MustWithSettings(settings appenv.Settings) Clients {
+	c, err := newClients(settings)
+	if err != nil {
+		panic(err)
+	}
+	c.dbCtx = db.MustInit(c.Ctx(), c.Settings(), c.DDB())
+	c.rootTenantID = authx.MustRootTenant(
+		c.Ctx(), c.DBCtx(), c.CogIdp(), c.Settings().UserPoolName())
 	return c
 }

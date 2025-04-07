@@ -80,6 +80,7 @@ func dangerousRecreateDynamoTable(cfg aws.Config, name string) {
 	if _, err := ddb.CreateTable(ctx, input); err != nil {
 		zap.L().Fatal("failed to create table", zap.Error(err))
 	}
+	zap.L().Info("created table", zap.String("table", name))
 }
 
 // dangerousDeleteAllItems deletes all items from the DynamoDB table -- only
@@ -92,7 +93,9 @@ func dangerousDeleteAllItems(cfg aws.Config, tableName string) {
 	ctx := context.Background()
 	scanResult, err := ddb.Scan(ctx, scanInput)
 	if err != nil {
-		zap.L().Fatal("failed to scan table", zap.Error(err))
+		zap.L().Fatal("failed to scan table",
+			zap.String("table", tableName),
+			zap.Error(err))
 	}
 	for _, item := range scanResult.Items {
 		key := map[string]types.AttributeValue{}

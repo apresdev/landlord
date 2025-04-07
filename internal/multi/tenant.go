@@ -170,6 +170,9 @@ const (
 )
 
 func ValidateTenantName(name string) error {
+	if name == "" {
+		return errors.New("tenant name cannot be empty")
+	}
 	if len(name) < minTenantNameLength {
 		return errors.New("tenant name must be at least 3 characters")
 	}

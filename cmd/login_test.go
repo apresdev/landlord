@@ -15,16 +15,20 @@ import (
 
 type LoginTestSuite struct {
 	suite.Suite
+	s      appenv.Settings
 	out    bytes.Buffer
 	errOut bytes.Buffer
 	cmd    *cobra.Command
 }
 
 func TestLoginTestSuite(t *testing.T) {
-	if !apptest.InitLocalStack(appenv.MustSettings()) {
-		t.Skip("localstack not running")
+	suite.Run(t, &LoginTestSuite{s: appenv.MustTestSettings()})
+}
+
+func (s *LoginTestSuite) SetupSuite() {
+	if !apptest.InitLocalStack(s.s) {
+		s.T().Skip("localstack not running")
 	}
-	suite.Run(t, &LoginTestSuite{})
 }
 
 func (s *LoginTestSuite) SetupTest() {

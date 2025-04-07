@@ -165,16 +165,18 @@ func Eval(ctx context.Context, a App, sub *Subject, action Action, r *Resource) 
 	}
 	if r.UserOwner != nil {
 		resource["userOwner"] = map[string]string{
-			"id":       r.UserOwner.ID.String(),
-			"username": r.UserOwner.Username,
-			"role":     r.UserOwner.Role,
-			"status":   string(r.UserOwner.Status),
+			"id":        r.UserOwner.ID.String(),
+			"cognitoID": r.UserOwner.CognitoID.String(),
+			"username":  r.UserOwner.Username,
+			"role":      r.UserOwner.Role,
+			"status":    string(r.UserOwner.Status),
 		}
 	}
 	input := map[string]any{
 		"subject": map[string]map[string]string{
 			"user": {
 				"id":        subjectUser.ID.String(),
+				"cognitoID": subjectUser.CognitoID.String(),
 				"username":  subjectUser.Username,
 				"role":      subjectUser.Role,
 				"status":    string(subjectUser.Status),

@@ -93,12 +93,7 @@ func HandleImpersonateRole(
 
 	targetGroupName := targetTenant.GroupName(targetRole)
 	err = authx.ImpersonateRole(
-		c.Request.Context(),
-		a.CogIdp(),
-		targetTenant.UserPoolID,
-		sub.Username,
-		targetTenant.ID,
-		targetGroupName)
+		c.Request.Context(), a.CogIdp(), sub.Username, targetTenant, targetGroupName)
 	if err != nil {
 		zap.L().Error("could not set impersonate on user",
 			zap.String("clientID", string(sub.Cid)),

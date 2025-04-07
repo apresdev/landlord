@@ -81,7 +81,8 @@ func HandleUpdateUserMFA(
 	if targetUser.Status == multi.UserStatusInactive {
 		zap.L().Info("user is inactive cannot change MFA",
 			zap.String("tenantID", targetTenant.ID.String()),
-			zap.String("userID", targetUser.ID.String()))
+			zap.String("userID", targetUser.ID.String()),
+			zap.String("cognitoID", targetUser.CognitoID.String()))
 		return nil, apperr.NewBadRequest("user is inactive, cannot modify MFA")
 	}
 	// Transition from MFA policy None to Required initiates the flow to
@@ -94,7 +95,8 @@ func HandleUpdateUserMFA(
 			zap.L().Error("error storing user",
 				zap.Error(err),
 				zap.String("tenantID", targetTenant.ID.String()),
-				zap.String("userID", targetUser.ID.String()))
+				zap.String("userID", targetUser.ID.String()),
+				zap.String("cognitoID", targetUser.CognitoID.String()))
 			return nil, apperr.NewUnauthorized("not authorized")
 		}
 	} else if req.MfaPolicy == MFAPolicyNone {
@@ -105,7 +107,8 @@ func HandleUpdateUserMFA(
 			zap.L().Error("error storing user",
 				zap.Error(err),
 				zap.String("tenantID", targetTenant.ID.String()),
-				zap.String("userID", targetUser.ID.String()))
+				zap.String("userID", targetUser.ID.String()),
+				zap.String("cognitoID", targetUser.CognitoID.String()))
 			return nil, apperr.NewUnauthorized("not authorized")
 		}
 		_, err = a.CogIdp().AdminSetUserMFAPreference(
@@ -122,12 +125,14 @@ func HandleUpdateUserMFA(
 			zap.L().Error("error removing MFA preference",
 				zap.Error(err),
 				zap.String("tenantID", targetTenant.ID.String()),
-				zap.String("userID", targetUser.ID.String()))
+				zap.String("userID", targetUser.ID.String()),
+				zap.String("cognitoID", targetUser.CognitoID.String()))
 			return nil, apperr.NewInternal("could not remove MFA preference")
 		}
 		zap.L().Info("removed MFA preference",
 			zap.String("tenantID", targetTenant.ID.String()),
-			zap.String("userID", targetUser.ID.String()))
+			zap.String("userID", targetUser.ID.String()),
+			zap.String("cognitoID", targetUser.CognitoID.String()))
 	}
 	return targetUser, nil
 }

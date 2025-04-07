@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/apresdev/landlord/internal/apperr"
 
@@ -24,7 +23,8 @@ import (
 func MustRootTenant(
 	ctx context.Context,
 	dbc *db.Context,
-	cogIdp AWSCognitoIdentityProvider) uuid.UUID {
+	cogIdp AWSCognitoIdentityProvider,
+	userPoolName string) uuid.UUID {
 
 	rootTenant, err := db.GetTenantByName(ctx, dbc, multi.RootTenantName)
 	if err != nil && !apperr.IsNotFound(err) {
@@ -36,7 +36,7 @@ func MustRootTenant(
 
 	rootTenant = multi.NewTenant(multi.RootTenantName)
 	rootTenant.Description = multi.RootTenantDescription
-	rootTenant.UserPoolName = os.Getenv("LANDLORD_DEFAULT_USER_POOL")
+	rootTenant.UserPoolName = userPoolName
 	up, err := GetUserPoolByNameOrID(ctx, cogIdp, rootTenant.UserPoolName)
 	if err != nil {
 		zap.L().Fatal("error getting user pool for root tenant",

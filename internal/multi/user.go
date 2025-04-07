@@ -107,6 +107,7 @@ type User struct {
 	TenantID   uuid.UUID  `dynamodbav:"-"` // pk
 	ID         uuid.UUID  `dynamodbav:"-"` // sk
 	Username   string     `dynamodbav:"-"` // altName
+	CognitoID  uuid.UUID  `dynamodbav:"cognitoId"`
 	Role       string     `dynamodbav:"role"`
 	Status     UserStatus `dynamodbav:"status"`
 	MFAStatus  MFAStatus  `dynamodbav:"mfaStatus"`
@@ -123,8 +124,9 @@ func NewUser(tenantID uuid.UUID, cognitoID uuid.UUID, username, role string, mfa
 	}
 	return &User{
 		TenantID:  tenantID,
-		ID:        cognitoID,
+		ID:        uuid.New(),
 		Username:  username,
+		CognitoID: cognitoID,
 		Role:      role,
 		Status:    UserStatusInvited,
 		MFAPolicy: mfaPolicy,

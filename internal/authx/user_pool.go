@@ -12,6 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 )
 
+const defaultMaxResults = int32(10)
+
 // GetUserPoolDescriptions returns the descriptions of all user pools
 // in the AWS Cognito Identity Provider for the current AWS_PROFILE
 func GetUserPoolDescriptions(
@@ -20,7 +22,7 @@ func GetUserPoolDescriptions(
 	[]types.UserPoolDescriptionType, error) {
 
 	result := make([]types.UserPoolDescriptionType, 0)
-	maxResults := tinytools.MaxPagingResults
+	maxResults := defaultMaxResults
 	nextToken := tinytools.NewNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
@@ -61,7 +63,7 @@ func getUserPoolDescriptions(
 	match func(descriptionType types.UserPoolDescriptionType) bool) (
 	[]types.UserPoolDescriptionType, error) {
 
-	maxResults := tinytools.MaxPagingResults
+	maxResults := defaultMaxResults
 	nextToken := tinytools.NewNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
@@ -85,6 +87,7 @@ func getUserPoolDescriptions(
 	return result, nil
 }
 
+// GetUserPoolByName returns the user pool with the given name
 func GetUserPoolByName(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
@@ -106,6 +109,7 @@ func GetUserPoolByName(
 	return getUserPool(ctx, cogIdp, ups[0])
 }
 
+// GetUserPoolByID returns the user pool with the given ID
 func GetUserPoolByID(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
@@ -118,6 +122,7 @@ func GetUserPoolByID(
 	return up, nil
 }
 
+// GetUserPoolByNameOrID returns the user pool with the given name or ID
 func GetUserPoolByNameOrID(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
@@ -133,6 +138,7 @@ func GetUserPoolByNameOrID(
 	return GetUserPoolByName(ctx, cogIdp, nameOrID)
 }
 
+// GetUsersInUserPool returns the users in the user pool with the given name or ID
 func GetUsersInUserPool(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
@@ -152,6 +158,7 @@ func GetUsersInUserPool(
 	return o.Users, nil
 }
 
+// DeleteUserFromUserPool deletes the user with the given email from the user pool
 func DeleteUserFromUserPool(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
@@ -173,12 +180,14 @@ func DeleteUserFromUserPool(
 	return nil
 }
 
+// CognitoUserPoolURL returns the URL to the user pool in the AWS console
 func CognitoUserPoolURL(region string, userPoolID string) string {
 	return fmt.Sprintf(
 		"https://%s.console.aws.amazon.com/cognito/v2/idp/user-pools/%s",
 		region, userPoolID)
 }
 
+// CognitoUserDetailsURL returns the URL to the user details in the AWS console
 func CognitoUserDetailsURL(region string, userPoolID string, userID string) string {
 	return fmt.Sprintf(
 		"https://%s.console.aws.amazon.com/cognito/v2/idp/user-pools/%s/users/details/%s",

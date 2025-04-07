@@ -11,6 +11,8 @@ type SubjectResponse struct {
 
 	UserID string `json:"userID"`
 
+	CognitoID string `json:"cognitoID"`
+
 	Username string `json:"username"`
 
 	Role string `json:"role"`

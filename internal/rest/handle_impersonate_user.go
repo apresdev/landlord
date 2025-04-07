@@ -93,14 +93,7 @@ func HandleImpersonateUser(
 	}
 
 	err = authx.ImpersonateUser(
-		c.Request.Context(),
-		a.CogIdp(),
-		targetTenant.UserPoolID,
-		sub.Username,
-		targetTenant.ID,
-		targetGroupName,
-		targetUser.Username,
-		targetUser.ID)
+		c.Request.Context(), a.CogIdp(), sub.Username, targetTenant, targetUser)
 	if err != nil {
 		zap.L().Error("could not set impersonate on user",
 			zap.String("clientID", string(sub.Cid)),
@@ -110,6 +103,7 @@ func HandleImpersonateUser(
 			zap.String("targetGroupName", targetGroupName),
 			zap.String("targetUsername", targetUser.Username),
 			zap.String("targetUserID", targetUser.ID.String()),
+			zap.String("targetCognitoID", targetUser.CognitoID.String()),
 			zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}

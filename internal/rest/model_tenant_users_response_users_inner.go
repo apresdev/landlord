@@ -11,6 +11,8 @@ type TenantUsersResponseUsersInner struct {
 
 	Status UserStatus `json:"status"`
 
+	UserID string `json:"userID"`
+
 	CognitoID string `json:"cognitoID"`
 
 	ProfileFields []ProfileFormatField `json:"profileFields,omitempty"`

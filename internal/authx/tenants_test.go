@@ -15,21 +15,25 @@ import (
 
 type TenantsTestSuite struct {
 	suite.Suite
+	s appenv.Settings
 }
 
 func TestTenantsTestSuite(t *testing.T) {
-	if !apptest.InitLocalStack(appenv.MustSettings()) {
-		t.Skip("localstack not running")
+	suite.Run(t, &TenantsTestSuite{s: appenv.MustTestSettings()})
+}
+
+func (s *TenantsTestSuite) SetupSuite() {
+	if !apptest.InitLocalStack(s.s) {
+		s.T().Skip("localstack not running")
 	}
-	suite.Run(t, &TenantsTestSuite{})
 }
 
 func (s *TenantsTestSuite) SetupTest() {
-	apptest.ResetLocalStack(appenv.MustSettings())
+	apptest.ResetLocalStack(s.s)
 }
 
 func (s *TenantsTestSuite) TestSetTenantStateOnRoot() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 
 	ten, err := db.GetRootTenant(a.Ctx(), a.DBCtx(), a.RootTenantID())
 	s.Assert().NoError(err)
@@ -44,7 +48,7 @@ func (s *TenantsTestSuite) TestSetTenantStateOnRoot() {
 }
 
 func (s *TenantsTestSuite) TestSetTenantStateOnRegularTenant() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 
 	ten, err := authx.CreateTenant(
 		a.Ctx(), a.DBCtx(), a.RootTenantID(), a.CogIdp(), "regular", "Regular Tenant")

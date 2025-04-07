@@ -18,6 +18,7 @@ type SubjectResponse struct {
 	TenantID            string                        `json:"tenantID"`
 	TenantName          string                        `json:"tenantName"`
 	UserID              string                        `json:"userID"`
+	CognitoID           string                        `json:"cognitoID"`
 	Username            string                        `json:"username"`
 	Role                string                        `json:"role"`
 	Status              UserStatus                    `json:"status"`
@@ -32,11 +33,12 @@ type _SubjectResponse SubjectResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSubjectResponse(tenantID string, tenantName string, userID string, username string, role string, status UserStatus) *SubjectResponse {
+func NewSubjectResponse(tenantID string, tenantName string, userID string, cognitoID string, username string, role string, status UserStatus) *SubjectResponse {
 	this := SubjectResponse{}
 	this.TenantID = tenantID
 	this.TenantName = tenantName
 	this.UserID = userID
+	this.CognitoID = cognitoID
 	this.Username = username
 	this.Role = role
 	this.Status = status
@@ -121,6 +123,30 @@ func (o *SubjectResponse) GetUserIDOk() (*string, bool) {
 // SetUserID sets field value
 func (o *SubjectResponse) SetUserID(v string) {
 	o.UserID = v
+}
+
+// GetCognitoID returns the CognitoID field value
+func (o *SubjectResponse) GetCognitoID() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.CognitoID
+}
+
+// GetCognitoIDOk returns a tuple with the CognitoID field value
+// and a boolean to check if the value has been set.
+func (o *SubjectResponse) GetCognitoIDOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.CognitoID, true
+}
+
+// SetCognitoID sets field value
+func (o *SubjectResponse) SetCognitoID(v string) {
+	o.CognitoID = v
 }
 
 // GetUsername returns the Username field value
@@ -304,6 +330,7 @@ func (o SubjectResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["tenantID"] = o.TenantID
 	toSerialize["tenantName"] = o.TenantName
 	toSerialize["userID"] = o.UserID
+	toSerialize["cognitoID"] = o.CognitoID
 	toSerialize["username"] = o.Username
 	toSerialize["role"] = o.Role
 	toSerialize["status"] = o.Status
@@ -327,6 +354,7 @@ func (o *SubjectResponse) UnmarshalJSON(data []byte) (err error) {
 		"tenantID",
 		"tenantName",
 		"userID",
+		"cognitoID",
 		"username",
 		"role",
 		"status",

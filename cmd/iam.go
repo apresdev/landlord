@@ -51,7 +51,6 @@ func methods[T any](prefix string) []string {
 
 func wildcardResourceCalls() []string {
 	result := make([]string, 0)
-	result = append(result, methods[authx.AWSSES]("ses")...)
 	result = append(result, methods[authx.AWSCognitoIdentityProvider]("cognito-idp")...)
 	return result
 }

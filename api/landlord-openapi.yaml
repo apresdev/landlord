@@ -1236,6 +1236,7 @@ components:
         - tenantID
         - tenantName
         - userID
+        - cognitoID
         - username
         - role
         - status
@@ -1250,6 +1251,9 @@ components:
           items:
             $ref: '#/components/schemas/ProfileFormatField'
         userID:
+          type: string
+          format: uuid
+        cognitoID:
           type: string
           format: uuid
         username:
@@ -1267,6 +1271,7 @@ components:
           required:
             - tenantID
             - userID
+            - cognitoID
             - email
             - role
           properties:
@@ -1274,6 +1279,9 @@ components:
               type: string
               format: uuid
             userID:
+              type: string
+              format: uuid
+            cognitoID:
               type: string
               format: uuid
             email:
@@ -1300,6 +1308,7 @@ components:
               - username
               - role
               - status
+              - userID
               - cognitoID
             properties:
               username:
@@ -1308,8 +1317,12 @@ components:
                 type: string
               status:
                 $ref: '#/components/schemas/UserStatus'
+              userID:
+                type: string
+                format: uuid
               cognitoID:
                 type: string
+                format: uuid
               profileFields:
                 type: array
                 items:
@@ -1454,6 +1467,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProfileField'
+        optionalUserID:
+          type: string
+          format: uuid
+          description: Optional user ID to use for the user.  This is useful for
+            migrating users from another system.
     CreateTenantRequest:
       type: object
       required:

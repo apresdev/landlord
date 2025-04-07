@@ -248,6 +248,7 @@ func restInviteCmd() *cobra.Command {
 	var username string
 	var role string
 	var mfa string
+	var userID string
 	c := &cobra.Command{
 		Use:   "invite",
 		Short: "Send an invite to a tenant",
@@ -267,13 +268,21 @@ func restInviteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			req := client.InviteRequest{
+				Username:  username,
+				Role:      role,
+				MfaPolicy: client.MFAPolicy(mfa),
+			}
+			if userID != "" {
+				userIDParsed, err := uuid.Parse(userID)
+				if err != nil {
+					return err
+				}
+				v := userIDParsed.String()
+				req.OptionalUserID = &v
+			}
 			ctx := context.Background()
-			r, err := cl.LandlordAdminAPI.InviteToTenant(ctx, tenantID.String()).InviteRequest(
-				client.InviteRequest{
-					Username:  username,
-					Role:      role,
-					MfaPolicy: client.MFAPolicy(mfa),
-				}).Execute()
+			r, err := cl.LandlordAdminAPI.InviteToTenant(ctx, tenantID.String()).InviteRequest(req).Execute()
 			if err != nil {
 				b, err2 := io.ReadAll(r.Body)
 				if err2 == nil {
@@ -299,6 +308,9 @@ func restInviteCmd() *cobra.Command {
 		"M",
 		multi.MFAPolicyRequired.String(),
 		"MFA policy for user. One of 'none', 'required'")
+	c.PersistentFlags().StringVarP(
+		&userID, "userid", "", "",
+		"Optional user ID. Useful for migrating users.")
 	return c
 }
 
@@ -665,7 +677,7 @@ func restUsersCmd() *cobra.Command {
 				cmd.Printf("No users for tenant\n")
 				return nil
 			}
-			table := NewTable([]string{"Username", "Role", "Status", "CognitoID"})
+			table := NewTable([]string{"Username", "Role", "Status", "ID", "CognitoID"})
 			for _, user := range o.Users {
 				err := table.AddRow([]string{user.Username, user.Role, string(user.Status), user.CognitoID})
 				if err != nil {

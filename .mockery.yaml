@@ -8,11 +8,6 @@ packages:
                     dir: "internal/mocks"
                     outpkg: "mocks"
                     filename: "aws_cognito_identity_provider.go"
-            AWSSES:
-                config:
-                    dir: "internal/mocks"
-                    outpkg: "mocks"
-                    filename: "aws_ses.go"
 
     github.com/apresdev/landlord/internal/db:
         interfaces:

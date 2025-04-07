@@ -25,6 +25,7 @@ func SendInvite(
 	cogIdp AWSCognitoIdentityProvider,
 	ten *multi.Tenant,
 	username string,
+	optionalUserID uuid.UUID,
 	role string,
 	mfaPolicy multi.MFAPolicy) error {
 
@@ -72,6 +73,27 @@ func SendInvite(
 	if err := SetCognitoGroup(ctx, cogIdp, ten, e.Address(), role); err != nil {
 		return err
 	}
+
+	// Since the user's do not go through the typical sign-up flow in our version
+	// of Cognito, we have to manually update the email_verified attribute. We were
+	// previously relying on logging into Landlord to do this, but that does not
+	// happen in the typical case. There, update email_verified when invited.
+	_, err = cogIdp.AdminUpdateUserAttributes(ctx,
+		&cognitoidentityprovider.AdminUpdateUserAttributesInput{
+			UserPoolId: aws.String(ten.UserPoolID),
+			Username:   aws.String(e.Address()),
+			UserAttributes: []types.AttributeType{
+				{Name: aws.String("email_verified"), Value: aws.String("true")},
+			},
+		})
+	if err != nil {
+		zap.L().Error("could not update user attributes",
+			zap.String("tenantID", ten.ID.String()),
+			zap.String("userID", e.Address()),
+			zap.String("cognitoID", e.Address()),
+			zap.Error(err))
+	}
+
 	var cognitoUserID uuid.UUID
 	for _, attr := range o.User.Attributes {
 		if aws.ToString(attr.Name) == "sub" {
@@ -82,8 +104,11 @@ func SendInvite(
 			break
 		}
 	}
-	return db.StoreUser(
-		ctx, dbc, multi.NewUser(ten.ID, cognitoUserID, e.Address(), role, mfaPolicy))
+	u := multi.NewUser(ten.ID, cognitoUserID, e.Address(), role, mfaPolicy)
+	if optionalUserID != uuid.Nil {
+		u.ID = optionalUserID
+	}
+	return db.StoreUser(ctx, dbc, u)
 }
 
 func DeleteCognitoUser(
@@ -94,12 +119,13 @@ func DeleteCognitoUser(
 
 	args := cognitoidentityprovider.AdminDeleteUserInput{
 		UserPoolId: aws.String(ten.UserPoolID),
-		Username:   aws.String(user.ID.String()),
+		Username:   aws.String(user.CognitoID.String()),
 	}
 	if _, err := cogIdp.AdminDeleteUser(ctx, &args); err != nil {
 		zap.L().Error("could not delete user from Cognito",
 			zap.String("tenantID", ten.ID.String()),
 			zap.String("userID", user.ID.String()),
+			zap.String("cognitoID", user.CognitoID.String()),
 			zap.Error(err))
 	}
 }

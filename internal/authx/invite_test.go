@@ -22,21 +22,25 @@ import (
 
 type InviteTestSuite struct {
 	suite.Suite
+	s appenv.Settings
 }
 
 func TestInviteTestSuite(t *testing.T) {
-	if !apptest.InitLocalStack(appenv.MustSettings()) {
-		t.Skip("localstack not running")
+	suite.Run(t, &InviteTestSuite{s: appenv.MustTestSettings()})
+}
+
+func (s *InviteTestSuite) SetupSuite() {
+	if !apptest.InitLocalStack(s.s) {
+		s.T().Skip("localstack not running")
 	}
-	suite.Run(t, &InviteTestSuite{})
 }
 
 func (s *InviteTestSuite) SetupTest() {
-	apptest.ResetLocalStack(appenv.MustSettings())
+	apptest.ResetLocalStack(s.s)
 }
 
 func (s *InviteTestSuite) TestBadEmail() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 	rootTenant, err := db.GetRootTenant(a.Ctx(), a.DBCtx(), a.RootTenantID())
 	s.Require().NoError(err)
 	err = authx.SendInvite(
@@ -45,6 +49,7 @@ func (s *InviteTestSuite) TestBadEmail() {
 		a.CogIdp(),
 		rootTenant,
 		"not-an-email-address",
+		uuid.Nil,
 		"guest",
 		multi.MFAPolicyNone)
 	s.Error(err)
@@ -59,13 +64,20 @@ func (s *InviteTestSuite) TestInviteDBFailure() {
 	ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
 	tenant := multi.NewTenant("ten1")
 	err := authx.SendInvite(
-		ctx, dbc, cogIdp, tenant, "foo@example.com", "guest", multi.MFAPolicyNone)
+		ctx,
+		dbc,
+		cogIdp,
+		tenant,
+		"foo@example.com",
+		uuid.Nil,
+		"guest",
+		multi.MFAPolicyNone)
 	s.Error(err)
 	s.Contains(err.Error(), "db error")
 }
 
 func (s *InviteTestSuite) TestInviteInactiveUser() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 
 	ten, err := authx.CreateTenant(
 		a.Ctx(), a.DBCtx(), a.RootTenantID(), a.CogIdp(), "foo", "Foo")
@@ -84,6 +96,7 @@ func (s *InviteTestSuite) TestInviteInactiveUser() {
 		a.CogIdp(),
 		ten,
 		"foo@example.com",
+		uuid.Nil,
 		"guest",
 		multi.MFAPolicyNone)
 	s.Error(err)
@@ -91,7 +104,7 @@ func (s *InviteTestSuite) TestInviteInactiveUser() {
 }
 
 func (s *InviteTestSuite) TestInviteNewUser() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 
 	ten, err := authx.CreateTenant(
 		a.Ctx(), a.DBCtx(), a.RootTenantID(), a.CogIdp(), "foo", "Foo")
@@ -104,7 +117,34 @@ func (s *InviteTestSuite) TestInviteNewUser() {
 		a.CogIdp(),
 		ten,
 		"foo@example.com",
+		uuid.Nil,
 		"guest",
 		multi.MFAPolicyNone)
 	s.NoError(err)
+}
+
+func (s *InviteTestSuite) TestInviteOverrideUserID() {
+	a := appcore.MustWithSettings(s.s)
+
+	ten, err := authx.CreateTenant(
+		a.Ctx(), a.DBCtx(), a.RootTenantID(), a.CogIdp(), "foo", "Foo")
+	s.Require().NoError(err)
+	s.Require().NotNil(ten)
+
+	overrideUserID := uuid.New()
+
+	err = authx.SendInvite(
+		a.Ctx(),
+		a.DBCtx(),
+		a.CogIdp(),
+		ten,
+		"foo@example.com",
+		overrideUserID,
+		"guest",
+		multi.MFAPolicyNone)
+	s.NoError(err)
+
+	u1, err := db.GetUserByName(a.Ctx(), a.DBCtx(), "foo@example.com")
+	s.NoError(err)
+	s.Equal(overrideUserID, u1.ID)
 }

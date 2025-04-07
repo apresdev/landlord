@@ -12,4 +12,7 @@ type InviteRequest struct {
 	MfaPolicy MfaPolicy `json:"mfaPolicy"`
 
 	ProfileFields []ProfileField `json:"profileFields,omitempty"`
+
+	// Optional user ID to use for the user.  This is useful for migrating users from another system.
+	OptionalUserID string `json:"optionalUserID,omitempty"`
 }

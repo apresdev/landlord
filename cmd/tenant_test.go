@@ -2,14 +2,11 @@ package cmd_test
 
 import (
 	"bytes"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/apresdev/landlord/internal/apptest"
-
-	"github.com/apresdev/landlord/internal/visit"
 
 	"github.com/apresdev/landlord/cmd"
 	"github.com/spf13/cobra"
@@ -18,29 +15,26 @@ import (
 
 type TenantTestSuite struct {
 	suite.Suite
+	s      appenv.Settings
 	out    bytes.Buffer
 	errOut bytes.Buffer
 	cmd    *cobra.Command
 }
 
 func TestTenantTestSuite(t *testing.T) {
-	if !apptest.InitLocalStack(appenv.MustSettings()) {
-		t.Skip("localstack not running")
+	suite.Run(t, &TenantTestSuite{s: appenv.MustTestSettings()})
+}
+
+func (s *TenantTestSuite) SetupSuite() {
+	if !apptest.InitLocalStack(s.s) {
+		s.T().Skip("localstack not running")
 	}
-	suite.Run(t, &TenantTestSuite{})
 }
 
 func (s *TenantTestSuite) SetupTest() {
 	s.cmd = cmd.Root()
 	s.cmd.SetOut(&s.out)
 	s.cmd.SetErr(&s.errOut)
-	err := visit.FilesInDirectory(".", []string{".json"}, func(filename string) error {
-		if strings.HasPrefix(filename, "tenants.") {
-			return os.Remove(filename)
-		}
-		return nil
-	})
-	s.Require().NoError(err)
 	cmd.ClearSession()
 }
 
