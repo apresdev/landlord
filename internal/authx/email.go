@@ -1,16 +1,9 @@
 package authx
 
 import (
-	"context"
 	"errors"
 	"net/mail"
-	"os"
 	"strings"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/ses"
-	sestypes "github.com/aws/aws-sdk-go-v2/service/ses/types"
-	"go.uber.org/zap"
 )
 
 type Email struct {
@@ -41,39 +34,4 @@ func (e Email) Domain() string {
 
 func (e Email) Full() string {
 	return e.addr.String()
-}
-
-func newMsg(subject, body string) (*sestypes.Message, error) {
-	bodyContent := sestypes.Content{Data: aws.String(body)}
-	subjectContent := sestypes.Content{Data: aws.String(subject)}
-	return &sestypes.Message{
-		Body:    &sestypes.Body{Text: &bodyContent},
-		Subject: &subjectContent,
-	}, nil
-}
-
-func SendAdminEmail(
-	ctx context.Context,
-	s AWSSES,
-	e Email,
-	subject string,
-	body string) error {
-
-	msg, err := newMsg(subject, body)
-	if err != nil {
-		return err
-	}
-	senderEmail := os.Getenv("LANDLORD_SENDER_EMAIL")
-	o, err := s.SendEmail(
-		ctx, &ses.SendEmailInput{
-			Destination: &sestypes.Destination{ToAddresses: []string{e.Address()}},
-			Message:     msg,
-			Source:      aws.String(senderEmail),
-		})
-	if err != nil {
-		return err
-	}
-	zap.L().Info("Sent email",
-		zap.String("email", e.Address()), zap.Any("output", o))
-	return nil
 }

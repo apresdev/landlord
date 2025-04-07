@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/apresdev/landlord/internal/apperr"
 
 	"go.uber.org/zap"
@@ -105,12 +107,13 @@ const (
 )
 
 type Settings struct {
-	appURL      *url.URL
-	consoleURL  *url.URL
-	appName     string
-	adminEmail  string
-	routes      RouteSetting
-	dbTableName string
+	appURL       *url.URL
+	consoleURL   *url.URL
+	appName      string
+	adminEmail   string
+	routes       RouteSetting
+	dbTableName  string
+	userPoolName string
 }
 
 func (s Settings) AppURL() *url.URL {
@@ -139,6 +142,10 @@ func (s Settings) Routes() RouteSetting {
 
 func (s Settings) DBTableName() string {
 	return s.dbTableName
+}
+
+func (s Settings) UserPoolName() string {
+	return s.userPoolName
 }
 
 func (s Settings) DevMode() bool {
@@ -200,11 +207,25 @@ func MustSettings() Settings {
 	if t == "" {
 		zap.L().Fatal("LANDLORD_DB_TABLE_NAME not set")
 	}
+	u := os.Getenv("LANDLORD_DEFAULT_USER_POOL")
+	if u == "" {
+		zap.L().Fatal("LANDLORD_DEFAULT_USER_POOL not set")
+	}
 	return Settings{
-		appURL:      appURL,
-		consoleURL:  consoleURL,
-		appName:     n,
-		adminEmail:  e,
-		routes:      rs,
-		dbTableName: t}
+		appURL:       appURL,
+		consoleURL:   consoleURL,
+		appName:      n,
+		adminEmail:   e,
+		routes:       rs,
+		dbTableName:  t,
+		userPoolName: u,
+	}
+}
+
+// MustTestSettings returns a Settings struct with a random table name for testing.
+func MustTestSettings() Settings {
+	s := MustSettings()
+	s.dbTableName = "dynamodb-test-" + uuid.New().String()
+	s.userPoolName = "cognito-test-" + uuid.New().String()
+	return s
 }

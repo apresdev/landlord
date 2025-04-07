@@ -31,8 +31,8 @@ func handleUpdateUserStatus(a App, c *gin.Context) error {
 	targetTenantID, err := uuid.Parse(tenantID)
 	if err != nil {
 		zap.L().Error("error parsing tenant handle",
-			zap.Error(err),
-			zap.String("tenantID", tenantID))
+			zap.String("tenantID", tenantID),
+			zap.Error(err))
 		return apperr.NewBadRequest("invalid tenantID")
 	}
 	uID := c.Param("userID")
@@ -42,20 +42,21 @@ func handleUpdateUserStatus(a App, c *gin.Context) error {
 	userID, err := uuid.Parse(uID)
 	if err != nil {
 		zap.L().Error("error parsing user ID",
-			zap.Error(err),
-			zap.String("userID", uID))
+			zap.String("userID", uID),
+			zap.Error(err))
 		return apperr.NewBadRequest("invalid userID")
 	}
 	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DBCtx(), targetTenantID)
 	if err != nil {
 		zap.L().Error("error resolving tenant",
-			zap.Error(err),
-			zap.String("tenantID", tenantID))
+			zap.String("tenantID", tenantID),
+			zap.Error(err))
 		return apperr.NewBadRequest("invalid tenant")
 	}
 	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DBCtx(), targetTenant.ID, userID)
 	if err != nil {
 		zap.L().Info("user not found when setting user status",
+			zap.String("tenantID", targetTenant.ID.String()),
 			zap.String("userID", userID.String()),
 			zap.Error(err))
 		return apperr.NewNotFound(fmt.Sprintf("user not found: %s", userID.String()))
@@ -97,8 +98,10 @@ func HandleUpdateUserStatus(
 
 	if targetUser.Status == targetStatus {
 		zap.L().Info("user status already set",
-			zap.String("userID", targetUser.ID.String()),
+			zap.String("tenantID", targetTenant.ID.String()),
 			zap.String("username", targetUser.Username),
+			zap.String("userID", targetUser.ID.String()),
+			zap.String("cognitoID", targetUser.CognitoID.String()),
 			zap.String("status", targetStatus.String()))
 		return targetUser, nil
 	}
@@ -110,8 +113,10 @@ func HandleUpdateUserStatus(
 			})
 		if err != nil {
 			zap.L().Error("error disabling user",
-				zap.String("userID", targetUser.ID.String()),
+				zap.String("tenantID", targetTenant.ID.String()),
 				zap.String("username", targetUser.Username),
+				zap.String("userID", targetUser.ID.String()),
+				zap.String("cognitoID", targetUser.CognitoID.String()),
 				zap.Error(err))
 			return nil, apperr.NewInternalE(err)
 		}
@@ -123,8 +128,10 @@ func HandleUpdateUserStatus(
 			})
 		if err != nil {
 			zap.L().Error("error enabling user",
+				zap.String("tenantID", targetTenant.ID.String()),
 				zap.String("userID", targetUser.ID.String()),
 				zap.String("username", targetUser.Username),
+				zap.String("cognitoID", targetUser.CognitoID.String()),
 				zap.Error(err))
 			return nil, apperr.NewInternalE(err)
 		}

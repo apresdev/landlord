@@ -15,17 +15,21 @@ import (
 
 type UserTestSuite struct {
 	suite.Suite
+	s appenv.Settings
 }
 
 func TestUsersTestSuite(t *testing.T) {
-	if !apptest.InitLocalStack(appenv.MustSettings()) {
-		t.Skip("localstack not running")
+	suite.Run(t, &UserTestSuite{s: appenv.MustTestSettings()})
+}
+
+func (s *UserTestSuite) SetupSuite() {
+	if !apptest.InitLocalStack(s.s) {
+		s.T().Skip("localstack not running")
 	}
-	suite.Run(t, &UserTestSuite{})
 }
 
 func (s *UserTestSuite) SetupTest() {
-	apptest.ResetLocalStack(appenv.MustSettings())
+	apptest.ResetLocalStack(s.s)
 }
 
 func (s *UserTestSuite) storeTestUser(a appcore.Clients) *multi.User {
@@ -41,19 +45,20 @@ func (s *UserTestSuite) storeTestUserWithName(a appcore.Clients, name string) *m
 }
 
 func (s *UserTestSuite) TestStoreUser() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 	u1 := s.storeTestUser(a)
 	u2, err := db.GetUserByName(a.Ctx(), a.DBCtx(), u1.Username)
 	s.NoError(err)
 	s.NotNil(u2)
 	s.Equal(a.RootTenantID(), u2.TenantID)
 	s.Equal(u1.ID, u2.ID)
+	s.Equal(u1.CognitoID, u2.CognitoID)
 	s.Equal(u1.Username, u2.Username)
 	s.Equal(u1.Role, u2.Role)
 }
 
 func (s *UserTestSuite) TestDeleteUser() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 	u1 := s.storeTestUser(a)
 	u2, err := db.GetUserByName(a.Ctx(), a.DBCtx(), u1.Username)
 	s.NoError(err)
@@ -68,7 +73,7 @@ func (s *UserTestSuite) TestDeleteUser() {
 }
 
 func (s *UserTestSuite) TestGetUserByID() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 	u1 := s.storeTestUser(a)
 	u2, err := db.GetUserInTenantByID(a.Ctx(), a.DBCtx(), u1.TenantID, u1.ID)
 	s.NoError(err)
@@ -81,7 +86,7 @@ func (s *UserTestSuite) TestGetUserByID() {
 }
 
 func (s *UserTestSuite) TestGetUsersForTenant() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 	u1 := s.storeTestUserWithName(a, "testuser1@example.com")
 	u2 := s.storeTestUserWithName(a, "testuser2@example.com")
 	users1, err := db.GetUsersForTenant(a.Ctx(), a.DBCtx(), u1.TenantID)
@@ -110,7 +115,7 @@ func (s *UserTestSuite) TestGetUsersForTenant() {
 }
 
 func (s *UserTestSuite) TestGetUserAndTenant() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 	u1 := s.storeTestUser(a)
 	u2, t2, err := db.GetUserAndTenant(a.Ctx(), a.DBCtx(), u1.Username)
 	s.NoError(err)
@@ -121,7 +126,7 @@ func (s *UserTestSuite) TestGetUserAndTenant() {
 }
 
 func (s *UserTestSuite) TestSetUserStatus() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 	u1 := s.storeTestUser(a)
 	u2, err := db.GetUserByName(a.Ctx(), a.DBCtx(), u1.Username)
 	s.NoError(err)
@@ -149,4 +154,15 @@ func (s *UserTestSuite) TestSetUserStatus() {
 	s.Error(err)
 	_, err = db.SetUserStatus(a.Ctx(), a.DBCtx(), u6, multi.UserStatusInactive)
 	s.Error(err)
+}
+
+func (s *UserTestSuite) TestStoreUserError() {
+	a := appcore.MustWithSettings(s.s)
+	u := multi.NewUser(a.RootTenantID(), uuid.New(),
+		"testuser7@other.example.com", "admin", multi.MFAPolicyRequired)
+	u.Status = multi.UserStatusActive
+	u.CognitoID = uuid.Nil
+	err := db.StoreUser(a.Ctx(), a.DBCtx(), u)
+	s.Error(err)
+	s.Equal("cannot store user with nil Cognito ID", err.Error())
 }

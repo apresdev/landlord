@@ -82,6 +82,7 @@ func HandleUpdateUserRole(
 		zap.L().Error("error updating user",
 			zap.String("tenantID", targetTenant.ID.String()),
 			zap.String("userID", targetUser.ID.String()),
+			zap.String("cognitoID", targetUser.CognitoID.String()),
 			zap.Error(err))
 		return nil, nil, apperr.NewInternal("error updating user")
 	}

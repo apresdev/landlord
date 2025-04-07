@@ -19,6 +19,8 @@ type InviteRequest struct {
 	Role          string         `json:"role"`
 	MfaPolicy     MFAPolicy      `json:"mfaPolicy"`
 	ProfileFields []ProfileField `json:"profileFields,omitempty"`
+	// Optional user ID to use for the user.  This is useful for migrating users from another system.
+	OptionalUserID *string `json:"optionalUserID,omitempty"`
 }
 
 type _InviteRequest InviteRequest
@@ -149,6 +151,38 @@ func (o *InviteRequest) SetProfileFields(v []ProfileField) {
 	o.ProfileFields = v
 }
 
+// GetOptionalUserID returns the OptionalUserID field value if set, zero value otherwise.
+func (o *InviteRequest) GetOptionalUserID() string {
+	if o == nil || IsNil(o.OptionalUserID) {
+		var ret string
+		return ret
+	}
+	return *o.OptionalUserID
+}
+
+// GetOptionalUserIDOk returns a tuple with the OptionalUserID field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *InviteRequest) GetOptionalUserIDOk() (*string, bool) {
+	if o == nil || IsNil(o.OptionalUserID) {
+		return nil, false
+	}
+	return o.OptionalUserID, true
+}
+
+// HasOptionalUserID returns a boolean if a field has been set.
+func (o *InviteRequest) HasOptionalUserID() bool {
+	if o != nil && !IsNil(o.OptionalUserID) {
+		return true
+	}
+
+	return false
+}
+
+// SetOptionalUserID gets a reference to the given string and assigns it to the OptionalUserID field.
+func (o *InviteRequest) SetOptionalUserID(v string) {
+	o.OptionalUserID = &v
+}
+
 func (o InviteRequest) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -164,6 +198,9 @@ func (o InviteRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize["mfaPolicy"] = o.MfaPolicy
 	if !IsNil(o.ProfileFields) {
 		toSerialize["profileFields"] = o.ProfileFields
+	}
+	if !IsNil(o.OptionalUserID) {
+		toSerialize["optionalUserID"] = o.OptionalUserID
 	}
 	return toSerialize, nil
 }

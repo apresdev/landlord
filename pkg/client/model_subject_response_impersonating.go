@@ -17,6 +17,7 @@ var _ MappedNullable = &SubjectResponseImpersonating{}
 type SubjectResponseImpersonating struct {
 	TenantID      string               `json:"tenantID"`
 	UserID        string               `json:"userID"`
+	CognitoID     string               `json:"cognitoID"`
 	Email         string               `json:"email"`
 	Role          string               `json:"role"`
 	ProfileFields []ProfileFormatField `json:"profileFields,omitempty"`
@@ -28,10 +29,11 @@ type _SubjectResponseImpersonating SubjectResponseImpersonating
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSubjectResponseImpersonating(tenantID string, userID string, email string, role string) *SubjectResponseImpersonating {
+func NewSubjectResponseImpersonating(tenantID string, userID string, cognitoID string, email string, role string) *SubjectResponseImpersonating {
 	this := SubjectResponseImpersonating{}
 	this.TenantID = tenantID
 	this.UserID = userID
+	this.CognitoID = cognitoID
 	this.Email = email
 	this.Role = role
 	return &this
@@ -91,6 +93,30 @@ func (o *SubjectResponseImpersonating) GetUserIDOk() (*string, bool) {
 // SetUserID sets field value
 func (o *SubjectResponseImpersonating) SetUserID(v string) {
 	o.UserID = v
+}
+
+// GetCognitoID returns the CognitoID field value
+func (o *SubjectResponseImpersonating) GetCognitoID() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.CognitoID
+}
+
+// GetCognitoIDOk returns a tuple with the CognitoID field value
+// and a boolean to check if the value has been set.
+func (o *SubjectResponseImpersonating) GetCognitoIDOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.CognitoID, true
+}
+
+// SetCognitoID sets field value
+func (o *SubjectResponseImpersonating) SetCognitoID(v string) {
+	o.CognitoID = v
 }
 
 // GetEmail returns the Email field value
@@ -185,6 +211,7 @@ func (o SubjectResponseImpersonating) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["tenantID"] = o.TenantID
 	toSerialize["userID"] = o.UserID
+	toSerialize["cognitoID"] = o.CognitoID
 	toSerialize["email"] = o.Email
 	toSerialize["role"] = o.Role
 	if !IsNil(o.ProfileFields) {
@@ -200,6 +227,7 @@ func (o *SubjectResponseImpersonating) UnmarshalJSON(data []byte) (err error) {
 	requiredProperties := []string{
 		"tenantID",
 		"userID",
+		"cognitoID",
 		"email",
 		"role",
 	}

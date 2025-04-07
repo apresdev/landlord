@@ -3024,6 +3024,7 @@
           "tenantID",
           "tenantName",
           "userID",
+          "cognitoID",
           "username",
           "role",
           "status"
@@ -3043,6 +3044,10 @@
             }
           },
           "userID": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cognitoID": {
             "type": "string",
             "format": "uuid"
           },
@@ -3066,6 +3071,7 @@
             "required": [
               "tenantID",
               "userID",
+              "cognitoID",
               "email",
               "role"
             ],
@@ -3075,6 +3081,10 @@
                 "format": "uuid"
               },
               "userID": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "cognitoID": {
                 "type": "string",
                 "format": "uuid"
               },
@@ -3112,6 +3122,7 @@
                 "username",
                 "role",
                 "status",
+                "userID",
                 "cognitoID"
               ],
               "properties": {
@@ -3124,8 +3135,13 @@
                 "status": {
                   "$ref": "#/components/schemas/UserStatus"
                 },
+                "userID": {
+                  "type": "string",
+                  "format": "uuid"
+                },
                 "cognitoID": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "uuid"
                 },
                 "profileFields": {
                   "type": "array",
@@ -3340,6 +3356,11 @@
             "items": {
               "$ref": "#/components/schemas/ProfileField"
             }
+          },
+          "optionalUserID": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Optional user ID to use for the user.  This is useful for migrating users from another system."
           }
         }
       },

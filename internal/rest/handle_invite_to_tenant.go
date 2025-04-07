@@ -66,8 +66,23 @@ func HandleInviteToTenant(
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
+	overrideUUID := uuid.Nil
+	if req.OptionalUserID != "" {
+		overrideUUID, err = uuid.Parse(req.OptionalUserID)
+		if err != nil {
+			return apperr.NewBadRequest("invalid user ID")
+		}
+	}
+
 	err = authx.SendInvite(
-		c.Request.Context(), a.DBCtx(), a.CogIdp(), targetTenant, req.Username, req.Role, mfaPol)
+		c.Request.Context(),
+		a.DBCtx(),
+		a.CogIdp(),
+		targetTenant,
+		req.Username,
+		overrideUUID,
+		req.Role,
+		mfaPol)
 	if err != nil {
 		zap.L().Error("could not send invite",
 			zap.String("username", req.Username),

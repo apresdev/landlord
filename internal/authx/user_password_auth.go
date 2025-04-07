@@ -30,6 +30,7 @@ func CreateSecretHash(email, clientId, clientSecret string) (string, error) {
 	return secretHash, nil
 }
 
+// UserPasswordAuth authenticates a user using the USER_PASSWORD_AUTH flow
 func UserPasswordAuth(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,

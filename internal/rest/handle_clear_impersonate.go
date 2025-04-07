@@ -57,6 +57,8 @@ func HandleClearImpersonation(a App, c *gin.Context, sub *perms.Subject) error {
 	if err != nil {
 		zap.L().Error("could not clear impersonation",
 			zap.String("clientID", string(sub.Cid)),
+			zap.String("targetTenant", targetTenant.ID.String()),
+			zap.String("targetUser", targetUser.Username),
 			zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}

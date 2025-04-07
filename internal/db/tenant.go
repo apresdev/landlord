@@ -18,6 +18,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// StoreTenant stores the given tenant in the database, creating a new item if
+// it does not already exist.
 func StoreTenant(ctx context.Context, dbc *Context, ten *multi.Tenant) error {
 	if ten.ID == uuid.Nil {
 		return apperr.NewInternal("cannot store tenant with nil ID")
@@ -51,6 +53,7 @@ func StoreTenant(ctx context.Context, dbc *Context, ten *multi.Tenant) error {
 	return err
 }
 
+// GetTenantByID retrieves a tenant by its ID from the database.
 func GetTenantByID(ctx context.Context, dbc *Context, id uuid.UUID) (*multi.Tenant, error) {
 	kv := make(map[string]types.AttributeValue)
 	kv["pk"] = &types.AttributeValueMemberS{Value: GlobalEntityID("*")}
@@ -72,6 +75,7 @@ func GetTenantByID(ctx context.Context, dbc *Context, id uuid.UUID) (*multi.Tena
 	return unmarshalTenant(result.Item)
 }
 
+// GetTenantByName retrieves a tenant by its name from the database.
 func GetTenantByName(ctx context.Context, dbc *Context, name string) (*multi.Tenant, error) {
 	kv := make(map[string]types.AttributeValue)
 	kv[":altName"] = &types.AttributeValueMemberS{Value: TenantEntityID(name)}
@@ -96,6 +100,7 @@ func GetTenantByName(ctx context.Context, dbc *Context, name string) (*multi.Ten
 	return unmarshalTenant(result.Items[0])
 }
 
+// GetRootTenant retrieves the root tenant from the database.
 func GetRootTenant(
 	ctx context.Context,
 	dbc *Context,
@@ -104,6 +109,7 @@ func GetRootTenant(
 	return GetTenantByID(ctx, dbc, rootTenantID)
 }
 
+// GetAllTenants retrieves all tenants from the database.
 func GetAllTenants(ctx context.Context, dbc *Context) ([]*multi.Tenant, error) {
 	kv := make(map[string]types.AttributeValue)
 	kv[":pk"] = &types.AttributeValueMemberS{Value: GlobalEntityID("*")}
@@ -139,6 +145,8 @@ func GetAllTenants(ctx context.Context, dbc *Context) ([]*multi.Tenant, error) {
 	return tenants, nil
 }
 
+// ResolveTenant resolves a tenant by its ID or name. If both are set, it
+// prefers the ID.
 func ResolveTenant(ctx context.Context, dbc *Context, h multi.TenantHandle) (*multi.Tenant, error) {
 	if !h.IsSet() {
 		return nil, apperr.NewBadRequest("tenant ID or tenant name must be set")

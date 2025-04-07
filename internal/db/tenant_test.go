@@ -15,17 +15,21 @@ import (
 
 type TenantTestSuite struct {
 	suite.Suite
+	s appenv.Settings
 }
 
 func TestTenantTestSuite(t *testing.T) {
-	if !apptest.InitLocalStack(appenv.MustSettings()) {
-		t.Skip("localstack not running")
+	suite.Run(t, &TenantTestSuite{s: appenv.MustTestSettings()})
+}
+
+func (s *TenantTestSuite) SetupSuite() {
+	if !apptest.InitLocalStack(s.s) {
+		s.T().Skip("localstack not running")
 	}
-	suite.Run(t, &TenantTestSuite{})
 }
 
 func (s *TenantTestSuite) SetupTest() {
-	apptest.ResetLocalStack(appenv.MustSettings())
+	apptest.ResetLocalStack(s.s)
 }
 
 func (s *TenantTestSuite) storeTestTenant(a appcore.Clients) *multi.Tenant {
@@ -45,7 +49,7 @@ func (s *TenantTestSuite) storeTestTenantWithName(
 }
 
 func (s *TenantTestSuite) TestStoreTenant() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 	t1 := s.storeTestTenant(a)
 	t2, err := db.GetTenantByID(a.Ctx(), a.DBCtx(), t1.ID)
 	s.NoError(err)
@@ -54,7 +58,7 @@ func (s *TenantTestSuite) TestStoreTenant() {
 }
 
 func (s *TenantTestSuite) TestGetTenantByID() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 	t1 := s.storeTestTenant(a)
 	t2, err := db.GetTenantByID(a.Ctx(), a.DBCtx(), t1.ID)
 	s.NoError(err)
@@ -73,7 +77,7 @@ func (s *TenantTestSuite) TestGetTenantByID() {
 }
 
 func (s *TenantTestSuite) TestGetTenantByName() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 	t1 := s.storeTestTenant(a)
 	t2, err := db.GetTenantByName(a.Ctx(), a.DBCtx(), t1.Name)
 	s.NoError(err)
@@ -86,7 +90,7 @@ func (s *TenantTestSuite) TestGetTenantByName() {
 }
 
 func (s *TenantTestSuite) TestGetAllTenants() {
-	a := appcore.Must()
+	a := appcore.MustWithSettings(s.s)
 	tc := s.storeTestTenantWithName(a, "c-test-tenant1")
 	tb := s.storeTestTenantWithName(a, "b-test-tenant2")
 	ta := s.storeTestTenantWithName(a, "a-test-tenant3")

@@ -1,8 +1,6 @@
 package rest
 
 import (
-	"fmt"
-
 	"github.com/apresdev/landlord/internal/authx"
 
 	"github.com/apresdev/landlord/internal/apperr"
@@ -61,9 +59,13 @@ func HandleCancelInvitation(
 	}
 
 	if targetUser.Status != multi.UserStatusInvited {
-		return apperr.NewBadRequest(
-			fmt.Sprintf("cannot cancel invite, user '%s' is not invited",
-				targetUser.ID.String()))
+		zap.L().Info("user is not invited",
+			zap.String("clientID", string(sub.Cid)),
+			zap.String("username", targetUser.Username),
+			zap.String("tenantID", targetTenant.ID.String()),
+			zap.String("userID", targetUser.ID.String()),
+			zap.String("cognitoID", targetUser.CognitoID.String()))
+		return apperr.NewBadRequest("cannot cancel invite, user is not invited")
 	}
 
 	authx.DeleteCognitoUser(ctx, a.CogIdp(), targetTenant, targetUser)

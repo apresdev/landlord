@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/apresdev/landlord/internal/appcore"
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
@@ -274,7 +276,7 @@ func tenantInviteCmd() *cobra.Command {
 				return err
 			}
 			err = authx.SendInvite(
-				cs.Ctx(), cs.DBCtx(), cs.CogIdp(), ten, username, role, mfaPol)
+				cs.Ctx(), cs.DBCtx(), cs.CogIdp(), ten, username, uuid.Nil, role, mfaPol)
 			if err != nil {
 				return err
 			}

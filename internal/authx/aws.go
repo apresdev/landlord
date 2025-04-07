@@ -4,16 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-
-	"github.com/aws/aws-sdk-go-v2/service/ses"
 )
-
-type AWSSES interface {
-	SendEmail(
-		ctx context.Context,
-		params *ses.SendEmailInput,
-		optFns ...func(*ses.Options)) (*ses.SendEmailOutput, error)
-}
 
 type AWSCognitoIdentityProvider interface {
 	InitiateAuth(

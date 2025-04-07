@@ -25,6 +25,9 @@ func StoreUser(ctx context.Context, dbc *Context, user *multi.User) error {
 	if user.ID == uuid.Nil {
 		return apperr.NewInternal("cannot store user with nil ID")
 	}
+	if user.CognitoID == uuid.Nil {
+		return apperr.NewInternal("cannot store user with nil Cognito ID")
+	}
 	if user.Username == "" {
 		return apperr.NewInternal("cannot store user with empty username")
 	}
@@ -74,6 +77,7 @@ func DeleteUser(ctx context.Context, dbc *Context, user *multi.User) error {
 		zap.String("tenant", user.TenantID.String()),
 		zap.String("username", user.Username),
 		zap.String("userID", user.ID.String()),
+		zap.String("cognitoID", user.CognitoID.String()),
 		zap.Any("output", o))
 	return nil
 }
@@ -173,6 +177,7 @@ func GetUserAndTenant(
 	return user, ten, nil
 }
 
+// SetUserStatus sets the status of the user to the given status.
 func SetUserStatus(
 	ctx context.Context,
 	dbc *Context,
@@ -214,6 +219,13 @@ func unmarshalUser(item map[string]types.AttributeValue) (*multi.User, error) {
 	if err != nil {
 		return nil, apperr.NewInternalE(
 			fmt.Errorf("failed to strip entity ID: %w", err))
+	}
+	if user.CognitoID == uuid.Nil {
+		zap.L().Info("Cognito ID is nil, assigning user ID to cognito ID",
+			zap.String("tenant", user.TenantID.String()),
+			zap.String("username", user.Username),
+			zap.String("userID", user.ID.String()))
+		user.CognitoID = user.ID
 	}
 	return &user, nil
 }

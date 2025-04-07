@@ -25,6 +25,7 @@ func SendInvite(
 	cogIdp AWSCognitoIdentityProvider,
 	ten *multi.Tenant,
 	username string,
+	optionalUserID uuid.UUID,
 	role string,
 	mfaPolicy multi.MFAPolicy) error {
 
@@ -82,8 +83,11 @@ func SendInvite(
 			break
 		}
 	}
-	return db.StoreUser(
-		ctx, dbc, multi.NewUser(ten.ID, cognitoUserID, e.Address(), role, mfaPolicy))
+	u := multi.NewUser(ten.ID, cognitoUserID, e.Address(), role, mfaPolicy)
+	if optionalUserID != uuid.Nil {
+		u.ID = optionalUserID
+	}
+	return db.StoreUser(ctx, dbc, u)
 }
 
 func DeleteCognitoUser(
@@ -94,12 +98,13 @@ func DeleteCognitoUser(
 
 	args := cognitoidentityprovider.AdminDeleteUserInput{
 		UserPoolId: aws.String(ten.UserPoolID),
-		Username:   aws.String(user.ID.String()),
+		Username:   aws.String(user.CognitoID.String()),
 	}
 	if _, err := cogIdp.AdminDeleteUser(ctx, &args); err != nil {
 		zap.L().Error("could not delete user from Cognito",
 			zap.String("tenantID", ten.ID.String()),
 			zap.String("userID", user.ID.String()),
+			zap.String("cognitoID", user.CognitoID.String()),
 			zap.Error(err))
 	}
 }

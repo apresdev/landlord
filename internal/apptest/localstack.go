@@ -23,7 +23,7 @@ func InitLocalStack(settings appenv.Settings) bool {
 		return false
 	}
 	dangerousRecreateDynamoTable(cfg, settings.DBTableName())
-	dangerousRecreateUserPool(cfg)
+	dangerousRecreateUserPool(cfg, settings.UserPoolName())
 	return true
 }
 
@@ -32,7 +32,7 @@ func InitLocalStack(settings appenv.Settings) bool {
 func ResetLocalStack(settings appenv.Settings) {
 	cfg := mustLocalStackConfig()
 	dangerousDeleteAllItems(cfg, settings.DBTableName())
-	dangerousRecreateUserPool(cfg)
+	dangerousRecreateUserPool(cfg, settings.UserPoolName())
 }
 
 func localStackConfig() (aws.Config, error) {
