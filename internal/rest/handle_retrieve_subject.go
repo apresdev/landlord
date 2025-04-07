@@ -73,6 +73,11 @@ func handleRetrieveSubject(a App, c *gin.Context) error {
 			}
 		}
 	}
+	if err := authx.OnSuccessfulLogin(c.Request.Context(), a.DBCtx(), user); err != nil {
+		zap.L().Error("error updating user status",
+			zap.String("user", user.ID.String()),
+			zap.Error(err))
+	}
 
 	c.JSON(http.StatusOK, resp)
 	return nil
