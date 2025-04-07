@@ -24,12 +24,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleLogin(app App, c *gin.Context) error {
+func handleLogin(a App, c *gin.Context) error {
 	var req LoginRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequestE(err)
 	}
-	resp, err := HandleLogin(app, c, req)
+	resp, err := HandleLogin(a, c, req)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func handleLogin(app App, c *gin.Context) error {
 	return nil
 }
 
-func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, error) {
+func HandleLogin(a App, c *gin.Context, req LoginRequest) (*LoginResponse, error) {
 	if req.Username == "" {
 		return nil, apperr.NewBadRequest("username is required")
 	}
@@ -45,7 +45,7 @@ func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, err
 		return nil, apperr.NewBadRequest("password is required")
 	}
 	ctx := c.Request.Context()
-	user, tenant, err := db.GetUserAndTenant(ctx, app.DDB(), req.Username)
+	user, tenant, err := db.GetUserAndTenant(ctx, a.DBCtx(), req.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, err
 		return nil, apperr.NewUnauthorized("no tenants found for username")
 	}
 	upc, err := authx.GetUserPoolClient(
-		ctx, app.CogIdp(), tenant.UserPoolID)
+		ctx, a.CogIdp(), tenant.UserPoolID)
 	if err != nil {
 		zap.L().Warn("Could not resolve user pool client",
 			zap.String("userPoolID", tenant.UserPoolID), zap.Error(err))
@@ -77,7 +77,7 @@ func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, err
 		}
 		params["SECRET_HASH"] = secretHash
 	}
-	o, err := app.CogIdp().InitiateAuth(ctx, &cognitoidentityprovider.InitiateAuthInput{
+	o, err := a.CogIdp().InitiateAuth(ctx, &cognitoidentityprovider.InitiateAuthInput{
 		AuthFlow:       "USER_PASSWORD_AUTH",
 		ClientId:       upc.ClientId,
 		AuthParameters: params,
@@ -122,7 +122,7 @@ func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, err
 	}
 
 	if user.MFAPolicy == multi.MFAPolicyRequired {
-		u, err := app.CogIdp().AdminGetUser(ctx,
+		u, err := a.CogIdp().AdminGetUser(ctx,
 			&cognitoidentityprovider.AdminGetUserInput{
 				UserPoolId: aws.String(tenant.UserPoolID),
 				Username:   aws.String(req.Username)})
@@ -133,8 +133,8 @@ func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, err
 		if idx == -1 {
 			result, err := authx.AssociateSoftwareToken(
 				ctx,
-				app.CogIdp(),
-				app.Settings().AppName(),
+				a.CogIdp(),
+				a.Settings().AppName(),
 				aws.ToString(o.AuthenticationResult.AccessToken),
 				req.Username)
 			if err != nil {
@@ -148,18 +148,18 @@ func HandleLogin(app App, c *gin.Context, req LoginRequest) (*LoginResponse, err
 		}
 	}
 
-	if err := authx.OnSuccessfulLogin(ctx, app.DDB(), user); err != nil {
+	if err := authx.OnSuccessfulLogin(ctx, a.DBCtx(), user); err != nil {
 		return nil, err
 	}
 
 	cid := perms.ClientID(c)
-	validationURL := jwx.ValidationURL(app.Cfg().Region, tenant.UserPoolID)
-	accessTok, err := app.Validator().ValidateToken(
+	validationURL := jwx.ValidationURL(a.Cfg().Region, tenant.UserPoolID)
+	accessTok, err := a.Validator().ValidateToken(
 		ctx, cid, validationURL, aws.ToString(o.AuthenticationResult.AccessToken))
 	if err != nil {
 		return nil, err
 	}
-	idTok, err := app.Validator().ValidateToken(
+	idTok, err := a.Validator().ValidateToken(
 		ctx, cid, validationURL, aws.ToString(o.AuthenticationResult.IdToken))
 	if err != nil {
 		return nil, err

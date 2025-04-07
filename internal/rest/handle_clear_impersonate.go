@@ -12,12 +12,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleClearImpersonation(app App, c *gin.Context) error {
+func handleClearImpersonation(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
 	}
-	err = HandleClearImpersonation(app, c, sub)
+	err = HandleClearImpersonation(a, c, sub)
 	if err != nil {
 		return err
 	}
@@ -25,14 +25,14 @@ func handleClearImpersonation(app App, c *gin.Context) error {
 	return nil
 }
 
-func HandleClearImpersonation(app App, c *gin.Context, sub *perms.Subject) error {
+func HandleClearImpersonation(a App, c *gin.Context, sub *perms.Subject) error {
 	// The target user and tenant of this API are from the subject
-	targetUser, err := sub.ResolveUser(c.Request.Context(), app)
+	targetUser, err := sub.ResolveUser(c.Request.Context(), a)
 	if err != nil {
 		zap.L().Error("could not resolve subject user", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	targetTenant, err := sub.ResolveTenant(c.Request.Context(), app)
+	targetTenant, err := sub.ResolveTenant(c.Request.Context(), a)
 	if err != nil {
 		zap.L().Error("could not resolve subject tenant", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
@@ -40,7 +40,7 @@ func HandleClearImpersonation(app App, c *gin.Context, sub *perms.Subject) error
 
 	resource := perms.NewResource(
 		perms.ResourceKindImpersonation, targetUser.Username, targetTenant, targetUser)
-	effect, err := perms.Eval(c, app, sub, perms.ActionDelete, resource)
+	effect, err := perms.Eval(c, a, sub, perms.ActionDelete, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return apperr.NewUnauthorized("not authorized")
@@ -53,7 +53,7 @@ func HandleClearImpersonation(app App, c *gin.Context, sub *perms.Subject) error
 	}
 
 	err = authx.ClearImpersonate(
-		c.Request.Context(), app.CogIdp(), targetTenant.UserPoolID, targetUser.Username)
+		c.Request.Context(), a.CogIdp(), targetTenant.UserPoolID, targetUser.Username)
 	if err != nil {
 		zap.L().Error("could not clear impersonation",
 			zap.String("clientID", string(sub.Cid)),

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"slices"
 
 	"github.com/apresdev/landlord/internal/apperr"
 
@@ -24,10 +23,10 @@ import (
 
 func MustRootTenant(
 	ctx context.Context,
-	ddb db.AWSDynamoDB,
+	dbc *db.Context,
 	cogIdp AWSCognitoIdentityProvider) uuid.UUID {
 
-	rootTenant, err := db.GetTenantByName(ctx, ddb, multi.RootTenantName)
+	rootTenant, err := db.GetTenantByName(ctx, dbc, multi.RootTenantName)
 	if err != nil && !apperr.IsNotFound(err) {
 		zap.L().Fatal("unexpected error getting root tenant", zap.Error(err))
 	}
@@ -56,7 +55,7 @@ func MustRootTenant(
 		}
 	}
 	rootTenant.Roles = multi.BuiltInRoles
-	err = db.StoreTenant(ctx, ddb, rootTenant)
+	err = db.StoreTenant(ctx, dbc, rootTenant)
 	if err != nil {
 		zap.L().Fatal("error storing root tenant", zap.Error(err))
 	} else {
@@ -69,7 +68,7 @@ func MustRootTenant(
 // CreateTenant creates a new tenant in the system.
 func CreateTenant(
 	ctx context.Context,
-	ddb db.AWSDynamoDB,
+	dbc *db.Context,
 	rootTenantID uuid.UUID,
 	cogIdp AWSCognitoIdentityProvider,
 	name string,
@@ -78,7 +77,7 @@ func CreateTenant(
 	if err := multi.ValidateTenantName(name); err != nil {
 		return nil, apperr.NewBadRequestE(err)
 	}
-	_, err := db.GetTenantByName(ctx, ddb, name)
+	_, err := db.GetTenantByName(ctx, dbc, name)
 	if err == nil {
 		return nil, apperr.NewBadRequestE(
 			fmt.Errorf("tenant already exists: %s", name))
@@ -86,7 +85,7 @@ func CreateTenant(
 	if !apperr.IsNotFound(err) {
 		return nil, apperr.NewInternalE(err)
 	}
-	rootTenant, err := db.GetRootTenant(ctx, ddb, rootTenantID)
+	rootTenant, err := db.GetRootTenant(ctx, dbc, rootTenantID)
 	if err != nil {
 		return nil, apperr.NewInternalE(err)
 	}
@@ -105,7 +104,7 @@ func CreateTenant(
 		}
 	}
 	ten.Roles = rootTenant.SubTenantRoles
-	if err := db.StoreTenant(ctx, ddb, ten); err != nil {
+	if err := db.StoreTenant(ctx, dbc, ten); err != nil {
 		return nil, apperr.NewInternalE(err)
 	}
 	return ten, nil
@@ -133,7 +132,7 @@ func SetTenantOnUser(
 
 func ApplyTenant(
 	ctx context.Context,
-	ddb db.AWSDynamoDB,
+	dbc *db.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	ten *multi.Tenant) error {
 
@@ -156,7 +155,7 @@ func ApplyTenant(
 		}
 		zap.L().Info("created group", zap.String("name", groupName))
 	}
-	users, err := db.GetUsersForTenant(ctx, ddb, ten.ID)
+	users, err := db.GetUsersForTenant(ctx, dbc, ten.ID)
 	if err != nil {
 		return err
 	}
@@ -191,48 +190,9 @@ func ApplyTenant(
 	return nil
 }
 
-func GetUsersWithRole(ctx context.Context, ddb db.AWSDynamoDB, tenantID uuid.UUID, role string) ([]*multi.User, error) {
-	users, err := db.GetUsersForTenant(ctx, ddb, tenantID)
-	if err != nil {
-		return nil, err
-	}
-	var result []*multi.User
-	for _, user := range users {
-		if user.Role == role {
-			result = append(result, user)
-		}
-	}
-	return result, nil
-}
-
-func RemoveRoleFromTenant(ctx context.Context, ddb db.AWSDynamoDB, tenantID uuid.UUID, role string) error {
-	if role == multi.RoleGuest {
-		return errors.New("cannot remove guest role")
-	}
-	ten, err := db.GetTenantByID(ctx, ddb, tenantID)
-	if err != nil {
-		return err
-	}
-	users, err := db.GetUsersForTenant(ctx, ddb, tenantID)
-	if err != nil {
-		return err
-	}
-	for _, user := range users {
-		if user.Role == role {
-			return errors.New("role still in use")
-		}
-	}
-	idx := slices.Index(ten.Roles, role)
-	if idx == -1 {
-		return errors.New("role not found")
-	}
-	ten.Roles = append(ten.Roles[:idx], ten.Roles[idx+1:]...)
-	return db.StoreTenant(ctx, ddb, ten)
-}
-
 func SetTenantState(
 	ctx context.Context,
-	ddb db.AWSDynamoDB,
+	dbc *db.Context,
 	ten *multi.Tenant,
 	state multi.TenantState) (*multi.Tenant, error) {
 
@@ -240,7 +200,7 @@ func SetTenantState(
 		return nil, apperr.NewBadRequest("cannot change the root tenant's state")
 	}
 	ten.State = state
-	err := db.StoreTenant(ctx, ddb, ten)
+	err := db.StoreTenant(ctx, dbc, ten)
 	if err != nil {
 		return nil, err
 	}

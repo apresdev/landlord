@@ -244,7 +244,7 @@ func (s *HandleRefreshTestSuite) TestInitiateAuthFailure() {
 }
 
 func (s *HandleRefreshTestSuite) TestHappyPath() {
-	app := NewMockApp()
+	a := NewMockApp()
 
 	mt := multi.NewTenant("ten1")
 
@@ -254,7 +254,7 @@ func (s *HandleRefreshTestSuite) TestHappyPath() {
 	kv := make(map[string]ddbtypes.AttributeValue)
 	kv[":altName"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(username)}
 	i1 := &dynamodb.QueryInput{
-		TableName:                 aws.String(db.TableName()),
+		TableName:                 aws.String(a.DBCtx().TableName()),
 		IndexName:                 aws.String("altNameIndex"),
 		KeyConditionExpression:    aws.String("altName = :altName"),
 		ExpressionAttributeValues: kv,
@@ -265,7 +265,7 @@ func (s *HandleRefreshTestSuite) TestHappyPath() {
 	item["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(usernameUUID.String())}
 	item["altName"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(username)}
 	o1.Items = append(o1.Items, item)
-	app.ddb.On("Query", mock.Anything, i1).Return(&o1, nil)
+	a.ddb.On("Query", mock.Anything, i1).Return(&o1, nil)
 
 	// ...then tenant
 	o2 := dynamodb.GetItemOutput{}
@@ -273,14 +273,14 @@ func (s *HandleRefreshTestSuite) TestHappyPath() {
 	o2.Item["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
 	o2.Item["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(mt.ID.String())}
 	o2.Item["altName"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(mt.Name)}
-	app.ddb.EXPECT().GetItem(mock.Anything, mock.Anything).Return(&o2, nil)
+	a.ddb.EXPECT().GetItem(mock.Anything, mock.Anything).Return(&o2, nil)
 
-	app.cogIdp.EXPECT().ListUserPoolClients(mock.Anything, mock.Anything).Return(
+	a.cogIdp.EXPECT().ListUserPoolClients(mock.Anything, mock.Anything).Return(
 		&cognitoidentityprovider.ListUserPoolClientsOutput{
 			UserPoolClients: []types.UserPoolClientDescription{
 				{ClientId: aws.String("test-client-id1")},
 			}}, nil).Once()
-	app.cogIdp.EXPECT().DescribeUserPoolClient(mock.Anything, mock.Anything).Return(
+	a.cogIdp.EXPECT().DescribeUserPoolClient(mock.Anything, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolClientOutput{
 			UserPoolClient: &types.UserPoolClientType{
 				ClientId:     aws.String("test-client-id1"),
@@ -291,7 +291,7 @@ func (s *HandleRefreshTestSuite) TestHappyPath() {
 			{Name: aws.String("sub"), Value: aws.String("sub-123")},
 		},
 	}
-	app.cogIdp.EXPECT().AdminGetUser(mock.Anything, mock.Anything).Return(
+	a.cogIdp.EXPECT().AdminGetUser(mock.Anything, mock.Anything).Return(
 		&u, nil).Once()
 	o3 := cognitoidentityprovider.InitiateAuthOutput{
 		AuthenticationResult: &types.AuthenticationResultType{
@@ -299,7 +299,7 @@ func (s *HandleRefreshTestSuite) TestHappyPath() {
 			AccessToken: aws.String("access-token"),
 		},
 	}
-	app.cogIdp.EXPECT().InitiateAuth(mock.Anything, mock.Anything).Return(
+	a.cogIdp.EXPECT().InitiateAuth(mock.Anything, mock.Anything).Return(
 		&o3, nil).Once()
 
 	req := client.RefreshRequest{}
@@ -310,7 +310,7 @@ func (s *HandleRefreshTestSuite) TestHappyPath() {
 	gt1 := newGinTest(s.T()).withRequest(
 		httptest.NewRequest("POST", "/refresh", bytes.NewReader(b)))
 
-	err = handleRefresh(app, gt1.c)
+	err = handleRefresh(a, gt1.c)
 	s.NoError(err)
 
 	bodyBytes, err := io.ReadAll(gt1.w.Result().Body)

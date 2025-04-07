@@ -407,14 +407,19 @@ func restNewPassword() *cobra.Command {
 			return nil
 		},
 	}
+
 	c.PersistentFlags().StringVarP(
 		&username, "username", "u", "", "Username to login with")
+	c.PersistentFlags().StringVarP(
+		&username, "email", "", "", "Email to login with")
+	_ = c.PersistentFlags().MarkHidden("email")
 	c.PersistentFlags().StringVarP(
 		&password, "password", "p", "", "Password to login with")
 	c.PersistentFlags().StringVarP(
 		&session, "session", "", "", "Session token returned from login call")
 	c.PersistentFlags().StringVarP(
 		&server, "server", "s", "", "Server to connect to")
+
 	return c
 }
 

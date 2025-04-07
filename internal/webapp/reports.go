@@ -170,13 +170,13 @@ type cognitoEvents struct {
 }
 
 func getCognitoEvents(ctx context.Context, a App, tenantID uuid.UUID) (cognitoEvents, error) {
-	ten, err := db.GetTenantByID(ctx, a.DDB(), tenantID)
+	ten, err := db.GetTenantByID(ctx, a.DBCtx(), tenantID)
 	if err != nil {
 		return cognitoEvents{},
 			apperr.NewNotFoundE(
 				fmt.Errorf("tenant not found: %s %w", tenantID, err))
 	}
-	users, err := db.GetUsersForTenant(ctx, a.DDB(), tenantID)
+	users, err := db.GetUsersForTenant(ctx, a.DBCtx(), tenantID)
 	if err != nil {
 		return cognitoEvents{},
 			apperr.NewInternalE(

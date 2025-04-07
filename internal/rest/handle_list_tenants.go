@@ -26,8 +26,8 @@ func convertTenant(ten *multi.Tenant) Tenant {
 	}
 }
 
-func handleListTenants(app App, c *gin.Context) error {
-	tens, err := HandleGetTenants(app, c)
+func handleListTenants(a App, c *gin.Context) error {
+	tens, err := HandleGetTenants(a, c)
 	if err != nil {
 		return err
 	}
@@ -40,19 +40,19 @@ func handleListTenants(app App, c *gin.Context) error {
 	return nil
 }
 
-func HandleGetTenants(app App, c *gin.Context) ([]*multi.Tenant, error) {
+func HandleGetTenants(a App, c *gin.Context) ([]*multi.Tenant, error) {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return nil, err
 	}
-	allTenants, err := db.GetAllTenants(c.Request.Context(), app.DDB())
+	allTenants, err := db.GetAllTenants(c.Request.Context(), a.DBCtx())
 	if err != nil {
 		zap.L().Error("error fetching tenants", zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	result := make([]*multi.Tenant, 0, len(allTenants))
 	for _, ten := range allTenants {
-		if perms.IsAuthorizedToReadTenant(app.RootTenantID(), ten, sub.Role) {
+		if perms.IsAuthorizedToReadTenant(a.RootTenantID(), ten, sub.Role) {
 			result = append(result, ten)
 		}
 	}

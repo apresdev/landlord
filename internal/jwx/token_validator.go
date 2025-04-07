@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/url"
 
-	"go.uber.org/zap"
+	"github.com/apresdev/landlord/internal/apptest"
 
-	"github.com/apresdev/landlord/internal/localstack"
+	"go.uber.org/zap"
 
 	"github.com/golang-jwt/jwt/v5"
 
@@ -52,7 +52,7 @@ func ValidationURL(region, userPoolID string) *url.URL {
 	var raw string
 	if appenv.LocalStack() {
 		var err error
-		raw, err = url.JoinPath(localstack.Endpoint(), userPoolID, ".well-known/jwks.json")
+		raw, err = url.JoinPath(apptest.Endpoint(), userPoolID, ".well-known/jwks.json")
 		if err != nil {
 			zap.L().Fatal("could not join URL path", zap.Error(err))
 		}

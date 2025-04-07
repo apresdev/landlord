@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleUpdateUserStatus(app App, c *gin.Context) error {
+func handleUpdateUserStatus(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
@@ -46,14 +46,14 @@ func handleUpdateUserStatus(app App, c *gin.Context) error {
 			zap.String("userID", uID))
 		return apperr.NewBadRequest("invalid userID")
 	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), app.DDB(), targetTenantID)
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DBCtx(), targetTenantID)
 	if err != nil {
 		zap.L().Error("error resolving tenant",
 			zap.Error(err),
 			zap.String("tenantID", tenantID))
 		return apperr.NewBadRequest("invalid tenant")
 	}
-	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), app.DDB(), targetTenant.ID, userID)
+	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DBCtx(), targetTenant.ID, userID)
 	if err != nil {
 		zap.L().Info("user not found when setting user status",
 			zap.String("userID", userID.String()),
@@ -64,12 +64,12 @@ func handleUpdateUserStatus(app App, c *gin.Context) error {
 	if s == "" {
 		return apperr.NewBadRequest("no userStatus provided")
 	}
-	_, err = HandleUpdateUserStatus(app, c, sub, targetTenant, targetUser, s)
+	_, err = HandleUpdateUserStatus(a, c, sub, targetTenant, targetUser, s)
 	return err
 }
 
 func HandleUpdateUserStatus(
-	app App,
+	a App,
 	c *gin.Context,
 	sub *perms.Subject,
 	targetTenant *multi.Tenant,
@@ -83,7 +83,7 @@ func HandleUpdateUserStatus(
 
 	resource := perms.NewResource(
 		perms.ResourceKindUserStatus, targetUser.Username, targetTenant, targetUser)
-	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
+	effect, err := perms.Eval(c, a, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
@@ -103,7 +103,7 @@ func HandleUpdateUserStatus(
 		return targetUser, nil
 	}
 	if targetStatus == multi.UserStatusInactive {
-		_, err := app.CogIdp().AdminDisableUser(c.Request.Context(),
+		_, err := a.CogIdp().AdminDisableUser(c.Request.Context(),
 			&cognitoidentityprovider.AdminDisableUserInput{
 				UserPoolId: aws.String(targetTenant.UserPoolID),
 				Username:   aws.String(targetUser.ID.String()),
@@ -116,7 +116,7 @@ func HandleUpdateUserStatus(
 			return nil, apperr.NewInternalE(err)
 		}
 	} else if targetStatus == multi.UserStatusActive {
-		_, err := app.CogIdp().AdminEnableUser(c.Request.Context(),
+		_, err := a.CogIdp().AdminEnableUser(c.Request.Context(),
 			&cognitoidentityprovider.AdminEnableUserInput{
 				UserPoolId: aws.String(targetTenant.UserPoolID),
 				Username:   aws.String(targetUser.ID.String()),
@@ -130,7 +130,7 @@ func HandleUpdateUserStatus(
 		}
 	}
 
-	u, err := db.SetUserStatus(c.Request.Context(), app.DDB(), targetUser, targetStatus)
+	u, err := db.SetUserStatus(c.Request.Context(), a.DBCtx(), targetUser, targetStatus)
 	if err != nil {
 		return nil, err
 	}

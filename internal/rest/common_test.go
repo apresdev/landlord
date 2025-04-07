@@ -37,6 +37,7 @@ type MockApp struct {
 	cogIdp       mocks.AWSCognitoIdentityProvider
 	validator    mocks.TokenValidator
 	ddb          mocks.AWSDynamoDB
+	dbCtx        *db.Context
 	settings     appenv.Settings
 	rootTenantID uuid.UUID
 }
@@ -57,6 +58,10 @@ func (m *MockApp) DDB() db.AWSDynamoDB {
 	return &m.ddb
 }
 
+func (m *MockApp) DBCtx() *db.Context {
+	return m.dbCtx
+}
+
 func (m *MockApp) Settings() appenv.Settings {
 	return m.settings
 }
@@ -67,13 +72,13 @@ func (m *MockApp) RootTenantID() uuid.UUID {
 
 func NewMockApp() *MockApp {
 	settings := appenv.MustSettings()
-	app := &MockApp{
+	a := &MockApp{
 		settings:     settings,
 		rootTenantID: uuid.New(),
 	}
-	app.ddb.EXPECT().DescribeTable(mock.Anything, mock.Anything).Return(nil, nil)
-	db.MustInit(context.Background(), settings, app.DDB())
-	return app
+	a.ddb.EXPECT().DescribeTable(mock.Anything, mock.Anything).Return(nil, nil)
+	a.dbCtx = db.MustInit(context.Background(), settings, &a.ddb)
+	return a
 }
 
 type ginTest struct {
@@ -116,23 +121,23 @@ func marshalTenant(t *multi.Tenant) map[string]ddbtypes.AttributeValue {
 	return result
 }
 
-func withSetupRootTenant(app *MockApp) *multi.Tenant {
+func withSetupRootTenant(a *MockApp) *multi.Tenant {
 	rt := multi.NewTenant(multi.RootTenantName)
-	rt.ID = app.RootTenantID()
+	rt.ID = a.RootTenantID()
 	o := dynamodb.GetItemOutput{}
 	o.Item = marshalTenant(rt)
 	kv := make(map[string]ddbtypes.AttributeValue)
 	kv["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
 	kv["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(rt.ID.String())}
 	input := &dynamodb.GetItemInput{
-		TableName: aws.String(app.Settings().DBTableName()),
+		TableName: aws.String(a.Settings().DBTableName()),
 		Key:       kv,
 	}
-	app.ddb.EXPECT().GetItem(mock.Anything, input).Return(&o, nil)
+	a.ddb.EXPECT().GetItem(mock.Anything, input).Return(&o, nil)
 	return rt
 }
 
-func withSetupQueryTenant(app *MockApp) *multi.Tenant {
+func withSetupQueryTenant(a *MockApp) *multi.Tenant {
 	ten := multi.NewTenant("ten1")
 	ten.Roles = append(ten.Roles, "guest")
 	o := dynamodb.QueryOutput{}
@@ -140,32 +145,32 @@ func withSetupQueryTenant(app *MockApp) *multi.Tenant {
 	kv := make(map[string]ddbtypes.AttributeValue)
 	kv[":altName"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(ten.Name)}
 	input := &dynamodb.QueryInput{
-		TableName:                 aws.String(db.TableName()),
+		TableName:                 aws.String(a.DBCtx().TableName()),
 		IndexName:                 aws.String("altNameIndex"),
 		KeyConditionExpression:    aws.String("altName = :altName"),
 		ExpressionAttributeValues: kv,
 	}
-	app.ddb.EXPECT().Query(mock.Anything, input).Return(&o, nil)
+	a.ddb.EXPECT().Query(mock.Anything, input).Return(&o, nil)
 	return ten
 }
 
-func withSetupGetTenantByID(app *MockApp) *multi.Tenant {
+func withSetupGetTenantByID(a *MockApp) *multi.Tenant {
 	ten := multi.NewTenant("ten1")
-	withSetupGetTenantByID2(app, ten)
+	withSetupGetTenantByID2(a, ten)
 	return ten
 }
 
-func withSetupGetTenantByID2(app *MockApp, ten *multi.Tenant) {
+func withSetupGetTenantByID2(a *MockApp, ten *multi.Tenant) {
 	o := dynamodb.GetItemOutput{}
 	o.Item = marshalTenant(ten)
 	kv := make(map[string]ddbtypes.AttributeValue)
 	kv["pk"] = &ddbtypes.AttributeValueMemberS{Value: db.GlobalEntityID("*")}
 	kv["sk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(ten.ID.String())}
 	input := &dynamodb.GetItemInput{
-		TableName: aws.String(db.TableName()),
+		TableName: aws.String(a.DBCtx().TableName()),
 		Key:       kv,
 	}
-	app.ddb.EXPECT().GetItem(mock.Anything, input).Return(&o, nil)
+	a.ddb.EXPECT().GetItem(mock.Anything, input).Return(&o, nil)
 }
 
 func marshalUser(u *multi.User) map[string]ddbtypes.AttributeValue {
@@ -182,25 +187,25 @@ func newTestUser(t *multi.Tenant) *multi.User {
 	return u
 }
 
-func withSetupQueryUser(app *MockApp, t *multi.Tenant) {
-	withSetupQueryUser2(app, newTestUser(t))
+func withSetupQueryUser(a *MockApp, t *multi.Tenant) {
+	withSetupQueryUser2(a, newTestUser(t))
 }
 
-func withSetupQueryUser2(app *MockApp, u *multi.User) {
+func withSetupQueryUser2(a *MockApp, u *multi.User) {
 	o := dynamodb.QueryOutput{}
 	o.Items = append(o.Items, marshalUser(u))
 	kv := make(map[string]ddbtypes.AttributeValue)
 	kv[":altName"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID(u.Username)}
 	input := &dynamodb.QueryInput{
-		TableName:                 aws.String(db.TableName()),
+		TableName:                 aws.String(a.DBCtx().TableName()),
 		IndexName:                 aws.String("altNameIndex"),
 		KeyConditionExpression:    aws.String("altName = :altName"),
 		ExpressionAttributeValues: kv,
 	}
-	app.ddb.EXPECT().Query(mock.Anything, input).Return(&o, nil)
+	a.ddb.EXPECT().Query(mock.Anything, input).Return(&o, nil)
 }
 
-func withSetupQueryUsers(app *MockApp, ten *multi.Tenant, users []*multi.User) {
+func withSetupQueryUsers(a *MockApp, ten *multi.Tenant, users []*multi.User) {
 	o := dynamodb.QueryOutput{}
 	for _, u := range users {
 		o.Items = append(o.Items, marshalUser(u))
@@ -209,20 +214,20 @@ func withSetupQueryUsers(app *MockApp, ten *multi.Tenant, users []*multi.User) {
 	kv[":pk"] = &ddbtypes.AttributeValueMemberS{Value: db.TenantEntityID(ten.ID.String())}
 	kv[":skPrefix"] = &ddbtypes.AttributeValueMemberS{Value: db.UserEntityID("")}
 	input := &dynamodb.QueryInput{
-		TableName:                 aws.String(db.TableName()),
+		TableName:                 aws.String(a.DBCtx().TableName()),
 		KeyConditionExpression:    aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
 		ExpressionAttributeValues: kv,
 	}
-	app.ddb.EXPECT().Query(mock.Anything, input).Return(&o, nil)
+	a.ddb.EXPECT().Query(mock.Anything, input).Return(&o, nil)
 }
 
-func withGetUserPoolClient(app *MockApp, ctx context.Context) {
-	app.cogIdp.EXPECT().ListUserPoolClients(ctx, mock.Anything).Return(
+func withGetUserPoolClient(a *MockApp, ctx context.Context) {
+	a.cogIdp.EXPECT().ListUserPoolClients(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.ListUserPoolClientsOutput{
 			UserPoolClients: []types.UserPoolClientDescription{
 				{ClientId: aws.String("test-client-id1")},
 			}}, nil).Once()
-	app.cogIdp.EXPECT().DescribeUserPoolClient(ctx, mock.Anything).Return(
+	a.cogIdp.EXPECT().DescribeUserPoolClient(ctx, mock.Anything).Return(
 		&cognitoidentityprovider.DescribeUserPoolClientOutput{
 			UserPoolClient: &types.UserPoolClientType{
 				ClientId:     aws.String("test-client-id1"),

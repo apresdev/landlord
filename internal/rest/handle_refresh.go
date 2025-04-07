@@ -17,12 +17,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleRefresh(app App, c *gin.Context) error {
+func handleRefresh(a App, c *gin.Context) error {
 	var req RefreshRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequestE(err)
 	}
-	resp, err := HandleRefresh(app, c, req)
+	resp, err := HandleRefresh(a, c, req)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func handleRefresh(app App, c *gin.Context) error {
 	return nil
 }
 
-func HandleRefresh(app App, c *gin.Context, req RefreshRequest) (*LoginResponse, error) {
+func HandleRefresh(a App, c *gin.Context, req RefreshRequest) (*LoginResponse, error) {
 	cid := perms.ClientID(c)
 	if req.RefreshToken == "" {
 		zap.L().Info("No refresh token in request", zap.String("cid", string(cid)))
@@ -41,19 +41,19 @@ func HandleRefresh(app App, c *gin.Context, req RefreshRequest) (*LoginResponse,
 		return nil, apperr.NewBadRequest("missing username in request")
 	}
 	ctx := c.Request.Context()
-	_, tenant, err := db.GetUserAndTenant(ctx, app.DDB(), req.Username)
+	_, tenant, err := db.GetUserAndTenant(ctx, a.DBCtx(), req.Username)
 	if err != nil {
 		return nil, apperr.NewUnauthorized("unauthorized")
 	}
 	upc, err := authx.GetUserPoolClient(
-		ctx, app.CogIdp(), tenant.UserPoolID)
+		ctx, a.CogIdp(), tenant.UserPoolID)
 	if err != nil {
 		zap.L().Warn("Could not resolve user pool client",
 			zap.String("userPoolID", tenant.UserPoolID), zap.Error(err))
 		return nil, apperr.NewUnauthorized("unauthorized")
 	}
 
-	cogUser, err := app.CogIdp().AdminGetUser(
+	cogUser, err := a.CogIdp().AdminGetUser(
 		ctx, &cognitoidentityprovider.AdminGetUserInput{
 			UserPoolId: aws.String(tenant.UserPoolID),
 			Username:   aws.String(req.Username),
@@ -88,7 +88,7 @@ func HandleRefresh(app App, c *gin.Context, req RefreshRequest) (*LoginResponse,
 		}
 		params["SECRET_HASH"] = secretHash
 	}
-	o, err := app.CogIdp().InitiateAuth(
+	o, err := a.CogIdp().InitiateAuth(
 		c.Request.Context(), &cognitoidentityprovider.InitiateAuthInput{
 			AuthFlow:       types.AuthFlowTypeRefreshToken,
 			ClientId:       upc.ClientId,

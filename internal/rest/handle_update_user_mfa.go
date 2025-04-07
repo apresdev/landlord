@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleUpdateUserMFA(app App, c *gin.Context) error {
+func handleUpdateUserMFA(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
@@ -30,14 +30,14 @@ func handleUpdateUserMFA(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewBadRequest("invalid user ID")
 	}
-	targetTenant, err := db.GetTenantByID(c.Request.Context(), app.DDB(), tenantID)
+	targetTenant, err := db.GetTenantByID(c.Request.Context(), a.DBCtx(), tenantID)
 	if err != nil {
 		zap.L().Error("error fetching tenant",
 			zap.Error(err),
 			zap.String("tenantID", tenantID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), app.DDB(), tenantID, userID)
+	targetUser, err := db.GetUserInTenantByID(c.Request.Context(), a.DBCtx(), tenantID, userID)
 	if err != nil {
 		zap.L().Error("error fetching user",
 			zap.Error(err),
@@ -45,12 +45,12 @@ func handleUpdateUserMFA(app App, c *gin.Context) error {
 			zap.String("userID", userID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	_, err = HandleUpdateUserMFA(app, c, sub, targetTenant, targetUser, req)
+	_, err = HandleUpdateUserMFA(a, c, sub, targetTenant, targetUser, req)
 	return err
 }
 
 func HandleUpdateUserMFA(
-	app App,
+	a App,
 	c *gin.Context,
 	sub *perms.Subject,
 	targetTenant *multi.Tenant,
@@ -63,7 +63,7 @@ func HandleUpdateUserMFA(
 
 	resource := perms.NewResource(
 		perms.ResourceKindUserMFAPolicy, perms.ResourceNameAny, targetTenant, targetUser)
-	effect, err := perms.Eval(c.Request.Context(), app, sub, perms.ActionWrite, resource)
+	effect, err := perms.Eval(c.Request.Context(), a, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions",
 			zap.Error(err),
@@ -89,7 +89,7 @@ func HandleUpdateUserMFA(
 	if targetUser.MFAPolicy.String() == string(MFAPolicyNone) && req.MfaPolicy == MFAPolicyRequired {
 		targetUser.MFAStatus = multi.MFAStatusPending
 		targetUser.MFAPolicy = multi.MFAPolicyRequired
-		err := db.StoreUser(c.Request.Context(), app.DDB(), targetUser)
+		err := db.StoreUser(c.Request.Context(), a.DBCtx(), targetUser)
 		if err != nil {
 			zap.L().Error("error storing user",
 				zap.Error(err),
@@ -100,7 +100,7 @@ func HandleUpdateUserMFA(
 	} else if req.MfaPolicy == MFAPolicyNone {
 		targetUser.MFAStatus = multi.MFAStatusNone
 		targetUser.MFAPolicy = multi.MFAPolicyNone
-		err := db.StoreUser(c.Request.Context(), app.DDB(), targetUser)
+		err := db.StoreUser(c.Request.Context(), a.DBCtx(), targetUser)
 		if err != nil {
 			zap.L().Error("error storing user",
 				zap.Error(err),
@@ -108,7 +108,7 @@ func HandleUpdateUserMFA(
 				zap.String("userID", targetUser.ID.String()))
 			return nil, apperr.NewUnauthorized("not authorized")
 		}
-		_, err = app.CogIdp().AdminSetUserMFAPreference(
+		_, err = a.CogIdp().AdminSetUserMFAPreference(
 			c.Request.Context(),
 			&cognitoidentityprovider.AdminSetUserMFAPreferenceInput{
 				UserPoolId: aws.String(targetTenant.UserPoolID),

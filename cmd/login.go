@@ -20,7 +20,7 @@ func loginCmd() *cobra.Command {
 	var password string
 	c := &cobra.Command{
 		Use:   "login",
-		Short: "Login to the server",
+		Short: "Login to a user pool. Stores tokens in session.json",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if userpool == "" {
 				return errors.New("--userpool required")
@@ -63,6 +63,10 @@ func loginCmd() *cobra.Command {
 	c.PersistentFlags().StringVarP(
 		&username, "username", "u", "", "Username to login with")
 	c.PersistentFlags().StringVarP(
+		&username, "email", "", "", "Email to login with")
+	_ = c.PersistentFlags().MarkHidden("email")
+	c.PersistentFlags().StringVarP(
 		&password, "password", "p", "", "Password to login with")
+
 	return c
 }

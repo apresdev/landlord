@@ -27,7 +27,7 @@ type App interface {
 	Cfg() aws.Config
 	CogIdp() authx.AWSCognitoIdentityProvider
 	Validator() jwx.TokenValidator
-	DDB() db.AWSDynamoDB
+	DBCtx() *db.Context
 	Settings() appenv.Settings
 	RootTenantID() uuid.UUID
 }
@@ -53,13 +53,13 @@ var unauthorizedPaths = []string{
 	pathFor("/api/verify-otp-association"),
 }
 
-func AddRoutes(app App, router *gin.Engine) http.Handler {
+func AddRoutes(a App, router *gin.Engine) http.Handler {
 	router.Use(func(c *gin.Context) {
-		c.Set(AppContextKey, app)
+		c.Set(AppContextKey, a)
 	})
 	router.Use(cors.Default()) // Permissive CORS
 	authorized := router.Group("/")
-	authorized.Use(isAuthorized(app))
+	authorized.Use(isAuthorized(a))
 	for _, subRoute := range getRoutes() {
 		if subRoute.Pattern == "/" {
 			continue

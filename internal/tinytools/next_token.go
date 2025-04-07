@@ -1,4 +1,4 @@
-package authx
+package tinytools
 
 import (
 	"encoding/base64"

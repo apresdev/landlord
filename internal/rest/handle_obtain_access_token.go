@@ -30,7 +30,7 @@ type obtainAccessTokenForm struct {
 // HandleObtainAccessToken handles an oauth2 request to obtain an access token. This
 // is not a traditional JSON POST, but a form POST. Part of the oauth2 authorization
 // flow.
-func HandleObtainAccessToken(app App, c *gin.Context) (*ObtainTokenResponse, error) {
+func HandleObtainAccessToken(a App, c *gin.Context) (*ObtainTokenResponse, error) {
 	if err := c.Request.ParseForm(); err != nil {
 		zap.L().Error("Error parsing form", zap.Error(err))
 		return nil, apperr.NewBadRequest("bad request")
@@ -65,12 +65,12 @@ func HandleObtainAccessToken(app App, c *gin.Context) (*ObtainTokenResponse, err
 		return nil, apperr.NewBadRequest("missing code verifier in request")
 	}
 	ctx := c.Request.Context()
-	rootTenant, err := db.GetRootTenant(ctx, app.DDB(), app.RootTenantID())
+	rootTenant, err := db.GetRootTenant(ctx, a.DBCtx(), a.RootTenantID())
 	if err != nil {
 		zap.L().Error("Error getting root tenant", zap.Error(err))
 		return nil, apperr.NewUnauthorized("unauthorized")
 	}
-	up, err := authx.GetUserPoolByID(ctx, app.CogIdp(), rootTenant.UserPoolID)
+	up, err := authx.GetUserPoolByID(ctx, a.CogIdp(), rootTenant.UserPoolID)
 	if err != nil {
 		zap.L().Warn("Could not resolve user pool",
 			zap.String("userPoolID", rootTenant.UserPoolID), zap.Error(err))
@@ -82,7 +82,7 @@ func HandleObtainAccessToken(app App, c *gin.Context) (*ObtainTokenResponse, err
 		return nil, apperr.NewUnauthorized("unauthorized")
 	}
 	upc, err := authx.GetUserPoolClient(
-		ctx, app.CogIdp(), rootTenant.UserPoolID)
+		ctx, a.CogIdp(), rootTenant.UserPoolID)
 	if err != nil {
 		zap.L().Warn("Could not resolve user pool client",
 			zap.String("userPoolID", rootTenant.UserPoolID), zap.Error(err))

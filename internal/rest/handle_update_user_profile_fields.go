@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleUpdateUserProfileFields(app App, c *gin.Context) error {
+func handleUpdateUserProfileFields(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func handleUpdateUserProfileFields(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewBadRequest("invalid tenantID")
 	}
-	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
+	targetTenant, err := db.ResolveTenant(c.Request.Context(), a.DBCtx(), th)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func handleUpdateUserProfileFields(app App, c *gin.Context) error {
 		return apperr.NewBadRequest("invalid user ID")
 	}
 	targetUser, err := db.GetUserInTenantByID(
-		c.Request.Context(), app.DDB(), targetTenant.ID, userID)
+		c.Request.Context(), a.DBCtx(), targetTenant.ID, userID)
 	if err != nil {
 		zap.L().Error("error fetching user",
 			zap.Error(err),
@@ -47,11 +47,11 @@ func handleUpdateUserProfileFields(app App, c *gin.Context) error {
 			zap.String("userID", userID.String()))
 		return apperr.NewUnauthorized("not authorized")
 	}
-	return HandleUpdateUserProfileFields(app, c, sub, targetTenant, targetUser, req)
+	return HandleUpdateUserProfileFields(a, c, sub, targetTenant, targetUser, req)
 }
 
 func HandleUpdateUserProfileFields(
-	app App,
+	a App,
 	c *gin.Context,
 	sub *perms.Subject,
 	targetTenant *multi.Tenant,
@@ -66,7 +66,7 @@ func HandleUpdateUserProfileFields(
 		}
 		resource := perms.NewResource(
 			perms.ResourceKindUserProfile, fieldDef.Name, targetTenant, targetUser)
-		effect, err := perms.Eval(c.Request.Context(), app, sub, perms.ActionWrite, resource)
+		effect, err := perms.Eval(c.Request.Context(), a, sub, perms.ActionWrite, resource)
 		if err != nil {
 			zap.L().Error("could not evaluate permissions",
 				zap.Error(err),
@@ -93,7 +93,7 @@ func HandleUpdateUserProfileFields(
 		}
 		targetUser.UpdateProfileField(update.Name, defn.Format, update.Value)
 	}
-	if err := db.StoreUser(c.Request.Context(), app.DDB(), targetUser); err != nil {
+	if err := db.StoreUser(c.Request.Context(), a.DBCtx(), targetUser); err != nil {
 		return err
 	}
 	return nil

@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleUpdateRolesForTenant(app App, c *gin.Context) error {
+func handleUpdateRolesForTenant(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func handleUpdateRolesForTenant(app App, c *gin.Context) error {
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	targetTenant, err := db.ResolveTenant(c.Request.Context(), app.DDB(), th)
+	targetTenant, err := db.ResolveTenant(c.Request.Context(), a.DBCtx(), th)
 	if err != nil {
 		return apperr.NewNotFound(err.Error())
 	}
@@ -43,12 +43,12 @@ func handleUpdateRolesForTenant(app App, c *gin.Context) error {
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	_, err = HandleUpdateRolesForTenant(app, c, sub, targetTenant, req)
+	_, err = HandleUpdateRolesForTenant(a, c, sub, targetTenant, req)
 	return err
 }
 
 func HandleUpdateRolesForTenant(
-	app App,
+	a App,
 	c *gin.Context,
 	sub *perms.Subject,
 	targetTenant *multi.Tenant,
@@ -65,7 +65,7 @@ func HandleUpdateRolesForTenant(
 
 	resource := perms.NewResource(
 		perms.ResourceKindTenantRoles, perms.ResourceNameAny, targetTenant, nil)
-	effect, err := perms.Eval(c, app, sub, perms.ActionWrite, resource)
+	effect, err := perms.Eval(c, a, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
 		return nil, apperr.NewUnauthorized("not authorized")
@@ -77,7 +77,7 @@ func HandleUpdateRolesForTenant(
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
-	users, err := db.GetUsersForTenant(c.Request.Context(), app.DDB(), targetTenant.ID)
+	users, err := db.GetUsersForTenant(c.Request.Context(), a.DBCtx(), targetTenant.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func HandleUpdateRolesForTenant(
 	}
 
 	for _, r := range newRoles {
-		_, err = app.CogIdp().CreateGroup(c.Request.Context(),
+		_, err = a.CogIdp().CreateGroup(c.Request.Context(),
 			&cognitoidentityprovider.CreateGroupInput{
 				GroupName:  aws.String(targetTenant.GroupName(r)),
 				UserPoolId: aws.String(targetTenant.UserPoolID),
@@ -119,7 +119,7 @@ func HandleUpdateRolesForTenant(
 		}
 	}
 	for _, r := range deletedRoles {
-		_, err = app.CogIdp().DeleteGroup(c.Request.Context(),
+		_, err = a.CogIdp().DeleteGroup(c.Request.Context(),
 			&cognitoidentityprovider.DeleteGroupInput{
 				GroupName:  aws.String(targetTenant.GroupName(r)),
 				UserPoolId: aws.String(targetTenant.UserPoolID),
@@ -136,7 +136,7 @@ func HandleUpdateRolesForTenant(
 	targetTenant.Roles = ensureBuiltinNames(req.Roles)
 	targetTenant.SubTenantRoles = ensureBuiltinNames(req.SubTenantRoles)
 
-	err = db.StoreTenant(c.Request.Context(), app.DDB(), targetTenant)
+	err = db.StoreTenant(c.Request.Context(), a.DBCtx(), targetTenant)
 	if err != nil {
 		return nil, err
 	}

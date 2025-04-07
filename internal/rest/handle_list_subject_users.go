@@ -10,16 +10,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleListSubjectUsers(app App, c *gin.Context) error {
+func handleListSubjectUsers(a App, c *gin.Context) error {
 	sub, err := perms.SubjectFromContext(c)
 	if err != nil {
 		return err
 	}
-	ten, err := sub.ResolveTenant(c.Request.Context(), app)
+	ten, err := sub.ResolveTenant(c.Request.Context(), a)
 	if err != nil {
 		return apperr.NewNotFound(err.Error())
 	}
-	resp, err := getUsersForTenant(app, c, ten, sub)
+	resp, err := getUsersForTenant(a, c, ten, sub)
 	if err != nil {
 		return err
 	}

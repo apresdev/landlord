@@ -66,12 +66,12 @@ func (uv UnauthenticatedView) WithErrMsg(errMsg string) UnauthenticatedView {
 
 type SubjectView struct {
 	ctx context.Context
-	app App
+	a   App
 	sub *perms.Subject
 }
 
-func NewSubjectView(ctx context.Context, app App, sub *perms.Subject) SubjectView {
-	return SubjectView{ctx: ctx, app: app, sub: sub}
+func NewSubjectView(ctx context.Context, a App, sub *perms.Subject) SubjectView {
+	return SubjectView{ctx: ctx, a: a, sub: sub}
 }
 
 func (sv SubjectView) Subject() *perms.Subject {
@@ -100,7 +100,7 @@ func (sv SubjectView) TenantName() string {
 	if sv.sub == nil {
 		return unknownViewValue
 	}
-	subjectTenant, err := sv.sub.ResolveTenant(sv.ctx, sv.app)
+	subjectTenant, err := sv.sub.ResolveTenant(sv.ctx, sv.a)
 	if err != nil {
 		zap.L().Error("error resolving tenant",
 			zap.String("tenantID", sv.sub.TenantID.String()),
@@ -137,7 +137,7 @@ func (sv SubjectView) ImpersonationName() string {
 		return ""
 	}
 	tenName := sv.sub.ImpersonateTenant.String()
-	ten, err := db.GetTenantByID(sv.ctx, sv.app.DDB(), sv.sub.ImpersonateTenant)
+	ten, err := db.GetTenantByID(sv.ctx, sv.a.DBCtx(), sv.sub.ImpersonateTenant)
 	if err != nil {
 		zap.L().Error("error resolving tenant",
 			zap.String("tenantID", sv.sub.ImpersonateTenant.String()),
@@ -326,7 +326,7 @@ func (tv TenantView) Profile() ProfileFieldsView {
 
 type UserView struct {
 	ctx     context.Context
-	app     App
+	a       App
 	sub     *perms.Subject
 	ten     *multi.Tenant
 	user    *multi.User
@@ -335,14 +335,14 @@ type UserView struct {
 
 func NewUserView(
 	ctx context.Context,
-	app App,
+	a App,
 	sub *perms.Subject,
 	ten *multi.Tenant,
 	user *multi.User) *UserView {
 
 	return &UserView{
 		ctx:  ctx,
-		app:  app,
+		a:    a,
 		sub:  sub,
 		ten:  ten,
 		user: user,
@@ -409,7 +409,7 @@ func (uv *UserView) CogUser() *cognitoidentityprovider.AdminGetUserOutput {
 		return uv.cogUser
 	}
 	userPoolID := uv.ten.UserPoolID
-	o, err := uv.app.CogIdp().AdminGetUser(
+	o, err := uv.a.CogIdp().AdminGetUser(
 		uv.ctx, &cognitoidentityprovider.AdminGetUserInput{
 			UserPoolId: aws.String(userPoolID),
 			Username:   aws.String(uv.user.Username),
@@ -435,7 +435,7 @@ func (uv *UserView) CogURL() string {
 	}
 	userPoolID := uv.ten.UserPoolID
 	return authx.CognitoUserDetailsURL(
-		uv.app.Cfg().Region, userPoolID, aws.ToString(o.Username))
+		uv.a.Cfg().Region, userPoolID, aws.ToString(o.Username))
 }
 
 func (uv *UserView) Role() string {
@@ -449,7 +449,7 @@ func (uv *UserView) Tenant() TenantView {
 	if uv.ten == nil {
 		return TenantView{}
 	}
-	return NewTenantView(uv.ctx, uv.app, uv.sub, uv.ten)
+	return NewTenantView(uv.ctx, uv.a, uv.sub, uv.ten)
 }
 
 func (uv *UserView) IsImpersonating() bool {
@@ -499,7 +499,7 @@ func (uv *UserView) ImpersonationName() string {
 						zap.Error(err))
 					impersonateTenant = "error"
 				} else {
-					ten, err := db.GetTenantByID(uv.ctx, uv.app.DDB(), impersonateTenantUUID)
+					ten, err := db.GetTenantByID(uv.ctx, uv.a.DBCtx(), impersonateTenantUUID)
 					if err != nil {
 						zap.L().Error("error resolving tenant",
 							zap.String("tenantID", impersonateTenantID),
@@ -518,7 +518,7 @@ func (uv *UserView) ImpersonationName() string {
 func (uv *UserView) CanSubjectImpersonate() bool {
 	e, err := perms.Eval(
 		uv.ctx,
-		uv.app,
+		uv.a,
 		uv.sub,
 		perms.ActionWrite,
 		perms.NewResource(
@@ -652,7 +652,7 @@ type RolesView struct {
 }
 
 func NewRolesView(ctx context.Context, a App, ten *multi.Tenant) RolesView {
-	users, err := db.GetUsersForTenant(ctx, a.DDB(), ten.ID)
+	users, err := db.GetUsersForTenant(ctx, a.DBCtx(), ten.ID)
 	if err != nil {
 		zap.L().Error("error getting users for tenant",
 			zap.String("tenantID", ten.ID.String()),

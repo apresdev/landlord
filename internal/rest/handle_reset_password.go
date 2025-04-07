@@ -17,12 +17,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func handleResetPassword(app App, c *gin.Context) error {
+func handleResetPassword(a App, c *gin.Context) error {
 	var req ResetPasswordRequest
 	if err := c.BindJSON(&req); err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
-	err := HandleResetPassword(app, c, req)
+	err := HandleResetPassword(a, c, req)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func handleResetPassword(app App, c *gin.Context) error {
 	return nil
 }
 
-func HandleResetPassword(app App, c *gin.Context, req ResetPasswordRequest) error {
+func HandleResetPassword(a App, c *gin.Context, req ResetPasswordRequest) error {
 	username := req.Username
 	if username == "" {
 		return apperr.NewBadRequest("username is required")
@@ -44,9 +44,8 @@ func HandleResetPassword(app App, c *gin.Context, req ResetPasswordRequest) erro
 		return apperr.NewBadRequest("new-password is required")
 	}
 	ctx := c.Request.Context()
-	ddb := app.DDB()
-	cogIdp := app.CogIdp()
-	_, tenant, err := db.GetUserAndTenant(ctx, ddb, username)
+	cogIdp := a.CogIdp()
+	_, tenant, err := db.GetUserAndTenant(ctx, a.DBCtx(), username)
 	if err != nil {
 		zap.L().Warn("in reset password, no user/tenant found",
 			zap.Error(err),

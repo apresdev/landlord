@@ -11,12 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleVerifyOTPAssociation(app App, c *gin.Context) error {
+func handleVerifyOTPAssociation(a App, c *gin.Context) error {
 	var req VerifyOtpAssociationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		return err
 	}
-	err := HandleVerifyOTPAssociation(app, c, req)
+	err := HandleVerifyOTPAssociation(a, c, req)
 	if err != nil {
 		return err
 	}
@@ -25,24 +25,24 @@ func handleVerifyOTPAssociation(app App, c *gin.Context) error {
 }
 
 func HandleVerifyOTPAssociation(
-	app App,
+	a App,
 	c *gin.Context,
 	req VerifyOtpAssociationRequest) error {
 
 	ctx := c.Request.Context()
-	user, ten, err := db.GetUserAndTenant(ctx, app.DDB(), req.Username)
+	user, ten, err := db.GetUserAndTenant(ctx, a.DBCtx(), req.Username)
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
 	err = authx.VerifySoftwareToken(
-		ctx, app.CogIdp(), ten.UserPoolID, req.AccessToken, req.Username, req.OtpCode)
+		ctx, a.CogIdp(), ten.UserPoolID, req.AccessToken, req.Username, req.OtpCode)
 	if err != nil {
 		return apperr.NewBadRequest(err.Error())
 	}
 	if user.MFAStatus == multi.MFAStatusPending {
 		user.MFAStatus = multi.MFAStatusActive
 		user.Status = multi.UserStatusActive
-		err = db.StoreUser(ctx, app.DDB(), user)
+		err = db.StoreUser(ctx, a.DBCtx(), user)
 		if err != nil {
 			return apperr.NewInternal(err.Error())
 		}
