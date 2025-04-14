@@ -110,7 +110,7 @@ func CreateTenant(
 	return ten, nil
 }
 
-func SetTenantOnUser(
+func setCustomClaimsOnUser(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	ten *multi.Tenant,
@@ -123,6 +123,10 @@ func SetTenantOnUser(
 			{
 				Name:  aws.String(CustomTenantClaim),
 				Value: aws.String(ten.ID.String()),
+			},
+			{
+				Name:  aws.String(CustomUserClaim),
+				Value: aws.String(user.ID.String()),
 			},
 		},
 	}
@@ -160,7 +164,7 @@ func ApplyTenant(
 		return err
 	}
 	for _, user := range users {
-		if err := SetTenantOnUser(ctx, cogIdp, ten, user); err != nil {
+		if err := setCustomClaimsOnUser(ctx, cogIdp, ten, user); err != nil {
 			return err
 		}
 		zap.L().Info("updated user attributes",

@@ -221,7 +221,7 @@ func unmarshalUser(item map[string]types.AttributeValue) (*multi.User, error) {
 			fmt.Errorf("failed to strip entity ID: %w", err))
 	}
 	if user.CognitoID == uuid.Nil {
-		zap.L().Info("Cognito ID is nil, assigning user ID to cognito ID",
+		zap.L().Debug("Cognito ID is nil, assigning user ID to cognito ID",
 			zap.String("tenant", user.TenantID.String()),
 			zap.String("username", user.Username),
 			zap.String("userID", user.ID.String()))

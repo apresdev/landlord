@@ -60,7 +60,7 @@ func infoCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := MustSession()
 			cmd.Printf("Tokens:\n")
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			if verbose {
 				if s.AccessToken == "" {
 					cmd.Printf("  Access  : empty\n")

@@ -33,7 +33,7 @@ func (s *RootTestSuite) SetupSuite() {
 func (s *RootTestSuite) SetupTest() {
 	s.cmd = cmd.Root()
 	s.cmd.SetOut(&s.out)
-	apptest.ResetLocalStack(appenv.MustSettings())
+	apptest.ResetLocalStack(s.s)
 }
 
 func (s *RootTestSuite) TearDownTest() {

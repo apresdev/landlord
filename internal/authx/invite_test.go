@@ -5,6 +5,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+
 	"github.com/apresdev/landlord/internal/appcore"
 	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/apresdev/landlord/internal/db"
@@ -147,4 +151,24 @@ func (s *InviteTestSuite) TestInviteOverrideUserID() {
 	u1, err := db.GetUserByName(a.Ctx(), a.DBCtx(), "foo@example.com")
 	s.NoError(err)
 	s.Equal(overrideUserID, u1.ID)
+
+	// get cognito user
+	o, err := a.CogIdp().AdminGetUser(a.Ctx(), &cognitoidentityprovider.AdminGetUserInput{
+		UserPoolId: aws.String(ten.UserPoolID),
+		Username:   aws.String("foo@example.com"),
+	})
+	s.NoError(err)
+	s.True(hasUserAttributeWithValue(o.UserAttributes, "custom:tenant", ten.ID.String()))
+	s.True(hasUserAttributeWithValue(o.UserAttributes, "custom:user", u1.ID.String()))
+	s.True(hasUserAttributeWithValue(o.UserAttributes, "sub", u1.CognitoID.String()))
+	s.True(hasUserAttributeWithValue(o.UserAttributes, "email_verified", "true"))
+}
+
+func hasUserAttributeWithValue(userAttributes []types.AttributeType, key string, value string) bool {
+	for _, attr := range userAttributes {
+		if *attr.Name == key && *attr.Value == value {
+			return true
+		}
+	}
+	return false
 }

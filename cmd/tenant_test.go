@@ -2,6 +2,7 @@ package cmd_test
 
 import (
 	"bytes"
+	"context"
 	"strings"
 	"testing"
 
@@ -18,6 +19,7 @@ type TenantTestSuite struct {
 	s      appenv.Settings
 	out    bytes.Buffer
 	errOut bytes.Buffer
+	ctx    context.Context
 	cmd    *cobra.Command
 }
 
@@ -35,7 +37,10 @@ func (s *TenantTestSuite) SetupTest() {
 	s.cmd = cmd.Root()
 	s.cmd.SetOut(&s.out)
 	s.cmd.SetErr(&s.errOut)
+	s.ctx = context.Background()
+	s.ctx = context.WithValue(s.ctx, cmd.SettingsKey, s.s)
 	cmd.ClearSession()
+	apptest.ResetLocalStack(s.s)
 }
 
 func (s *TenantTestSuite) TearDownTest() {
@@ -44,7 +49,7 @@ func (s *TenantTestSuite) TearDownTest() {
 
 func (s *TenantTestSuite) CLI(args string) (*cobra.Command, error) {
 	s.cmd.SetArgs(strings.Fields(args))
-	return s.cmd.ExecuteC()
+	return s.cmd.ExecuteContextC(s.ctx)
 }
 
 func (s *TenantTestSuite) TestCreateTenant() {
