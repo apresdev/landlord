@@ -15,12 +15,13 @@ var _ MappedNullable = &SubjectResponseImpersonating{}
 
 // SubjectResponseImpersonating struct for SubjectResponseImpersonating
 type SubjectResponseImpersonating struct {
-	TenantID      string               `json:"tenantID"`
-	UserID        string               `json:"userID"`
-	CognitoID     string               `json:"cognitoID"`
-	Email         string               `json:"email"`
-	Role          string               `json:"role"`
-	ProfileFields []ProfileFormatField `json:"profileFields,omitempty"`
+	TenantID            string               `json:"tenantID"`
+	UserID              string               `json:"userID"`
+	CognitoID           string               `json:"cognitoID"`
+	Email               string               `json:"email"`
+	Role                string               `json:"role"`
+	ProfileFields       []ProfileFormatField `json:"profileFields,omitempty"`
+	TenantProfileFields []ProfileFormatField `json:"tenantProfileFields,omitempty"`
 }
 
 type _SubjectResponseImpersonating SubjectResponseImpersonating
@@ -199,6 +200,38 @@ func (o *SubjectResponseImpersonating) SetProfileFields(v []ProfileFormatField) 
 	o.ProfileFields = v
 }
 
+// GetTenantProfileFields returns the TenantProfileFields field value if set, zero value otherwise.
+func (o *SubjectResponseImpersonating) GetTenantProfileFields() []ProfileFormatField {
+	if o == nil || IsNil(o.TenantProfileFields) {
+		var ret []ProfileFormatField
+		return ret
+	}
+	return o.TenantProfileFields
+}
+
+// GetTenantProfileFieldsOk returns a tuple with the TenantProfileFields field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *SubjectResponseImpersonating) GetTenantProfileFieldsOk() ([]ProfileFormatField, bool) {
+	if o == nil || IsNil(o.TenantProfileFields) {
+		return nil, false
+	}
+	return o.TenantProfileFields, true
+}
+
+// HasTenantProfileFields returns a boolean if a field has been set.
+func (o *SubjectResponseImpersonating) HasTenantProfileFields() bool {
+	if o != nil && !IsNil(o.TenantProfileFields) {
+		return true
+	}
+
+	return false
+}
+
+// SetTenantProfileFields gets a reference to the given []ProfileFormatField and assigns it to the TenantProfileFields field.
+func (o *SubjectResponseImpersonating) SetTenantProfileFields(v []ProfileFormatField) {
+	o.TenantProfileFields = v
+}
+
 func (o SubjectResponseImpersonating) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -216,6 +249,9 @@ func (o SubjectResponseImpersonating) ToMap() (map[string]interface{}, error) {
 	toSerialize["role"] = o.Role
 	if !IsNil(o.ProfileFields) {
 		toSerialize["profileFields"] = o.ProfileFields
+	}
+	if !IsNil(o.TenantProfileFields) {
+		toSerialize["tenantProfileFields"] = o.TenantProfileFields
 	}
 	return toSerialize, nil
 }

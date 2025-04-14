@@ -70,6 +70,15 @@ func handleRetrieveSubject(a App, c *gin.Context) error {
 					zap.Error(err))
 			} else {
 				resp.Impersonating.ProfileFields = convertProfileFields(impersonateUser)
+				impersonateTenant, err := db.GetTenantByID(c.Request.Context(), a.DBCtx(), sub.ImpersonateTenant)
+				if err != nil {
+					zap.L().Error("error fetching impersonated tenant",
+						zap.String("user", user.ID.String()),
+						zap.String("impersonatedTenant", sub.ImpersonateTenant.String()),
+						zap.Error(err))
+				} else {
+					resp.Impersonating.TenantProfileFields = convertProfileFields(impersonateTenant)
+				}
 			}
 		}
 	}
