@@ -93,14 +93,7 @@ func newClients(settings appenv.Settings) (*clients, error) {
 // to external services used by landlord. Further, it ensures that
 // our Dynamo DB table is created and available for use (or panics).
 func Must() Clients {
-	c, err := newClients(appenv.MustSettings())
-	if err != nil {
-		panic(err)
-	}
-	c.dbCtx = db.MustInit(c.Ctx(), c.Settings(), c.DDB())
-	c.rootTenantID = authx.MustRootTenant(
-		c.Ctx(), c.DBCtx(), c.CogIdp(), c.Settings().UserPoolName())
-	return c
+	return MustWithSettings(appenv.MustSettings())
 }
 
 // MustWithSettings is like Must, but takes a settings object instead of

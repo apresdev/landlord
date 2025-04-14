@@ -41,7 +41,7 @@ func tenantActivateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -76,7 +76,7 @@ func tenantApplyCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -100,7 +100,7 @@ func tenantCreateCmd() *cobra.Command {
 		Use:   "create",
 		Short: "Create a tenant",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := authx.CreateTenant(
 				cs.Ctx(), cs.DBCtx(), cs.RootTenantID(), cs.CogIdp(), name, description)
 			if err != nil {
@@ -130,7 +130,7 @@ func tenantDeactivateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -182,7 +182,7 @@ func tenantEmailDomainAddCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -221,7 +221,7 @@ func tenantEmailDomainRemoveCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -266,7 +266,7 @@ func tenantInviteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -340,7 +340,7 @@ func tenantListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List the tenants",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			if id != "" {
 				h, err := multi.ParseTenantHandle(id)
 				if err != nil {
@@ -404,7 +404,7 @@ func tenantRoleAddCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -450,7 +450,7 @@ func tenantRoleEnsureCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -501,7 +501,7 @@ func tenantRoleRemoveCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -569,7 +569,7 @@ func tenantSubTenantRoleAddCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -609,7 +609,7 @@ func tenantSubTenantRoleRemoveCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -662,7 +662,7 @@ func tenantUserAssociateOTP() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			result, err := authx.AssociateSoftwareToken(
 				cs.Ctx(), cs.CogIdp(), "Landlord CLI", s.AccessToken, e.Address())
 			if err != nil {
@@ -703,7 +703,7 @@ func tenantUserListEvents() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			result, err := cs.CogIdp().AdminListUserAuthEvents(cs.Ctx(),
 				&cognitoidentityprovider.AdminListUserAuthEventsInput{
 					UserPoolId: aws.String(s.UserPool),
@@ -770,7 +770,7 @@ func tenantUserVerifyOTP() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -812,7 +812,7 @@ func tenantUserRemoveCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -857,7 +857,7 @@ func tenantUserRoleCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			ten, err := db.ResolveTenant(cs.Ctx(), cs.DBCtx(), h)
 			if err != nil {
 				return err
@@ -904,7 +904,7 @@ func tenantUserPoolCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			up, err := authx.GetUserPoolByNameOrID(cs.Ctx(), cs.CogIdp(), userpool)
 			if err != nil {
 				return err

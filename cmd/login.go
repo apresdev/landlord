@@ -3,8 +3,6 @@ package cmd
 import (
 	"errors"
 
-	"github.com/apresdev/landlord/internal/appcore"
-
 	"github.com/apresdev/landlord/internal/jwx"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -31,7 +29,7 @@ func loginCmd() *cobra.Command {
 			if password == "" {
 				return errors.New("--password required")
 			}
-			cs := appcore.Must()
+			cs := appcoreMust(cmd.Context())
 			up, err := authx.GetUserPoolByNameOrID(cs.Ctx(), cs.CogIdp(), userpool)
 			if err != nil {
 				return err

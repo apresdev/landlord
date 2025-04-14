@@ -25,7 +25,7 @@ func SendInvite(
 	cogIdp AWSCognitoIdentityProvider,
 	ten *multi.Tenant,
 	username string,
-	optionalUserID uuid.UUID,
+	overrideUserID uuid.UUID,
 	role string,
 	mfaPolicy multi.MFAPolicy) error {
 
@@ -53,13 +53,9 @@ func SendInvite(
 		return apperr.NewBadRequest(
 			fmt.Sprintf("cannot send invite, user '%s' is inactive", e.Address()))
 	}
-	ua := []types.AttributeType{
-		{Name: aws.String(CustomTenantClaim), Value: aws.String(ten.ID.String())},
-	}
 	args := cognitoidentityprovider.AdminCreateUserInput{
-		UserPoolId:     aws.String(ten.UserPoolID),
-		Username:       aws.String(e.Address()),
-		UserAttributes: ua,
+		UserPoolId: aws.String(ten.UserPoolID),
+		Username:   aws.String(e.Address()),
 	}
 	// User has already been activated, so we need "resend" the invite, instead
 	// of just a regular old send.
@@ -71,6 +67,26 @@ func SendInvite(
 		return err
 	}
 	if err := SetCognitoGroup(ctx, cogIdp, ten, e.Address(), role); err != nil {
+		return err
+	}
+
+	var cognitoUserID uuid.UUID
+	for _, attr := range o.User.Attributes {
+		if aws.ToString(attr.Name) == "sub" {
+			cognitoUserID, err = uuid.Parse(aws.ToString(attr.Value))
+			if err != nil {
+				return err
+			}
+			break
+		}
+	}
+	u := multi.NewUser(ten.ID, cognitoUserID, e.Address(), role, mfaPolicy)
+	if overrideUserID != uuid.Nil {
+		u.ID = overrideUserID
+	}
+
+	err = setCustomClaimsOnUser(ctx, cogIdp, ten, u)
+	if err != nil {
 		return err
 	}
 
@@ -94,20 +110,6 @@ func SendInvite(
 			zap.Error(err))
 	}
 
-	var cognitoUserID uuid.UUID
-	for _, attr := range o.User.Attributes {
-		if aws.ToString(attr.Name) == "sub" {
-			cognitoUserID, err = uuid.Parse(aws.ToString(attr.Value))
-			if err != nil {
-				return err
-			}
-			break
-		}
-	}
-	u := multi.NewUser(ten.ID, cognitoUserID, e.Address(), role, mfaPolicy)
-	if optionalUserID != uuid.Nil {
-		u.ID = optionalUserID
-	}
 	return db.StoreUser(ctx, dbc, u)
 }
 
