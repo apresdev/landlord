@@ -679,7 +679,7 @@ func restUsersCmd() *cobra.Command {
 			}
 			table := NewTable([]string{"Username", "Role", "Status", "ID", "CognitoID"})
 			for _, user := range o.Users {
-				err := table.AddRow([]string{user.Username, user.Role, string(user.Status), user.CognitoID})
+				err := table.AddRow([]string{user.Username, user.Role, string(user.Status), user.UserID, user.CognitoID})
 				if err != nil {
 					return err
 				}
