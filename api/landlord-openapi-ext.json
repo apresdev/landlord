@@ -3099,6 +3099,12 @@
                 "items": {
                   "$ref": "#/components/schemas/ProfileFormatField"
                 }
+              },
+              "tenantProfileFields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProfileFormatField"
+                }
               }
             }
           }
