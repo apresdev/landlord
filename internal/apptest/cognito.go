@@ -56,13 +56,13 @@ func dangerousRecreateUserPool(cfg aws.Config, userPoolName string) {
 		ClaimName string
 		MaxLen    int
 	}{
-		{ClaimName: "tenant", MaxLen: 64},
-		{ClaimName: "user", MaxLen: 64},
-		{ClaimName: "impersonate_tenant", MaxLen: 64},
-		{ClaimName: "impersonate_group", MaxLen: 64},
-		{ClaimName: "impersonate_sub", MaxLen: 128},
+		{ClaimName: "tenant", MaxLen: 36},
+		{ClaimName: "user", MaxLen: 36},
+		{ClaimName: "impersonate_tenant", MaxLen: 36},
+		{ClaimName: "impersonate_group", MaxLen: 128},
+		{ClaimName: "impersonate_sub", MaxLen: 36},
 		{ClaimName: "impersonate_email", MaxLen: 128},
-		{ClaimName: "impersonate_user", MaxLen: 128},
+		{ClaimName: "impersonate_user_id", MaxLen: 36},
 	}
 	customAttributes := make([]types.SchemaAttributeType, len(claims))
 	for i, claim := range claims {

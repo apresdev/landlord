@@ -142,7 +142,7 @@ tenancy and impersonation:
     * `custom:impersonate_group`
     * `custom:impersonate_email`
     * `custom:impersonate_sub`
-    * `custom:impersonate_user`
+    * `custom:impersonate_user_id`
 
 #### AWS Cognito Claims
 
@@ -187,13 +187,13 @@ impersonating, additional claims are added to the JWT:
     that is currently being impersonated.
   * `custom:impersonate_sub` (optional): The `sub` claim of the user that is
     currently being impersonated.
-  * `custom:impersonate_user`: The `custom:user` claim of the user that is
+  * `custom:impersonate_user_id`: The `custom:user` claim of the user that is
     currently being impersonated.
 
-When impersonating, the `custom:impersonate_email`, `custom:impersonate_user`
+When impersonating, the `custom:impersonate_email`, `custom:impersonate_user_id`
 and `custom:impersonate_sub`
 claims are optional. If the `custom:impersonate_group` claim is set, but the
-`custom:impersonate_email`, `custom:impersonate_user` and
+`custom:impersonate_email`, `custom:impersonate_user_id` and
 `custom:impersonate_sub` claims are not set,
 the user represented by the `sub`, `user`, and `email` claims should be
 considered part of the impersonated tenant and group.
