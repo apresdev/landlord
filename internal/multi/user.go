@@ -123,8 +123,13 @@ func NewUser(tenantID uuid.UUID, cognitoID uuid.UUID, username, role string, mfa
 		mfaStatus = MFAStatusPending
 	}
 	return &User{
-		TenantID:  tenantID,
-		ID:        uuid.New(),
+		TenantID: tenantID,
+		// TODO: this should be updated to create a new UUID, but the first production
+		// version of this was released inappropriately with the Cognito ID
+		//ID:        uuid.New(),
+		ID: cognitoID,
+		// TODO TODO TODO
+
 		Username:  username,
 		CognitoID: cognitoID,
 		Role:      role,

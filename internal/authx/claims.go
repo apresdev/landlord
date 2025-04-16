@@ -10,5 +10,5 @@ const (
 	CustomImpersonateGroupClaim  = "custom:impersonate_group"
 	CustomImpersonateSubClaim    = "custom:impersonate_sub"
 	CustomImpersonateEmailClaim  = "custom:impersonate_email"
-	CustomImpersonateUserClaim   = "custom:impersonate_user"
+	CustomImpersonateUserClaim   = "custom:impersonate_user_id"
 )
