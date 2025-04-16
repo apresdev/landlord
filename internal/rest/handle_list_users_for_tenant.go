@@ -54,6 +54,7 @@ func getUsersForTenant(
 			Username:      user.Username,
 			Role:          user.Role,
 			Status:        UserStatus(user.Status.String()),
+			UserID:        user.ID.String(),
 			CognitoID:     aws.ToString(u.Username),
 			ProfileFields: convertProfileFields(user),
 		})
