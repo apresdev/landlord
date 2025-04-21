@@ -1,8 +1,7 @@
 # TODOs
 
 * add pk/sk as separate fields
-* add indicators to submits https://htmx.org/attributes/hx-indicator/
-* builtin login dialog should say "login again" after entering in OTP
+* builtin login dialog should say "login again" after configuring OTP
 * how to handle abuse of the unauthenticated landlord APIs?
     * what does the WAF do to help here?
 * apply handling
@@ -16,4 +15,3 @@
 * UI
   * friendly timestamp in frontend -- normalize to browser time
   * many htmx routes that are just HTML can be unauthorized routes #perf
-  * shake out only the icons we need from font-awesome
