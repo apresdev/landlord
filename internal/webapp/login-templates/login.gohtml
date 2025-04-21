@@ -18,7 +18,7 @@
                         <div class="container has-text-centered">
                             <div class="is-size-4">Enter Credentials</div>
                         </div>
-                        <form action="/ll-auth/app/login/submit" method="POST">
+                        <form id="login-form" action="/ll-auth/app/login/submit" method="POST">
                             <!-- Email Field -->
                             <div class="field">
                                 <label class="label">Email</label>
@@ -52,10 +52,14 @@
                             <!-- Submit Button -->
                             <div class="field">
                                 <div class="control">
-                                    <button class="button is-primary is-fullwidth">
+                                    <button id="login-submit-button" class="button is-primary is-fullwidth">
                                         Login
                                     </button>
                                 </div>
+                            </div>
+
+                            <div id="login-spinner" class="submit-indicator">
+                                <i class="fa-sharp fa-spinner fa-spin"></i> Logging in...
                             </div>
 
                             <!-- Links -->
