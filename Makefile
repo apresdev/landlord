@@ -5,6 +5,12 @@ all: build
 build: gen
 	./scripts/go-dev-bld
 
+.PHONY: clean
+clean:
+	go clean
+	go clean -testcache
+	rm -f landlord.linux.amd64
+
 .PHONY: rel
 rel: gen
 	./scripts/go-rel-bld
