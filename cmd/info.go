@@ -1,7 +1,11 @@
 package cmd
 
 import (
+	"encoding/base64"
+	"fmt"
 	"net/url"
+
+	"github.com/google/uuid"
 
 	"github.com/apresdev/landlord/internal/appcore"
 	"github.com/apresdev/landlord/internal/jwx"
@@ -25,7 +29,7 @@ func displayToken(cmd *cobra.Command, tokName string, tok *jwt.Token) error {
 	return nil
 }
 
-// parseUnverified creates a jwt.Token instance, but does not verify the signature.
+// parseUnverified creates a jwt.Token instance but does not verify the signature.
 // Useful in some diagnostic / troubleshooting scenarios.
 func parseUnverified(tokStr string) (*jwt.Token, error) {
 	p := jwt.NewParser()
@@ -50,12 +54,12 @@ func parseToken(
 	}
 }
 
-func infoCmd() *cobra.Command {
+func infoSessionCmd() *cobra.Command {
 	var raw bool
 	var verbose bool
 	var noValidate bool
 	c := &cobra.Command{
-		Use:   "info",
+		Use:   "session",
 		Short: "Display info about the current session",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := MustSession()
@@ -103,5 +107,68 @@ func infoCmd() *cobra.Command {
 		&raw, "raw", "r", false, "display raw tokens")
 	c.PersistentFlags().BoolVarP(
 		&noValidate, "no-validate", "N", false, "do not attempt to validate the token")
+	return c
+}
+
+func base64DecodeStringAsBinaryUUID(s string) (uuid.UUID, error) {
+	decoded, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to decode base64 string: %w", err)
+	}
+	if len(decoded) != 16 {
+		return uuid.Nil, fmt.Errorf("decoded string is not a valid UUID: %s", s)
+	}
+	return uuid.FromBytes(decoded)
+}
+
+func infoDecodeJWTCmd() *cobra.Command {
+	var in string
+	c := &cobra.Command{
+		Use:   "decode-jwt",
+		Short: "Decode a base64 encoded JWT, without verification",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			j, err := parseUnverified(in)
+			if err != nil {
+				return err
+			}
+			cmd.Println(jwx.Describe("JWT", j))
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&in, "input", "i", "", "base64 encoded binary UUID")
+	return c
+}
+
+func infoDecodeUUIDCmd() *cobra.Command {
+	var in string
+	c := &cobra.Command{
+		Use:   "decode-uuid",
+		Short: "Decode a base64 encoded binary UUID",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			v, err := base64DecodeStringAsBinaryUUID(in)
+			if err != nil {
+				return err
+			}
+			cmd.Println(v.String())
+			return nil
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&in, "input", "i", "", "base64 encoded binary UUID")
+	return c
+}
+
+func infoCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "info",
+		Short: "Info sub-command",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+	}
+	c.AddCommand(infoSessionCmd())
+	c.AddCommand(infoDecodeJWTCmd())
+	c.AddCommand(infoDecodeUUIDCmd())
 	return c
 }

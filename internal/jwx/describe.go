@@ -36,7 +36,8 @@ func Describe(tokName string, tok *jwt.Token) (string, error) {
 		}
 		sb.WriteString(fmt.Sprintf("    Issuer: %s\n", issuer))
 		sb.WriteString(fmt.Sprintf("    Subject: %s\n", subject))
-		if claims, ok := tok.Claims.(jwt.MapClaims); ok {
+		if cl, ok := tok.Claims.(*jwt.MapClaims); ok {
+			claims := *cl
 			sb.WriteString("    Claims:\n")
 			keys := make([]string, 0, len(claims))
 			for k := range claims {
@@ -47,6 +48,8 @@ func Describe(tokName string, tok *jwt.Token) (string, error) {
 				sb.WriteString(fmt.Sprintf("      %s: %v\n", k, claims[k]))
 			}
 		}
+	} else {
+		sb.WriteString("    Claims: empty\n")
 	}
 	return sb.String(), nil
 }

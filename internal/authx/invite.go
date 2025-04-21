@@ -85,7 +85,7 @@ func SendInvite(
 		u.ID = overrideUserID
 	}
 
-	err = setCustomClaimsOnUser(ctx, cogIdp, ten, u)
+	err = SetCustomClaimsOnUser(ctx, cogIdp, ten, u)
 	if err != nil {
 		return err
 	}

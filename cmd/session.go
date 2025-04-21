@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"os"
 
+	"github.com/apresdev/landlord/internal/appcore"
+	"github.com/apresdev/landlord/internal/appenv"
 	"go.uber.org/zap"
 )
 
@@ -99,4 +102,20 @@ func (s *Session) GetValidationURL() *url.URL {
 		zap.L().Fatal("could not parse URL", zap.Error(err))
 	}
 	return u
+}
+
+type SettingsKeyType string
+
+const SettingsKey SettingsKeyType = "settings"
+
+func appcoreMust(ctx context.Context) appcore.Clients {
+	s := ctx.Value(SettingsKey)
+	if s == nil {
+		return appcore.Must()
+	}
+	settings, ok := s.(appenv.Settings)
+	if !ok {
+		zap.L().Fatal("invalid settings type", zap.Any("type", s))
+	}
+	return appcore.MustWithSettings(settings)
 }

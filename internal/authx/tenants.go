@@ -110,7 +110,7 @@ func CreateTenant(
 	return ten, nil
 }
 
-func setCustomClaimsOnUser(
+func SetCustomClaimsOnUser(
 	ctx context.Context,
 	cogIdp AWSCognitoIdentityProvider,
 	ten *multi.Tenant,
@@ -164,7 +164,7 @@ func ApplyTenant(
 		return err
 	}
 	for _, user := range users {
-		if err := setCustomClaimsOnUser(ctx, cogIdp, ten, user); err != nil {
+		if err := SetCustomClaimsOnUser(ctx, cogIdp, ten, user); err != nil {
 			return err
 		}
 		zap.L().Info("updated user attributes",
