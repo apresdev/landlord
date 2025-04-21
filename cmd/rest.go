@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 
 	"go.uber.org/zap"
 
@@ -678,6 +679,9 @@ func restUsersCmd() *cobra.Command {
 				return nil
 			}
 			table := NewTable([]string{"Username", "Role", "Status", "ID", "CognitoID"})
+			sort.Slice(o.Users, func(i, j int) bool {
+				return o.Users[i].Username < o.Users[j].Username
+			})
 			for _, user := range o.Users {
 				err := table.AddRow([]string{user.Username, user.Role, string(user.Status), user.UserID, user.CognitoID})
 				if err != nil {

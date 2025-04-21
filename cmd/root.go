@@ -1,12 +1,7 @@
 package cmd
 
 import (
-	"context"
 	"os"
-
-	"github.com/apresdev/landlord/internal/appcore"
-	"github.com/apresdev/landlord/internal/appenv"
-	"go.uber.org/zap"
 
 	"github.com/spf13/cobra"
 )
@@ -40,20 +35,4 @@ func Execute() {
 	if err != nil {
 		os.Exit(1)
 	}
-}
-
-type SettingsKeyType string
-
-const SettingsKey SettingsKeyType = "settings"
-
-func appcoreMust(ctx context.Context) appcore.Clients {
-	s := ctx.Value(SettingsKey)
-	if s == nil {
-		return appcore.Must()
-	}
-	settings, ok := s.(appenv.Settings)
-	if !ok {
-		zap.L().Fatal("invalid settings type", zap.Any("type", s))
-	}
-	return appcore.MustWithSettings(settings)
 }

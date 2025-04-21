@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/apresdev/landlord/internal/appenv"
-
 	"github.com/spf13/cobra"
 )
 
