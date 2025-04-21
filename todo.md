@@ -1,9 +1,6 @@
 # TODOs
 
-* command line for delete a user entirely
 * add pk/sk as separate fields
-* BUG: remove cognito ID from subject listUsers API
-* React UI flow for adding MFA
 * add indicators to submits https://htmx.org/attributes/hx-indicator/
 * builtin login dialog should say "login again" after entering in OTP
 * how to handle abuse of the unauthenticated landlord APIs?
@@ -19,5 +16,4 @@
 * UI
   * friendly timestamp in frontend -- normalize to browser time
   * many htmx routes that are just HTML can be unauthorized routes #perf
-  * add affordance to display a token in the UI given its base64 form
   * shake out only the icons we need from font-awesome
