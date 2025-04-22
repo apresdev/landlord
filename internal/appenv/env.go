@@ -152,6 +152,10 @@ func (s Settings) DevMode() bool {
 	return DevMode()
 }
 
+func (s Settings) Version() VersionInfo {
+	return GetVersionInfo()
+}
+
 func mustEnvURL(key string) *url.URL {
 	u, err := envURL(key)
 	if err != nil {

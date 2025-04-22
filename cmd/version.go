@@ -11,7 +11,7 @@ func versionCmd() *cobra.Command {
 		Short: "Version command",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			v := appenv.GetVersionInfo()
-			cmd.Printf("Version    : %s\n", v.Version)
+			cmd.Printf("GitTag     : %s\n", v.GitTag)
 			cmd.Printf("Commit     : %s\n", v.Commit)
 			cmd.Printf("Build time : %s\n", v.BuildTime)
 			cmd.Printf("Go version : %s\n", v.GoVersion)

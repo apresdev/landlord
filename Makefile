@@ -38,6 +38,14 @@ sim-test:
 	LANDLORD_SKIP_TESTS=1 ./scripts/go-dev-bld
 	cd ./test && ./sim-cleanup.sh && ./sim-test-01.sh && ./sim-cleanup.sh
 
+.PHONY: help
+help:
+	pandoc ./HELP.md --output tmp/help.snippet.html
+	echo "{{ define \"help\" }}" > tmp/help.snippet.gohtml
+	cat tmp/help.snippet.html >> tmp/help.snippet.gohtml
+	echo "{{ end }}" >> tmp/help.snippet.gohtml
+	cp -v tmp/help.snippet.gohtml ./internal/webapp/admin-templates/help.gohtml
+
 .PHONY: gen
 gen: ./api/landlord-openapi-ext.json
 

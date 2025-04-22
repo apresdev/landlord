@@ -1,0 +1,13 @@
+{{ define "footer" }}
+    {{- /*gotype: github.com/apresdev/landlord/internal/appenv.Settings*/}}
+    <footer class="footer">
+      <div class="content has-text-centered">
+        <p>
+          <strong>Landlord {{ .Version.GitTag }}</strong> ({{ .Version.Commit }}) by <a href="https://apres.dev">Apres Software</a>
+        </p>
+        <p>
+          Copyright &copy; {{ .Version.BuildYear }} Apres Software. All rights reserved.
+        </p>
+      </div>
+    </footer>
+{{ end }}

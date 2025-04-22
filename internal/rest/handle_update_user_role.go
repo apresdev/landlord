@@ -3,6 +3,8 @@ package rest
 import (
 	"net/http"
 
+	"github.com/apresdev/landlord/internal/authx"
+
 	"github.com/apresdev/landlord/internal/multi"
 	"github.com/apresdev/landlord/internal/perms"
 
@@ -60,10 +62,10 @@ func HandleUpdateUserRole(
 	sub *perms.Subject,
 	targetTenant *multi.Tenant,
 	targetUser *multi.User,
-	role string) (*multi.Tenant, *multi.User, error) {
+	newRole string) (*multi.Tenant, *multi.User, error) {
 
 	resource := perms.NewResource(
-		perms.ResourceKindUserRole, role, targetTenant, targetUser)
+		perms.ResourceKindUserRole, newRole, targetTenant, targetUser)
 	effect, err := perms.Eval(c, a, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
@@ -71,12 +73,23 @@ func HandleUpdateUserRole(
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied setting role for user",
+			zap.String("newRole", newRole),
 			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
 		return nil, nil, apperr.NewUnauthorized("not authorized")
 	}
 
-	targetUser.Role = role
+	err = authx.SetCognitoGroup(
+		c.Request.Context(), a.CogIdp(), targetTenant, targetUser.Username, newRole)
+	if err != nil {
+		zap.L().Error("error updating user group",
+			zap.String("tenantID", targetTenant.ID.String()),
+			zap.String("userID", targetUser.ID.String()),
+			zap.String("cognitoID", targetUser.CognitoID.String()),
+			zap.Error(err))
+	}
+
+	targetUser.Role = newRole
 	err = db.StoreUser(c.Request.Context(), a.DBCtx(), targetUser)
 	if err != nil {
 		zap.L().Error("error updating user",

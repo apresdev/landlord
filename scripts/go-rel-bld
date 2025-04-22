@@ -35,11 +35,7 @@ then
     GoVersion=${BASH_REMATCH[0]}
 fi
 
-GV=$(git tag || echo 'N/A')
-if [[ $GV =~ [^[:space:]]+ ]];
-then
-    GitTag=${BASH_REMATCH[0]}
-fi
+GitTag=$(git describe --tags --abbrev=0 || echo 'N/A')
 
 GH=$(git log -1 --pretty=format:%h || echo 'N/A')
 if [[ "$GH" =~ 'fatal' ]];

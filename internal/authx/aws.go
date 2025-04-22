@@ -132,6 +132,11 @@ type AWSCognitoIdentityProvider interface {
 		params *cognitoidentityprovider.AdminRemoveUserFromGroupInput,
 		optFns ...func(*cognitoidentityprovider.Options)) (
 		*cognitoidentityprovider.AdminRemoveUserFromGroupOutput, error)
+	AdminListGroupsForUser(
+		ctx context.Context,
+		params *cognitoidentityprovider.AdminListGroupsForUserInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (
+		*cognitoidentityprovider.AdminListGroupsForUserOutput, error)
 	ForgotPassword(
 		ctx context.Context,
 		params *cognitoidentityprovider.ForgotPasswordInput,
