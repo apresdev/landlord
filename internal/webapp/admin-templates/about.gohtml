@@ -1,0 +1,14 @@
+{{ define "about" }}
+    {{- /*gotype: github.com/apresdev/landlord/internal/webapp.AuthenticatedSubjectView*/}}
+    <!DOCTYPE html>
+    <html lang="en">
+    {{ template "header" . }}
+    <body>
+        {{ template "navbar" . }}
+        <div class="container content">
+          {{ template "help" }}
+        </div>
+    {{ template "footer" .Settings }}
+    </body>
+    </html>
+{{ end }}

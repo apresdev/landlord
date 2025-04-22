@@ -59,6 +59,11 @@ func handleAdminDashboardError(a App, c *gin.Context) error {
 	return nil
 }
 
+func handleAdminAbout(a App, c *gin.Context, sub *perms.Subject) error {
+	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub)
+	return executeAdminTemplate(c, "about", sv)
+}
+
 func handleAdminClearImpersonation(a App, c *gin.Context, sub *perms.Subject) error {
 	err := rest.HandleClearImpersonation(a, c, sub)
 	if err != nil {

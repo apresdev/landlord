@@ -15,7 +15,7 @@ var (
 
 func main() {
 	appenv.SetVersionInfo(appenv.VersionInfo{
-		Version:   GitTag,
+		GitTag:    GitTag,
 		Commit:    CommitHash,
 		BuildTime: BuildTime,
 		GoVersion: GoVersion,

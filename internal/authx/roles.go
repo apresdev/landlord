@@ -49,27 +49,78 @@ func SetCognitoGroup(
 	username string,
 	role string) error {
 
-	userGroupName := ten.GroupName(role)
-	_, err := cogIdp.AdminAddUserToGroup(ctx,
+	groups, err := cogIdp.AdminListGroupsForUser(ctx,
+		&cognitoidentityprovider.AdminListGroupsForUserInput{
+			Username:   aws.String(username),
+			UserPoolId: aws.String(ten.UserPoolID),
+		})
+	if err != nil {
+		zap.L().Error("failed to list groups for user",
+			zap.Error(err),
+			zap.String("username", username),
+			zap.String("userPoolID", ten.UserPoolID),
+			zap.String("tenantID", ten.ID.String()))
+		return err
+	}
+
+	newGroupName := ten.GroupName(role)
+	groupsToRemove := make([]string, 0)
+	for _, group := range groups.Groups {
+		if aws.ToString(group.GroupName) == newGroupName {
+			zap.L().Info("user already in group",
+				zap.String("username", username),
+				zap.String("groupName", newGroupName),
+				zap.String("userPoolID", ten.UserPoolID),
+				zap.String("tenantID", ten.ID.String()))
+			return nil
+		}
+		groupsToRemove = append(groupsToRemove, aws.ToString(group.GroupName))
+	}
+
+	_, err = cogIdp.AdminAddUserToGroup(ctx,
 		&cognitoidentityprovider.AdminAddUserToGroupInput{
-			GroupName:  aws.String(userGroupName),
+			GroupName:  aws.String(newGroupName),
 			UserPoolId: aws.String(ten.UserPoolID),
 			Username:   aws.String(username),
 		})
 	if err != nil {
 		zap.L().Warn("failed to add user to group",
 			zap.Error(err),
-			zap.String("user-pool-id", ten.UserPoolID),
-			zap.String("tenant-id", ten.ID.String()),
-			zap.String("group", userGroupName),
-			zap.String("user", username))
+			zap.String("username", username),
+			zap.String("groupName", newGroupName),
+			zap.String("userPoolID", ten.UserPoolID),
+			zap.String("tenantID", ten.ID.String()))
 	} else {
 		zap.L().Info("added user to group",
-			zap.String("user-pool-id", ten.UserPoolID),
-			zap.String("tenant-id", ten.ID.String()),
-			zap.String("group", userGroupName),
-			zap.String("user", username))
+			zap.String("username", username),
+			zap.String("groupName", newGroupName),
+			zap.String("userPoolID", ten.UserPoolID),
+			zap.String("tenantID", ten.ID.String()))
 	}
+
+	for _, groupToRemove := range groupsToRemove {
+		_, err = cogIdp.AdminRemoveUserFromGroup(ctx,
+			&cognitoidentityprovider.AdminRemoveUserFromGroupInput{
+				GroupName:  aws.String(groupToRemove),
+				UserPoolId: aws.String(ten.UserPoolID),
+				Username:   aws.String(username),
+			})
+		if err != nil {
+			zap.L().Warn("failed to remove user from group",
+				zap.Error(err),
+				zap.String("username", username),
+				zap.String("groupName", groupToRemove),
+				zap.String("userPoolID", ten.UserPoolID),
+				zap.String("tenantID", ten.ID.String()))
+		} else {
+			zap.L().Info("removed user from group",
+				zap.String("username", username),
+				zap.String("groupName", groupToRemove),
+				zap.String("userPoolID", ten.UserPoolID),
+				zap.String("tenantID", ten.ID.String()))
+		}
+	}
+
 	return err
 }
 

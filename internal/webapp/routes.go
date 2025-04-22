@@ -268,6 +268,7 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	// They utilize the setupAuthContext middleware to ensure that the token is valid.
 	authPlain.GET("/admin/dashboard", handleAdminDashboard)
 	authPlain.GET("/admin/dashboard-error", handleAdminDashboardError)
+	authSubject.GET("/admin/about", handleAdminAbout)
 	authSubject.POST("/admin/clear-impersonation", handleAdminClearImpersonation)
 	authSubject.GET("/admin/tenants", handleAdminTenants)
 	authPlain.GET("/admin/tenant-ops/create-tenant-button", handleAdminCreateTenantButton)

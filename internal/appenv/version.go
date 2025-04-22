@@ -1,10 +1,17 @@
 package appenv
 
 type VersionInfo struct {
-	Version   string
+	GitTag    string
 	Commit    string
 	BuildTime string
 	GoVersion string
+}
+
+func (vi VersionInfo) BuildYear() string {
+	if len(vi.BuildTime) > 4 {
+		return vi.BuildTime[:4]
+	}
+	return "2025"
 }
 
 var Version VersionInfo
