@@ -93,6 +93,8 @@ aws sso login
 * `LANDLORD_LOCALSTACK_ENDPOINT=<endpoint>`: If set, the landlord tool will
   use this endpoint for AWS API calls using localstack. AWS_PROFILE should
   be set to a profile that uses the localstack endpoint.
+* `LANDLORD_TERRAFORM_MODULE_VERSION=<version>`: The version of the terraform
+  module that the container is being deployed with.
 
 ### Users and Roles
 
