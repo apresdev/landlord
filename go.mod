@@ -1,14 +1,12 @@
 module github.com/apresdev/landlord
 
-go 1.23.6
-
-toolchain go1.23.7
+go 1.24
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.14
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.18.12
-	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.51.4
+	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.52.0
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.42.4
 	github.com/ettle/strcase v0.2.0
 	github.com/gin-contrib/cors v1.7.5
