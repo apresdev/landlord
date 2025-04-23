@@ -1,10 +1,13 @@
 package appenv
 
 type VersionInfo struct {
-	GitTag    string
 	Commit    string
 	BuildTime string
 	GoVersion string
+}
+
+func (vi VersionInfo) Version() string {
+	return TagVersion
 }
 
 func (vi VersionInfo) BuildYear() string {
