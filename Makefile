@@ -15,6 +15,12 @@ clean:
 rel: gen
 	./scripts/go-rel-bld
 
+.PHONY: version
+version:
+	echo "package appenv" > ./internal/appenv/tag.go
+	echo "" >> ./internal/appenv/tag.go
+	echo "const TagVersion = \"$(shell git describe --tags --abbrev=0)\"" >> ./internal/appenv/tag.go
+
 .PHONY: completion
 completion: build
 	t=$(mktemp)
