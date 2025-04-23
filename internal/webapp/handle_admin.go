@@ -101,7 +101,7 @@ func handleAdminCreateTenantSubmit(a App, c *gin.Context, sub *perms.Subject) er
 	_, err := rest.HandleCreateTenant(a, c, req)
 	errMsg := ""
 	if err != nil {
-		errMsg = fmt.Sprintf("Could not create tenant: " + err.Error())
+		errMsg = fmt.Sprintf("Could not create tenant: %s", err)
 	}
 	tens, err := rest.HandleGetTenants(a, c)
 	if err != nil {
