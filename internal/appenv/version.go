@@ -1,5 +1,7 @@
 package appenv
 
+import "os"
+
 type VersionInfo struct {
 	Commit    string
 	BuildTime string
@@ -8,6 +10,19 @@ type VersionInfo struct {
 
 func (vi VersionInfo) Version() string {
 	return TagVersion
+}
+
+var terraformVersion = "unset"
+
+func init() {
+	v := os.Getenv("LANDLORD_TERRAFORM_MODULE_VERSION")
+	if v != "" {
+		terraformVersion = v
+	}
+}
+
+func (vi VersionInfo) TerraformVersion() string {
+	return terraformVersion
 }
 
 func (vi VersionInfo) BuildYear() string {

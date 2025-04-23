@@ -7,6 +7,14 @@
         {{ template "navbar" . }}
         <div class="container content">
           {{ template "help" }}
+            <h3>Versions</h3>
+            <pre><code>
+Terraform  : {{ .Settings.Version.TerraformVersion }}
+Landlord   : {{ .Settings.Version.Version }}
+Commit     : {{ .Settings.Version.Commit }}
+Go Version : {{ .Settings.Version.GoVersion }}
+Build Time : {{ .Settings.Version.BuildTime }}
+            </code></pre>
         </div>
     {{ template "footer" .Settings }}
     </body>
