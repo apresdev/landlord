@@ -2,8 +2,14 @@ package cmd
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/url"
+
+	"github.com/apresdev/landlord/internal/db"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
 	"github.com/google/uuid"
 
@@ -159,6 +165,82 @@ func infoDecodeUUIDCmd() *cobra.Command {
 	return c
 }
 
+func infoDriftCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "drift",
+		Short: "Detect any drift between Cognito and Landlord",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cs := appcoreMust(cmd.Context())
+			tenants, err := db.GetAllTenants(cs.Ctx(), cs.DBCtx())
+			if err != nil {
+				return err
+			}
+			for _, t := range tenants {
+				tenantUsers, err := db.GetUsersForTenant(cs.Ctx(), cs.DBCtx(), t.ID)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("> Tenant %s (%s)\n", t.Name, t.ID.String())
+				for _, u := range tenantUsers {
+					cogU, err := cs.CogIdp().AdminGetUser(cs.Ctx(), &cognitoidentityprovider.AdminGetUserInput{
+						UserPoolId: aws.String(t.UserPoolID),
+						Username:   aws.String(u.Username),
+					})
+					if u.ID != u.CognitoID {
+						fmt.Printf(">> User %s (%s %s)\n",
+							u.Username, u.ID.String(), u.CognitoID.String())
+					} else {
+						fmt.Printf(">> User %s (%s)\n",
+							u.Username, u.ID.String())
+					}
+					if err != nil {
+						var userNotFoundErr *types.UserNotFoundException
+						if errors.As(err, &userNotFoundErr) {
+							cmd.Printf("User %s not found in Cognito\n", u.Username)
+						} else {
+							cmd.Printf("Error getting user %s from Cognito: %v\n", u.Username, err)
+						}
+					} else {
+						cogUUID, err := uuid.Parse(aws.ToString(cogU.Username))
+						if err != nil {
+							fmt.Printf("Failed to parse Cognito UUID: %s", err)
+						} else {
+							if cogUUID != u.CognitoID {
+								fmt.Printf("Cognito UUID %s does not match Landlord UUID %s\n",
+									cogUUID.String(), u.CognitoID.String())
+							}
+						}
+
+						cogGroups, err := cs.CogIdp().AdminListGroupsForUser(
+							cs.Ctx(), &cognitoidentityprovider.AdminListGroupsForUserInput{
+								UserPoolId: aws.String(t.UserPoolID),
+								Username:   aws.String(u.Username),
+							})
+						if err != nil {
+							cmd.Printf("Error getting groups for user %s: %v\n", u.Username, err)
+						} else {
+							if len(cogGroups.Groups) == 0 {
+								cmd.Printf("User %s is not in any groups\n", u.Username)
+							} else if len(cogGroups.Groups) > 1 {
+								cmd.Printf("User %s is in multiple groups: ", u.Username)
+							} else {
+								cogGroup := cogGroups.Groups[0]
+								userGroupName := t.GroupName(u.Role)
+								if userGroupName != aws.ToString(cogGroup.GroupName) {
+									cmd.Printf("User %s has role %s, but is in group %s\n",
+										u.Username, u.Role, aws.ToString(cogGroup.GroupName))
+								}
+							}
+						}
+					}
+				}
+			}
+			return nil
+		},
+	}
+	return c
+}
+
 func infoCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "info",
@@ -167,8 +249,9 @@ func infoCmd() *cobra.Command {
 			return cmd.Help()
 		},
 	}
-	c.AddCommand(infoSessionCmd())
 	c.AddCommand(infoDecodeJWTCmd())
 	c.AddCommand(infoDecodeUUIDCmd())
+	c.AddCommand(infoDriftCmd())
+	c.AddCommand(infoSessionCmd())
 	return c
 }
