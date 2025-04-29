@@ -7,5 +7,5 @@ package rest
 type TenantUsersResponse struct {
 	TenantID string `json:"tenantID"`
 
-	Users []TenantUsersResponseUsersInner `json:"users,omitempty"`
+	Users []TenantUser `json:"users,omitempty"`
 }

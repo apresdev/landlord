@@ -556,8 +556,8 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/InviteRequest"
       responses:
-        "204":
-          description: No content
+        "200":
+          $ref: "#/components/responses/InviteResponse"
         "400":
           $ref: '#/components/responses/BadRequest'
         "401":
@@ -709,8 +709,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         "500":
           $ref: '#/components/responses/InternalServerError'
-      # No security on this as it initiates a password recovery, and, by
-      # definition the user does not have a password.
+      # No 'security' on this as it initiates a password recovery, and, by
+      # definition, the user does not have a password.
       security: []
   /ll-auth/api/reset-password:
     post:
@@ -916,6 +916,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/SetNewPasswordResponse'
+    InviteResponse:
+      description: A response for a successful invitation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/InviteResponse'
     BadRequest:
       description: An error occurred.  The client provided one or more invalid inputs.
       content:
@@ -1307,30 +1313,32 @@ components:
         users:
           type: array
           items:
-            type: object
-            required:
-              - username
-              - role
-              - status
-              - userID
-              - cognitoID
-            properties:
-              username:
-                type: string
-              role:
-                type: string
-              status:
-                $ref: '#/components/schemas/UserStatus'
-              userID:
-                type: string
-                format: uuid
-              cognitoID:
-                type: string
-                format: uuid
-              profileFields:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ProfileFormatField'
+            $ref: '#/components/schemas/TenantUser'
+    TenantUser:
+      type: object
+      required:
+        - username
+        - role
+        - status
+        - userID
+        - cognitoID
+      properties:
+        username:
+          type: string
+        role:
+          type: string
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        userID:
+          type: string
+          format: uuid
+        cognitoID:
+          type: string
+          format: uuid
+        profileFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileFormatField'
     ImpersonateRoleRequest:
       type: object
       required:
@@ -1476,6 +1484,13 @@ components:
           format: uuid
           description: Optional user ID to use for the user.  This is useful for
             migrating users from another system.
+    InviteResponse:
+      type: object
+      required:
+        - invitedUser
+      properties:
+        invitedUser:
+          $ref: '#/components/schemas/TenantUser'
     CreateTenantRequest:
       type: object
       required:
