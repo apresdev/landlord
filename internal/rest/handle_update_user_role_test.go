@@ -6,21 +6,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/apresdev/landlord/internal/perms"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/apresdev/landlord/internal/appcore"
-	"github.com/apresdev/landlord/internal/authx"
+	"github.com/apresdev/landlord/internal/appenv"
+	"github.com/apresdev/landlord/internal/apptest"
 	"github.com/apresdev/landlord/internal/db"
-	"github.com/apresdev/landlord/internal/multi"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
-	"github.com/apresdev/landlord/internal/appenv"
-	"github.com/apresdev/landlord/internal/apptest"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -53,18 +47,11 @@ func (s *HandleUpdateUserRoleTestSuite) SetupTest() {
 
 func (s *HandleUpdateUserRoleTestSuite) TestHappyPath() {
 	c := appcore.MustWithSettings(s.s)
-	rootTenant, err := db.GetRootTenant(c.Ctx(), c.DBCtx(), c.RootTenantID())
+	username := "root@example.com"
+	err := inviteRootUser(s.s, username)
 	s.NoError(err)
-	username := "user1@example.com"
-	err = authx.SendInvite(
-		c.Ctx(),
-		c.DBCtx(),
-		c.CogIdp(),
-		rootTenant,
-		username,
-		uuid.Nil,
-		"admin",
-		multi.MFAPolicyNone)
+
+	rootTenant, err := db.GetRootTenant(c.Ctx(), c.DBCtx(), c.RootTenantID())
 	s.NoError(err)
 
 	o, err := c.CogIdp().AdminListGroupsForUser(c.Ctx(),
@@ -90,14 +77,8 @@ func (s *HandleUpdateUserRoleTestSuite) TestHappyPath() {
 	gt.c.AddParam("tenantID", rootTenant.ID.String())
 	gt.c.AddParam("userID", u.ID.String())
 
-	claims := make(jwt.MapClaims)
-	claims[authx.SubClaim] = u.CognitoID.String()
-	claims[authx.CustomTenantClaim] = rootTenant.ID.String()
-	claims[authx.CognitoGroupsClaim] = []string{
-		fmt.Sprintf("tenant-%s-admin", rootTenant.ID.String())}
-	claims[authx.EmailClaim] = u.Username
-	tok := &jwt.Token{Claims: claims}
-	gt.c.Set(perms.TokenKey, tok)
+	withSetupJWT(gt.c, rootTenant, u)
+
 	err = handleUpdateUserRole(c, gt.c)
 	s.NoError(err)
 

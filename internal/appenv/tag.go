@@ -1,3 +1,3 @@
 package appenv
 
-const TagVersion = "v0.1.2"
+const TagVersion = "v1.1.0"

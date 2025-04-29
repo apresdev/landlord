@@ -50,7 +50,7 @@ func getUsersForTenant(
 				zap.Error(err))
 			return nil, apperr.NewInternal(err.Error())
 		}
-		resp.Users = append(resp.Users, TenantUsersResponseUsersInner{
+		resp.Users = append(resp.Users, TenantUser{
 			Username:      user.Username,
 			Role:          user.Role,
 			Status:        UserStatus(user.Status.String()),

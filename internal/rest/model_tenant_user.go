@@ -4,7 +4,7 @@
 
 package rest
 
-type TenantUsersResponseUsersInner struct {
+type TenantUser struct {
 	Username string `json:"username"`
 
 	Role string `json:"role"`

@@ -15,8 +15,8 @@ var _ MappedNullable = &TenantUsersResponse{}
 
 // TenantUsersResponse struct for TenantUsersResponse
 type TenantUsersResponse struct {
-	TenantID string                          `json:"tenantID"`
-	Users    []TenantUsersResponseUsersInner `json:"users,omitempty"`
+	TenantID string       `json:"tenantID"`
+	Users    []TenantUser `json:"users,omitempty"`
 }
 
 type _TenantUsersResponse TenantUsersResponse
@@ -64,9 +64,9 @@ func (o *TenantUsersResponse) SetTenantID(v string) {
 }
 
 // GetUsers returns the Users field value if set, zero value otherwise.
-func (o *TenantUsersResponse) GetUsers() []TenantUsersResponseUsersInner {
+func (o *TenantUsersResponse) GetUsers() []TenantUser {
 	if o == nil || IsNil(o.Users) {
-		var ret []TenantUsersResponseUsersInner
+		var ret []TenantUser
 		return ret
 	}
 	return o.Users
@@ -74,7 +74,7 @@ func (o *TenantUsersResponse) GetUsers() []TenantUsersResponseUsersInner {
 
 // GetUsersOk returns a tuple with the Users field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *TenantUsersResponse) GetUsersOk() ([]TenantUsersResponseUsersInner, bool) {
+func (o *TenantUsersResponse) GetUsersOk() ([]TenantUser, bool) {
 	if o == nil || IsNil(o.Users) {
 		return nil, false
 	}
@@ -90,8 +90,8 @@ func (o *TenantUsersResponse) HasUsers() bool {
 	return false
 }
 
-// SetUsers gets a reference to the given []TenantUsersResponseUsersInner and assigns it to the Users field.
-func (o *TenantUsersResponse) SetUsers(v []TenantUsersResponseUsersInner) {
+// SetUsers gets a reference to the given []TenantUser and assigns it to the Users field.
+func (o *TenantUsersResponse) SetUsers(v []TenantUser) {
 	o.Users = v
 }
 
