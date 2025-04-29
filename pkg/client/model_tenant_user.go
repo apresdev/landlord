@@ -10,11 +10,11 @@ import (
 	"fmt"
 )
 
-// checks if the TenantUsersResponseUsersInner type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &TenantUsersResponseUsersInner{}
+// checks if the TenantUser type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &TenantUser{}
 
-// TenantUsersResponseUsersInner struct for TenantUsersResponseUsersInner
-type TenantUsersResponseUsersInner struct {
+// TenantUser struct for TenantUser
+type TenantUser struct {
 	Username      string               `json:"username"`
 	Role          string               `json:"role"`
 	Status        UserStatus           `json:"status"`
@@ -23,14 +23,14 @@ type TenantUsersResponseUsersInner struct {
 	ProfileFields []ProfileFormatField `json:"profileFields,omitempty"`
 }
 
-type _TenantUsersResponseUsersInner TenantUsersResponseUsersInner
+type _TenantUser TenantUser
 
-// NewTenantUsersResponseUsersInner instantiates a new TenantUsersResponseUsersInner object
+// NewTenantUser instantiates a new TenantUser object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTenantUsersResponseUsersInner(username string, role string, status UserStatus, userID string, cognitoID string) *TenantUsersResponseUsersInner {
-	this := TenantUsersResponseUsersInner{}
+func NewTenantUser(username string, role string, status UserStatus, userID string, cognitoID string) *TenantUser {
+	this := TenantUser{}
 	this.Username = username
 	this.Role = role
 	this.Status = status
@@ -39,16 +39,16 @@ func NewTenantUsersResponseUsersInner(username string, role string, status UserS
 	return &this
 }
 
-// NewTenantUsersResponseUsersInnerWithDefaults instantiates a new TenantUsersResponseUsersInner object
+// NewTenantUserWithDefaults instantiates a new TenantUser object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewTenantUsersResponseUsersInnerWithDefaults() *TenantUsersResponseUsersInner {
-	this := TenantUsersResponseUsersInner{}
+func NewTenantUserWithDefaults() *TenantUser {
+	this := TenantUser{}
 	return &this
 }
 
 // GetUsername returns the Username field value
-func (o *TenantUsersResponseUsersInner) GetUsername() string {
+func (o *TenantUser) GetUsername() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -59,7 +59,7 @@ func (o *TenantUsersResponseUsersInner) GetUsername() string {
 
 // GetUsernameOk returns a tuple with the Username field value
 // and a boolean to check if the value has been set.
-func (o *TenantUsersResponseUsersInner) GetUsernameOk() (*string, bool) {
+func (o *TenantUser) GetUsernameOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -67,12 +67,12 @@ func (o *TenantUsersResponseUsersInner) GetUsernameOk() (*string, bool) {
 }
 
 // SetUsername sets field value
-func (o *TenantUsersResponseUsersInner) SetUsername(v string) {
+func (o *TenantUser) SetUsername(v string) {
 	o.Username = v
 }
 
 // GetRole returns the Role field value
-func (o *TenantUsersResponseUsersInner) GetRole() string {
+func (o *TenantUser) GetRole() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -83,7 +83,7 @@ func (o *TenantUsersResponseUsersInner) GetRole() string {
 
 // GetRoleOk returns a tuple with the Role field value
 // and a boolean to check if the value has been set.
-func (o *TenantUsersResponseUsersInner) GetRoleOk() (*string, bool) {
+func (o *TenantUser) GetRoleOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -91,12 +91,12 @@ func (o *TenantUsersResponseUsersInner) GetRoleOk() (*string, bool) {
 }
 
 // SetRole sets field value
-func (o *TenantUsersResponseUsersInner) SetRole(v string) {
+func (o *TenantUser) SetRole(v string) {
 	o.Role = v
 }
 
 // GetStatus returns the Status field value
-func (o *TenantUsersResponseUsersInner) GetStatus() UserStatus {
+func (o *TenantUser) GetStatus() UserStatus {
 	if o == nil {
 		var ret UserStatus
 		return ret
@@ -107,7 +107,7 @@ func (o *TenantUsersResponseUsersInner) GetStatus() UserStatus {
 
 // GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
-func (o *TenantUsersResponseUsersInner) GetStatusOk() (*UserStatus, bool) {
+func (o *TenantUser) GetStatusOk() (*UserStatus, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -115,12 +115,12 @@ func (o *TenantUsersResponseUsersInner) GetStatusOk() (*UserStatus, bool) {
 }
 
 // SetStatus sets field value
-func (o *TenantUsersResponseUsersInner) SetStatus(v UserStatus) {
+func (o *TenantUser) SetStatus(v UserStatus) {
 	o.Status = v
 }
 
 // GetUserID returns the UserID field value
-func (o *TenantUsersResponseUsersInner) GetUserID() string {
+func (o *TenantUser) GetUserID() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -131,7 +131,7 @@ func (o *TenantUsersResponseUsersInner) GetUserID() string {
 
 // GetUserIDOk returns a tuple with the UserID field value
 // and a boolean to check if the value has been set.
-func (o *TenantUsersResponseUsersInner) GetUserIDOk() (*string, bool) {
+func (o *TenantUser) GetUserIDOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -139,12 +139,12 @@ func (o *TenantUsersResponseUsersInner) GetUserIDOk() (*string, bool) {
 }
 
 // SetUserID sets field value
-func (o *TenantUsersResponseUsersInner) SetUserID(v string) {
+func (o *TenantUser) SetUserID(v string) {
 	o.UserID = v
 }
 
 // GetCognitoID returns the CognitoID field value
-func (o *TenantUsersResponseUsersInner) GetCognitoID() string {
+func (o *TenantUser) GetCognitoID() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -155,7 +155,7 @@ func (o *TenantUsersResponseUsersInner) GetCognitoID() string {
 
 // GetCognitoIDOk returns a tuple with the CognitoID field value
 // and a boolean to check if the value has been set.
-func (o *TenantUsersResponseUsersInner) GetCognitoIDOk() (*string, bool) {
+func (o *TenantUser) GetCognitoIDOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -163,12 +163,12 @@ func (o *TenantUsersResponseUsersInner) GetCognitoIDOk() (*string, bool) {
 }
 
 // SetCognitoID sets field value
-func (o *TenantUsersResponseUsersInner) SetCognitoID(v string) {
+func (o *TenantUser) SetCognitoID(v string) {
 	o.CognitoID = v
 }
 
 // GetProfileFields returns the ProfileFields field value if set, zero value otherwise.
-func (o *TenantUsersResponseUsersInner) GetProfileFields() []ProfileFormatField {
+func (o *TenantUser) GetProfileFields() []ProfileFormatField {
 	if o == nil || IsNil(o.ProfileFields) {
 		var ret []ProfileFormatField
 		return ret
@@ -178,7 +178,7 @@ func (o *TenantUsersResponseUsersInner) GetProfileFields() []ProfileFormatField 
 
 // GetProfileFieldsOk returns a tuple with the ProfileFields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *TenantUsersResponseUsersInner) GetProfileFieldsOk() ([]ProfileFormatField, bool) {
+func (o *TenantUser) GetProfileFieldsOk() ([]ProfileFormatField, bool) {
 	if o == nil || IsNil(o.ProfileFields) {
 		return nil, false
 	}
@@ -186,7 +186,7 @@ func (o *TenantUsersResponseUsersInner) GetProfileFieldsOk() ([]ProfileFormatFie
 }
 
 // HasProfileFields returns a boolean if a field has been set.
-func (o *TenantUsersResponseUsersInner) HasProfileFields() bool {
+func (o *TenantUser) HasProfileFields() bool {
 	if o != nil && !IsNil(o.ProfileFields) {
 		return true
 	}
@@ -195,11 +195,11 @@ func (o *TenantUsersResponseUsersInner) HasProfileFields() bool {
 }
 
 // SetProfileFields gets a reference to the given []ProfileFormatField and assigns it to the ProfileFields field.
-func (o *TenantUsersResponseUsersInner) SetProfileFields(v []ProfileFormatField) {
+func (o *TenantUser) SetProfileFields(v []ProfileFormatField) {
 	o.ProfileFields = v
 }
 
-func (o TenantUsersResponseUsersInner) MarshalJSON() ([]byte, error) {
+func (o TenantUser) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -207,7 +207,7 @@ func (o TenantUsersResponseUsersInner) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o TenantUsersResponseUsersInner) ToMap() (map[string]interface{}, error) {
+func (o TenantUser) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["username"] = o.Username
 	toSerialize["role"] = o.Role
@@ -220,7 +220,7 @@ func (o TenantUsersResponseUsersInner) ToMap() (map[string]interface{}, error) {
 	return toSerialize, nil
 }
 
-func (o *TenantUsersResponseUsersInner) UnmarshalJSON(data []byte) (err error) {
+func (o *TenantUser) UnmarshalJSON(data []byte) (err error) {
 	// This validates that all required properties are included in the JSON object
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
@@ -246,53 +246,53 @@ func (o *TenantUsersResponseUsersInner) UnmarshalJSON(data []byte) (err error) {
 		}
 	}
 
-	varTenantUsersResponseUsersInner := _TenantUsersResponseUsersInner{}
+	varTenantUser := _TenantUser{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varTenantUsersResponseUsersInner)
+	err = decoder.Decode(&varTenantUser)
 
 	if err != nil {
 		return err
 	}
 
-	*o = TenantUsersResponseUsersInner(varTenantUsersResponseUsersInner)
+	*o = TenantUser(varTenantUser)
 
 	return err
 }
 
-type NullableTenantUsersResponseUsersInner struct {
-	value *TenantUsersResponseUsersInner
+type NullableTenantUser struct {
+	value *TenantUser
 	isSet bool
 }
 
-func (v NullableTenantUsersResponseUsersInner) Get() *TenantUsersResponseUsersInner {
+func (v NullableTenantUser) Get() *TenantUser {
 	return v.value
 }
 
-func (v *NullableTenantUsersResponseUsersInner) Set(val *TenantUsersResponseUsersInner) {
+func (v *NullableTenantUser) Set(val *TenantUser) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableTenantUsersResponseUsersInner) IsSet() bool {
+func (v NullableTenantUser) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableTenantUsersResponseUsersInner) Unset() {
+func (v *NullableTenantUser) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableTenantUsersResponseUsersInner(val *TenantUsersResponseUsersInner) *NullableTenantUsersResponseUsersInner {
-	return &NullableTenantUsersResponseUsersInner{value: val, isSet: true}
+func NewNullableTenantUser(val *TenantUser) *NullableTenantUser {
+	return &NullableTenantUser{value: val, isSet: true}
 }
 
-func (v NullableTenantUsersResponseUsersInner) MarshalJSON() ([]byte, error) {
+func (v NullableTenantUser) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableTenantUsersResponseUsersInner) UnmarshalJSON(src []byte) error {
+func (v *NullableTenantUser) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

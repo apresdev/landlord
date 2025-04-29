@@ -37,7 +37,18 @@ func handleInviteToTenant(a App, c *gin.Context) error {
 	if err := HandleInviteToTenant(a, c, sub, targetTenant, req); err != nil {
 		return err
 	}
-	c.JSON(http.StatusNoContent, nil)
+	user, err := db.GetUserByName(c, a.DBCtx(), req.Username)
+	if err != nil {
+		return apperr.NewInternalE(err)
+	}
+	invitedUser := TenantUser{
+		Username:  req.Username,
+		Role:      req.Role,
+		Status:    UserStatus(user.Status),
+		UserID:    user.ID.String(),
+		CognitoID: user.CognitoID.String(),
+	}
+	c.JSON(http.StatusOK, &InviteResponse{InvitedUser: invitedUser})
 	return nil
 }
 

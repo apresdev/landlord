@@ -1,5 +1,6 @@
 # TODOs
 
+* hide "Optional Profile Fields" in the UI if there are none defined
 * add pk/sk as separate fields
 * builtin login dialog should say "login again" after configuring OTP
 * how to handle abuse of the unauthenticated landlord APIs?

@@ -283,7 +283,8 @@ func restInviteCmd() *cobra.Command {
 				req.OptionalUserID = &v
 			}
 			ctx := context.Background()
-			r, err := cl.LandlordAdminAPI.InviteToTenant(ctx, tenantID.String()).InviteRequest(req).Execute()
+			invResp, r, err := cl.LandlordAdminAPI.InviteToTenant(
+				ctx, tenantID.String()).InviteRequest(req).Execute()
 			if err != nil {
 				b, err2 := io.ReadAll(r.Body)
 				if err2 == nil {
@@ -291,7 +292,9 @@ func restInviteCmd() *cobra.Command {
 				}
 				return err
 			}
-			cmd.Printf("Invitation sent to: %s for %s\n", username, tenant)
+			invUser := invResp.GetInvitedUser()
+			cmd.Printf("Invitation sent to: %s for %s (id=%s)\n",
+				username, tenant, invUser.GetUserID())
 			return nil
 		},
 	}
