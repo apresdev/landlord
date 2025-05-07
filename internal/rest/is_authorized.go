@@ -28,6 +28,16 @@ func isAuthorized(a App) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		bearer = strings.TrimSpace(bearer)
+		bearer = strings.ToLower(bearer)
+		if !strings.HasPrefix(bearer, "bearer ") {
+			zap.L().Info("unauthorized: invalid header",
+				zap.String("clientID", string(cid)),
+				zap.String("header", bearer))
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.Abort()
+			return
+		}
 		token := strings.TrimSpace(bearer[7:])
 		if token == "" {
 			zap.L().Info("unauthorized: no token found",
