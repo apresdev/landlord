@@ -5,6 +5,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/apresdev/landlord/internal/apperr"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/gin-gonic/gin"
 
@@ -26,7 +30,7 @@ func (s *IsAuthorizedTestSuite) SetupTest() {
 	gin.SetMode(gin.TestMode)
 }
 
-func (s *IsAuthorizedTestSuite) TestHappyPath() {
+func (s *IsAuthorizedTestSuite) TestBadRequests() {
 	a := NewMockApp()
 	f := isAuthorized(a)
 
@@ -50,4 +54,32 @@ func (s *IsAuthorizedTestSuite) TestHappyPath() {
 		f(gt.c)
 		s.Equal(401, gt.c.Writer.Status())
 	}
+}
+
+func (s *IsAuthorizedTestSuite) TestBadToken() {
+	a := NewMockApp()
+	withSetupRootTenant(a)
+	f := isAuthorized(a)
+
+	reqWithBadToken := httptest.NewRequest("GET", "/example", nil)
+	reqWithBadToken.Header.Set("Authorization", "Bearer badtoken")
+	a.validator.On("ValidateToken", mock.Anything, mock.Anything, mock.Anything, "badtoken").
+		Return(nil, apperr.NewInternal("foo"))
+	gt := newGinTest(s.T()).withRequest(reqWithBadToken)
+	f(gt.c)
+	s.Equal(401, gt.c.Writer.Status())
+}
+
+func (s *IsAuthorizedTestSuite) TestGoodToken() {
+	a := NewMockApp()
+	withSetupRootTenant(a)
+	f := isAuthorized(a)
+
+	reqWithBadToken := httptest.NewRequest("GET", "/example", nil)
+	reqWithBadToken.Header.Set("Authorization", "Bearer goodtoken   ")
+	a.validator.On("ValidateToken", mock.Anything, mock.Anything, mock.Anything, "goodtoken").
+		Return(&jwt.Token{}, nil)
+	gt := newGinTest(s.T()).withRequest(reqWithBadToken)
+	f(gt.c)
+	s.Equal(200, gt.c.Writer.Status())
 }

@@ -2,7 +2,9 @@ package server
 
 import (
 	"fmt"
+	"net/http"
 	"os"
+	"sort"
 
 	"github.com/apresdev/landlord/internal/appcore"
 
@@ -24,6 +26,10 @@ func Run() error {
 
 	a := appcore.Must()
 
+	baseRoutes.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusNoContent, nil)
+	})
+
 	if a.Settings().Routes() == appenv.RouteSettingBoth {
 		rest.AddRoutes(a, baseRoutes)
 		webapp.AddRoutes(a, baseRoutes)
@@ -39,6 +45,23 @@ func Run() error {
 	if err != nil {
 		return err
 	}
+
+	zap.L().Info("Starting Landlord server",
+		zap.Bool("devMode", a.Settings().DevMode()),
+		zap.String("addr", listenAddr.Addr),
+		zap.String("routesMode", a.Settings().Routes().String()),
+		zap.String("landlordVersion", appenv.Version.Version()),
+		zap.String("terraformVersion", appenv.Version.TerraformVersion()),
+		zap.String("buildTime", appenv.Version.BuildTime),
+		zap.String("commit", appenv.Version.Commit),
+		zap.String("goVersion", appenv.Version.GoVersion))
+
+	v := os.Environ()
+	sort.Slice(v, func(i, j int) bool {
+		return v[i] < v[j]
+	})
+	zap.L().Info("Landlord environment", zap.Strings("env", v))
+
 	if listenAddr.UseTLS {
 		return runTLS(listenAddr.Addr, baseRoutes)
 	} else {
