@@ -104,8 +104,8 @@ type healthCheckLogTracker struct {
 }
 
 const (
-	healthCheckLogFrequency = 10
-	healthCheckLogTimeFlush = 1 * time.Minute
+	healthCheckLogFrequency = 60
+	healthCheckLogTimeFlush = 2 * time.Minute
 )
 
 // logHealthCheck logs the health check request if it meets certain conditions.
