@@ -2,7 +2,6 @@ package authx
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -31,7 +30,7 @@ func SendInvite(
 
 	e, err := ParseEmail(username)
 	if err != nil {
-		return errors.New("invalid email")
+		return apperr.NewBadRequest("invalid email")
 	}
 	if role == "" {
 		return apperr.NewBadRequest("role is required")
@@ -47,6 +46,10 @@ func SendInvite(
 				fmt.Sprintf("user '%s' already belongs to another tenant", e.Address()))
 		}
 	} else if !apperr.IsNotFound(err) {
+		zap.L().Error("error getting user by name",
+			zap.String("username", e.Address()),
+			zap.String("tenantID", ten.ID.String()),
+			zap.Error(err))
 		return err
 	}
 	if existingUser != nil && existingUser.Status == multi.UserStatusInactive {
@@ -57,17 +60,20 @@ func SendInvite(
 		UserPoolId: aws.String(ten.UserPoolID),
 		Username:   aws.String(e.Address()),
 	}
-	// User has already been activated, so we need "resend" the invite, instead
-	// of just a regular old send.
+	// User has already been activated, so we need to mark the invite as a resend
 	if existingUser != nil {
 		args.MessageAction = types.MessageActionTypeResend
 	}
 	o, err := cogIdp.AdminCreateUser(ctx, &args)
 	if err != nil {
-		return err
+		return apperr.NewInternalE(
+			fmt.Errorf("error creating user in Cognito during invite of %s: %w",
+				e.Address(), err))
 	}
 	if err := SetCognitoGroup(ctx, cogIdp, ten, e.Address(), role); err != nil {
-		return err
+		return apperr.NewInternalE(
+			fmt.Errorf("error setting Cognito group during invite of %s %s: %w",
+				e.Address(), role, err))
 	}
 
 	var cognitoUserID uuid.UUID
@@ -75,7 +81,9 @@ func SendInvite(
 		if aws.ToString(attr.Name) == "sub" {
 			cognitoUserID, err = uuid.Parse(aws.ToString(attr.Value))
 			if err != nil {
-				return err
+				return apperr.NewInternalE(
+					fmt.Errorf("error parsing cognito sub claim during invite of %s %s: %w",
+						e.Address(), aws.ToString(attr.Value), err))
 			}
 			break
 		}
@@ -87,7 +95,8 @@ func SendInvite(
 
 	err = SetCustomClaimsOnUser(ctx, cogIdp, ten, u)
 	if err != nil {
-		return err
+		return apperr.NewInternalE(
+			fmt.Errorf("error setting claims during invite of %s: %w", e.Address(), err))
 	}
 
 	// Since the user's do not go through the typical sign-up flow in our version
@@ -110,7 +119,19 @@ func SendInvite(
 			zap.Error(err))
 	}
 
-	return db.StoreUser(ctx, dbc, u)
+	if err = db.StoreUser(ctx, dbc, u); err != nil {
+		return apperr.NewInternalE(
+			fmt.Errorf("error storing user during invite of %s: %w",
+				e.Address(), err))
+	}
+	zap.L().Info("successfully sent invite",
+		zap.String("tenantID", ten.ID.String()),
+		zap.String("userID", u.ID.String()),
+		zap.String("cognitoID", u.CognitoID.String()),
+		zap.String("username", e.Address()),
+		zap.String("role", role),
+		zap.String("mfaPolicy", mfaPolicy.String()))
+	return nil
 }
 
 func DeleteCognitoUser(
