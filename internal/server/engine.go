@@ -4,7 +4,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
+	ginzap "github.com/gin-contrib/zap"
+
+	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -24,7 +29,43 @@ func ipAllowList(al map[string]bool) gin.HandlerFunc {
 }
 
 func engine() (*gin.Engine, error) {
-	r := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+	if appenv.DevMode() {
+		gin.SetMode(gin.DebugMode)
+	}
+	r := gin.New()
+
+	healthCheckPaths := []string{"/health"}
+	tracker := &healthCheckLogTracker{}
+
+	// - Logs all requests, like a combined access and error log
+	// - Logs to stdout
+	// - RFC3339 with UTC time format
+	// - Logs stack traces on panic
+	r.Use(ginzap.GinzapWithConfig(zap.L(), &ginzap.Config{
+		TimeFormat: time.RFC3339,
+		UTC:        true,
+		Skipper: func(c *gin.Context) bool {
+			path := c.Request.URL.Path
+			for _, healthPath := range healthCheckPaths {
+				if path == healthPath {
+					tracker.logHealthCheck()
+					return true // Skip logging
+				}
+			}
+			// Special case for AWS health checks aimed at the root
+			if path == "/" {
+				ua := c.GetHeader("User-Agent")
+				if strings.Contains(strings.ToLower(ua), "healthcheck") {
+					tracker.logHealthCheck()
+					return true // Skip logging
+				}
+			}
+			return false
+		},
+	}))
+	r.Use(ginzap.RecoveryWithZap(zap.L(), true))
+
 	ips := os.Getenv("LANDLORD_IP_ALLOW_LIST")
 	if ips != "" {
 		al := make(map[string]bool)
@@ -54,4 +95,31 @@ func parseListenAddr(s string) (ListenAddr, error) {
 		return ListenAddr{UseTLS: false, Addr: s[7:]}, nil
 	}
 	return ListenAddr{UseTLS: false, Addr: s}, nil
+}
+
+type healthCheckLogTracker struct {
+	mu                 sync.Mutex
+	healthCheckCount   int
+	lastHealthCheckLog time.Time
+}
+
+const (
+	healthCheckLogFrequency = 10
+	healthCheckLogTimeFlush = 1 * time.Minute
+)
+
+// logHealthCheck logs the health check request if it meets certain conditions.
+func (h *healthCheckLogTracker) logHealthCheck() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	h.healthCheckCount++
+	now := time.Now()
+	lastLog := h.lastHealthCheckLog
+	shouldLog := h.healthCheckCount%healthCheckLogFrequency == 0 || now.Sub(lastLog) >= healthCheckLogTimeFlush
+	if shouldLog {
+		h.lastHealthCheckLog = now
+		zap.L().Info("Health check accumulator",
+			zap.Int("count", h.healthCheckCount))
+	}
 }

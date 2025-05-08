@@ -106,6 +106,19 @@ const (
 	RouteSettingWebApp
 )
 
+func (r RouteSetting) String() string {
+	switch r {
+	case RouteSettingBoth:
+		return "both"
+	case RouteSettingRest:
+		return "rest"
+	case RouteSettingWebApp:
+		return "webapp"
+	default:
+		return "unknown"
+	}
+}
+
 type Settings struct {
 	appURL       *url.URL
 	consoleURL   *url.URL
@@ -193,7 +206,7 @@ func MustSettings() Settings {
 	if e == "" {
 		zap.L().Fatal("LANDLORD_APP_ADMIN_EMAIL not set")
 	}
-	r := os.Getenv("LANDLORD_APP_ROUTES")
+	r := os.Getenv("LANDLORD_ROUTES")
 	rs := RouteSettingBoth
 	if r != "" {
 		switch r {
