@@ -37,6 +37,7 @@ func engine() (*gin.Engine, error) {
 
 	r.ForwardedByClientIP = true
 
+	// Trusting standard private IP address ranges (RFC 1918) commonly used for internal networks.
 	err := r.SetTrustedProxies([]string{"172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"})
 	if err != nil {
 		return nil, err
