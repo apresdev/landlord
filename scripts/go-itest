@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# go-itest is used to run all unit tests (some of which are
+# integration-style tests using localstack) without respecting
+# the typical caching of go unit tests. This is to more easily
+# iterate when changing the configs in the external dependency
+# (i.e. localstack) and wanting to ensure that everything re-runs.
+
+# Find all subdirectories containing *_test.go files
+# and run 'go test' in each of them
+
+# Find all directories containing *_test.go files
+test_dirs=$(find . -type f -name "*_test.go" -exec dirname {} \; | sort -u)
+
+# Check if any test directories were found
+if [ -z "$test_dirs" ]; then
+  echo "No directories containing *_test.go files were found."
+  exit 0
+fi
+
+echo "Found the following test directories:"
+echo "$test_dirs"
+echo "Running tests in each directory..."
+echo "--------------------------------"
+
+# For each directory, cd into it, run go test, then cd back
+for dir in $test_dirs; do
+  echo "Testing in $dir"
+  (cd "$dir" && go test)
+  echo "--------------------------------"
+done
+
+echo "All tests completed."

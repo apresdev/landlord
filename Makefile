@@ -15,6 +15,10 @@ clean:
 rel: gen
 	./scripts/go-rel-bld
 
+.PHONY: itest
+itest:
+	./scripts/go-itest
+
 .PHONY: version
 version:
 	echo "package appenv" > ./internal/appenv/tag.go

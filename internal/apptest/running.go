@@ -10,14 +10,14 @@ import (
 	"go.uber.org/zap"
 )
 
-const DefaultLocalstackEndpoint = "http://localhost:4566"
+const DefaultLocalStackEndpoint = "http://localhost:4566"
 
 func Endpoint() string {
 	v := os.Getenv("LANDLORD_LOCALSTACK_ENDPOINT")
 	if v != "" {
 		return v
 	}
-	return DefaultLocalstackEndpoint
+	return DefaultLocalStackEndpoint
 }
 
 var isRunningDetermined bool
