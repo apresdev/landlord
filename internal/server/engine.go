@@ -35,6 +35,13 @@ func engine() (*gin.Engine, error) {
 	}
 	r := gin.New()
 
+	r.ForwardedByClientIP = true
+
+	err := r.SetTrustedProxies([]string{"172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"})
+	if err != nil {
+		return nil, err
+	}
+
 	healthCheckPaths := []string{"/health"}
 	tracker := &healthCheckLogTracker{}
 
