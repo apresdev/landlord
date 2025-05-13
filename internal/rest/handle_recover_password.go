@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/apresdev/landlord/internal/apperr"
 	"github.com/apresdev/landlord/internal/db"
@@ -37,7 +38,7 @@ func HandleRecoverPassword(
 	if username == "" {
 		return nil, apperr.NewBadRequest("username is required")
 	}
-	_, tenant, err := db.GetUserAndTenant(ctx, a.DBCtx(), username)
+	user, tenant, err := db.GetUserAndTenant(ctx, a.DBCtx(), username)
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +67,15 @@ func HandleRecoverPassword(
 	if err != nil {
 		zap.L().Warn("Error sending forgot password", zap.Error(err))
 		return nil, err
+	}
+
+	user.RecoverAt = time.Now().UTC().Format(time.RFC3339)
+	if err = db.StoreUser(ctx, a.DBCtx(), user); err != nil {
+		zap.L().Error("error storing user in password recovery",
+			zap.String("username", username),
+			zap.String("tenantID", tenant.ID.String()),
+			zap.String("userID", user.ID.String()),
+			zap.Error(err))
 	}
 
 	// TODO: handle SMS and email separately?

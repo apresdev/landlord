@@ -581,6 +581,25 @@ func (uv *UserView) MFADisableLink() string {
 		uv.ten.ID.String(), uv.user.ID.String())
 }
 
+func (uv *UserView) LastRecovery() string {
+	if uv.user == nil {
+		return ""
+	}
+	if uv.user.RecoverAt == "" {
+		return "Never"
+	}
+	parsedTime, err := time.Parse(time.RFC3339, uv.user.RecoverAt)
+	if err != nil {
+		return uv.user.RecoverAt
+	}
+	return parsedTime.Format("2006-01-02 15:04:05") + " UTC"
+}
+
+func (uv *UserView) RecoverPasswordLink() string {
+	return fmt.Sprintf("/ll-auth/app/admin/tenants/%s/users/%s/recover-password",
+		uv.ten.ID.String(), uv.user.ID.String())
+}
+
 func displayTimestamp(t string) string {
 	parsedTime, err := time.Parse(time.RFC3339, t)
 	if err != nil {

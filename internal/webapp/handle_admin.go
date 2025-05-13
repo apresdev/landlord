@@ -552,6 +552,23 @@ func handleAdminDisableMFASubmit(
 		a, c, sub, targetTenant, targetUser, rest.MFAPolicyNone)
 }
 
+func handleAdminRecoverPasswordSubmit(
+	a App,
+	c *gin.Context,
+	sub *perms.Subject,
+	targetTenant *multi.Tenant,
+	targetUser *multi.User) error {
+
+	var req rest.RecoverPasswordRequest
+	req.Username = targetUser.Username
+	_, err := rest.HandleRecoverPassword(a, c, req)
+	if err != nil {
+		return err
+	}
+	redirectTo(c, "/admin/tenants/"+targetTenant.ID.String()+"/users/"+targetUser.ID.String())
+	return nil
+}
+
 func handleAdminReInviteUserSubmit(
 	a App,
 	c *gin.Context,

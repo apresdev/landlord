@@ -113,6 +113,7 @@ type User struct {
 	MFAStatus  MFAStatus  `dynamodbav:"mfaStatus"`
 	MFAPolicy  MFAPolicy  `dynamodbav:"mfaPolicy"`
 	CreatedAt  string     `dynamodbav:"createdAt"`
+	RecoverAt  string     `dynamodbav:"recoverAt"`
 	RawProfile []byte     `dynamodbav:"rawProfile"`
 	profile    *Profile   `dynamodbav:"-"`
 }

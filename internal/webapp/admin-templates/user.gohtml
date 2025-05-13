@@ -27,14 +27,14 @@
                             <span class="value">{{ template "userRoleForm" . }}</span>
                         {{ end }}
                     </div>
-                </div>
-
-                <!-- Column 2 -->
-                <div class="column is-half">
                     <div class="field">
                         <label class="label">State</label>
                         <span class="value">{{ .Status }}</span>
                     </div>
+                </div>
+
+                <!-- Column 2 -->
+                <div class="column is-half">
                     <div class="field">
                         <label class="label">Impersonation</label>
                         {{ if .IsImpersonating }}
@@ -49,6 +49,14 @@
                     <div class="field">
                         <label class="label">Time Created</label>
                         <span class="value">{{ .CreatedAt }}</span>
+                    </div>
+                    <div class="field">
+                        <label class="label">Last Password Recovery</label>
+                        <span class="value">{{ .LastRecovery }}</span>
+                        <button class="button is-small is-danger is-outlined" hx-post={{ .RecoverPasswordLink }}>
+                            Recover Password
+                            <i class="htmx-indicator fa-sharp fa-spinner fa-spin"></i>
+                        </button>
                     </div>
                     <div class="field">
                         <label class="label">Cognito User ID</label>
