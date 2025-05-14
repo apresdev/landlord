@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -11,12 +12,7 @@ import (
 	"github.com/apresdev/landlord/internal/appcore"
 	"github.com/apresdev/landlord/internal/appenv"
 	"github.com/apresdev/landlord/internal/apptest"
-	"github.com/apresdev/landlord/internal/authx"
 	"github.com/apresdev/landlord/internal/db"
-	"github.com/apresdev/landlord/internal/multi"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/gin-gonic/gin"
@@ -62,69 +58,73 @@ func (s *HandleRetrieveSubjectTestSuite) TestNotARealToken() {
 	assert.Equal(s.T(), http.StatusUnauthorized, w.Code)
 }
 
-func (s *HandleRetrieveSubjectTestSuite) TestHappyPath() {
-	ctx := context.Background()
-	emailAddress := uuid.New().String() + "@apres.dev"
-	rootTenant, err := db.GetRootTenant(ctx, s.app.DBCtx(), s.app.RootTenantID())
-	s.Require().NoError(err)
-	err = authx.SendInvite(
-		ctx,
-		s.app.DBCtx(),
-		s.app.CogIdp(),
-		rootTenant,
-		emailAddress,
-		uuid.Nil,
-		"admin",
-		multi.MFAPolicyNone)
-	s.NoError(err)
-	pwd := generateSortOfRandomPassword(12)
-	_, err = s.app.CogIdp().AdminSetUserPassword(
-		ctx,
-		&cognitoidentityprovider.AdminSetUserPasswordInput{
-			Password:   aws.String(pwd),
-			UserPoolId: aws.String(rootTenant.UserPoolID),
-			Username:   aws.String(emailAddress),
-			Permanent:  true,
-		})
-	s.NoError(err)
-
-	upc, err := authx.GetUserPoolClient(ctx, s.app.CogIdp(), rootTenant.UserPoolID)
-	s.NoError(err)
-
-	params := make(map[string]string)
-	params["USERNAME"] = emailAddress
-	params["PASSWORD"] = pwd
-	secretHash, err := authx.CreateSecretHash(
-		emailAddress, aws.ToString(upc.ClientId), aws.ToString(upc.ClientSecret))
-	s.NoError(err)
-	params["SECRET_HASH"] = secretHash
-
-	o, err := s.app.CogIdp().InitiateAuth(
-		ctx,
-		&cognitoidentityprovider.InitiateAuthInput{
-			AuthFlow:       "USER_PASSWORD_AUTH",
-			ClientId:       upc.ClientId,
-			AuthParameters: params,
-		})
-	s.NoError(err)
-	accessToken := aws.ToString(o.AuthenticationResult.AccessToken)
-
+func retrieveSubject(t *testing.T, g *gin.Engine, accessToken string) *SubjectResponse {
 	w := httptest.NewRecorder()
 	req, err := http.NewRequest("GET", "/ll-auth/api/subject", nil)
-	s.NoError(err)
+	assert.NoError(t, err)
 	req.Header.Set("Authorization", "Bearer "+accessToken)
-	s.g.ServeHTTP(w, req)
-	assert.Equal(s.T(), http.StatusOK, w.Code)
+	g.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
 	bodyBytes, err := io.ReadAll(w.Body)
-	s.NoError(err)
+	assert.NoError(t, err)
 	resp := &SubjectResponse{}
 	err = json.Unmarshal(bodyBytes, resp)
-	s.NoError(err)
-	assert.Equal(s.T(), emailAddress, resp.Username)
-	assert.Equal(s.T(), rootTenant.ID.String(), resp.TenantID)
-	assert.Equal(s.T(), rootTenant.Name, resp.TenantName)
-	assert.Equal(s.T(), "admin", resp.Role)
-	assert.Equal(s.T(), UserStatus("invited"), resp.Status)
-	assert.NotEqual(s.T(), "", resp.CognitoID)
-	assert.NotEqual(s.T(), "", resp.UserID)
+	assert.NoError(t, err)
+	return resp
+}
+
+func (s *HandleRetrieveSubjectTestSuite) TestHappyPath() {
+	invited := inviteUserAndAuthenticate(s.T(), s.app)
+	subject := retrieveSubject(s.T(), s.g, invited.accessToken)
+
+	ctx := context.Background()
+	rootTenant, err := db.GetRootTenant(ctx, s.app.DBCtx(), s.app.RootTenantID())
+	assert.NoError(s.T(), err)
+	user, err := db.GetUserByName(ctx, s.app.DBCtx(), invited.emailAddress)
+	assert.NoError(s.T(), err)
+
+	assert.Equal(s.T(), invited.emailAddress, subject.Username)
+	assert.Equal(s.T(), rootTenant.ID.String(), subject.TenantID)
+	assert.Equal(s.T(), rootTenant.Name, subject.TenantName)
+	assert.Equal(s.T(), "admin", subject.Role)
+	assert.Equal(s.T(), UserStatus("invited"), subject.Status)
+	assert.Equal(s.T(), user.CognitoID.String(), subject.CognitoID)
+	assert.Equal(s.T(), user.ID.String(), subject.UserID)
+	assert.Equal(s.T(), "", subject.Impersonating.TenantID)
+}
+
+func (s *HandleRetrieveSubjectTestSuite) TestImpersonate() {
+	invited1 := inviteUserAndAuthenticate(s.T(), s.app)
+	invited2 := inviteUserAndAuthenticate(s.T(), s.app)
+
+	user2, err := db.GetUserByName(context.Background(), s.app.DBCtx(), invited2.emailAddress)
+	assert.NoError(s.T(), err)
+
+	subject1 := retrieveSubject(s.T(), s.g, invited1.accessToken)
+	assert.Equal(s.T(), invited1.emailAddress, subject1.Username)
+	assert.Equal(s.T(), "", subject1.Impersonating.TenantID)
+
+	w := httptest.NewRecorder()
+	reqBody := ImpersonateUserRequest{
+		Tenant:       user2.TenantID.String(),
+		Username:     user2.Username,
+		RefreshToken: invited1.refreshToken,
+	}
+	reqBodyBytes, err := json.Marshal(reqBody)
+	assert.NoError(s.T(), err)
+	impersonateReq, err := http.NewRequest(
+		"POST", "/ll-auth/api/impersonate-user", bytes.NewBuffer(reqBodyBytes))
+	assert.NoError(s.T(), err)
+	impersonateReq.Header.Set("Authorization", "Bearer "+invited1.accessToken)
+	s.g.ServeHTTP(w, impersonateReq)
+	assert.Equal(s.T(), http.StatusOK, w.Code)
+	resp := ImpersonateResponse{}
+	bodyBytes, err := io.ReadAll(w.Body)
+	assert.NoError(s.T(), err)
+	err = json.Unmarshal(bodyBytes, &resp)
+	assert.NoError(s.T(), err)
+
+	subject1a := retrieveSubject(s.T(), s.g, resp.AccessToken)
+	assert.Equal(s.T(), invited1.emailAddress, subject1a.Username)
+	assert.Equal(s.T(), user2.TenantID.String(), subject1a.Impersonating.TenantID)
 }

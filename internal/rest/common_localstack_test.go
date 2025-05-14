@@ -1,7 +1,13 @@
 package rest
 
 import (
+	"context"
 	"math/rand"
+	"testing"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/apresdev/landlord/internal/appcore"
 	"github.com/apresdev/landlord/internal/appenv"
@@ -51,4 +57,63 @@ func generateSortOfRandomPassword(l int) string {
 		password[i] = allChars[(i*randomNumber)%len(allChars)]
 	}
 	return string(password)
+}
+
+type invitedUser struct {
+	emailAddress string
+	accessToken  string
+	refreshToken string
+}
+
+func inviteUserAndAuthenticate(t *testing.T, app App) *invitedUser {
+	ctx := context.Background()
+	emailAddress := uuid.New().String() + "@apres.dev"
+	rootTenant, err := db.GetRootTenant(ctx, app.DBCtx(), app.RootTenantID())
+	assert.NoError(t, err)
+	err = authx.SendInvite(
+		ctx,
+		app.DBCtx(),
+		app.CogIdp(),
+		rootTenant,
+		emailAddress,
+		uuid.Nil,
+		"admin",
+		multi.MFAPolicyNone)
+	assert.NoError(t, err)
+	pwd := generateSortOfRandomPassword(12)
+	_, err = app.CogIdp().AdminSetUserPassword(
+		ctx,
+		&cognitoidentityprovider.AdminSetUserPasswordInput{
+			Password:   aws.String(pwd),
+			UserPoolId: aws.String(rootTenant.UserPoolID),
+			Username:   aws.String(emailAddress),
+			Permanent:  true,
+		})
+	assert.NoError(t, err)
+
+	upc, err := authx.GetUserPoolClient(ctx, app.CogIdp(), rootTenant.UserPoolID)
+	assert.NoError(t, err)
+
+	params := make(map[string]string)
+	params["USERNAME"] = emailAddress
+	params["PASSWORD"] = pwd
+	secretHash, err := authx.CreateSecretHash(
+		emailAddress, aws.ToString(upc.ClientId), aws.ToString(upc.ClientSecret))
+	assert.NoError(t, err)
+	params["SECRET_HASH"] = secretHash
+
+	o, err := app.CogIdp().InitiateAuth(
+		ctx,
+		&cognitoidentityprovider.InitiateAuthInput{
+			AuthFlow:       "USER_PASSWORD_AUTH",
+			ClientId:       upc.ClientId,
+			AuthParameters: params,
+		})
+	assert.NoError(t, err)
+
+	return &invitedUser{
+		emailAddress: emailAddress,
+		accessToken:  aws.ToString(o.AuthenticationResult.AccessToken),
+		refreshToken: aws.ToString(o.AuthenticationResult.RefreshToken),
+	}
 }
