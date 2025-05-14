@@ -53,7 +53,7 @@
                     <div class="field">
                         <label class="label">Last Password Recovery</label>
                         <span class="value">{{ .LastRecovery }}</span>
-                        <button class="button is-small is-danger is-outlined" hx-post={{ .RecoverPasswordLink }}>
+                        <button class="button is-small is-danger is-outlined" hx-post="{{ .RecoverPasswordLink }}">
                             Recover Password
                             <i class="htmx-indicator fa-sharp fa-spinner fa-spin"></i>
                         </button>
