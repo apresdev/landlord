@@ -101,6 +101,17 @@ form.htmx-request {
     cursor: not-allowed;
 }
 
+.htmx-indicator {
+    display: none;
+}
+.htmx-request .htmx-indicator {
+    display: inline;
+}
+.htmx-request.button {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
 .submit-indicator{
     opacity:0;
     transition: opacity 100ms ease-in;

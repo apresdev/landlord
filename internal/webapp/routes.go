@@ -295,6 +295,7 @@ func AddRoutes(a App, baseRoutes *gin.Engine) {
 	authUser.POST("/admin/tenants/:tenantID/users/:userID/mfa/enable", handleAdminEnableMFASubmit)
 	authUser.POST("/admin/tenants/:tenantID/users/:userID/mfa/disable", handleAdminDisableMFASubmit)
 	authUser.POST("/admin/tenants/:tenantID/users/:userID/reinvite", handleAdminReInviteUserSubmit)
+	authUser.POST("/admin/tenants/:tenantID/users/:userID/recover-password", handleAdminRecoverPasswordSubmit)
 	authUser.POST("/admin/tenants/:tenantID/users/:userID/impersonate", handleAdminImpersonateUserSubmit)
 
 	authUser.POST("/admin/tenants/:tenantID/users/:userID/field/edit", handleAdminUserProfileFieldSubmit)
