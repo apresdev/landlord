@@ -35,12 +35,13 @@ func handleRetrieveSubject(a App, c *gin.Context) error {
 		return apperr.NewUnauthorized("not authorized")
 	}
 	var resp SubjectResponse
+	resp.TenantID = ten.ID.String()
+	resp.TenantName = ten.Name
 	resp.UserID = user.ID.String()
+	resp.CognitoID = user.CognitoID.String()
 	resp.Username = sub.Username
 	resp.Role = sub.Role.Name
 	resp.Status = UserStatus(user.Status.String())
-	resp.TenantID = ten.ID.String()
-	resp.TenantName = ten.Name
 	resp.TenantProfileFields = convertProfileFields(ten)
 	resp.UserProfileFields = convertProfileFields(user)
 
