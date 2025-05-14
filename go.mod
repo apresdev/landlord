@@ -8,6 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.18.12
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.52.0
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.42.4
+	github.com/aws/aws-sdk-go-v2/service/lambda v1.71.2
 	github.com/ettle/strcase v0.2.0
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-contrib/zap v1.1.5
@@ -28,6 +29,7 @@ require (
 
 require (
 	github.com/agnivade/levenshtein v1.2.1 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.10 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.67 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.34 // indirect

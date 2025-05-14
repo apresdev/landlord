@@ -76,8 +76,8 @@ func (s *IsAuthorizedTestSuite) TestGoodToken() {
 	f := isAuthorized(a)
 
 	reqWithBadToken := httptest.NewRequest("GET", "/example", nil)
-	reqWithBadToken.Header.Set("Authorization", "Bearer goodtoken   ")
-	a.validator.On("ValidateToken", mock.Anything, mock.Anything, mock.Anything, "goodtoken").
+	reqWithBadToken.Header.Set("Authorization", "Bearer Goodtoken   ")
+	a.validator.On("ValidateToken", mock.Anything, mock.Anything, mock.Anything, "Goodtoken").
 		Return(&jwt.Token{}, nil)
 	gt := newGinTest(s.T()).withRequest(reqWithBadToken)
 	f(gt.c)
