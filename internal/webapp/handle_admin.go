@@ -274,7 +274,8 @@ func handleAdminInviteUserSubmit(
 	req.Role = c.PostForm("role")
 	req.MfaPolicy = rest.MfaPolicy(c.PostForm("mfaPolicy"))
 
-	if err := rest.HandleInviteToTenant(a, c, sub, targetTenant, req); err != nil {
+	user, err := rest.HandleInviteToTenant(a, c, sub, targetTenant, req)
+	if err != nil {
 		return inviteUserFormError(a, c, sub, targetTenant, err.Error())
 	}
 
@@ -298,10 +299,6 @@ func handleAdminInviteUserSubmit(
 				rest.ProfileField{
 					Name:  r.def.UIName,
 					Value: r.formValue})
-		}
-		user, err := db.GetUserByName(c.Request.Context(), a.DBCtx(), req.Username)
-		if err != nil {
-			return apperr.NewNotFoundE(err)
 		}
 		err = rest.HandleUpdateUserProfileFields(
 			a, c, sub, targetTenant, user, updateProfileFieldsReq)
@@ -580,12 +577,13 @@ func handleAdminReInviteUserSubmit(
 	req.Username = targetUser.Username
 	req.Role = targetUser.Role
 	req.MfaPolicy = rest.MfaPolicy(targetUser.MFAPolicy.String())
-	if err := rest.HandleInviteToTenant(a, c, sub, targetTenant, req); err != nil {
+	user, err := rest.HandleInviteToTenant(a, c, sub, targetTenant, req)
+	if err != nil {
 		return err
 	}
 	return executeUserTemplate(
 		c, "userFragment",
-		NewUserView(c.Request.Context(), a, sub, targetTenant, targetUser))
+		NewUserView(c.Request.Context(), a, sub, targetTenant, user))
 }
 
 func handleAdminImpersonateUserSubmit(
@@ -988,7 +986,7 @@ func handleBulkInviteSubmit(
 				Value: row[i],
 			})
 		}
-		err = rest.HandleInviteToTenant(a, c, sub, targetTenant, req)
+		_, err = rest.HandleInviteToTenant(a, c, sub, targetTenant, req)
 		if err != nil {
 			return bulkInviteFormError(a, c, sub, targetTenant,
 				fmt.Sprintf("Invite failed for %s: %s", req.Username, err.Error()))

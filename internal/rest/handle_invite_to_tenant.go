@@ -34,12 +34,9 @@ func handleInviteToTenant(a App, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := HandleInviteToTenant(a, c, sub, targetTenant, req); err != nil {
-		return err
-	}
-	user, err := db.GetUserByName(c, a.DBCtx(), req.Username)
+	user, err := HandleInviteToTenant(a, c, sub, targetTenant, req)
 	if err != nil {
-		return apperr.NewInternalE(err)
+		return err
 	}
 	invitedUser := TenantUser{
 		Username:  req.Username,
@@ -57,35 +54,35 @@ func HandleInviteToTenant(
 	c *gin.Context,
 	sub *perms.Subject,
 	targetTenant *multi.Tenant,
-	req InviteRequest) error {
+	req InviteRequest) (*multi.User, error) {
 
 	resource := perms.NewResource(
 		perms.ResourceKindInvitation, req.Role, targetTenant, nil)
 	effect, err := perms.Eval(c, a, sub, perms.ActionWrite, resource)
 	if err != nil {
 		zap.L().Error("could not evaluate permissions", zap.Error(err))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	if effect.IsDenied() {
 		zap.L().Info("denied sending invitation",
 			zap.String("subject", sub.String()),
 			zap.String("resource", resource.String()))
-		return apperr.NewUnauthorized("not authorized")
+		return nil, apperr.NewUnauthorized("not authorized")
 	}
 
 	mfaPol, err := multi.ParseMFAPolicy(string(req.MfaPolicy))
 	if err != nil {
-		return apperr.NewBadRequest(err.Error())
+		return nil, apperr.NewBadRequest(err.Error())
 	}
 	overrideUUID := uuid.Nil
 	if req.OptionalUserID != "" {
 		overrideUUID, err = uuid.Parse(req.OptionalUserID)
 		if err != nil {
-			return apperr.NewBadRequest("invalid user ID")
+			return nil, apperr.NewBadRequest("invalid user ID")
 		}
 	}
 
-	err = authx.SendInvite(
+	user, err := authx.SendInvite(
 		c.Request.Context(),
 		a.DBCtx(),
 		a.CogIdp(),
@@ -99,7 +96,7 @@ func HandleInviteToTenant(
 			zap.String("username", req.Username),
 			zap.String("role", req.Role),
 			zap.Error(err))
-		return apperr.NewBadRequest(err.Error())
+		return nil, apperr.NewBadRequest(err.Error())
 	}
-	return nil
+	return user, nil
 }

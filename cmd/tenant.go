@@ -275,7 +275,7 @@ func tenantInviteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = authx.SendInvite(
+			_, err = authx.SendInvite(
 				cs.Ctx(), cs.DBCtx(), cs.CogIdp(), ten, username, uuid.Nil, role, mfaPol)
 			if err != nil {
 				return err
