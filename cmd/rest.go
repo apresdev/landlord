@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -286,9 +287,11 @@ func restInviteCmd() *cobra.Command {
 			invResp, r, err := cl.LandlordAdminAPI.InviteToTenant(
 				ctx, tenantID.String()).InviteRequest(req).Execute()
 			if err != nil {
-				b, err2 := io.ReadAll(r.Body)
-				if err2 == nil {
-					return fmt.Errorf("%w: error: %s", err, string(b))
+				if r != nil {
+					b, err2 := io.ReadAll(r.Body)
+					if err2 == nil {
+						return fmt.Errorf("%w: error: %s", err, string(b))
+					}
 				}
 				return err
 			}
@@ -332,6 +335,7 @@ func restLoginCmd() *cobra.Command {
 			if password == "" {
 				return errors.New("--password required")
 			}
+			server = strings.TrimSuffix(server, "/")
 			cl, err := apiClient("", server)
 			if err != nil {
 				return err

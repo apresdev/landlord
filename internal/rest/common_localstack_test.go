@@ -23,7 +23,7 @@ func inviteRootUser(s appenv.Settings, username string) error {
 	if err != nil {
 		return err
 	}
-	return authx.SendInvite(
+	_, err = authx.SendInvite(
 		c.Ctx(),
 		c.DBCtx(),
 		c.CogIdp(),
@@ -32,6 +32,7 @@ func inviteRootUser(s appenv.Settings, username string) error {
 		uuid.Nil,
 		"admin",
 		multi.MFAPolicyNone)
+	return err
 }
 
 // generateSortOfRandomPassword generates a random password of the specified length.
@@ -70,7 +71,7 @@ func inviteUserAndAuthenticate(t *testing.T, app App) *invitedUser {
 	emailAddress := uuid.New().String() + "@apres.dev"
 	rootTenant, err := db.GetRootTenant(ctx, app.DBCtx(), app.RootTenantID())
 	assert.NoError(t, err)
-	err = authx.SendInvite(
+	_, err = authx.SendInvite(
 		ctx,
 		app.DBCtx(),
 		app.CogIdp(),

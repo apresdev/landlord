@@ -47,7 +47,7 @@ func (s *InviteTestSuite) TestBadEmail() {
 	a := appcore.MustWithSettings(s.s)
 	rootTenant, err := db.GetRootTenant(a.Ctx(), a.DBCtx(), a.RootTenantID())
 	s.Require().NoError(err)
-	err = authx.SendInvite(
+	user, err := authx.SendInvite(
 		a.Ctx(),
 		a.DBCtx(),
 		a.CogIdp(),
@@ -58,6 +58,7 @@ func (s *InviteTestSuite) TestBadEmail() {
 		multi.MFAPolicyNone)
 	s.Error(err)
 	s.Equal(err.Error(), "invalid email")
+	s.Nil(user)
 }
 
 func (s *InviteTestSuite) TestInviteDBFailure() {
@@ -67,7 +68,7 @@ func (s *InviteTestSuite) TestInviteDBFailure() {
 	cogIdp := mocks.NewAWSCognitoIdentityProvider(s.T())
 	ddb.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
 	tenant := multi.NewTenant("ten1")
-	err := authx.SendInvite(
+	user, err := authx.SendInvite(
 		ctx,
 		dbc,
 		cogIdp,
@@ -78,6 +79,7 @@ func (s *InviteTestSuite) TestInviteDBFailure() {
 		multi.MFAPolicyNone)
 	s.Error(err)
 	s.Contains(err.Error(), "db error")
+	s.Nil(user)
 }
 
 func (s *InviteTestSuite) TestInviteInactiveUser() {
@@ -94,7 +96,7 @@ func (s *InviteTestSuite) TestInviteInactiveUser() {
 	err = db.StoreUser(a.Ctx(), a.DBCtx(), u)
 	s.Require().NoError(err)
 
-	err = authx.SendInvite(
+	user, err := authx.SendInvite(
 		a.Ctx(),
 		a.DBCtx(),
 		a.CogIdp(),
@@ -105,6 +107,7 @@ func (s *InviteTestSuite) TestInviteInactiveUser() {
 		multi.MFAPolicyNone)
 	s.Error(err)
 	s.Equal(err.Error(), "cannot send invite, user 'foo@example.com' is inactive")
+	s.Nil(user)
 }
 
 func (s *InviteTestSuite) TestInviteNewUser() {
@@ -115,7 +118,7 @@ func (s *InviteTestSuite) TestInviteNewUser() {
 	s.Require().NoError(err)
 	s.Require().NotNil(ten)
 
-	err = authx.SendInvite(
+	user, err := authx.SendInvite(
 		a.Ctx(),
 		a.DBCtx(),
 		a.CogIdp(),
@@ -125,6 +128,8 @@ func (s *InviteTestSuite) TestInviteNewUser() {
 		"guest",
 		multi.MFAPolicyNone)
 	s.NoError(err)
+	s.NotNil(user)
+	s.Equal("foo@example.com", user.Username)
 }
 
 func (s *InviteTestSuite) TestInviteOverrideUserID() {
@@ -137,7 +142,7 @@ func (s *InviteTestSuite) TestInviteOverrideUserID() {
 
 	overrideUserID := uuid.New()
 
-	err = authx.SendInvite(
+	user, err := authx.SendInvite(
 		a.Ctx(),
 		a.DBCtx(),
 		a.CogIdp(),
@@ -147,6 +152,8 @@ func (s *InviteTestSuite) TestInviteOverrideUserID() {
 		"guest",
 		multi.MFAPolicyNone)
 	s.NoError(err)
+	s.NotNil(user)
+	s.Equal("foo@example.com", user.Username)
 
 	u1, err := db.GetUserByName(a.Ctx(), a.DBCtx(), "foo@example.com")
 	s.NoError(err)

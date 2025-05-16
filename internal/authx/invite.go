@@ -26,23 +26,23 @@ func SendInvite(
 	username string,
 	overrideUserID uuid.UUID,
 	role string,
-	mfaPolicy multi.MFAPolicy) error {
+	mfaPolicy multi.MFAPolicy) (*multi.User, error) {
 
 	e, err := ParseEmail(username)
 	if err != nil {
-		return apperr.NewBadRequest("invalid email")
+		return nil, apperr.NewBadRequest("invalid email")
 	}
 	if role == "" {
-		return apperr.NewBadRequest("role is required")
+		return nil, apperr.NewBadRequest("role is required")
 	}
 	if !ten.HasRole(role) {
-		return apperr.NewBadRequest(
+		return nil, apperr.NewBadRequest(
 			fmt.Sprintf("role '%s' is not valid for tenant '%s'", role, ten.ID))
 	}
 	existingUser, err := db.GetUserByName(ctx, dbc, e.Address())
 	if err == nil {
 		if existingUser.TenantID != ten.ID {
-			return apperr.NewBadRequest(
+			return nil, apperr.NewBadRequest(
 				fmt.Sprintf("user '%s' already belongs to another tenant", e.Address()))
 		}
 	} else if !apperr.IsNotFound(err) {
@@ -50,10 +50,10 @@ func SendInvite(
 			zap.String("username", e.Address()),
 			zap.String("tenantID", ten.ID.String()),
 			zap.Error(err))
-		return err
+		return nil, err
 	}
 	if existingUser != nil && existingUser.Status == multi.UserStatusInactive {
-		return apperr.NewBadRequest(
+		return nil, apperr.NewBadRequest(
 			fmt.Sprintf("cannot send invite, user '%s' is inactive", e.Address()))
 	}
 	args := cognitoidentityprovider.AdminCreateUserInput{
@@ -66,12 +66,12 @@ func SendInvite(
 	}
 	o, err := cogIdp.AdminCreateUser(ctx, &args)
 	if err != nil {
-		return apperr.NewInternalE(
+		return nil, apperr.NewInternalE(
 			fmt.Errorf("error creating user in Cognito during invite of %s: %w",
 				e.Address(), err))
 	}
 	if err := SetCognitoGroup(ctx, cogIdp, ten, e.Address(), role); err != nil {
-		return apperr.NewInternalE(
+		return nil, apperr.NewInternalE(
 			fmt.Errorf("error setting Cognito group during invite of %s %s: %w",
 				e.Address(), role, err))
 	}
@@ -81,7 +81,7 @@ func SendInvite(
 		if aws.ToString(attr.Name) == "sub" {
 			cognitoUserID, err = uuid.Parse(aws.ToString(attr.Value))
 			if err != nil {
-				return apperr.NewInternalE(
+				return nil, apperr.NewInternalE(
 					fmt.Errorf("error parsing cognito sub claim during invite of %s %s: %w",
 						e.Address(), aws.ToString(attr.Value), err))
 			}
@@ -95,7 +95,7 @@ func SendInvite(
 
 	err = SetCustomClaimsOnUser(ctx, cogIdp, ten, u)
 	if err != nil {
-		return apperr.NewInternalE(
+		return nil, apperr.NewInternalE(
 			fmt.Errorf("error setting claims during invite of %s: %w", e.Address(), err))
 	}
 
@@ -120,7 +120,7 @@ func SendInvite(
 	}
 
 	if err = db.StoreUser(ctx, dbc, u); err != nil {
-		return apperr.NewInternalE(
+		return nil, apperr.NewInternalE(
 			fmt.Errorf("error storing user during invite of %s: %w",
 				e.Address(), err))
 	}
@@ -131,7 +131,8 @@ func SendInvite(
 		zap.String("username", e.Address()),
 		zap.String("role", role),
 		zap.String("mfaPolicy", mfaPolicy.String()))
-	return nil
+
+	return u, nil
 }
 
 func DeleteCognitoUser(
