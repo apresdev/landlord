@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-contrib/gzip"
+
 	ginzap "github.com/gin-contrib/zap"
 
 	"github.com/apresdev/landlord/internal/appenv"
@@ -42,6 +44,8 @@ func engine() (*gin.Engine, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	healthCheckPaths := []string{"/health"}
 	tracker := &healthCheckLogTracker{}
