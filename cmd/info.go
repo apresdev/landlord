@@ -116,6 +116,42 @@ func infoSessionCmd() *cobra.Command {
 	return c
 }
 
+func infoTokenCmd() *cobra.Command {
+	var whichToken string
+	c := &cobra.Command{
+		Use:   "token",
+		Short: "Display a token of the current session",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := MustSession()
+			switch whichToken {
+			case "access":
+				if s.AccessToken == "" {
+					return fmt.Errorf("access token is empty")
+				}
+				fmt.Println(s.AccessToken)
+				return nil
+			case "id":
+				if s.IdToken == "" {
+					return fmt.Errorf("id token is empty")
+				}
+				fmt.Println(s.IdToken)
+				return nil
+			case "refresh":
+				if s.RefreshToken == "" {
+					return fmt.Errorf("refresh token is empty")
+				}
+				fmt.Println(s.RefreshToken)
+				return nil
+			default:
+				return fmt.Errorf("unknown token type %s", whichToken)
+			}
+		},
+	}
+	c.PersistentFlags().StringVarP(
+		&whichToken, "token", "t", "access", "token type (access, id, refresh)")
+	return c
+}
+
 func base64DecodeStringAsBinaryUUID(s string) (uuid.UUID, error) {
 	decoded, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
@@ -253,5 +289,6 @@ func infoCmd() *cobra.Command {
 	c.AddCommand(infoDecodeUUIDCmd())
 	c.AddCommand(infoDriftCmd())
 	c.AddCommand(infoSessionCmd())
+	c.AddCommand(infoTokenCmd())
 	return c
 }
