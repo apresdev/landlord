@@ -50,7 +50,7 @@ func handleAdminDashboardError(a App, c *gin.Context) error {
 	err := executeErrorTemplate(c, "error", ev)
 	if err != nil {
 		// We are already in an error context and have hit another error.
-		// Log it and just try redirecting to the root page. Something is
+		// Log it and try redirecting to the root page. Something is
 		// really wrong if we get here.
 		zap.L().Error("Error rendering error page", zap.Error(err))
 		c.Redirect(http.StatusFound, appPath("/"))
@@ -60,6 +60,13 @@ func handleAdminDashboardError(a App, c *gin.Context) error {
 }
 
 func handleAdminAbout(a App, c *gin.Context, sub *perms.Subject) error {
+	// a tiny backdoor to log all the headers for debugging, add ?debug=true to the URL for
+	// the about page
+	if c.Query("debug") == "true" {
+		for k, v := range c.Request.Header {
+			zap.L().Info("Header", zap.String("key", k), zap.Strings("value", v))
+		}
+	}
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub)
 	return executeAdminTemplate(c, "about", sv)
 }
