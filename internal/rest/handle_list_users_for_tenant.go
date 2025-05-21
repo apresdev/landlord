@@ -5,8 +5,6 @@ import (
 
 	"github.com/apresdev/landlord/internal/perms"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"go.uber.org/zap"
 
 	"github.com/apresdev/landlord/internal/multi"
@@ -37,25 +35,12 @@ func getUsersForTenant(
 	}
 	resp := TenantUsersResponse{TenantID: ten.ID.String()}
 	for _, user := range users {
-		u, err := a.CogIdp().AdminGetUser(
-			c.Request.Context(),
-			&cognitoidentityprovider.AdminGetUserInput{
-				UserPoolId: aws.String(ten.UserPoolID),
-				Username:   aws.String(user.Username),
-			})
-		if err != nil {
-			zap.L().Error("error getting user",
-				zap.String("username", user.Username),
-				zap.String("tenantID", ten.ID.String()),
-				zap.Error(err))
-			return nil, apperr.NewInternal(err.Error())
-		}
 		resp.Users = append(resp.Users, TenantUser{
 			Username:      user.Username,
 			Role:          user.Role,
 			Status:        UserStatus(user.Status.String()),
 			UserID:        user.ID.String(),
-			CognitoID:     aws.ToString(u.Username),
+			CognitoID:     user.CognitoID.String(),
 			ProfileFields: convertProfileFields(user),
 		})
 	}
