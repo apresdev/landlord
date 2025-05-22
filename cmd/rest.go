@@ -235,8 +235,7 @@ func restImpersonateUserCmd() *cobra.Command {
 		&token, "token", "t", "", "Token to authorize with")
 	c.PersistentFlags().StringVarP(
 		&tenant, "tenant", "T", "", "Tenant to impersonate")
-	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username to impersonate")
+	addUsernameFlags(c, &username, "Username to impersonate")
 	c.PersistentFlags().StringVarP(
 		&refreshToken, "refresh-token", "f", "", "Refresh token to use")
 	c.PersistentFlags().StringVarP(
@@ -305,8 +304,7 @@ func restInviteCmd() *cobra.Command {
 		&server, "server", "s", "", "Server to connect to")
 	c.PersistentFlags().StringVarP(
 		&tenant, "tenant", "T", "", "Tenant to impersonate")
-	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username to invite")
+	addUsernameFlags(c, &username, "Username to invite")
 	c.PersistentFlags().StringVarP(
 		&role, "role", "r", multi.RoleGuest, "Role to impersonate")
 	c.PersistentFlags().StringVarP(
@@ -371,10 +369,9 @@ func restLoginCmd() *cobra.Command {
 			return nil
 		},
 	}
+	addUsernameFlags(c, &username, "Login username")
 	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username to login with")
-	c.PersistentFlags().StringVarP(
-		&password, "password", "p", "", "Password to login with")
+		&password, "password", "p", "", "Login password")
 	c.PersistentFlags().StringVarP(
 		&server, "server", "s", "", "Server to connect to")
 	return c
@@ -428,13 +425,9 @@ func restNewPassword() *cobra.Command {
 		},
 	}
 
+	addUsernameFlags(c, &username, "Username to set password for")
 	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username to login with")
-	c.PersistentFlags().StringVarP(
-		&username, "email", "", "", "Email to login with")
-	_ = c.PersistentFlags().MarkHidden("email")
-	c.PersistentFlags().StringVarP(
-		&password, "password", "p", "", "Password to login with")
+		&password, "password", "p", "", "New password to set")
 	c.PersistentFlags().StringVarP(
 		&session, "session", "", "", "Session token returned from login call")
 	c.PersistentFlags().StringVarP(
@@ -488,8 +481,7 @@ func restRefreshCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username to login with")
+	addUsernameFlags(c, &username, "Username to refresh tokens for")
 	c.PersistentFlags().StringVarP(
 		&refreshToken, "refresh-token", "r", "", "Refresh token")
 	c.PersistentFlags().StringVarP(
@@ -752,8 +744,7 @@ func restValidateMFACodeCmd() *cobra.Command {
 	}
 	c.PersistentFlags().StringVarP(
 		&server, "server", "s", "", "Server to connect to")
-	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username to validate")
+	addUsernameFlags(c, &username, "Username for MFA code validation")
 	c.PersistentFlags().StringVarP(
 		&code, "code", "c", "", "MFA code to validate")
 	c.PersistentFlags().StringVarP(
@@ -801,8 +792,7 @@ func restVerifyOTPAssociation() *cobra.Command {
 		&server, "server", "s", "", "Server to connect to")
 	c.PersistentFlags().StringVarP(
 		&tenant, "tenant", "T", "", "Tenant to impersonate")
-	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username to validate")
+	addUsernameFlags(c, &username, "Username to verify OTP association for")
 	c.PersistentFlags().StringVarP(
 		&code, "code", "c", "", "MFA code to validate")
 	return c

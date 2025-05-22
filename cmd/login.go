@@ -58,11 +58,7 @@ func loginCmd() *cobra.Command {
 	}
 	c.PersistentFlags().StringVarP(
 		&userpool, "userpool", "U", "", "User pool to login to")
-	c.PersistentFlags().StringVarP(
-		&username, "username", "u", "", "Username to login with")
-	c.PersistentFlags().StringVarP(
-		&username, "email", "", "", "Email to login with")
-	_ = c.PersistentFlags().MarkHidden("email")
+	addUsernameFlags(c, &username, "Username to login with")
 	c.PersistentFlags().StringVarP(
 		&password, "password", "p", "", "Password to login with")
 
