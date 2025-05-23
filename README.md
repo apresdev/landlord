@@ -95,12 +95,14 @@ aws sso login
   be set to a profile that uses the localstack endpoint.
 * `LANDLORD_TERRAFORM_MODULE_VERSION=<version>`: The version of the terraform
   module that the container is being deployed with.
+* `LANDLORD_SECURE_COOKIE_KEY`: Key used to sign and encrypt cookies. A
+  base64 encoded string of 64 bytes.
 
 ### Users and Roles
 
-The landlord tool supports the creation of custom roles. By default, the
+The Landlord tool supports the creation of custom roles. By default, the
 built-in `guest` role is applied to all users. Permissions attached to a
-role are an app-specific responsibility. The landlord merely manages the
+role are an app-specific responsibility. Landlord manages the
 assignment of users to roles and the inclusion of those roles in the
 production of JWTs after a user logs in.
 

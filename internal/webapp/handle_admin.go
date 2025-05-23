@@ -63,9 +63,11 @@ func handleAdminAbout(a App, c *gin.Context, sub *perms.Subject) error {
 	// a tiny backdoor to log all the headers for debugging, add ?debug=true to the URL for
 	// the about page
 	if c.Query("debug") == "true" {
+		allHeaders := make([]string, 0)
 		for k, v := range c.Request.Header {
-			zap.L().Info("Header", zap.String("key", k), zap.Strings("value", v))
+			allHeaders = append(allHeaders, fmt.Sprintf("%s: %s", k, strings.Join(v, ",")))
 		}
+		zap.L().Info("Header", zap.Strings("headers", allHeaders))
 	}
 	sv := NewAuthenticatedSubjectView(c.Request.Context(), a, sub)
 	return executeAdminTemplate(c, "about", sv)
@@ -364,8 +366,11 @@ func handleAdminImpersonateRoleSubmit(
 	a App, c *gin.Context, sub *perms.Subject, targetTenant *multi.Tenant) error {
 
 	role := c.Param("role")
-	refreshToken, _ := c.Cookie(LandlordRefreshTokenCookie)
-	_, err := rest.HandleImpersonateRole(a, c, sub, targetTenant, role, refreshToken)
+	refreshToken, err := getEncodedCookie(c, LandlordRefreshTokenCookie)
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	_, err = rest.HandleImpersonateRole(a, c, sub, targetTenant, role, refreshToken)
 	if err != nil {
 		return err
 	}
@@ -600,8 +605,11 @@ func handleAdminImpersonateUserSubmit(
 	targetTenant *multi.Tenant,
 	targetUser *multi.User) error {
 
-	refreshToken, _ := c.Cookie(LandlordRefreshTokenCookie)
-	_, err := rest.HandleImpersonateUser(a, c, sub, targetTenant, targetUser, refreshToken)
+	refreshToken, err := getEncodedCookie(c, LandlordRefreshTokenCookie)
+	if err != nil {
+		return apperr.NewBadRequestE(err)
+	}
+	_, err = rest.HandleImpersonateUser(a, c, sub, targetTenant, targetUser, refreshToken)
 	if err != nil {
 		return err
 	}
