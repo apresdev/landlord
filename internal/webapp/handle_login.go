@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/apresdev/landlord/internal/apperr"
+
 	"github.com/apresdev/landlord/internal/db"
 	"github.com/apresdev/landlord/internal/jwx"
 	"github.com/skip2/go-qrcode"
@@ -23,17 +25,15 @@ func handleRoot(a App, c *gin.Context) error {
 		return nil
 	}
 
-	username, _ := c.Cookie(LandlordUsernameCookie)
-	if username == "" {
+	username, err := getEncodedCookie(c, LandlordUsernameCookie)
+	if err != nil || username == "" {
 		redirectToLogin(c)
 		return nil
 	}
 
-	var rawTokens jwx.RawTokens
-	rawTokens.IdToken, _ = c.Cookie(LandlordIDTokenCookie)
-	rawTokens.AccessToken, _ = c.Cookie(LandlordAccessTokenCookie)
-	rawTokens.RefreshToken, _ = c.Cookie(LandlordRefreshTokenCookie)
-	if rawTokens.IdToken == "" || rawTokens.AccessToken == "" || rawTokens.RefreshToken == "" {
+	accessToken, err := getEncodedCookie(c, LandlordAccessTokenCookie)
+	if err != nil || accessToken == "" {
+		clearLandlordCookies(c, a.Settings().ConsoleURL())
 		redirectToLogin(c)
 		return nil
 	}
@@ -48,8 +48,8 @@ func handleRoot(a App, c *gin.Context) error {
 		return nil
 	}
 	validationURL := jwx.ValidationURL(a.Cfg().Region, tenant.UserPoolID)
-	_, err = jwx.ValidateAllTokens(
-		c.Request.Context(), clientID(c), a.Validator(), validationURL, rawTokens)
+	_, err = a.Validator().ValidateToken(
+		c.Request.Context(), clientID(c), validationURL, accessToken)
 	if err != nil {
 		redirectToLogin(c)
 		return err
@@ -61,7 +61,7 @@ func handleRoot(a App, c *gin.Context) error {
 }
 
 func handleLogin(a App, c *gin.Context) error {
-	username, _ := c.Cookie(LandlordUsernameCookie)
+	username, _ := getEncodedCookie(c, LandlordUsernameCookie)
 	uv := NewUnauthenticatedView(a.Settings()).WithPotentialUsername(username)
 	return executeUnauthenticatedView(c, "loginPage", uv)
 }
@@ -78,31 +78,30 @@ func handleLoginSubmit(a App, c *gin.Context) error {
 	}
 	switch resp.Status {
 	case rest.LoginStatusSuccess:
-		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordAccessTokenCookie, resp.AccessToken)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordIDTokenCookie, resp.IdToken)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordRefreshTokenCookie, resp.RefreshToken)
+		setEncodedCookie(a, c, LandlordUsernameCookie, req.Username)
+		setEncodedCookie(a, c, LandlordAccessTokenCookie, resp.AccessToken)
+		setEncodedCookie(a, c, LandlordRefreshTokenCookie, resp.RefreshToken)
 		redirectToAppRoot(c)
 		return nil
 	case rest.LoginStatusNewPasswordRequired:
-		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
+		setEncodedCookie(a, c, LandlordUsernameCookie, req.Username)
+		setEncodedCookie(a, c, LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "new-password")
 		return nil
 	case rest.LoginStatusPasswordResetRequired:
-		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
+		setEncodedCookie(a, c, LandlordUsernameCookie, req.Username)
+		setEncodedCookie(a, c, LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "reset-password")
 		return nil
 	case rest.LoginStatusMFASetupRequired:
-		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordAccessTokenCookie, resp.AccessToken)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordOTPURI, resp.OtpURI)
+		setEncodedCookie(a, c, LandlordUsernameCookie, req.Username)
+		setEncodedCookie(a, c, LandlordAccessTokenCookie, resp.AccessToken)
+		setEncodedCookie(a, c, LandlordOTPURICookie, resp.OtpURI)
 		redirectTo(c, "setup-otp")
 		return nil
 	case rest.LoginStatusMFACodeRequired:
-		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
+		setEncodedCookie(a, c, LandlordUsernameCookie, req.Username)
+		setEncodedCookie(a, c, LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "otp")
 		return nil
 	default:
@@ -125,13 +124,11 @@ func handleQRCode(a App, c *gin.Context) error {
 	_ = a
 	uri := c.Query("uri")
 	if uri == "" {
-		c.String(http.StatusBadRequest, "missing uri")
-		return nil
+		return apperr.NewBadRequest("missing uri")
 	}
 	b, err := base64.URLEncoding.DecodeString(uri)
 	if err != nil {
-		c.String(http.StatusBadRequest, "invalid uri")
-		return nil
+		return apperr.NewBadRequest("invalid uri")
 	}
 	png, err := qrcode.Encode(string(b), qrcode.Medium, 256)
 	if err != nil {
@@ -142,10 +139,24 @@ func handleQRCode(a App, c *gin.Context) error {
 }
 
 func handleSetupOTP(a App, c *gin.Context) error {
-	otpURI, _ := c.Cookie(LandlordOTPURI)
+	otpURI, err := getEncodedCookie(c, LandlordOTPURICookie)
+	if err != nil || otpURI == "" {
+		zap.L().Error("missing OTP URI in handleSetupOTP",
+			zap.String("cid", string(clientID(c))),
+			zap.Error(err),
+			zap.String("cookie", string(LandlordOTPURICookie)))
+		return apperr.NewUnauthorized("unauthorized")
+	}
 	otpImageURI := appPath(fmt.Sprintf(
 		"/qrcode?uri=%s", base64.URLEncoding.EncodeToString([]byte(otpURI))))
-	username, _ := c.Cookie(LandlordUsernameCookie)
+	username, err := getEncodedCookie(c, LandlordUsernameCookie)
+	if err != nil || username == "" {
+		zap.L().Error("missing username in handleSetupOTP",
+			zap.String("cid", string(clientID(c))),
+			zap.Error(err),
+			zap.String("cookie", string(LandlordUsernameCookie)))
+		return apperr.NewUnauthorized("unauthorized")
+	}
 	uv := NewUnauthenticatedView(a.Settings()).
 		WithPotentialUsername(username).WithOTPImageLink(otpImageURI)
 	return executeUnauthenticatedView(c, "setupOTPPage", uv)
@@ -155,15 +166,17 @@ func handleSetupOTPSubmit(a App, c *gin.Context) error {
 	var req rest.VerifyOtpAssociationRequest
 	req.Username = c.PostForm("username")
 	req.OtpCode = c.PostForm("code")
-	req.AccessToken, _ = c.Cookie(LandlordAccessTokenCookie)
-	if req.AccessToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "missing access token"})
-		return nil
+	var err error
+	req.AccessToken, err = getEncodedCookie(c, LandlordAccessTokenCookie)
+	if err != nil || req.AccessToken == "" {
+		return apperr.NewBadRequest("missing access token")
 	}
-	err := rest.HandleVerifyOTPAssociation(a, c, req)
+	err = rest.HandleVerifyOTPAssociation(a, c, req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return nil
+		zap.L().Error("error verifying OTP association",
+			zap.String("username", req.Username),
+			zap.Error(err))
+		return apperr.NewBadRequest("error verifying OTP association")
 	}
 	// TODO: add refresh token to request and re-fetch tokens here
 	redirectToAppRoot(c)
@@ -171,7 +184,10 @@ func handleSetupOTPSubmit(a App, c *gin.Context) error {
 }
 
 func handleOTP(a App, c *gin.Context) error {
-	username, _ := c.Cookie(LandlordUsernameCookie)
+	username, err := getEncodedCookie(c, LandlordUsernameCookie)
+	if err != nil || username == "" {
+		return apperr.NewBadRequest("missing username")
+	}
 	uv := NewUnauthenticatedView(a.Settings()).WithPotentialUsername(username)
 	return executeUnauthenticatedView(c, "otpCodePage", uv)
 }
@@ -180,36 +196,43 @@ func handleOTPSubmit(a App, c *gin.Context) error {
 	var req rest.ValidateMfaCodeRequest
 	req.Username = c.PostForm("username")
 	req.MfaCode = c.PostForm("code")
-	req.Session, _ = c.Cookie(LandlordChallengeSessionCookie)
+	var err error
+	req.Session, err = getEncodedCookie(c, LandlordChallengeSessionCookie)
+	if err != nil || req.Session == "" {
+		return apperr.NewBadRequest("missing session")
+	}
 	resp, err := rest.HandleValidateMFACode(a, c, req)
 	if err != nil {
 		return err
 	}
 	switch resp.Status {
 	case rest.LoginStatusSuccess:
-		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordAccessTokenCookie, resp.AccessToken)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordIDTokenCookie, resp.IdToken)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordRefreshTokenCookie, resp.RefreshToken)
+		setEncodedCookie(a, c, LandlordUsernameCookie, req.Username)
+		setEncodedCookie(a, c, LandlordAccessTokenCookie, resp.AccessToken)
+		setEncodedCookie(a, c, LandlordRefreshTokenCookie, resp.RefreshToken)
+		clearCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie)
 		redirectToAppRoot(c)
 	case rest.LoginStatusNewPasswordRequired:
-		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
+		setEncodedCookie(a, c, LandlordUsernameCookie, req.Username)
+		setEncodedCookie(a, c, LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "new-password")
 	case rest.LoginStatusPasswordResetRequired:
-		setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie, resp.Session)
+		setEncodedCookie(a, c, LandlordUsernameCookie, req.Username)
+		setEncodedCookie(a, c, LandlordChallengeSessionCookie, resp.Session)
 		redirectTo(c, "reset-password")
 	default:
 		zap.L().Error("unexpected login status value",
 			zap.String("status", string(resp.Status)))
-		c.String(http.StatusInternalServerError, "internal error")
+		return apperr.NewInternal("unexpected login status value")
 	}
 	return nil
 }
 
 func handleNewPassword(a App, c *gin.Context) error {
-	username, _ := c.Cookie(LandlordUsernameCookie)
+	username, err := getEncodedCookie(c, LandlordUsernameCookie)
+	if err != nil || username == "" {
+		return apperr.NewBadRequest("missing username")
+	}
 	uv := NewUnauthenticatedView(a.Settings()).WithPotentialUsername(username)
 	return executeUnauthenticatedView(c, "newPasswordPage", uv)
 }
@@ -220,18 +243,21 @@ func handleNewPasswordSubmit(a App, c *gin.Context) error {
 	pwdOne := c.PostForm("password-one")
 	pwdTwo := c.PostForm("password-two")
 	if pwdOne != pwdTwo {
-		c.String(http.StatusBadRequest, "passwords do not match")
-		return nil
+		return apperr.NewBadRequest("passwords do not match")
 	}
 	req.Password = pwdOne
-	req.Session, _ = c.Cookie(LandlordChallengeSessionCookie)
+	var err error
+	req.Session, err = getEncodedCookie(c, LandlordChallengeSessionCookie)
+	if err != nil || req.Session == "" {
+		return apperr.NewBadRequest("missing session")
+	}
 	resp, err := rest.HandleSetNewPassword(a, c, req)
 	if err != nil {
 		return err
 	}
 	if resp.Status == rest.LoginStatusMFASetupRequired {
-		setCookie(c, a.Settings().ConsoleURL(), LandlordOTPURI, resp.OtpURI)
-		setCookie(c, a.Settings().ConsoleURL(), LandlordAccessTokenCookie, resp.AccessToken)
+		setEncodedCookie(a, c, LandlordOTPURICookie, resp.OtpURI)
+		setEncodedCookie(a, c, LandlordAccessTokenCookie, resp.AccessToken)
 		redirectTo(c, "setup-otp")
 		return nil
 	}
@@ -239,19 +265,20 @@ func handleNewPasswordSubmit(a App, c *gin.Context) error {
 		zap.L().Info("error setting new password",
 			zap.String("username", req.Username),
 			zap.String("status", string(resp.Status)))
-		c.String(http.StatusUnauthorized, "unauthorized")
-		return nil
+		return apperr.NewBadRequest("unauthorized")
 	}
-	setCookie(c, a.Settings().ConsoleURL(), LandlordIDTokenCookie, resp.IdToken)
-	setCookie(c, a.Settings().ConsoleURL(), LandlordAccessTokenCookie, resp.AccessToken)
-	setCookie(c, a.Settings().ConsoleURL(), LandlordRefreshTokenCookie, resp.RefreshToken)
+	setEncodedCookie(a, c, LandlordAccessTokenCookie, resp.AccessToken)
+	setEncodedCookie(a, c, LandlordRefreshTokenCookie, resp.RefreshToken)
 	clearCookie(c, a.Settings().ConsoleURL(), LandlordChallengeSessionCookie)
 	redirectToAppRoot(c)
 	return nil
 }
 
 func handleRecovery(a App, c *gin.Context) error {
-	username, _ := c.Cookie(LandlordUsernameCookie)
+	username, err := getEncodedCookie(c, LandlordUsernameCookie)
+	if err != nil || username == "" {
+		return apperr.NewBadRequest("missing username")
+	}
 	uv := NewUnauthenticatedView(a.Settings()).WithPotentialUsername(username)
 	return executeUnauthenticatedView(c, "recoveryPage", uv)
 }
@@ -265,13 +292,16 @@ func handleRecoverySubmit(a App, c *gin.Context) error {
 	}
 	// TODO: put the details from the response into front-end
 	_ = resp
-	setCookie(c, a.Settings().ConsoleURL(), LandlordUsernameCookie, req.Username)
+	setEncodedCookie(a, c, LandlordUsernameCookie, req.Username)
 	redirectTo(c, "reset-password")
 	return err
 }
 
 func handleResetPassword(a App, c *gin.Context) error {
-	username, _ := c.Cookie(LandlordUsernameCookie)
+	username, err := getEncodedCookie(c, LandlordUsernameCookie)
+	if err != nil || username == "" {
+		return apperr.NewBadRequest("missing username")
+	}
 	uv := NewUnauthenticatedView(a.Settings()).WithPotentialUsername(username)
 	return executeUnauthenticatedView(c, "resetPasswordPage", uv)
 }
@@ -283,8 +313,7 @@ func handleResetPasswordSubmit(a App, c *gin.Context) error {
 	pwdOne := c.PostForm("password-one")
 	pwdTwo := c.PostForm("password-two")
 	if pwdOne != pwdTwo {
-		c.String(http.StatusBadRequest, "passwords do not match")
-		return nil
+		return apperr.NewBadRequest("passwords do not match")
 	}
 	req.NewPassword = pwdOne
 	if err := rest.HandleResetPassword(a, c, req); err != nil {

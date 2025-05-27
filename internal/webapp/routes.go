@@ -373,7 +373,7 @@ func unauthorizedResponse(a App, c *gin.Context) {
 func setupAuthContext(a App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cid := perms.ClientID(c)
-		rawAccessToken, err := c.Cookie(LandlordAccessTokenCookie)
+		rawAccessToken, err := getEncodedCookie(c, LandlordAccessTokenCookie)
 		if rawAccessToken == "" || err != nil {
 			zap.L().Info("unauthorized: no access token cookie",
 				zap.String("clientID", string(cid)),
@@ -381,7 +381,7 @@ func setupAuthContext(a App) gin.HandlerFunc {
 			unauthorizedResponse(a, c)
 			return
 		}
-		username, err := c.Cookie(LandlordUsernameCookie)
+		username, err := getEncodedCookie(c, LandlordUsernameCookie)
 		if username == "" || err != nil {
 			zap.L().Info("unauthorized: no username cookie",
 				zap.String("clientID", string(cid)),

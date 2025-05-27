@@ -26,6 +26,8 @@ func Run() error {
 
 	a := appcore.Must()
 
+	webapp.InitSecureCookies(a)
+
 	baseRoutes.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusNoContent, nil)
 	})

@@ -17,7 +17,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwk"
 )
 
-// RawTokens is a struct that holds the raw tokens returned from the authorization server.
 type RawTokens struct {
 	AccessToken  string `json:"access_token"`
 	IdToken      string `json:"id_token"`
@@ -155,30 +154,6 @@ func (DefaultTokenValidator) ValidateToken(
 
 func NewTokenValidator() TokenValidator {
 	return DefaultTokenValidator{}
-}
-
-// ValidateAllTokens validates all tokens in the RawTokens struct producing a Tokens struct.
-func ValidateAllTokens(
-	ctx context.Context,
-	cid OpaqueClientID,
-	v TokenValidator,
-	validationURL *url.URL,
-	rawTokens RawTokens) (*Tokens, error) {
-
-	result := Tokens{}
-	var err error
-	result.AccessToken, err = v.ValidateToken(
-		ctx, cid, validationURL, rawTokens.AccessToken)
-	if err != nil {
-		return nil, err
-	}
-	result.IdToken, err = v.ValidateToken(
-		ctx, cid, validationURL, rawTokens.IdToken)
-	if err != nil {
-		return nil, err
-	}
-	result.RefreshToken = rawTokens.RefreshToken
-	return &result, nil
 }
 
 func strFromMap(m map[string]interface{}, key string) (string, error) {
