@@ -12,6 +12,40 @@ See [HELP.md](HELP.md) for end-user documentation.
 The `landlord` tool is designed to be deployed as a Docker container. It
 provides a REST API
 
+## CI/CD Configuration
+
+The GitHub Actions workflow builds and pushes a Docker image to Amazon ECR.
+It requires the following repository-level configuration, set under
+**Settings → Secrets and variables → Actions** in the GitHub repository.
+
+### Repository Secret
+
+| Name | Description |
+|------|-------------|
+| `AWS_ROLE_TO_ASSUME` | ARN of the IAM role the workflow assumes via OIDC to push to ECR (e.g. `arn:aws:iam::123456789012:role/MyGitHubActionsRole`) |
+
+### Repository Variables
+
+| Name | Description | Example |
+|------|-------------|---------|
+| `AWS_REGION` | AWS region where the ECR registry lives | `us-east-2` |
+| `ECR_REPOSITORY` | Name of the ECR repository to push images to | `landlord` |
+
+If any of these are missing the workflow will fail immediately with a message
+listing the missing values.
+
+#### Setting a repository secret
+
+```
+GitHub repo → Settings → Secrets and variables → Actions → New repository secret
+```
+
+#### Setting a repository variable
+
+```
+GitHub repo → Settings → Secrets and variables → Actions → Variables → New repository variable
+```
+
 ## Configuration and Usage
 
 ### AWS Cognito
