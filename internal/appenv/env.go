@@ -73,12 +73,13 @@ func DevMode() bool {
 }
 
 // LocalStack returns true if the AWS_PROFILE environment variable is set to
-// "localstack". This is used to determine whether to use the local stack for
-// testing.
+// "localstack" or AWS_ENDPOINT_URL points at a local AWS emulator. This is used
+// to determine whether to use the local stack for testing.
 func LocalStack() bool {
 	if !localStackSet {
 		s := os.Getenv("AWS_PROFILE")
-		localStack = strings.ToLower(s) == "localstack"
+		localStack = strings.ToLower(s) == "localstack" ||
+			os.Getenv("AWS_ENDPOINT_URL") != ""
 		localStackSet = true
 	}
 	return localStack

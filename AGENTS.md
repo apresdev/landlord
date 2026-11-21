@@ -28,8 +28,12 @@ is both a CLI (`landlord tenant ...`, `login`, `refresh`, ...) and a server
 - `go test ./...` runs unit tests; integration-style tests skip themselves when
   LocalStack is not running (`apptest.InitLocalStack` returns false).
 - `make itest` runs tests per directory without caching.
-- There is no real AWS account for development. Test against LocalStack or the
-  AWS Emulator (see TODO.md), never production.
+- There is no real AWS account for development. Integration tests run against the
+  AWS Emulator: `scripts/aws-emulator start && eval "$(scripts/aws-emulator env)"`
+  (see README). LocalStack's free tier lacks Cognito. Never test against production.
+- The emulator is stricter than LocalStack (real DynamoDB table creation is async,
+  Lambda permissions are enforced, pagination tokens are validated); keep helpers in
+  `internal/apptest` correct against real-AWS semantics.
 
 ## Conventions
 

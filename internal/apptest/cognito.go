@@ -6,10 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
-
-	"github.com/apresdev/landlord/internal/tinytools"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -26,10 +25,8 @@ func dangerousRecreateUserPool(cfg aws.Config, userPoolName string) {
 	ctx := context.Background()
 	cogIdp := cognitoidentityprovider.NewFromConfig(cfg)
 	maxResults := int32(10)
-	nextToken := tinytools.NewNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
-		NextToken:  &nextToken,
 	}
 	result := make([]cogtypes.UserPoolDescriptionType, 0)
 	for {
@@ -144,6 +141,11 @@ func createOrGetLambda(ctx context.Context, cfg aws.Config, userPoolArn string) 
 		FunctionName: aws.String(name),
 	})
 	if err == nil {
+		// The function outlives user pools, but each pool needs its own permission.
+		err = addCognitoPermission(ctx, lambdaClient, *o.Configuration.FunctionArn, userPoolArn)
+		if err != nil {
+			return nil, err
+		}
 		return o, nil
 	}
 
@@ -237,8 +239,14 @@ func addCognitoPermission(
 		FunctionName: aws.String(functionArn),
 		Principal:    aws.String("cognito-idp.amazonaws.com"),
 		SourceArn:    aws.String(cognitoUserPoolArn),
-		StatementId:  aws.String("AllowExecuteFromCognito"),
+		StatementId:  aws.String("AllowExecuteFromCognito-" + sourceArnSuffix(cognitoUserPoolArn)),
 	})
 
 	return err
+}
+
+// sourceArnSuffix returns the user pool ID part of a user pool ARN, for use in
+// a unique policy statement ID.
+func sourceArnSuffix(arn string) string {
+	return arn[strings.LastIndex(arn, "/")+1:]
 }

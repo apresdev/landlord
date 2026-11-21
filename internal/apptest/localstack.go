@@ -39,8 +39,8 @@ func localStackConfig() (aws.Config, error) {
 	if !localstackIsRunning() {
 		return aws.Config{}, apperr.NewInternal("localstack not running")
 	}
-	if os.Getenv("AWS_PROFILE") != "localstack" {
-		zap.L().Fatal("AWS_PROFILE must be set to 'localstack'")
+	if os.Getenv("AWS_PROFILE") != "localstack" && os.Getenv("AWS_ENDPOINT_URL") == "" {
+		zap.L().Fatal("AWS_PROFILE must be 'localstack' or AWS_ENDPOINT_URL must be set")
 	}
 	ctx := context.Background()
 	cfg, err := config.LoadDefaultConfig(ctx)

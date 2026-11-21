@@ -165,11 +165,26 @@ To assign a role to a user:
 
 ### Testing
 
-The `landlord` tool calls AWS APIs liberally. To that end,
-we test with [localstack](https://www.localstack.cloud/).
-A health check of localstack
-is made prior to running unit tests that rely on localstack.
-If that health check fails, those tests are skipped.
+The `landlord` tool calls AWS APIs liberally (Cognito, DynamoDB, Lambda). Unit
+tests use mocks; integration-style tests run against a local AWS stand-in and
+skip themselves if none is reachable.
+
+The preferred stand-in is the
+[AWS Emulator](https://aws.amazon.com/products/developer-tools/emulator/), which
+needs no AWS account or license:
+
+```shell
+scripts/aws-emulator start
+eval "$(scripts/aws-emulator env)"
+go test ./...
+scripts/aws-emulator stop
+```
+
+The emulator generates new credentials and a new CA on each start, so run `env`
+again after restarting. Any endpoint set in `AWS_ENDPOINT_URL` is treated as a
+local stand-in. LocalStack (`AWS_PROFILE=localstack`) still works for older
+setups, but current LocalStack releases require an auth token and the free
+tier does not include Cognito user pools (`cognito-idp`).
 
 ### On the Commitment of Auto-Generated Sources
 
