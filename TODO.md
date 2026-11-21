@@ -14,9 +14,7 @@
       integration test in `internal/rest`/`internal/apptest`.
 - [ ] Pass `preferred` client per tenant (store a client ID on the tenant) rather
       than one global setting.
-- [ ] Upgrade deps: `go get -u ./... && go mod tidy` (aws-sdk-go-v2, gin, opa,
-      jwx, ...); review OPA and jwx major-version changes. Go toolchain: go.mod
-      says 1.26.0, CI 1.26.1, Dockerfile uses unpinned `golang:alpine`; pin them.
+- [x] Upgrade deps and Go (1.27.4); go.mod, CI and Dockerfile pinned.
 - [ ] CI: add `go test ./...` / `go vet` / `staticcheck` as explicit steps (today
       tests only run inside `make rel`); bump actions (checkout, setup-go).
 - [ ] Replace deprecated `::set-output` in ci.yaml; `golang.org/x/lint/golint`

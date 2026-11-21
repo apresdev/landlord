@@ -1,6 +1,6 @@
 # See: https://github.com/chemidy/smallest-secured-golang-docker-image
 
-ARG BUILDER_IMAGE=golang:alpine
+ARG BUILDER_IMAGE=golang:1.27.4-alpine
 
 FROM ${BUILDER_IMAGE} AS builder
 
