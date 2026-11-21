@@ -60,7 +60,7 @@ func HandleLogin(a App, c *gin.Context, req LoginRequest) (*LoginResponse, error
 		return nil, apperr.NewUnauthorized("no tenants found for username")
 	}
 	upc, err := authx.GetUserPoolClient(
-		ctx, a.CogIdp(), tenant.UserPoolID)
+		ctx, a.CogIdp(), tenant.UserPoolID, a.Settings().UserPoolClient())
 	if err != nil {
 		zap.L().Warn("Could not resolve user pool client",
 			zap.String("userPoolID", tenant.UserPoolID), zap.Error(err))

@@ -37,7 +37,7 @@ func HandleValidateMFACode(a App, c *gin.Context, req ValidateMfaCodeRequest) (*
 	if err != nil {
 		return nil, fmt.Errorf("error finding tenant for username: %w", err)
 	}
-	upc, err := authx.GetUserPoolClient(ctx, cogIdp, tenant.UserPoolID)
+	upc, err := authx.GetUserPoolClient(ctx, cogIdp, tenant.UserPoolID, a.Settings().UserPoolClient())
 	if err != nil {
 		return nil, err
 	}

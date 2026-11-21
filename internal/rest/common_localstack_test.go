@@ -92,7 +92,7 @@ func inviteUserAndAuthenticate(t *testing.T, app App) *invitedUser {
 		})
 	assert.NoError(t, err)
 
-	upc, err := authx.GetUserPoolClient(ctx, app.CogIdp(), rootTenant.UserPoolID)
+	upc, err := authx.GetUserPoolClient(ctx, app.CogIdp(), rootTenant.UserPoolID, app.Settings().UserPoolClient())
 	assert.NoError(t, err)
 
 	params := make(map[string]string)

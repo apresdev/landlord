@@ -118,8 +118,10 @@ aws sso login
   default user pool. Tenants can have custom user pools, but the fallback is
   to use the default user pool.
 * `LANDLORD_DEFAULT_USER_POOL_CLIENT=<user-pool-client-name-or-id>`: The
-  name or ID of the default user pool client. Tenants can have custom user
-  pool clients.
+  name or ID of the default user pool client. Required only when a user
+  pool has more than one app client (e.g. a separate client for an MCP server);
+  a pool with a single client uses that client regardless. Tenants can have
+  custom user pools and clients.
 * `LANDLORD_CERT_PATH=<path>`: Path to the certificate when running landlord
   in server mode with TLS.
 * `LANDLORD_PRIVATE_KEY_PATH=<path>`: Path to the private key when running

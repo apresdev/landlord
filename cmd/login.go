@@ -36,7 +36,8 @@ func loginCmd() *cobra.Command {
 			}
 			validationURL := jwx.ValidationURL(cs.Cfg().Region, aws.ToString(up.Id))
 			tokens, err := authx.UserPasswordAuth(
-				cs.Ctx(), cs.CogIdp(), cs.Validator(), validationURL, up, username, password)
+				cs.Ctx(), cs.CogIdp(), cs.Validator(), validationURL, up, username, password,
+				cs.Settings().UserPoolClient())
 			if err != nil {
 				return err
 			}

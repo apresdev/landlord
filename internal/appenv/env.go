@@ -127,6 +127,9 @@ type Settings struct {
 	routes       RouteSetting
 	dbTableName  string
 	userPoolName string
+	// userPoolClient is the name or ID of the user pool client to use when a
+	// pool has more than one. Optional.
+	userPoolClient string
 }
 
 func (s Settings) AppURL() *url.URL {
@@ -159,6 +162,10 @@ func (s Settings) DBTableName() string {
 
 func (s Settings) UserPoolName() string {
 	return s.userPoolName
+}
+
+func (s Settings) UserPoolClient() string {
+	return s.userPoolClient
 }
 
 func (s Settings) DevMode() bool {
@@ -229,13 +236,14 @@ func MustSettings() Settings {
 		zap.L().Fatal("LANDLORD_DEFAULT_USER_POOL not set")
 	}
 	return Settings{
-		appURL:       appURL,
-		consoleURL:   consoleURL,
-		appName:      n,
-		adminEmail:   e,
-		routes:       rs,
-		dbTableName:  t,
-		userPoolName: u,
+		appURL:         appURL,
+		consoleURL:     consoleURL,
+		appName:        n,
+		adminEmail:     e,
+		routes:         rs,
+		dbTableName:    t,
+		userPoolName:   u,
+		userPoolClient: os.Getenv("LANDLORD_DEFAULT_USER_POOL_CLIENT"),
 	}
 }
 

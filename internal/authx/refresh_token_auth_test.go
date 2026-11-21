@@ -52,7 +52,7 @@ func (s *RefreshTokenAuthTestSuite) TestRefreshTokenAuth() {
 	s.Assert().NoError(err)
 	up := types.UserPoolType{Id: aws.String("test-user-pool1")}
 	tokens, err := authx.RefreshTokenAuth(
-		ctx, cogIdp, val, valURL, &up, "test-refresh-token")
+		ctx, cogIdp, val, valURL, &up, "test-refresh-token", "")
 	s.Assert().NoError(err)
 	s.Assert().Equal("test-access-token", tokens.AccessToken)
 	s.Assert().Equal("test-id-token", tokens.IdToken)
@@ -69,7 +69,7 @@ func (s *RefreshTokenAuthTestSuite) TestRefreshTokenAuthError2() {
 	s.Assert().NoError(err)
 	up := types.UserPoolType{Id: aws.String("test-user-pool1")}
 	tokens, err := authx.RefreshTokenAuth(
-		ctx, cogIdp, val, valURL, &up, "test-refresh-token")
+		ctx, cogIdp, val, valURL, &up, "test-refresh-token", "")
 	s.Assert().Error(err)
 	s.Assert().Nil(tokens)
 }
@@ -89,7 +89,7 @@ func (s *RefreshTokenAuthTestSuite) TestRefreshTokenAuthError3() {
 	s.Assert().NoError(err)
 	up := types.UserPoolType{Id: aws.String("test-user-pool1")}
 	tokens, err := authx.RefreshTokenAuth(
-		ctx, cogIdp, val, valURL, &up, "test-refresh-token")
+		ctx, cogIdp, val, valURL, &up, "test-refresh-token", "")
 	s.Assert().Error(err)
 	s.Assert().Nil(tokens)
 }
@@ -116,7 +116,7 @@ func (s *RefreshTokenAuthTestSuite) TestRefreshTokenAuthError4() {
 		nil, errors.New("test error")).Once()
 	up := types.UserPoolType{Id: aws.String("test-user-pool1")}
 	tokens, err := authx.RefreshTokenAuth(
-		ctx, cogIdp, val, valURL, &up, "test-refresh-token")
+		ctx, cogIdp, val, valURL, &up, "test-refresh-token", "")
 	s.Assert().Error(err)
 	s.Assert().Nil(tokens)
 }
@@ -146,7 +146,7 @@ func (s *RefreshTokenAuthTestSuite) TestRefreshTokenAuthError5() {
 		nil, errors.New("test error")).Once()
 	up := types.UserPoolType{Id: aws.String("test-user-pool1")}
 	tokens, err := authx.RefreshTokenAuth(
-		ctx, cogIdp, val, valURL, &up, "test-refresh-token")
+		ctx, cogIdp, val, valURL, &up, "test-refresh-token", "")
 	s.Assert().Error(err)
 	s.Assert().Nil(tokens)
 }

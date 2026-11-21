@@ -82,7 +82,7 @@ func HandleObtainAccessToken(a App, c *gin.Context) (*ObtainTokenResponse, error
 		return nil, apperr.NewUnauthorized("unauthorized")
 	}
 	upc, err := authx.GetUserPoolClient(
-		ctx, a.CogIdp(), rootTenant.UserPoolID)
+		ctx, a.CogIdp(), rootTenant.UserPoolID, a.Settings().UserPoolClient())
 	if err != nil {
 		zap.L().Warn("Could not resolve user pool client",
 			zap.String("userPoolID", rootTenant.UserPoolID), zap.Error(err))
