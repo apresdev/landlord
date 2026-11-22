@@ -13,7 +13,7 @@ import (
 )
 
 // UserPoolClientIntegrationTestSuite runs against a local AWS stand-in
-// (LocalStack or the AWS Emulator) and skips when none is running.
+// the AWS Emulator and skips when it is not running.
 type UserPoolClientIntegrationTestSuite struct {
 	suite.Suite
 	s appenv.Settings
@@ -24,13 +24,13 @@ func TestUserPoolClientIntegrationTestSuite(t *testing.T) {
 }
 
 func (s *UserPoolClientIntegrationTestSuite) SetupSuite() {
-	if !apptest.InitLocalStack(s.s) {
-		s.T().Skip("localstack not running")
+	if !apptest.InitEmulator(s.s) {
+		s.T().Skip("AWS emulator not running")
 	}
 }
 
 func (s *UserPoolClientIntegrationTestSuite) SetupTest() {
-	apptest.ResetLocalStack(s.s)
+	apptest.ResetEmulator(s.s)
 }
 
 // TestSecondClientInPool reproduces a pool that gains a second app client

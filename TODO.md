@@ -11,9 +11,7 @@
       including a multi-client pool test. Fixed helper/pagination bugs found on the way.
 - [ ] Emulator gap: `InitiateAuth` succeeds without `SECRET_HASH` for a client that
       has a secret (real Cognito rejects it). Don't rely on the emulator to catch that.
-- [ ] CI: start the emulator (Linux native binary) and run `go test ./...` with it.
-- [ ] `scripts/go-dev-bld` still runs tests with `AWS_PROFILE=localstack`; switch to the emulator.
-- [ ] Rename `localstack`-named helpers/env (`InitLocalStack`, `LANDLORD_LOCALSTACK_ENDPOINT`).
+- [x] LocalStack support removed; CI runs the tests against the AWS Emulator.
 - [ ] Pass `preferred` client per tenant (store a client ID on the tenant) rather
       than one global setting.
 - [x] Upgrade deps and Go (1.27.4); go.mod, CI and Dockerfile pinned.

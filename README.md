@@ -126,9 +126,9 @@ aws sso login
   in server mode with TLS.
 * `LANDLORD_PRIVATE_KEY_PATH=<path>`: Path to the private key when running
   landlord in server mode with TLS.
-* `LANDLORD_LOCALSTACK_ENDPOINT=<endpoint>`: If set, the landlord tool will
-  use this endpoint for AWS API calls using localstack. AWS_PROFILE should
-  be set to a profile that uses the localstack endpoint.
+* `LANDLORD_AWS_EMULATOR=true`: For development and testing only. Tells
+  landlord that AWS API calls (and the Cognito JWKS) go to a local AWS Emulator
+  at `AWS_ENDPOINT_URL` instead of AWS. Never set this in production.
 * `LANDLORD_TERRAFORM_MODULE_VERSION=<version>`: The version of the terraform
   module that the container is being deployed with.
 * `LANDLORD_SECURE_COOKIE_KEY`: Key used to sign and encrypt cookies. A
@@ -166,10 +166,10 @@ To assign a role to a user:
 ### Testing
 
 The `landlord` tool calls AWS APIs liberally (Cognito, DynamoDB, Lambda). Unit
-tests use mocks; integration-style tests run against a local AWS stand-in and
-skip themselves if none is reachable.
+tests use mocks; integration-style tests run against a local AWS emulator and
+skip themselves if it is not running.
 
-The preferred stand-in is the
+The stand-in is the
 [AWS Emulator](https://aws.amazon.com/products/developer-tools/emulator/), which
 needs no AWS account or license:
 
@@ -181,10 +181,9 @@ scripts/aws-emulator stop
 ```
 
 The emulator generates new credentials and a new CA on each start, so run `env`
-again after restarting. Any endpoint set in `AWS_ENDPOINT_URL` is treated as a
-local stand-in. LocalStack (`AWS_PROFILE=localstack`) still works for older
-setups, but current LocalStack releases require an auth token and the free
-tier does not include Cognito user pools (`cognito-idp`).
+again after restarting. The tests only use the emulator when
+`LANDLORD_AWS_EMULATOR=true` (set by `env`), because they delete and recreate
+tables and user pools.
 
 ### On the Commitment of Auto-Generated Sources
 

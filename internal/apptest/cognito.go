@@ -20,7 +20,7 @@ import (
 // dangerousRecreateUserPool optionally deletes the user pool with the given name
 // and creates a new one with the same name.
 //
-// This is meant for testing only and only works in a LocalStack environment.
+// This is meant for testing only and only works against a local AWS emulator.
 func dangerousRecreateUserPool(cfg aws.Config, userPoolName string) {
 	ctx := context.Background()
 	cogIdp := cognitoidentityprovider.NewFromConfig(cfg)
@@ -149,7 +149,7 @@ func createOrGetLambda(ctx context.Context, cfg aws.Config, userPoolArn string) 
 		return o, nil
 	}
 
-	environment := "LocalstackEnvironment"
+	environment := "TestEnvironment"
 	gitDir, err := findGitDirectory()
 	if err != nil {
 		return nil, fmt.Errorf("failed to find git directory: %w", err)
@@ -193,7 +193,7 @@ func createLambdaFunction(
 	runtime string,
 	handler string,
 ) (*lambda.GetFunctionOutput, error) {
-	// A fake role ARN that works fine in LocalStack
+	// A fake role ARN that the emulator accepts
 	roleArn := fmt.Sprintf("arn:aws:iam::123456789012:role/%s-execution-role", name)
 
 	zipBytes, err := os.ReadFile(sourceFile)

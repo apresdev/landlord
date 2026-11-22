@@ -18,20 +18,20 @@ is both a CLI (`landlord tenant ...`, `login`, `refresh`, ...) and a server
 - `internal/rest` — REST handlers (`handle_*.go`), `App` interface in `call_impl.go`.
 - `internal/webapp` — Console (gin + templates). `internal/perms` — OPA/rego policy.
 - `internal/jwx` — JWT validation. `internal/mocks` — mockery output.
-- `internal/apptest` — LocalStack/AWS-emulator test setup helpers.
+- `internal/apptest` — AWS Emulator test setup helpers.
 
 ## Build and test
 
 - `make setup` installs tools (goimports, mockery, staticcheck, ...).
-- `make build` runs `gen`, mockery, goimports, tests (`AWS_PROFILE=localstack`),
+- `make build` runs `gen`, mockery, goimports, tests,
   staticcheck, vet, `go mod tidy`. Set `LANDLORD_SKIP_TESTS=1` to skip tests.
 - `go test ./...` runs unit tests; integration-style tests skip themselves when
-  LocalStack is not running (`apptest.InitLocalStack` returns false).
+  the AWS Emulator is not running (`apptest.InitEmulator` returns false).
 - `make itest` runs tests per directory without caching.
 - There is no real AWS account for development. Integration tests run against the
   AWS Emulator: `scripts/aws-emulator start && eval "$(scripts/aws-emulator env)"`
-  (see README). LocalStack's free tier lacks Cognito. Never test against production.
-- The emulator is stricter than LocalStack (real DynamoDB table creation is async,
+  (see README). Never test against production.
+- The emulator follows real AWS semantics (DynamoDB table creation is async,
   Lambda permissions are enforced, pagination tokens are validated); keep helpers in
   `internal/apptest` correct against real-AWS semantics.
 
