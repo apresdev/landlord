@@ -23,3 +23,4 @@
       built binaries are ignored but check `tmp/`.
 - [ ] Paginate `ListUserPoolClients` (only first page is read today).
 - [x] Fixed `getUserPoolDescriptions` looping forever with more than 10 user pools.
+- [ ] The emulator install uses the unpinned `LTS/latest` package (CI and scripts/aws-emulator); a new release can change behaviour. Pin a version if one becomes available.

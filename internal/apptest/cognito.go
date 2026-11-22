@@ -104,7 +104,7 @@ func dangerousRecreateUserPool(cfg aws.Config, userPoolName string) {
 			AllowedOAuthFlowsUserPoolClient: true,
 			AllowedOAuthScopes:              []string{"email", "openid", "aws.cognito.signin.user.admin"},
 			CallbackURLs:                    []string{"http://127.0.0.1:42001/callback"},
-			DefaultRedirectURI:              aws.String("http://127.0.0.1:42001/"),
+			DefaultRedirectURI:              aws.String("http://127.0.0.1:42001/callback"),
 			ExplicitAuthFlows: []cogtypes.ExplicitAuthFlowsType{
 				"ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"},
 			GenerateSecret:             true,
