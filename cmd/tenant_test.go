@@ -28,8 +28,8 @@ func TestTenantTestSuite(t *testing.T) {
 }
 
 func (s *TenantTestSuite) SetupSuite() {
-	if !apptest.InitLocalStack(s.s) {
-		s.T().Skip("localstack not running")
+	if !apptest.InitEmulator(s.s) {
+		s.T().Skip("AWS emulator not running")
 	}
 }
 
@@ -40,7 +40,7 @@ func (s *TenantTestSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.ctx = context.WithValue(s.ctx, cmd.SettingsKey, s.s)
 	cmd.ClearSession()
-	apptest.ResetLocalStack(s.s)
+	apptest.ResetEmulator(s.s)
 }
 
 func (s *TenantTestSuite) TearDownTest() {
