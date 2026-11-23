@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   build-and-push:
-    timeout-minutes: 10
+    timeout-minutes: 20
     name: Build
     runs-on: ubuntu-latest
     strategy:
@@ -58,8 +58,35 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
 
+      # Integration-style tests run against the AWS Emulator, so no AWS account
+      # is needed. It is a native binary on Linux (state is in memory only).
+      - name: Install and start the AWS Emulator
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/aws-emulator.deb" \
+            https://downloads.aws.com/aws-emulator/packages/aws-emulator/LTS/latest/aws-emulator_amd64.deb
+          sudo apt-get install -y "$RUNNER_TEMP/aws-emulator.deb"
+          aws-emulator -v
+          EMULATOR_TELEMETRY=off nohup aws-emulator > "$RUNNER_TEMP/aws-emulator.log" 2>&1 &
+          dir="$HOME/.aws/emulator/9297"
+          for _ in $(seq 1 30); do
+            if curl -sf --cacert "$dir/ca.pem" https://127.0.0.1:9297/__admin/health; then
+              echo
+              # Point the tests at the emulator (credentials and CA are generated per start).
+              scripts/aws-emulator env | grep '^export ' | sed 's/^export //' >> "$GITHUB_ENV"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "AWS Emulator did not become healthy"
+          cat "$RUNNER_TEMP/aws-emulator.log"
+          exit 1
+
       - name: Build the release target
         run: make setup && make rel
+
+      - name: AWS Emulator log
+        if: failure()
+        run: cat "$RUNNER_TEMP/aws-emulator.log" || true
 
       - name: Configure AWS credentials
         if: steps.check-aws.outputs.configured == 'true'

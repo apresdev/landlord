@@ -23,13 +23,13 @@ func TestUsersTestSuite(t *testing.T) {
 }
 
 func (s *UserTestSuite) SetupSuite() {
-	if !apptest.InitLocalStack(s.s) {
-		s.T().Skip("localstack not running")
+	if !apptest.InitEmulator(s.s) {
+		s.T().Skip("AWS emulator not running")
 	}
 }
 
 func (s *UserTestSuite) SetupTest() {
-	apptest.ResetLocalStack(s.s)
+	apptest.ResetEmulator(s.s)
 }
 
 func (s *UserTestSuite) storeTestUser(a appcore.Clients) *multi.User {

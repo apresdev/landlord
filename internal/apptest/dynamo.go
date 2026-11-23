@@ -3,6 +3,7 @@ package apptest
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"go.uber.org/zap"
@@ -79,6 +80,12 @@ func dangerousRecreateDynamoTable(cfg aws.Config, name string) {
 	}
 	if _, err := ddb.CreateTable(ctx, input); err != nil {
 		zap.L().Fatal("failed to create table", zap.Error(err))
+	}
+	// Real DynamoDB creates tables asynchronously; wait until it is ACTIVE.
+	waiter := dynamodb.NewTableExistsWaiter(ddb)
+	err = waiter.Wait(ctx, &dynamodb.DescribeTableInput{TableName: aws.String(name)}, time.Minute)
+	if err != nil {
+		zap.L().Fatal("table did not become active", zap.Error(err))
 	}
 	zap.L().Info("created table", zap.String("table", name))
 }

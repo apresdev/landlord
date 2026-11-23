@@ -32,8 +32,8 @@ func TestHandleRetrieveSubjectTestSuite(t *testing.T) {
 }
 
 func (s *HandleRetrieveSubjectTestSuite) SetupSuite() {
-	if !apptest.InitLocalStack(s.s) {
-		s.T().Skip("localstack not running")
+	if !apptest.InitEmulator(s.s) {
+		s.T().Skip("AWS emulator not running")
 	}
 }
 

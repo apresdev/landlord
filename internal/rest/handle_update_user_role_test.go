@@ -30,19 +30,19 @@ func TestHandleUpdateUserRoleTestSuite(t *testing.T) {
 }
 
 func (s *HandleUpdateUserRoleTestSuite) SetupSuite() {
-	if !apptest.InitLocalStack(s.s) {
-		s.T().Skip("localstack not running")
+	if !apptest.InitEmulator(s.s) {
+		s.T().Skip("AWS emulator not running")
 	}
 }
 
 func (s *HandleUpdateUserRoleTestSuite) TearDownSuite() {
-	apptest.ResetLocalStack(s.s)
+	apptest.ResetEmulator(s.s)
 }
 
 func (s *HandleUpdateUserRoleTestSuite) SetupTest() {
 	s.ginMode = gin.Mode()
 	gin.SetMode(gin.TestMode)
-	apptest.ResetLocalStack(s.s)
+	apptest.ResetEmulator(s.s)
 }
 
 func (s *HandleUpdateUserRoleTestSuite) TestHappyPath() {
