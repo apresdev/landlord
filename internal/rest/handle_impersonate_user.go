@@ -108,7 +108,7 @@ func HandleImpersonateUser(
 		return nil, apperr.NewUnauthorized("not authorized")
 	}
 	upc, err := authx.GetUserPoolClient(
-		c.Request.Context(), a.CogIdp(), targetTenant.UserPoolID)
+		c.Request.Context(), a.CogIdp(), targetTenant.UserPoolID, a.Settings().UserPoolClient())
 	if err != nil {
 		zap.L().Warn("Could not resolve user pool client",
 			zap.String("userPoolID", targetTenant.UserPoolID),

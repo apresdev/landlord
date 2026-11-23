@@ -23,13 +23,13 @@ func TestTenantTestSuite(t *testing.T) {
 }
 
 func (s *TenantTestSuite) SetupSuite() {
-	if !apptest.InitLocalStack(s.s) {
-		s.T().Skip("localstack not running")
+	if !apptest.InitEmulator(s.s) {
+		s.T().Skip("AWS emulator not running")
 	}
 }
 
 func (s *TenantTestSuite) SetupTest() {
-	apptest.ResetLocalStack(s.s)
+	apptest.ResetEmulator(s.s)
 }
 
 func (s *TenantTestSuite) storeTestTenant(a appcore.Clients) *multi.Tenant {

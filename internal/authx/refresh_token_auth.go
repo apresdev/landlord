@@ -18,10 +18,11 @@ func RefreshTokenAuth(
 	validator jwx.TokenValidator,
 	validationURL *url.URL,
 	up *types.UserPoolType,
-	refreshToken string) (*jwx.RawTokens, error) {
+	refreshToken string,
+	preferredClient string) (*jwx.RawTokens, error) {
 
-	client, err := getSingletonUserPoolClientDescription(
-		ctx, cogIdp, aws.ToString(up.Id))
+	client, err := selectUserPoolClientDescription(
+		ctx, cogIdp, aws.ToString(up.Id), preferredClient)
 	if err != nil {
 		return nil, err
 	}

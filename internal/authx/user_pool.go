@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/apresdev/landlord/internal/tinytools"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
@@ -23,10 +21,8 @@ func GetUserPoolDescriptions(
 
 	result := make([]types.UserPoolDescriptionType, 0)
 	maxResults := defaultMaxResults
-	nextToken := tinytools.NewNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
-		NextToken:  &nextToken,
 	}
 	for {
 		u, err := cogIdp.ListUserPools(ctx, &args)
@@ -37,7 +33,7 @@ func GetUserPoolDescriptions(
 		if u.NextToken == nil {
 			break
 		}
-		nextToken = *u.NextToken
+		args.NextToken = u.NextToken
 	}
 	return result, nil
 }
@@ -64,10 +60,8 @@ func getUserPoolDescriptions(
 	[]types.UserPoolDescriptionType, error) {
 
 	maxResults := defaultMaxResults
-	nextToken := tinytools.NewNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
-		NextToken:  &nextToken,
 	}
 	result := make([]types.UserPoolDescriptionType, 0)
 	for {
@@ -83,6 +77,7 @@ func getUserPoolDescriptions(
 		if u.NextToken == nil {
 			break
 		}
+		args.NextToken = u.NextToken
 	}
 	return result, nil
 }

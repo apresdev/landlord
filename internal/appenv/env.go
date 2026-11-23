@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	devMode       bool
-	devModeSet    bool
-	localStack    bool
-	localStackSet bool
+	devMode     bool
+	devModeSet  bool
+	localAWS    bool
+	localAWSSet bool
 )
 
 func loadIfExists(filename string) error {
@@ -72,29 +72,30 @@ func DevMode() bool {
 	return devMode
 }
 
-// LocalStack returns true if the AWS_PROFILE environment variable is set to
-// "localstack". This is used to determine whether to use the local stack for
-// testing.
-func LocalStack() bool {
-	if !localStackSet {
-		s := os.Getenv("AWS_PROFILE")
-		localStack = strings.ToLower(s) == "localstack"
-		localStackSet = true
+// LocalAWS returns true if LANDLORD_AWS_EMULATOR is "true", i.e. AWS calls go to
+// a local AWS emulator (at AWS_ENDPOINT_URL) rather than AWS. This is used to
+// determine whether to use the emulator's endpoints for testing. It is an
+// explicit opt-in because AWS_ENDPOINT_URL can legitimately be set in
+// production (e.g. VPC endpoints).
+func LocalAWS() bool {
+	if !localAWSSet {
+		localAWS = strings.ToLower(os.Getenv("LANDLORD_AWS_EMULATOR")) == "true"
+		localAWSSet = true
 	}
-	return localStack
+	return localAWS
 }
 
-// OverrideLocalStack sets the local stack mode to v and returns a function that
-// resets the local stack mode to its previous value. Used in unit tests
+// OverrideLocalAWS sets the local AWS mode to v and returns a function that
+// resets the local AWS mode to its previous value. Used in unit tests
 // that poke around with the development environment.
-func OverrideLocalStack(v bool) func() {
-	current := LocalStack()
+func OverrideLocalAWS(v bool) func() {
+	current := LocalAWS()
 	if current == v {
 		return func() {}
 	}
-	localStack = v
+	localAWS = v
 	return func() {
-		localStack = current
+		localAWS = current
 	}
 }
 
@@ -127,6 +128,9 @@ type Settings struct {
 	routes       RouteSetting
 	dbTableName  string
 	userPoolName string
+	// userPoolClient is the name or ID of the user pool client to use when a
+	// pool has more than one. Optional.
+	userPoolClient string
 }
 
 func (s Settings) AppURL() *url.URL {
@@ -159,6 +163,10 @@ func (s Settings) DBTableName() string {
 
 func (s Settings) UserPoolName() string {
 	return s.userPoolName
+}
+
+func (s Settings) UserPoolClient() string {
+	return s.userPoolClient
 }
 
 func (s Settings) DevMode() bool {
@@ -229,13 +237,14 @@ func MustSettings() Settings {
 		zap.L().Fatal("LANDLORD_DEFAULT_USER_POOL not set")
 	}
 	return Settings{
-		appURL:       appURL,
-		consoleURL:   consoleURL,
-		appName:      n,
-		adminEmail:   e,
-		routes:       rs,
-		dbTableName:  t,
-		userPoolName: u,
+		appURL:         appURL,
+		consoleURL:     consoleURL,
+		appName:        n,
+		adminEmail:     e,
+		routes:         rs,
+		dbTableName:    t,
+		userPoolName:   u,
+		userPoolClient: os.Getenv("LANDLORD_DEFAULT_USER_POOL_CLIENT"),
 	}
 }
 

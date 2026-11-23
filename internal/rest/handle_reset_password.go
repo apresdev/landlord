@@ -53,7 +53,7 @@ func HandleResetPassword(a App, c *gin.Context, req ResetPasswordRequest) error 
 		return err
 	}
 
-	upc, err := authx.GetUserPoolClient(ctx, cogIdp, tenant.UserPoolID)
+	upc, err := authx.GetUserPoolClient(ctx, cogIdp, tenant.UserPoolID, a.Settings().UserPoolClient())
 	if err != nil {
 		return err
 	}

@@ -6,10 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
-
-	"github.com/apresdev/landlord/internal/tinytools"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -21,15 +20,13 @@ import (
 // dangerousRecreateUserPool optionally deletes the user pool with the given name
 // and creates a new one with the same name.
 //
-// This is meant for testing only and only works in a LocalStack environment.
+// This is meant for testing only and only works against a local AWS emulator.
 func dangerousRecreateUserPool(cfg aws.Config, userPoolName string) {
 	ctx := context.Background()
 	cogIdp := cognitoidentityprovider.NewFromConfig(cfg)
 	maxResults := int32(10)
-	nextToken := tinytools.NewNextToken()
 	args := cognitoidentityprovider.ListUserPoolsInput{
 		MaxResults: &maxResults,
-		NextToken:  &nextToken,
 	}
 	result := make([]cogtypes.UserPoolDescriptionType, 0)
 	for {
@@ -107,7 +104,7 @@ func dangerousRecreateUserPool(cfg aws.Config, userPoolName string) {
 			AllowedOAuthFlowsUserPoolClient: true,
 			AllowedOAuthScopes:              []string{"email", "openid", "aws.cognito.signin.user.admin"},
 			CallbackURLs:                    []string{"http://127.0.0.1:42001/callback"},
-			DefaultRedirectURI:              aws.String("http://127.0.0.1:42001/"),
+			DefaultRedirectURI:              aws.String("http://127.0.0.1:42001/callback"),
 			ExplicitAuthFlows: []cogtypes.ExplicitAuthFlowsType{
 				"ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"},
 			GenerateSecret:             true,
@@ -144,10 +141,15 @@ func createOrGetLambda(ctx context.Context, cfg aws.Config, userPoolArn string) 
 		FunctionName: aws.String(name),
 	})
 	if err == nil {
+		// The function outlives user pools, but each pool needs its own permission.
+		err = addCognitoPermission(ctx, lambdaClient, *o.Configuration.FunctionArn, userPoolArn)
+		if err != nil {
+			return nil, err
+		}
 		return o, nil
 	}
 
-	environment := "LocalstackEnvironment"
+	environment := "TestEnvironment"
 	gitDir, err := findGitDirectory()
 	if err != nil {
 		return nil, fmt.Errorf("failed to find git directory: %w", err)
@@ -191,7 +193,7 @@ func createLambdaFunction(
 	runtime string,
 	handler string,
 ) (*lambda.GetFunctionOutput, error) {
-	// A fake role ARN that works fine in LocalStack
+	// A fake role ARN that the emulator accepts
 	roleArn := fmt.Sprintf("arn:aws:iam::123456789012:role/%s-execution-role", name)
 
 	zipBytes, err := os.ReadFile(sourceFile)
@@ -237,8 +239,14 @@ func addCognitoPermission(
 		FunctionName: aws.String(functionArn),
 		Principal:    aws.String("cognito-idp.amazonaws.com"),
 		SourceArn:    aws.String(cognitoUserPoolArn),
-		StatementId:  aws.String("AllowExecuteFromCognito"),
+		StatementId:  aws.String("AllowExecuteFromCognito-" + sourceArnSuffix(cognitoUserPoolArn)),
 	})
 
 	return err
+}
+
+// sourceArnSuffix returns the user pool ID part of a user pool ARN, for use in
+// a unique policy statement ID.
+func sourceArnSuffix(arn string) string {
+	return arn[strings.LastIndex(arn, "/")+1:]
 }

@@ -43,7 +43,7 @@ func HandleRecoverPassword(
 		return nil, err
 	}
 	upc, err := authx.GetUserPoolClient(
-		c.Request.Context(), cogIdp, tenant.UserPoolID)
+		c.Request.Context(), cogIdp, tenant.UserPoolID, a.Settings().UserPoolClient())
 	if err != nil {
 		zap.L().Warn("Could not resolve user pool client",
 			zap.String("tenantID", tenant.ID.String()),

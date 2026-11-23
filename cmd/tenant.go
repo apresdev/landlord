@@ -910,7 +910,8 @@ func tenantUserPoolCmd() *cobra.Command {
 				return err
 			}
 			// Ensure that there is an appropriately configured client
-			_, err = authx.GetUserPoolClient(cs.Ctx(), cs.CogIdp(), aws.ToString(up.Id))
+			_, err = authx.GetUserPoolClient(
+				cs.Ctx(), cs.CogIdp(), aws.ToString(up.Id), cs.Settings().UserPoolClient())
 			if err != nil {
 				return err
 			}

@@ -22,7 +22,8 @@ func refreshCmd() *cobra.Command {
 				cs.Validator(),
 				s.GetValidationURL(),
 				up,
-				s.RefreshToken)
+				s.RefreshToken,
+				cs.Settings().UserPoolClient())
 			if err != nil {
 				return err
 			}

@@ -118,15 +118,17 @@ aws sso login
   default user pool. Tenants can have custom user pools, but the fallback is
   to use the default user pool.
 * `LANDLORD_DEFAULT_USER_POOL_CLIENT=<user-pool-client-name-or-id>`: The
-  name or ID of the default user pool client. Tenants can have custom user
-  pool clients.
+  name or ID of the default user pool client. Required only when a user
+  pool has more than one app client (e.g. a separate client for an MCP server);
+  a pool with a single client uses that client regardless. Tenants can have
+  custom user pools and clients.
 * `LANDLORD_CERT_PATH=<path>`: Path to the certificate when running landlord
   in server mode with TLS.
 * `LANDLORD_PRIVATE_KEY_PATH=<path>`: Path to the private key when running
   landlord in server mode with TLS.
-* `LANDLORD_LOCALSTACK_ENDPOINT=<endpoint>`: If set, the landlord tool will
-  use this endpoint for AWS API calls using localstack. AWS_PROFILE should
-  be set to a profile that uses the localstack endpoint.
+* `LANDLORD_AWS_EMULATOR=true`: For development and testing only. Tells
+  landlord that AWS API calls (and the Cognito JWKS) go to a local AWS Emulator
+  at `AWS_ENDPOINT_URL` instead of AWS. Never set this in production.
 * `LANDLORD_TERRAFORM_MODULE_VERSION=<version>`: The version of the terraform
   module that the container is being deployed with.
 * `LANDLORD_SECURE_COOKIE_KEY`: Key used to sign and encrypt cookies. A
@@ -163,11 +165,25 @@ To assign a role to a user:
 
 ### Testing
 
-The `landlord` tool calls AWS APIs liberally. To that end,
-we test with [localstack](https://www.localstack.cloud/).
-A health check of localstack
-is made prior to running unit tests that rely on localstack.
-If that health check fails, those tests are skipped.
+The `landlord` tool calls AWS APIs liberally (Cognito, DynamoDB, Lambda). Unit
+tests use mocks; integration-style tests run against a local AWS emulator and
+skip themselves if it is not running.
+
+The stand-in is the
+[AWS Emulator](https://aws.amazon.com/products/developer-tools/emulator/), which
+needs no AWS account or license:
+
+```shell
+scripts/aws-emulator start
+eval "$(scripts/aws-emulator env)"
+go test ./...
+scripts/aws-emulator stop
+```
+
+The emulator generates new credentials and a new CA on each start, so run `env`
+again after restarting. The tests only use the emulator when
+`LANDLORD_AWS_EMULATOR=true` (set by `env`), because they delete and recreate
+tables and user pools.
 
 ### On the Commitment of Auto-Generated Sources
 

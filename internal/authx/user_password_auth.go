@@ -38,7 +38,8 @@ func UserPasswordAuth(
 	validationURL *url.URL,
 	up *types.UserPoolType,
 	username string,
-	password string) (*jwx.Tokens, error) {
+	password string,
+	preferredClient string) (*jwx.Tokens, error) {
 
 	if validationURL == nil {
 		return nil, errors.New("validationURL is nil")
@@ -46,7 +47,7 @@ func UserPasswordAuth(
 	if up == nil {
 		return nil, errors.New("user pool is nil")
 	}
-	upc, err := GetUserPoolClient(ctx, cogIdp, aws.ToString(up.Id))
+	upc, err := GetUserPoolClient(ctx, cogIdp, aws.ToString(up.Id), preferredClient)
 	if err != nil {
 		return nil, err
 	}

@@ -28,19 +28,19 @@ func TestHandleInviteToTenantTestSuite(t *testing.T) {
 }
 
 func (s *HandleInviteToTenantTestSuite) SetupSuite() {
-	if !apptest.InitLocalStack(s.s) {
-		s.T().Skip("localstack not running")
+	if !apptest.InitEmulator(s.s) {
+		s.T().Skip("AWS emulator not running")
 	}
 }
 
 func (s *HandleInviteToTenantTestSuite) TearDownSuite() {
-	apptest.ResetLocalStack(s.s)
+	apptest.ResetEmulator(s.s)
 }
 
 func (s *HandleInviteToTenantTestSuite) SetupTest() {
 	s.ginMode = gin.Mode()
 	gin.SetMode(gin.TestMode)
-	apptest.ResetLocalStack(s.s)
+	apptest.ResetEmulator(s.s)
 }
 
 func (s *HandleInviteToTenantTestSuite) TestHappyPath() {

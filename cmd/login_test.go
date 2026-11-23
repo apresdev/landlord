@@ -26,8 +26,8 @@ func TestLoginTestSuite(t *testing.T) {
 }
 
 func (s *LoginTestSuite) SetupSuite() {
-	if !apptest.InitLocalStack(s.s) {
-		s.T().Skip("localstack not running")
+	if !apptest.InitEmulator(s.s) {
+		s.T().Skip("AWS emulator not running")
 	}
 }
 

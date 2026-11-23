@@ -34,13 +34,13 @@ func TestInviteTestSuite(t *testing.T) {
 }
 
 func (s *InviteTestSuite) SetupSuite() {
-	if !apptest.InitLocalStack(s.s) {
-		s.T().Skip("localstack not running")
+	if !apptest.InitEmulator(s.s) {
+		s.T().Skip("AWS emulator not running")
 	}
 }
 
 func (s *InviteTestSuite) SetupTest() {
-	apptest.ResetLocalStack(s.s)
+	apptest.ResetEmulator(s.s)
 }
 
 func (s *InviteTestSuite) TestBadEmail() {

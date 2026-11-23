@@ -3,10 +3,10 @@
 set -euo pipefail
 
 # go-itest is used to run all unit tests (some of which are
-# integration-style tests using localstack) without respecting
+# integration-style tests using the AWS emulator) without respecting
 # the typical caching of go unit tests. This is to more easily
 # iterate when changing the configs in the external dependency
-# (i.e. localstack) and wanting to ensure that everything re-runs.
+# (i.e. the AWS emulator) and wanting to ensure that everything re-runs.
 
 # Find all subdirectories containing *_test.go files
 # and run 'go test' in each of them
